@@ -1406,7 +1406,22 @@ const reply = (() => {
       .join("\n");
   }
 
-  return "Your profile is still empty. When you ask me to remember something, I’ll keep it here.";
+  if (isEmotionalProjectMessage) {
+  return [
+    "I hear you. This project is taking a lot of energy because you are not just building an app — you are carrying vision, pressure, time, money, expectation, and responsibility inside it.",
+    "",
+    "Do not turn today’s heaviness into a conclusion about the whole project.",
+    "",
+    "Fact: you feel down and tired today.",
+    "Discipline: we slow down and make one clean move, not ten.",
+    "",
+    "Today does not need a big push. It needs one clean step.",
+    "",
+    "What is the smallest part of Virtus AI we can finish now without forcing your mind?"
+  ].join("\n");
+}
+
+return "Your profile is still empty. When you ask me to remember something, I’ll keep it here.";
 })();
 
   await supabase.from("conversations").insert({
