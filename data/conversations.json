@@ -1,0 +1,27 @@
+[
+  {
+    "role": "user",
+    "text": "test",
+    "createdAt": "2026-04-01T12:53:23.498824+00:00"
+  },
+  {
+    "role": "user",
+    "text": "what do you see",
+    "createdAt": "2026-04-01T13:01:58.300188+00:00"
+  },
+  {
+    "role": "assistant",
+    "text": "I see very little yet.\n\nI see:\n- a brief question\n- no clear context\n- a possible test of perception, awareness, or interpretation\n\nIf you mean **in this conversation**, I see:\n- you are probing how I observe\n- you are likely testing clarity, not looking for decoration\n\nIf you mean **you**, I see:\n- restraint\n- ambiguity by design\n- a preference to reveal little and observe the response\n\nIf you want a deeper answer, be precise:\n- “What do you see in me?”\n- “What do you see in this situation?”\n- “What do you see in this image?”  \n- “What do you see that I’m missing?”",
+    "createdAt": "2026-04-01T13:02:05.754613+00:00"
+  },
+  {
+    "role": "user",
+    "text": "hi",
+    "createdAt": "2026-04-02T06:22:52.033Z"
+  },
+  {
+    "role": "assistant",
+    "text": "Hello.\n\nVirtus here.\n\nSpeak plainly. What do you need?",
+    "createdAt": "2026-04-02T06:22:52.033Z"
+  }
+]
