@@ -1366,8 +1366,11 @@ return true;
     },
   });
 
+  const isEmotionalProjectMessage =
+  /\b(project|virtus|build|app)\b/i.test(message || "") &&
+  /\b(feel|feeling|down|tired|drained|exhausted|heavy|sad|stressed|stress|pressure|energy|overwhelmed|discouraged|frustrated)\b/i.test(message || "");
 const reply = (() => {
-  if (isAllProjectsRecall) {
+  if (isAllProjectsRecall && !isEmotionalProjectMessage) {
     if (projectLines.length > 0) {
       return [
         "Here is what I remember about your projects.",
@@ -1379,7 +1382,7 @@ const reply = (() => {
     return "I do not yet hold clear project memory for your projects.";
   }
 
-  if (isThisProjectRecallCommand || requestedProjectLabel) {
+  if ((isThisProjectRecallCommand || requestedProjectLabel) && !isEmotionalProjectMessage) {
     if (projectLines.length > 0) {
       return [
         "Here is what I remember about this project.",
