@@ -825,8 +825,8 @@ setLoading(false);
   }
 
   return (
-   <main
-  className="h-screen overflow-hidden bg-black text-white"
+  <main
+  className="h-[100dvh] md:h-screen overflow-hidden bg-black text-white"
   onClick={() => {
     if (!showPlanOverlay) return;
     setShowPlanOverlay(false);
@@ -1057,14 +1057,14 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
           <div className="w-full max-w-6xl h-full flex flex-col">
             {showPlanOverlay && (
   <div
-    className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 px-6"
+    className="absolute inset-0 z-20 flex items-start md:items-center justify-center overflow-y-auto md:overflow-hidden bg-black/70 px-3 py-4 md:px-6 md:py-0 no-scrollbar"
     onClick={() => {
       setShowPlanOverlay(false);
       localStorage.setItem(planOverlayStorageKey, "true");
     }}
   >
     <div
-      className="w-full max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-950/95 p-6"
+      className="w-full max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-950/95 p-4 md:p-6"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="mb-6">
@@ -1145,7 +1145,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     </div>
   </div>
 )}
-           <div className="px-8 py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
+           <div className="px-3 py-3 md:px-8 md:py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
   <div className="flex items-center justify-between gap-4">
     <p className="text-sm font-medium text-sky-200">Virtus</p>
 
@@ -1187,7 +1187,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
 
             <div
   ref={scrollContainerRef}
-  className="flex-1 overflow-y-auto px-6 py-6 min-h-0 no-scrollbar"
+  className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 no-scrollbar"
 >
               {conversation.length > 0 || loading ? (
                 <div className="space-y-4">
