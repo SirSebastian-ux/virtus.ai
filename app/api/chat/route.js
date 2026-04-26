@@ -47,6 +47,7 @@ function cleanTrialGuestVisibleLabels(text) {
 
     // Clean extra spaces and empty lines
     .replace(/\n{3,}/g, "\n\n")
+    .replace(/The “/g, "The disciplined version is: “")
     .trim();
 }
 
