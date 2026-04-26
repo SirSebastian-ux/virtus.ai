@@ -1074,9 +1074,22 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
         <h2 className="mt-2 text-2xl font-semibold text-white">
           Choose the level of Virtus you want to understand
         </h2>
-        <p className="mt-2 text-sm text-zinc-400">
-          Click outside this panel to continue.
-        </p>
+<div className="mt-3 flex items-center justify-between gap-3">
+  <p className="text-sm text-zinc-400">
+    Review your access level, then continue to Virtus.
+  </p>
+
+  <button
+    type="button"
+    onClick={() => {
+      setShowPlanOverlay(false);
+      localStorage.setItem(planOverlayStorageKey, "true");
+    }}
+    className="shrink-0 rounded-full border border-sky-900/40 bg-sky-950/30 px-4 py-2 text-sm text-sky-100 transition hover:bg-sky-900/40"
+  >
+    Continue
+  </button>
+</div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
