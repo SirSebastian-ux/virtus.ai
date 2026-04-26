@@ -180,15 +180,27 @@ function getGuestSidebarRecentConversations(plan, fallbackChatId) {
       ? JSON.parse(storedGuestChatsRaw)
       : [];
 
-    if (Array.isArray(parsedGuestChats) && parsedGuestChats.length > 0) {
-      return parsedGuestChats;
+    if (Array.isArray(parsedGuestChats)) {
+      const cleanGuestChats = parsedGuestChats.filter(
+        (item) =>
+          item?.id &&
+          item?.title &&
+          item.title.trim() !== "New chat"
+      );
+
+      localStorage.setItem(
+        "virtus_guest_recent_chats",
+        JSON.stringify(cleanGuestChats)
+      );
+
+      return cleanGuestChats;
     }
   } catch {
     localStorage.removeItem("virtus_guest_recent_chats");
   }
 
-  const guestSidebarChatId = getGuestSidebarChatId(plan, fallbackChatId);
-  return [getGuestSidebarItem(plan, guestSidebarChatId)];
+  localStorage.removeItem("virtus_guest_recent_chats");
+  return [];
 }
 function getStoredGuestAccess() {
   const storedGuestAccessRaw = localStorage.getItem("virtus_guest_access");
@@ -844,31 +856,8 @@ setLoading(false);
   setConversation([]);
 
         if (!isAuthenticated) {
-      const existingGuestChatsRaw = localStorage.getItem("virtus_guest_recent_chats");
-
-      let existingGuestChats = [];
-      try {
-        existingGuestChats = existingGuestChatsRaw
-          ? JSON.parse(existingGuestChatsRaw)
-          : [];
-      } catch {
-        localStorage.removeItem("virtus_guest_recent_chats");
-      }
-
-      const nextGuestChats = [
-        {
-          id: newChatId,
-          title: "New chat",
-        },
-        ...existingGuestChats.filter((item) => item.id !== newChatId),
-      ];
-
-      localStorage.setItem(
-        "virtus_guest_recent_chats",
-        JSON.stringify(nextGuestChats)
-      );
-
-      setRecentConversations(nextGuestChats);
+      // Do not save empty guest chats in Recent.
+      // A chat should appear in Recent only after the user sends a message.
     }
 }}
 className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 text-left text-sm text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
@@ -881,13 +870,26 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
   Recent
 </p>
 
-              <div className="space-y-2">
-                {recentConversations.length === 0 ? (
-                  <div className="rounded-xl px-3 py-2 text-sm text-zinc-400 bg-zinc-900/60 border border-zinc-800">
-                    Recent conversations will appear here
-                  </div>
-                ) : (
-                  recentConversations.map((item) => (
+  <div className="space-y-2">
+  {recentConversations.filter(
+    (item) =>
+      item?.id &&
+      item?.title &&
+      item.title.trim().toLowerCase() !== "new chat"
+  ).length === 0 ? (
+    <div className="rounded-xl px-3 py-2 text-sm text-zinc-400 bg-zinc-900/60 border border-zinc-800">
+      Recent conversations will appear here
+    </div>
+  ) : (
+    recentConversations
+      .filter(
+        (item) =>
+          item?.id &&
+          item?.title &&
+          item.title.trim().toLowerCase() !== "new chat"
+      )
+      .map((item) => (
+  
                     <button
                       key={item.id}
                       onClick={async () => {
