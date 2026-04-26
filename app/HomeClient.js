@@ -1074,9 +1074,9 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
         <h2 className="mt-2 text-2xl font-semibold text-white">
           Choose the level of Virtus you want to understand
         </h2>
-<div className="mt-3 flex items-center justify-between gap-3">
+<div className="sticky top-0 z-30 mt-3 flex items-center justify-between gap-3 rounded-2xl border border-sky-900/25 bg-zinc-950/95 p-3 backdrop-blur-sm">
   <p className="text-sm text-zinc-400">
-    Review your access level, then continue to Virtus.
+    Review your access level, then continue.
   </p>
 
   <button
@@ -1085,7 +1085,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
       setShowPlanOverlay(false);
       localStorage.setItem(planOverlayStorageKey, "true");
     }}
-    className="shrink-0 rounded-full border border-sky-900/40 bg-sky-950/30 px-4 py-2 text-sm text-sky-100 transition hover:bg-sky-900/40"
+    className="shrink-0 rounded-full border border-sky-900/40 bg-sky-950/40 px-5 py-2 text-sm font-medium text-sky-100 transition hover:bg-sky-900/50"
   >
     Continue
   </button>
