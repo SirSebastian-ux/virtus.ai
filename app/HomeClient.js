@@ -834,7 +834,7 @@ setLoading(false);
   }}
 >
       <div className="flex h-full">
-        <aside className="w-72 bg-zinc-950 border-r border-zinc-800 flex h-full flex-col">
+        <aside className="hidden md:flex md:w-72 bg-zinc-950 border-r border-zinc-800 h-full flex-col">
           <div className="px-4 pt-4 pb-3 border-b border-zinc-800 flex justify-center">
   <img
     src="/virtus-logo.png"
@@ -1047,8 +1047,8 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
 </div>
         </aside>
 
-       <section
-  className="relative flex-1 flex justify-center bg-black"
+<section
+  className="relative flex-1 min-w-0 flex justify-center bg-black"
   onWheel={(e) => {
     if (!scrollContainerRef.current) return;
     scrollContainerRef.current.scrollTop += e.deltaY;
@@ -1194,7 +1194,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                   {conversation.map((item, index) => (
                     <div
                       key={index}
-className={`relative max-w-[75%] rounded-2xl px-4 py-3 ${
+className={`relative max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 break-words ${
 item.role === "user" && !loading
   ? "mb-12"
   : ""
@@ -1436,12 +1436,12 @@ setRegenerating(true);
               )}
             </div>
 
-<div className="px-8 py-5 border-t border-zinc-900">
+<div className="px-3 py-3 md:px-8 md:py-5 border-t border-zinc-900">
   <div className="relative rounded-[30px] border border-sky-900/25 bg-zinc-950/35 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/50">
 
                 <textarea
   ref={textareaRef}
-className="w-full min-h-[64px] max-h-40 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-6 py-5 pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+className="w-full min-h-[64px] max-h-40 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-4 py-4 pr-28 md:px-6 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
     placeholder={
     isTrialGuestExpired
       ? "Your Trial Guest access has ended. Please create an account to continue."
