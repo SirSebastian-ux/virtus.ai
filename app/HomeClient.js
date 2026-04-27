@@ -38,6 +38,8 @@ const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
 const [speaking, setSpeaking] = useState(false);
 const [availableVoices, setAvailableVoices] = useState([]);
 const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
+const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
+const [voiceStyle, setVoiceStyle] = useState("default");
 const speechRef = useRef(null);
 
 const hasSpeechOutput = () => {
@@ -66,8 +68,50 @@ const stopVirtusVoice = () => {
   setSpeaking(false);
 };
 
+const getPreferredVoice = () => {
+  if (!availableVoices.length) return null;
+
+  const englishVoices = availableVoices.filter((voice) =>
+    voice.lang?.toLowerCase().startsWith("en")
+  );
+
+  const voicesToSearch =
+    englishVoices.length > 0 ? englishVoices : availableVoices;
+
+  if (voiceStyle === "female") {
+    return (
+      voicesToSearch.find((voice) =>
+        /female|woman|zira|aria|jenny|susan|samantha|victoria|karen|moira|tessa|serena|sonia/i.test(
+          voice.name
+        )
+      ) || voicesToSearch[0]
+    );
+  }
+
+  if (voiceStyle === "male") {
+    return (
+      voicesToSearch.find((voice) =>
+        /male|man|david|mark|guy|daniel|alex|fred|george|thomas|richard|ryan|aaron/i.test(
+          voice.name
+        )
+      ) || voicesToSearch[0]
+    );
+  }
+
+  if (selectedVoiceURI) {
+    const manuallySelectedVoice = availableVoices.find(
+      (voice) => voice.voiceURI === selectedVoiceURI
+    );
+
+    if (manuallySelectedVoice) {
+      return manuallySelectedVoice;
+    }
+  }
+
+  return voicesToSearch[0];
+};
+
 const speakVirtusReply = (text) => {
-  if (!voiceOutputEnabled) return;
   if (!hasSpeechOutput()) return;
 
   const cleanText = cleanTextForSpeech(text);
@@ -76,25 +120,19 @@ const speakVirtusReply = (text) => {
 
   window.speechSynthesis.cancel();
 
-const utterance = new SpeechSynthesisUtterance(cleanText);
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  const selectedVoice = getPreferredVoice();
 
-const selectedVoice =
-  availableVoices.find((voice) => voice.voiceURI === selectedVoiceURI) ||
-  availableVoices.find((voice) =>
-    voice.lang?.toLowerCase().startsWith("en")
-  ) ||
-  availableVoices[0];
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+    utterance.lang = selectedVoice.lang || "en-US";
+  } else {
+    utterance.lang = "en-US";
+  }
 
-if (selectedVoice) {
-  utterance.voice = selectedVoice;
-  utterance.lang = selectedVoice.lang || "en-US";
-} else {
-  utterance.lang = "en-US";
-}
-
-utterance.rate = 0.94;
-utterance.pitch = 1;
-utterance.volume = 1;
+  utterance.rate = 0.93;
+  utterance.pitch = voiceStyle === "male" ? 0.9 : 1;
+  utterance.volume = 1;
 
   utterance.onstart = () => {
     setSpeaking(true);
@@ -820,7 +858,7 @@ if (assistantReply) {
     return next;
   });
 
-  speakVirtusReply(assistantReply);
+
 
                 if (activeChatId) {
           setRecentConversations((prev) => {
@@ -1394,38 +1432,139 @@ onClick={() => {
     </div>
   )}
 
-   {item.role === "assistant" &&
+{item.role === "assistant" &&
   index === conversation.length - 1 &&
   index > 0 &&
   conversation[index - 1]?.role === "user" &&
   !loading && (
-    <button
-      type="button"
-      title="Regenerate"
-      onClick={() => {
-        const lastUserMessage = conversation[index - 1]?.text || "";
+    <div className="relative flex items-center gap-2">
+      <button
+        type="button"
+        title="Regenerate"
+        onClick={() => {
+          const lastUserMessage = conversation[index - 1]?.text || "";
 
-        if (!lastUserMessage) return;
+          if (!lastUserMessage) return;
 
-        setRegenerating(true);
-        setMessage(lastUserMessage);
-        setConversation((prev) => prev.slice(0, index));
-      }}
-      className="flex h-7 w-7 items-center justify-center rounded-full border border-sky-900/50 bg-sky-950/40 text-sky-300/80 transition hover:bg-sky-900/60 hover:text-sky-200 hover:shadow-lg hover:shadow-sky-950/30"
-      aria-label="Regenerate"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        className="h-5 w-5"
+          setOpenMessageMenuIndex(null);
+          stopVirtusVoice();
+          setRegenerating(true);
+          setMessage(lastUserMessage);
+          setConversation((prev) => prev.slice(0, index));
+        }}
+        className="flex h-7 w-7 items-center justify-center rounded-full border border-sky-900/50 bg-sky-950/40 text-sky-300/80 transition hover:bg-sky-900/60 hover:text-sky-200 hover:shadow-lg hover:shadow-sky-950/30"
+        aria-label="Regenerate"
       >
-        <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-        <path d="M21 3v6h-6" />
-      </svg>
-    </button>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="h-5 w-5"
+        >
+          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+          <path d="M21 3v6h-6" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        title="More"
+        onClick={() => {
+          setOpenMessageMenuIndex(
+            openMessageMenuIndex === index ? null : index
+          );
+        }}
+        className="flex h-7 w-7 items-center justify-center rounded-full border border-sky-900/50 bg-zinc-950/60 text-sky-300/80 transition hover:bg-sky-900/40 hover:text-sky-200"
+        aria-label="Open message menu"
+      >
+        <span className="text-lg leading-none">···</span>
+      </button>
+
+      {openMessageMenuIndex === index && (
+        <div className="absolute right-0 top-9 z-30 w-56 rounded-2xl border border-zinc-800 bg-zinc-950/95 p-2 text-sm text-zinc-200 shadow-xl shadow-black/40 backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setOpenMessageMenuIndex(null);
+              speakVirtusReply(item.text || "");
+            }}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
+          >
+            <span className="text-sky-300">🔊</span>
+            <span>{speaking ? "Restart read aloud" : "Read aloud"}</span>
+          </button>
+
+          <div className="my-2 h-px bg-zinc-800" />
+
+          <button
+            type="button"
+            onClick={() => {
+              stopVirtusVoice();
+              setVoiceStyle("male");
+              setSelectedVoiceURI("");
+              setOpenMessageMenuIndex(null);
+            }}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100 ${
+              voiceStyle === "male" ? "bg-sky-950/40 text-sky-100" : ""
+            }`}
+          >
+            <span className="text-sky-300">🗣️</span>
+            <span>Confident male</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              stopVirtusVoice();
+              setVoiceStyle("female");
+              setSelectedVoiceURI("");
+              setOpenMessageMenuIndex(null);
+            }}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100 ${
+              voiceStyle === "female" ? "bg-sky-950/40 text-sky-100" : ""
+            }`}
+          >
+            <span className="text-sky-300">🎙️</span>
+            <span>Confident female</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              stopVirtusVoice();
+              setVoiceStyle("default");
+              setOpenMessageMenuIndex(null);
+            }}
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100 ${
+              voiceStyle === "default" ? "bg-sky-950/40 text-sky-100" : ""
+            }`}
+          >
+            <span className="text-sky-300">⚙️</span>
+            <span>Default voice</span>
+          </button>
+
+          {speaking && (
+            <>
+              <div className="my-2 h-px bg-zinc-800" />
+
+              <button
+                type="button"
+                onClick={() => {
+                  stopVirtusVoice();
+                  setOpenMessageMenuIndex(null);
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-red-950/35 hover:text-red-100"
+              >
+                <span className="text-red-300">■</span>
+                <span>Stop voice</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )}
   </div>
 </div>
