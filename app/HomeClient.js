@@ -69,7 +69,7 @@ const stopVirtusVoice = () => {
   setSpeaking(false);
 };
 
-const getPreferredVoice = () => {
+const getPreferredVoice = (styleOverride = voiceStyle) => {
   if (!availableVoices.length) return null;
 
   const englishVoices = availableVoices.filter((voice) =>
@@ -79,7 +79,7 @@ const getPreferredVoice = () => {
   const voicesToSearch =
     englishVoices.length > 0 ? englishVoices : availableVoices;
 
-  if (voiceStyle === "female") {
+  if (styleOverride === "female") {
     return (
       voicesToSearch.find((voice) =>
         /female|woman|zira|aria|jenny|susan|samantha|victoria|karen|moira|tessa|serena|sonia/i.test(
@@ -89,7 +89,7 @@ const getPreferredVoice = () => {
     );
   }
 
-  if (voiceStyle === "male") {
+  if (styleOverride === "male") {
     return (
       voicesToSearch.find((voice) =>
         /male|man|david|mark|guy|daniel|alex|fred|george|thomas|richard|ryan|aaron/i.test(
@@ -112,7 +112,7 @@ const getPreferredVoice = () => {
   return voicesToSearch[0];
 };
 
-const speakVirtusReply = (text) => {
+const speakVirtusReply = (text, styleOverride = voiceStyle) => {
   if (!hasSpeechOutput()) return;
 
   const cleanText = cleanTextForSpeech(text);
@@ -122,7 +122,7 @@ const speakVirtusReply = (text) => {
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(cleanText);
-  const selectedVoice = getPreferredVoice();
+  const selectedVoice = getPreferredVoice(styleOverride);
 
   if (selectedVoice) {
     utterance.voice = selectedVoice;
@@ -132,7 +132,7 @@ const speakVirtusReply = (text) => {
   }
 
   utterance.rate = 0.93;
-  utterance.pitch = voiceStyle === "male" ? 0.9 : 1;
+  utterance.pitch = styleOverride === "male" ? 0.9 : 1;
   utterance.volume = 1;
 
   utterance.onstart = () => {
@@ -1546,6 +1546,39 @@ onClick={() => {
         <path d="M9 14h6" />
       </svg>
     </button>
+
+    {index === conversation.length - 1 &&
+      index > 0 &&
+      conversation[index - 1]?.role === "user" && (
+        <button
+          type="button"
+          title="Regenerate"
+          onClick={() => {
+            const lastUserMessage = conversation[index - 1]?.text || "";
+
+            if (!lastUserMessage) return;
+
+            stopVirtusVoice();
+            setRegenerating(true);
+            setMessage(lastUserMessage);
+            setConversation((prev) => prev.slice(0, index));
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
+          aria-label="Regenerate Virtus answer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-4 w-4"
+          >
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
+        </button>
+      )}
   </div>
 )}
 
