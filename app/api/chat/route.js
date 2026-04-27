@@ -42,8 +42,6 @@ function cleanTrialGuestVisibleLabels(text) {
     .replace(/\bPattern:\s*/gi, "")
     .replace(/\bAwareness:\s*/gi, "")
     .replace(/\bCorrection:\s*/gi, "")
-    .replace(/\bDisciplined[^.:\n]*[:]?/gi, "")
-    .replace(/\bThought[^.:\n]*[:]?/gi, "")
 
     // Clean extra spaces and empty lines
     .replace(/\n{3,}/g, "\n\n")
