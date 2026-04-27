@@ -34,6 +34,77 @@ const [showPlanOverlay, setShowPlanOverlay] = useState(false);
 const [paymentSyncing, setPaymentSyncing] = useState(false);
 const [listening, setListening] = useState(false);
 const recognitionRef = useRef(null);
+const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
+const [speaking, setSpeaking] = useState(false);
+const speechRef = useRef(null);
+
+const hasSpeechOutput = () => {
+  if (typeof window === "undefined") return false;
+
+  return (
+    "speechSynthesis" in window &&
+    "SpeechSynthesisUtterance" in window
+  );
+};
+
+const cleanTextForSpeech = (text) => {
+  return String(text || "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+    .replace(/[#*_>`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const stopVirtusVoice = () => {
+  if (!hasSpeechOutput()) return;
+
+  window.speechSynthesis.cancel();
+  speechRef.current = null;
+  setSpeaking(false);
+};
+
+const speakVirtusReply = (text) => {
+  if (!voiceOutputEnabled) return;
+  if (!hasSpeechOutput()) return;
+
+  const cleanText = cleanTextForSpeech(text);
+
+  if (!cleanText) return;
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = "en-US";
+  utterance.rate = 0.94;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  utterance.onstart = () => {
+    setSpeaking(true);
+  };
+
+  utterance.onend = () => {
+    setSpeaking(false);
+    speechRef.current = null;
+  };
+
+  utterance.onerror = () => {
+    setSpeaking(false);
+    speechRef.current = null;
+  };
+
+  speechRef.current = utterance;
+  window.speechSynthesis.speak(utterance);
+};
+
+useEffect(() => {
+  return () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  };
+}, []);
 useEffect(() => {
   if (!regenerating) return;
   if (!message.trim()) return;
@@ -540,6 +611,8 @@ useEffect(() => {
 async function sendMessage() {
   if (!message.trim()) return;
 
+  stopVirtusVoice();
+
   setEditingIndex(null);
   setEditingText("");
 
@@ -694,7 +767,7 @@ const assistantReply = data?.reply || "";
         }
       }
 
-      if (assistantReply) {
+if (assistantReply) {
   setReply(assistantReply);
   setStreamingReply(assistantReply);
 
@@ -708,6 +781,8 @@ const assistantReply = data?.reply || "";
     }
     return next;
   });
+
+  speakVirtusReply(assistantReply);
 
                 if (activeChatId) {
           setRecentConversations((prev) => {
@@ -1474,7 +1549,50 @@ className="w-full min-h-[64px] max-h-40 resize-none overflow-y-auto no-scrollbar
 }}
 />
 
-                <div className="absolute bottom-3 right-3 flex items-center gap-3">
+<div className="absolute bottom-3 right-3 flex items-center gap-3">
+                 <button
+  type="button"
+  onClick={() => {
+    if (voiceOutputEnabled) {
+      stopVirtusVoice();
+      setVoiceOutputEnabled(false);
+      return;
+    }
+
+    if (!hasSpeechOutput()) {
+      alert("Voice output is not supported in this browser.");
+      return;
+    }
+
+    setVoiceOutputEnabled(true);
+  }}
+  className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+    voiceOutputEnabled
+      ? "bg-sky-950/60 text-sky-200"
+      : "text-white/80 hover:bg-sky-950/30 hover:text-sky-200"
+  }`}
+  aria-label={voiceOutputEnabled ? "Turn voice output off" : "Turn voice output on"}
+  title={voiceOutputEnabled ? "Voice output on" : "Voice output off"}
+>
+  {speaking ? (
+    <div className="h-3.5 w-3.5 rounded-sm bg-sky-200" />
+  ) : (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className="h-4 w-4"
+    >
+      <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M18.36 5.64a9 9 0 0 1 0 12.72" />
+      {!voiceOutputEnabled && <path d="M22 2 2 22" />}
+    </svg>
+  )}
+</button>
+
                  <button
   type="button"
   onClick={handleMicrophoneClick}
