@@ -36,6 +36,8 @@ const [listening, setListening] = useState(false);
 const recognitionRef = useRef(null);
 const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
 const [speaking, setSpeaking] = useState(false);
+const [availableVoices, setAvailableVoices] = useState([]);
+const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const speechRef = useRef(null);
 
 const hasSpeechOutput = () => {
@@ -74,11 +76,25 @@ const speakVirtusReply = (text) => {
 
   window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
+const utterance = new SpeechSynthesisUtterance(cleanText);
+
+const selectedVoice =
+  availableVoices.find((voice) => voice.voiceURI === selectedVoiceURI) ||
+  availableVoices.find((voice) =>
+    voice.lang?.toLowerCase().startsWith("en")
+  ) ||
+  availableVoices[0];
+
+if (selectedVoice) {
+  utterance.voice = selectedVoice;
+  utterance.lang = selectedVoice.lang || "en-US";
+} else {
   utterance.lang = "en-US";
-  utterance.rate = 0.94;
-  utterance.pitch = 1;
-  utterance.volume = 1;
+}
+
+utterance.rate = 0.94;
+utterance.pitch = 1;
+utterance.volume = 1;
 
   utterance.onstart = () => {
     setSpeaking(true);
@@ -99,12 +115,34 @@ const speakVirtusReply = (text) => {
 };
 
 useEffect(() => {
-  return () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+  if (typeof window === "undefined") return;
+
+  if (!("speechSynthesis" in window)) return;
+
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+
+    setAvailableVoices(voices);
+
+    if (!selectedVoiceURI && voices.length > 0) {
+      const preferredVoice =
+        voices.find((voice) =>
+          voice.lang?.toLowerCase().startsWith("en")
+        ) || voices[0];
+
+      setSelectedVoiceURI(preferredVoice.voiceURI);
     }
   };
-}, []);
+
+  loadVoices();
+
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+
+  return () => {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.onvoiceschanged = null;
+  };
+}, [selectedVoiceURI]);
 useEffect(() => {
   if (!regenerating) return;
   if (!message.trim()) return;
@@ -1548,6 +1586,29 @@ className="w-full min-h-[64px] max-h-40 resize-none overflow-y-auto no-scrollbar
   }
 }}
 />
+
+{voiceOutputEnabled && availableVoices.length > 0 && (
+  <select
+    value={selectedVoiceURI}
+    onChange={(e) => {
+      stopVirtusVoice();
+      setSelectedVoiceURI(e.target.value);
+    }}
+    className="h-10 max-w-[120px] rounded-full border border-sky-900/30 bg-zinc-950/80 px-3 text-xs text-sky-100 outline-none transition hover:border-sky-800/50"
+    aria-label="Select Virtus voice"
+    title="Select Virtus voice"
+  >
+    {availableVoices.map((voice) => (
+      <option
+        key={voice.voiceURI}
+        value={voice.voiceURI}
+        className="bg-zinc-950 text-white"
+      >
+        {voice.name}
+      </option>
+    ))}
+  </select>
+)}
 
 <div className="absolute bottom-3 right-3 flex items-center gap-3">
                  <button
