@@ -47,7 +47,7 @@ function cleanTrialGuestVisibleLabels(text) {
 
     // Clean extra spaces and empty lines
     .replace(/\n{3,}/g, "\n\n")
-    .replace(/The â€œ/g, "The disciplined version is: â€œ")
+    .replace(/The â€œ/g, "The stronger frame is: â€œ")
     .trim();
 }
 
@@ -2247,7 +2247,7 @@ I understand why that affected you, but the conclusion is moving faster than the
 
 You are moving from â€œthey did not respondâ€ to â€œthey do not respect me.â€ That may be possible, but silence alone does not prove motive.
 
-The disciplined version is: â€œThey did not respond. I need more evidence before I assign motive.â€
+The stronger frame is: â€œThey did not respond. I need more evidence before I assign motive.â€
 
 Before you respond, check the signal: is this repeated behavior, a delay, or a communication gap?
 
@@ -2300,7 +2300,7 @@ to:
 
 That may be possible, but it is not proven yet.
 
-The disciplined version is:
+The stronger frame is:
 "They have not responded. I do not yet know why."
 
 What evidence shows intention, not just lack of response?
@@ -2364,7 +2364,7 @@ Awareness
 That thought can create anger, defensiveness, or the urge to react before the facts are clear.
 
 Correction
-The disciplined interpretation is: â€œThey did not respond. I need more evidence before I assign motive.â€
+The stronger frame is: â€œThey did not respond. I need more evidence before I assign motive.â€
 
 # NO ROBOTIC PAUSE RULE
 
@@ -2785,7 +2785,7 @@ Instead write like this:
 
 You are moving from 'they did not respond' to 'they do not respect me.' That may be possible, but silence alone does not prove motive.
 
-The disciplined version is: 'They did not respond. I need more evidence before I assign motive.'
+The stronger frame is: 'They did not respond. I need more evidence before I assign motive.'
 
 Before you respond, check the signal: is this repeated behavior, a delay, or a communication gap?"
 
@@ -2824,7 +2824,7 @@ I understand why that affected you, but the conclusion is moving faster than the
 
 You are moving from â€œthey did not respondâ€ to â€œthey do not respect me.â€ That may be possible, but silence alone does not prove motive.
 
-The disciplined version is: â€œThey did not respond. I need more evidence before I assign motive.â€
+The stronger frame is: â€œThey did not respond. I need more evidence before I assign motive.â€
 
 Before you respond, check the signal: is this repeated behavior, a delay, or a communication gap?
 
@@ -2866,7 +2866,7 @@ I understand why that affected you, but the conclusion is moving faster than the
 
 You are moving from â€œthey did not respondâ€ to â€œthey do not respect me.â€ That may be possible, but silence alone does not prove motive.
 
-The disciplined version is: â€œThey did not respond. I need more evidence before I assign motive.â€
+The stronger frame is: â€œThey did not respond. I need more evidence before I assign motive.â€
 
 Before you respond, check the signal: is this repeated behavior, a delay, or a communication gap?
 
@@ -2923,7 +2923,7 @@ Letâ€™s slow that conclusion down.
 
 You are moving from â€œthey did not respondâ€ to â€œthey do not respect me.â€ That may be possible, but silence alone does not prove motive.
 
-The disciplined version is: â€œThey did not respond. I need more evidence before I assign motive.â€
+The stronger frame is: â€œThey did not respond. I need more evidence before I assign motive.â€
 
 Before you respond, check the signal: is this repeated behavior, a delay, or a communication gap?
 
@@ -3385,3 +3385,4 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
