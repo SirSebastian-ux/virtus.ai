@@ -69,90 +69,203 @@ const stopVirtusVoice = () => {
   setSpeaking(false);
 };
 
-const getPreferredVoice = () => {
-  if (!availableVoices.length) return null;
+{item.role === "assistant" && item.text?.trim() && !loading && (
+  <div className="relative flex items-center gap-3 text-zinc-400">
+    <button
+      type="button"
+      title="Copy"
+      onClick={() => {
+        navigator.clipboard?.writeText(item.text || "");
+        setCopiedIndex(index);
 
-  const englishVoices = availableVoices.filter((voice) =>
-    voice.lang?.toLowerCase().startsWith("en")
-  );
+        setTimeout(() => {
+          setCopiedIndex(null);
+        }, 1200);
+      }}
+      className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
+      aria-label="Copy Virtus answer"
+    >
+      {copiedIndex === index ? (
+        <span className="text-xs font-semibold text-sky-300">✓</span>
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="h-4 w-4"
+        >
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+    </button>
 
-  const voicesToSearch =
-    englishVoices.length > 0 ? englishVoices : availableVoices;
+    <button
+      type="button"
+      title="Good response"
+      onClick={() => {
+        setAssistantFeedback((prev) => ({
+          ...prev,
+          [index]: prev[index] === "like" ? null : "like",
+        }));
+      }}
+      className={`flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200 ${
+        assistantFeedback[index] === "like" ? "text-sky-300" : ""
+      }`}
+      aria-label="Like Virtus answer"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+        <path d="M7 10v11" />
+        <path d="M15 6.5 14 10h5.5a2 2 0 0 1 1.95 2.45l-1.3 6A2 2 0 0 1 18.2 20H7" />
+        <path d="M7 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" />
+        <path d="M15 6.5V4a2 2 0 0 0-2-2l-4 8" />
+      </svg>
+    </button>
 
-  if (voiceStyle === "female") {
-    return (
-      voicesToSearch.find((voice) =>
-        /female|woman|zira|aria|jenny|susan|samantha|victoria|karen|moira|tessa|serena|sonia/i.test(
-          voice.name
-        )
-      ) || voicesToSearch[0]
-    );
-  }
+    <button
+      type="button"
+      title="Poor response"
+      onClick={() => {
+        setAssistantFeedback((prev) => ({
+          ...prev,
+          [index]: prev[index] === "dislike" ? null : "dislike",
+        }));
+      }}
+      className={`flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200 ${
+        assistantFeedback[index] === "dislike" ? "text-sky-300" : ""
+      }`}
+      aria-label="Dislike Virtus answer"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+        <path d="M17 14V3" />
+        <path d="M9 17.5 10 14H4.5a2 2 0 0 1-1.95-2.45l1.3-6A2 2 0 0 1 5.8 4H17" />
+        <path d="M17 14h3a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-3" />
+        <path d="M9 17.5V20a2 2 0 0 0 2 2l4-8" />
+      </svg>
+    </button>
 
-  if (voiceStyle === "male") {
-    return (
-      voicesToSearch.find((voice) =>
-        /male|man|david|mark|guy|daniel|alex|fred|george|thomas|richard|ryan|aaron/i.test(
-          voice.name
-        )
-      ) || voicesToSearch[0]
-    );
-  }
+    <button
+      type="button"
+      title="Add to project"
+      onClick={() => {
+        alert("Add to project will be connected soon.");
+      }}
+      className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
+      aria-label="Add Virtus answer to project"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+        <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+        <path d="M12 11v6" />
+        <path d="M9 14h6" />
+      </svg>
+    </button>
 
-  if (selectedVoiceURI) {
-    const manuallySelectedVoice = availableVoices.find(
-      (voice) => voice.voiceURI === selectedVoiceURI
-    );
+    {index === conversation.length - 1 &&
+      index > 0 &&
+      conversation[index - 1]?.role === "user" && (
+        <button
+          type="button"
+          title="Regenerate"
+          onClick={() => {
+            const lastUserMessage = conversation[index - 1]?.text || "";
 
-    if (manuallySelectedVoice) {
-      return manuallySelectedVoice;
-    }
-  }
+            if (!lastUserMessage) return;
 
-  return voicesToSearch[0];
-};
+            stopVirtusVoice();
+            setOpenMessageMenuIndex(null);
+            setRegenerating(true);
+            setMessage(lastUserMessage);
+            setConversation((prev) => prev.slice(0, index));
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
+          aria-label="Regenerate Virtus answer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <path d="M21 3v6h-6" />
+          </svg>
+        </button>
+      )}
 
-const speakVirtusReply = (text) => {
-  if (!hasSpeechOutput()) return;
+    <button
+      type="button"
+      title="More"
+      onClick={() => {
+        setOpenMessageMenuIndex(
+          openMessageMenuIndex === index ? null : index
+        );
+      }}
+      className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
+      aria-label="Open assistant menu"
+    >
+      <span className="text-lg leading-none">···</span>
+    </button>
 
-  const cleanText = cleanTextForSpeech(text);
+    {openMessageMenuIndex === index && (
+      <div className="absolute right-0 top-8 z-30 w-52 rounded-2xl border border-zinc-800 bg-zinc-950/95 p-2 text-sm text-zinc-200 shadow-xl shadow-black/40 backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={() => {
+            setOpenMessageMenuIndex(null);
+            speakVirtusReply(item.text || "");
+          }}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
+        >
+          <span className="text-sky-300">🔊</span>
+          <span>{speaking ? "Restart read aloud" : "Read aloud"}</span>
+        </button>
 
-  if (!cleanText) return;
+        <button
+          type="button"
+          onClick={() => {
+            setVoiceStyle("male");
+            setSelectedVoiceURI("");
+            setOpenMessageMenuIndex(null);
+            speakVirtusReply(item.text || "", "male");
+          }}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
+        >
+          <span className="text-sky-300">🗣️</span>
+          <span>Male voice</span>
+        </button>
 
-  window.speechSynthesis.cancel();
+        <button
+          type="button"
+          onClick={() => {
+            setVoiceStyle("female");
+            setSelectedVoiceURI("");
+            setOpenMessageMenuIndex(null);
+            speakVirtusReply(item.text || "", "female");
+          }}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
+        >
+          <span className="text-sky-300">🎙️</span>
+          <span>Female voice</span>
+        </button>
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  const selectedVoice = getPreferredVoice();
+        {speaking && (
+          <>
+            <div className="my-2 h-px bg-zinc-800" />
 
-  if (selectedVoice) {
-    utterance.voice = selectedVoice;
-    utterance.lang = selectedVoice.lang || "en-US";
-  } else {
-    utterance.lang = "en-US";
-  }
-
-  utterance.rate = 0.93;
-  utterance.pitch = voiceStyle === "male" ? 0.9 : 1;
-  utterance.volume = 1;
-
-  utterance.onstart = () => {
-    setSpeaking(true);
-  };
-
-  utterance.onend = () => {
-    setSpeaking(false);
-    speechRef.current = null;
-  };
-
-  utterance.onerror = () => {
-    setSpeaking(false);
-    speechRef.current = null;
-  };
-
-  speechRef.current = utterance;
-  window.speechSynthesis.speak(utterance);
-};
-
+            <button
+              type="button"
+              onClick={() => {
+                stopVirtusVoice();
+                setOpenMessageMenuIndex(null);
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-red-950/35 hover:text-red-100"
+            >
+              <span className="text-red-300">■</span>
+              <span>Stop reading</span>
+            </button>
+          </>
+        )}
+      </div>
+    )}
+  </div>
+)}
 useEffect(() => {
   if (typeof window === "undefined") return;
 
