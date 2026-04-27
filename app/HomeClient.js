@@ -27,6 +27,7 @@ const abortControllerRef = useRef(null);
 const [editingIndex, setEditingIndex] = useState(null);
 const [editingText, setEditingText] = useState("");
 const [copiedIndex, setCopiedIndex] = useState(null);
+const [assistantFeedback, setAssistantFeedback] = useState({});
 const isEditing = editingIndex !== null;
 const [regenerating, setRegenerating] = useState(false);
 const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
@@ -1432,140 +1433,122 @@ onClick={() => {
     </div>
   )}
 
-{item.role === "assistant" &&
-  index === conversation.length - 1 &&
-  index > 0 &&
-  conversation[index - 1]?.role === "user" &&
-  !loading && (
-    <div className="relative flex items-center gap-2">
-      <button
-        type="button"
-        title="Regenerate"
-        onClick={() => {
-          const lastUserMessage = conversation[index - 1]?.text || "";
+{item.role === "assistant" && item.text?.trim() && !loading && (
+  <div className="flex items-center gap-3 text-zinc-400">
+    <button
+      type="button"
+      title="Copy"
+      onClick={() => {
+        navigator.clipboard?.writeText(item.text || "");
+        setCopiedIndex(index);
 
-          if (!lastUserMessage) return;
-
-          setOpenMessageMenuIndex(null);
-          stopVirtusVoice();
-          setRegenerating(true);
-          setMessage(lastUserMessage);
-          setConversation((prev) => prev.slice(0, index));
-        }}
-        className="flex h-7 w-7 items-center justify-center rounded-full border border-sky-900/50 bg-sky-950/40 text-sky-300/80 transition hover:bg-sky-900/60 hover:text-sky-200 hover:shadow-lg hover:shadow-sky-950/30"
-        aria-label="Regenerate"
-      >
+        setTimeout(() => {
+          setCopiedIndex(null);
+        }, 1200);
+      }}
+      className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
+      aria-label="Copy Virtus answer"
+    >
+      {copiedIndex === index ? (
+        <span className="text-xs font-semibold text-sky-300">✓</span>
+      ) : (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="h-5 w-5"
+          className="h-4 w-4"
         >
-          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-          <path d="M21 3v6h-6" />
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
         </svg>
-      </button>
-
-      <button
-        type="button"
-        title="More"
-        onClick={() => {
-          setOpenMessageMenuIndex(
-            openMessageMenuIndex === index ? null : index
-          );
-        }}
-        className="flex h-7 w-7 items-center justify-center rounded-full border border-sky-900/50 bg-zinc-950/60 text-sky-300/80 transition hover:bg-sky-900/40 hover:text-sky-200"
-        aria-label="Open message menu"
-      >
-        <span className="text-lg leading-none">···</span>
-      </button>
-
-      {openMessageMenuIndex === index && (
-        <div className="absolute right-0 top-9 z-30 w-56 rounded-2xl border border-zinc-800 bg-zinc-950/95 p-2 text-sm text-zinc-200 shadow-xl shadow-black/40 backdrop-blur-sm">
-          <button
-            type="button"
-            onClick={() => {
-              setOpenMessageMenuIndex(null);
-              speakVirtusReply(item.text || "");
-            }}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
-          >
-            <span className="text-sky-300">🔊</span>
-            <span>{speaking ? "Restart read aloud" : "Read aloud"}</span>
-          </button>
-
-          <div className="my-2 h-px bg-zinc-800" />
-
-          <button
-            type="button"
-            onClick={() => {
-              stopVirtusVoice();
-              setVoiceStyle("male");
-              setSelectedVoiceURI("");
-              setOpenMessageMenuIndex(null);
-            }}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100 ${
-              voiceStyle === "male" ? "bg-sky-950/40 text-sky-100" : ""
-            }`}
-          >
-            <span className="text-sky-300">🗣️</span>
-            <span>Confident male</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              stopVirtusVoice();
-              setVoiceStyle("female");
-              setSelectedVoiceURI("");
-              setOpenMessageMenuIndex(null);
-            }}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100 ${
-              voiceStyle === "female" ? "bg-sky-950/40 text-sky-100" : ""
-            }`}
-          >
-            <span className="text-sky-300">🎙️</span>
-            <span>Confident female</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              stopVirtusVoice();
-              setVoiceStyle("default");
-              setOpenMessageMenuIndex(null);
-            }}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100 ${
-              voiceStyle === "default" ? "bg-sky-950/40 text-sky-100" : ""
-            }`}
-          >
-            <span className="text-sky-300">⚙️</span>
-            <span>Default voice</span>
-          </button>
-
-          {speaking && (
-            <>
-              <div className="my-2 h-px bg-zinc-800" />
-
-              <button
-                type="button"
-                onClick={() => {
-                  stopVirtusVoice();
-                  setOpenMessageMenuIndex(null);
-                }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-red-950/35 hover:text-red-100"
-              >
-                <span className="text-red-300">■</span>
-                <span>Stop voice</span>
-              </button>
-            </>
-          )}
-        </div>
       )}
-    </div>
-  )}
+    </button>
+
+    <button
+      type="button"
+      title="Good response"
+      onClick={() => {
+        setAssistantFeedback((prev) => ({
+          ...prev,
+          [index]: prev[index] === "like" ? null : "like",
+        }));
+      }}
+      className={`flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200 ${
+        assistantFeedback[index] === "like" ? "text-sky-300" : ""
+      }`}
+      aria-label="Like Virtus answer"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-4 w-4"
+      >
+        <path d="M7 10v11" />
+        <path d="M15 6.5 14 10h5.5a2 2 0 0 1 1.95 2.45l-1.3 6A2 2 0 0 1 18.2 20H7" />
+        <path d="M7 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" />
+        <path d="M15 6.5V4a2 2 0 0 0-2-2l-4 8" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      title="Poor response"
+      onClick={() => {
+        setAssistantFeedback((prev) => ({
+          ...prev,
+          [index]: prev[index] === "dislike" ? null : "dislike",
+        }));
+      }}
+      className={`flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200 ${
+        assistantFeedback[index] === "dislike" ? "text-sky-300" : ""
+      }`}
+      aria-label="Dislike Virtus answer"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-4 w-4"
+      >
+        <path d="M17 14V3" />
+        <path d="M9 17.5 10 14H4.5a2 2 0 0 1-1.95-2.45l1.3-6A2 2 0 0 1 5.8 4H17" />
+        <path d="M17 14h3a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-3" />
+        <path d="M9 17.5V20a2 2 0 0 0 2 2l4-8" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      title="Add to project"
+      onClick={() => {
+        alert("Add to project will be connected soon.");
+      }}
+      className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
+      aria-label="Add Virtus answer to project"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-4 w-4"
+      >
+        <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+        <path d="M12 11v6" />
+        <path d="M9 14h6" />
+      </svg>
+    </button>
+  </div>
+)}
+
   </div>
 </div>
 
