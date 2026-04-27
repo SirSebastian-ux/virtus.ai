@@ -1553,16 +1553,17 @@ onClick={() => {
         <button
           type="button"
           title="Regenerate"
-          onClick={() => {
-            const lastUserMessage = conversation[index - 1]?.text || "";
+  onClick={() => {
+  const lastUserMessage = conversation[index - 1]?.text || "";
 
-            if (!lastUserMessage) return;
+  if (!lastUserMessage) return;
 
-            stopVirtusVoice();
-            setRegenerating(true);
-            setMessage(lastUserMessage);
-            setConversation((prev) => prev.slice(0, index));
-          }}
+  stopVirtusVoice();
+  setOpenMessageMenuIndex(null);
+  setConversation((prev) => prev.slice(0, index - 1));
+  setMessage(lastUserMessage);
+  setRegenerating(true);
+}}
           className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
           aria-label="Regenerate Virtus answer"
         >
