@@ -1726,72 +1726,7 @@ className="w-full min-h-[64px] max-h-40 resize-none overflow-y-auto no-scrollbar
 }}
 />
 
-{voiceOutputEnabled && availableVoices.length > 0 && (
-  <select
-    value={selectedVoiceURI}
-    onChange={(e) => {
-      stopVirtusVoice();
-      setSelectedVoiceURI(e.target.value);
-    }}
-    className="h-10 max-w-[120px] rounded-full border border-sky-900/30 bg-zinc-950/80 px-3 text-xs text-sky-100 outline-none transition hover:border-sky-800/50"
-    aria-label="Select Virtus voice"
-    title="Select Virtus voice"
-  >
-    {availableVoices.map((voice) => (
-      <option
-        key={voice.voiceURI}
-        value={voice.voiceURI}
-        className="bg-zinc-950 text-white"
-      >
-        {voice.name}
-      </option>
-    ))}
-  </select>
-)}
-
 <div className="absolute bottom-3 right-3 flex items-center gap-3">
-                 <button
-  type="button"
-  onClick={() => {
-    if (voiceOutputEnabled) {
-      stopVirtusVoice();
-      setVoiceOutputEnabled(false);
-      return;
-    }
-
-    if (!hasSpeechOutput()) {
-      alert("Voice output is not supported in this browser.");
-      return;
-    }
-
-    setVoiceOutputEnabled(true);
-  }}
-  className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
-    voiceOutputEnabled
-      ? "bg-sky-950/60 text-sky-200"
-      : "text-white/80 hover:bg-sky-950/30 hover:text-sky-200"
-  }`}
-  aria-label={voiceOutputEnabled ? "Turn voice output off" : "Turn voice output on"}
-  title={voiceOutputEnabled ? "Voice output on" : "Voice output off"}
->
-  {speaking ? (
-    <div className="h-3.5 w-3.5 rounded-sm bg-sky-200" />
-  ) : (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className="h-4 w-4"
-    >
-      <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-      <path d="M18.36 5.64a9 9 0 0 1 0 12.72" />
-      {!voiceOutputEnabled && <path d="M22 2 2 22" />}
-    </svg>
-  )}
-</button>
 
                  <button
   type="button"
