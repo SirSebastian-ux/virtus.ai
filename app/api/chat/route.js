@@ -47,7 +47,6 @@ function cleanTrialGuestVisibleLabels(text) {
 
     // Clean extra spaces and empty lines
     .replace(/\n{3,}/g, "\n\n")
-    .replace(/The â€œ/g, "The stronger frame is: â€œ")
     .trim();
 }
 
