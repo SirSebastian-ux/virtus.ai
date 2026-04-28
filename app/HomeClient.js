@@ -40,6 +40,7 @@ const [speaking, setSpeaking] = useState(false);
 const [availableVoices, setAvailableVoices] = useState([]);
 const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
+const [showMobileMenu, setShowMobileMenu] = useState(false);
 const [voiceStyle, setVoiceStyle] = useState("default");
 const speechRef = useRef(null);
 
@@ -1548,9 +1549,97 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     </div>
   </div>
 )}
-           <div className="px-3 py-3 md:px-8 md:py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
+<div className="relative px-3 py-3 md:px-8 md:py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
   <div className="flex items-center justify-between gap-4">
-    <p className="text-sm font-medium text-sky-200">Virtus</p>
+    <button
+      type="button"
+      onClick={() => setShowMobileMenu((prev) => !prev)}
+      className="flex items-center gap-2 rounded-2xl border border-sky-900/20 bg-zinc-950/30 px-2 py-1.5 text-sky-200 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-zinc-950/50"
+      aria-label="Open Virtus menu"
+    >
+      <img
+        src="/virtus-logo.png"
+        alt="Virtus AI"
+        className="h-7 w-auto object-contain"
+      />
+    </button>
+
+    {showMobileMenu && (
+      <div className="absolute left-3 top-14 z-40 w-64 rounded-3xl border border-sky-900/25 bg-zinc-950/95 p-3 text-sm text-sky-100 shadow-xl shadow-black/50 backdrop-blur-sm md:hidden">
+        <button
+          type="button"
+          onClick={() => {
+            const newChatId = getGuestSidebarChatId(
+              guestAccess?.plan,
+              crypto.randomUUID()
+            );
+
+            localStorage.setItem("virtus_chat_id", newChatId);
+            setActiveChatId(newChatId);
+            setConversation([]);
+            setShowMobileMenu(false);
+          }}
+          className="w-full rounded-2xl px-3 py-3 text-left transition hover:bg-sky-950/35"
+        >
+          + New chat
+        </button>
+
+        <Link
+          href="/account"
+          onClick={() => setShowMobileMenu(false)}
+          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+        >
+          Profile
+        </Link>
+
+        <Link
+          href="/account/personalization"
+          onClick={() => setShowMobileMenu(false)}
+          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+        >
+          Personalization
+        </Link>
+
+        <Link
+          href="/account/personalization/memory"
+          onClick={() => setShowMobileMenu(false)}
+          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+        >
+          Memory
+        </Link>
+
+        <Link
+          href="/upgrade"
+          onClick={() => setShowMobileMenu(false)}
+          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+        >
+          Plan
+        </Link>
+
+        <div className="my-2 h-px bg-sky-900/20" />
+
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={() => {
+              setShowMobileMenu(false);
+              handleLogout();
+            }}
+            className="w-full rounded-2xl px-3 py-3 text-left text-red-200 transition hover:bg-red-950/35"
+          >
+            Log out
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            onClick={() => setShowMobileMenu(false)}
+            className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+          >
+            Sign in
+          </Link>
+        )}
+      </div>
+    )}
 
                 <div className="text-right">
 <Link
