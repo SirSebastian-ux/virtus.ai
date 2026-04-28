@@ -1715,9 +1715,11 @@ className={`h-full w-full border-r border-sky-900/25 bg-black p-5 text-sm text-s
   </div>
 </div>
 
-            <div
+<div
   ref={scrollContainerRef}
-  className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 no-scrollbar"
+  className={`flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 no-scrollbar ${
+    showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
+  }`}
 >
               {conversation.length > 0 || loading ? (
                 <div className="space-y-4">
@@ -1935,7 +1937,11 @@ setRegenerating(true);
               )}
             </div>
 
-<div className="px-3 py-3 md:px-8 md:py-5 border-t border-zinc-900">
+<div
+  className={`px-3 py-3 md:px-8 md:py-5 border-t border-zinc-900 ${
+    showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
+  }`}
+>
   <div className="relative rounded-[30px] border border-sky-900/25 bg-zinc-950/35 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/50">
 
                 <textarea
