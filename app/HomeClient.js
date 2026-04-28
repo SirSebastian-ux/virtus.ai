@@ -41,6 +41,7 @@ const [availableVoices, setAvailableVoices] = useState([]);
 const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
+const mobileMenuTouchStartXRef = useRef(null);
 const [voiceStyle, setVoiceStyle] = useState("default");
 const speechRef = useRef(null);
 
@@ -1580,32 +1581,49 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
       />
     </button>
 
-{showMobileMenu && (
+<div
+  className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+    showMobileMenu ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+  }`}
+  onClick={() => setShowMobileMenu(false)}
+>
   <div
-    className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
-    onClick={() => setShowMobileMenu(false)}
+    className={`h-full w-[86%] max-w-[360px] border-r border-sky-900/25 bg-black p-5 text-sm text-sky-100 shadow-2xl shadow-black/80 transition-transform duration-300 ease-out ${
+      showMobileMenu ? "translate-x-0" : "-translate-x-full"
+    }`}
+    onClick={(e) => e.stopPropagation()}
+    onTouchStart={(e) => {
+      mobileMenuTouchStartXRef.current = e.touches[0].clientX;
+    }}
+    onTouchEnd={(e) => {
+      const startX = mobileMenuTouchStartXRef.current;
+      const endX = e.changedTouches[0].clientX;
+
+      if (startX !== null && startX - endX > 60) {
+        setShowMobileMenu(false);
+      }
+
+      mobileMenuTouchStartXRef.current = null;
+    }}
   >
-    <div
-      className="h-full w-[82%] max-w-[340px] border-r border-sky-900/25 bg-zinc-950/98 p-5 text-sm text-sky-100 shadow-2xl shadow-black/70"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
-        <img
-          src="/virtus-logo.png"
-          alt="Virtus AI"
-          className="h-10 w-auto object-contain"
-        />
+    <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
+      <img
+        src="/virtus-logo.png"
+        alt="Virtus AI"
+        className="h-10 w-auto object-contain"
+      />
 
-        <button
-          type="button"
-          onClick={() => setShowMobileMenu(false)}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200 transition hover:bg-sky-900/35"
-          aria-label="Close menu"
-        >
-          ×
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setShowMobileMenu(false)}
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200 transition hover:bg-sky-900/35"
+        aria-label="Close menu"
+      >
+        ×
+      </button>
+    </div>
 
+    <div className="space-y-2">
       <button
         type="button"
         onClick={() => {
@@ -1619,44 +1637,28 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
           setConversation([]);
           setShowMobileMenu(false);
         }}
-        className="w-full rounded-2xl px-3 py-3 text-left transition hover:bg-sky-950/35"
+        className="w-full rounded-2xl px-3 py-3 text-left text-sky-100 transition hover:bg-sky-950/35"
       >
         + New chat
       </button>
 
-      <Link
-        href="/account"
-        onClick={() => setShowMobileMenu(false)}
-        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-      >
+      <Link href="/account" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
         Profile
       </Link>
 
-      <Link
-        href="/account/personalization"
-        onClick={() => setShowMobileMenu(false)}
-        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-      >
+      <Link href="/account/personalization" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
         Personalization
       </Link>
 
-      <Link
-        href="/account/personalization/memory"
-        onClick={() => setShowMobileMenu(false)}
-        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-      >
+      <Link href="/account/personalization/memory" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
         Memory
       </Link>
 
-      <Link
-        href="/upgrade"
-        onClick={() => setShowMobileMenu(false)}
-        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-      >
+      <Link href="/upgrade" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
         Plan
       </Link>
 
-      <div className="my-2 h-px bg-sky-900/20" />
+      <div className="my-3 h-px bg-sky-900/20" />
 
       {isAuthenticated ? (
         <button
@@ -1670,18 +1672,13 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
           Log out
         </button>
       ) : (
-        <Link
-          href="/login"
-          onClick={() => setShowMobileMenu(false)}
-          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-        >
+        <Link href="/login" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
           Sign in
         </Link>
       )}
     </div>
   </div>
-)}
-
+</div>
                 <div className="text-right">
 <Link
   href="/upgrade"
