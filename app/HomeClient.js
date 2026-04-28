@@ -1582,13 +1582,13 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     </button>
 
 <div
-  className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+ className={`fixed inset-0 z-[9999] bg-black transition-opacity duration-300 md:hidden ${
     showMobileMenu ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
   }`}
   onClick={() => setShowMobileMenu(false)}
 >
   <div
-    className={`h-full w-[86%] max-w-[360px] border-r border-sky-900/25 bg-black p-5 text-sm text-sky-100 shadow-2xl shadow-black/80 transition-transform duration-300 ease-out ${
+className={`h-full w-full border-r border-sky-900/25 bg-black p-5 text-sm text-sky-100 shadow-2xl shadow-black/80 transition-transform duration-300 ease-out ${
       showMobileMenu ? "translate-x-0" : "-translate-x-full"
     }`}
     onClick={(e) => e.stopPropagation()}
