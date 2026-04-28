@@ -1434,7 +1434,7 @@ onClick={() => {
   )}
 
 {item.role === "assistant" && item.text?.trim() && !loading && (
-  <div className="relative flex items-center gap-3 text-zinc-400">
+  <div className="flex items-center gap-3 text-zinc-400">
     <button
       type="button"
       title="Copy"
@@ -1553,17 +1553,17 @@ onClick={() => {
         <button
           type="button"
           title="Regenerate"
-          onClick={() => {
-            const lastUserMessage = conversation[index - 1]?.text || "";
+  onClick={() => {
+  const lastUserMessage = conversation[index - 1]?.text || "";
 
-            if (!lastUserMessage) return;
+  if (!lastUserMessage) return;
 
-            stopVirtusVoice();
-            setOpenMessageMenuIndex(null);
-            setConversation((prev) => prev.slice(0, index - 1));
-            setMessage(lastUserMessage);
-            setRegenerating(true);
-          }}
+  stopVirtusVoice();
+  setOpenMessageMenuIndex(null);
+  setConversation((prev) => prev.slice(0, index - 1));
+  setMessage(lastUserMessage);
+  setRegenerating(true);
+}}
           className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
           aria-label="Regenerate Virtus answer"
         >
@@ -1580,82 +1580,6 @@ onClick={() => {
           </svg>
         </button>
       )}
-
-    <button
-      type="button"
-      title="More"
-      onClick={() => {
-        setOpenMessageMenuIndex(
-          openMessageMenuIndex === index ? null : index
-        );
-      }}
-      className="flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-900 hover:text-sky-200"
-      aria-label="Open assistant menu"
-    >
-      <span className="text-lg leading-none">···</span>
-    </button>
-
-    {openMessageMenuIndex === index && (
-      <div className="absolute right-0 top-8 z-30 w-52 rounded-2xl border border-zinc-800 bg-zinc-950/95 p-2 text-sm text-zinc-200 shadow-xl shadow-black/40 backdrop-blur-sm">
-        <button
-          type="button"
-          onClick={() => {
-            setOpenMessageMenuIndex(null);
-            speakVirtusReply(item.text || "");
-          }}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
-        >
-          <span className="text-sky-300">🔊</span>
-          <span>{speaking ? "Restart read aloud" : "Read aloud"}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setVoiceStyle("male");
-            setSelectedVoiceURI("");
-            setOpenMessageMenuIndex(null);
-            speakVirtusReply(item.text || "", "male");
-          }}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
-        >
-          <span className="text-sky-300">🗣️</span>
-          <span>Male voice</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setVoiceStyle("female");
-            setSelectedVoiceURI("");
-            setOpenMessageMenuIndex(null);
-            speakVirtusReply(item.text || "", "female");
-          }}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 hover:text-sky-100"
-        >
-          <span className="text-sky-300">🎙️</span>
-          <span>Female voice</span>
-        </button>
-
-        {speaking && (
-          <>
-            <div className="my-2 h-px bg-zinc-800" />
-
-            <button
-              type="button"
-              onClick={() => {
-                stopVirtusVoice();
-                setOpenMessageMenuIndex(null);
-              }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-red-950/35 hover:text-red-100"
-            >
-              <span className="text-red-300">■</span>
-              <span>Stop reading</span>
-            </button>
-          </>
-        )}
-      </div>
-    )}
   </div>
 )}
 
