@@ -1393,6 +1393,22 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     <>
 <div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-3 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/50">
   <div className="flex min-w-0 flex-1 items-center gap-3">
+    <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
+  <img
+    src="/virtus-logo.png"
+    alt="Virtus AI"
+    className="h-10 w-auto object-contain"
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowMobileMenu(false)}
+    className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200 transition hover:bg-sky-900/35"
+    aria-label="Close menu"
+  >
+    ×
+  </button>
+</div>
     <button
   type="button"
   onClick={() => router.push("/account")}
@@ -1564,82 +1580,107 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
       />
     </button>
 
-    {showMobileMenu && (
-      <div className="absolute left-3 top-14 z-40 w-64 rounded-3xl border border-sky-900/25 bg-zinc-950/95 p-3 text-sm text-sky-100 shadow-xl shadow-black/50 backdrop-blur-sm md:hidden">
+{showMobileMenu && (
+  <div
+    className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm md:hidden"
+    onClick={() => setShowMobileMenu(false)}
+  >
+    <div
+      className="h-full w-[82%] max-w-[340px] border-r border-sky-900/25 bg-zinc-950/98 p-5 text-sm text-sky-100 shadow-2xl shadow-black/70"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
+        <img
+          src="/virtus-logo.png"
+          alt="Virtus AI"
+          className="h-10 w-auto object-contain"
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowMobileMenu(false)}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200 transition hover:bg-sky-900/35"
+          aria-label="Close menu"
+        >
+          ×
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          const newChatId = getGuestSidebarChatId(
+            guestAccess?.plan,
+            crypto.randomUUID()
+          );
+
+          localStorage.setItem("virtus_chat_id", newChatId);
+          setActiveChatId(newChatId);
+          setConversation([]);
+          setShowMobileMenu(false);
+        }}
+        className="w-full rounded-2xl px-3 py-3 text-left transition hover:bg-sky-950/35"
+      >
+        + New chat
+      </button>
+
+      <Link
+        href="/account"
+        onClick={() => setShowMobileMenu(false)}
+        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+      >
+        Profile
+      </Link>
+
+      <Link
+        href="/account/personalization"
+        onClick={() => setShowMobileMenu(false)}
+        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+      >
+        Personalization
+      </Link>
+
+      <Link
+        href="/account/personalization/memory"
+        onClick={() => setShowMobileMenu(false)}
+        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+      >
+        Memory
+      </Link>
+
+      <Link
+        href="/upgrade"
+        onClick={() => setShowMobileMenu(false)}
+        className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
+      >
+        Plan
+      </Link>
+
+      <div className="my-2 h-px bg-sky-900/20" />
+
+      {isAuthenticated ? (
         <button
           type="button"
           onClick={() => {
-            const newChatId = getGuestSidebarChatId(
-              guestAccess?.plan,
-              crypto.randomUUID()
-            );
-
-            localStorage.setItem("virtus_chat_id", newChatId);
-            setActiveChatId(newChatId);
-            setConversation([]);
             setShowMobileMenu(false);
+            handleLogout();
           }}
-          className="w-full rounded-2xl px-3 py-3 text-left transition hover:bg-sky-950/35"
+          className="w-full rounded-2xl px-3 py-3 text-left text-red-200 transition hover:bg-red-950/35"
         >
-          + New chat
+          Log out
         </button>
-
+      ) : (
         <Link
-          href="/account"
+          href="/login"
           onClick={() => setShowMobileMenu(false)}
           className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
         >
-          Profile
+          Sign in
         </Link>
-
-        <Link
-          href="/account/personalization"
-          onClick={() => setShowMobileMenu(false)}
-          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-        >
-          Personalization
-        </Link>
-
-        <Link
-          href="/account/personalization/memory"
-          onClick={() => setShowMobileMenu(false)}
-          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-        >
-          Memory
-        </Link>
-
-        <Link
-          href="/upgrade"
-          onClick={() => setShowMobileMenu(false)}
-          className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-        >
-          Plan
-        </Link>
-
-        <div className="my-2 h-px bg-sky-900/20" />
-
-        {isAuthenticated ? (
-          <button
-            type="button"
-            onClick={() => {
-              setShowMobileMenu(false);
-              handleLogout();
-            }}
-            className="w-full rounded-2xl px-3 py-3 text-left text-red-200 transition hover:bg-red-950/35"
-          >
-            Log out
-          </button>
-        ) : (
-          <Link
-            href="/login"
-            onClick={() => setShowMobileMenu(false)}
-            className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35"
-          >
-            Sign in
-          </Link>
-        )}
-      </div>
-    )}
+      )}
+    </div>
+  </div>
+)}
 
                 <div className="text-right">
 <Link
