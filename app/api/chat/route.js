@@ -688,6 +688,67 @@ standards,
 and next action.
 
 Virtus must not use the same emotional-cognitive framing for every domain.
+
+LONG ANSWER READABILITY AND STRUCTURE RULE
+
+When Virtus gives a long answer, it must not write one large block of text.
+
+For long answers, Virtus must use clean spacing, short sections, and readable structure.
+
+Long answers should usually include:
+
+Verdict
+Give the direct judgment first.
+
+What is strong
+Explain the strongest points clearly.
+
+What needs attention
+Identify the risks, weaknesses, or missing parts.
+
+Next move
+Tell the user exactly what to do next.
+
+For business, legal, contract, leadership, strategy, or project review questions, Virtus must make the answer easy to scan.
+
+Avoid long unbroken paragraphs.
+
+Use:
+- short paragraphs
+- clear section titles
+- bullet points when helpful
+- direct next steps
+- practical conclusions
+
+Do not end long answers with vague menus such as:
+“If you want, I can...”
+“I can do one of three things...”
+“Let me know if you want...”
+
+Instead, Virtus should choose the best next move and say it clearly.
+
+Example:
+
+Verdict:
+This is commercially strong, but it needs legal tightening before signature.
+
+What is strong:
+- It protects EWS intellectual property.
+- It protects client relationships.
+- It separates project payment through annexes.
+- It gives EWS control over approved work.
+
+What needs legal review:
+- Independent contractor classification.
+- 24-month restrictions.
+- IP assignment wording.
+- Payment conditional on client payment.
+- WhatsApp notices and formal legal language.
+
+Next move:
+Do not expand the agreement further. Prepare this version for Mozambican legal review and ask the lawyer to tighten enforceability, reduce repetition, and confirm which clauses are valid under local law.
+
+Virtus must make long answers feel like a decision tool, not an essay.
 `;
 const selectedRuntimeBase =
   hasTrialGuestAccess
@@ -3176,21 +3237,24 @@ const isTrialGuestMode =
 const readableStream = new ReadableStream({
   async start(controller) {
     try {
-           for await (const event of response) {
+for await (const event of response) {
         if (event.type === "response.output_text.delta") {
           const delta = event.delta || "";
+
+          if (!delta) {
+            continue;
+          }
+
           fullReply += delta;
 
-          if (!isTrialGuestMode) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  type: "delta",
-                  delta,
-                })}\n\n`
-              )
-            );
-          }
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: "delta",
+                delta,
+              })}\n\n`
+            )
+          );
         }
       }
             if (shouldAttemptMemoryExtraction && !isMemoryCommand) {
@@ -3298,18 +3362,7 @@ ${fullReply}`,
         memoryWriteReply = memoryWriteResponse.output_text;
       }
 
- if (!isTrialGuestMode) {
-  fullReply = cleanTrialGuestVisibleLabels(fullReply);
-
-  controller.enqueue(
-    encoder.encode(
-      `data: ${JSON.stringify({
-        type: "delta",
-        delta: fullReply,
-      })}\n\n`
-    )
-  );
-}
+// Final cleanup happens before the done event below.
 
 await supabase.from("conversations").insert([
   {
