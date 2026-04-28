@@ -1586,10 +1586,10 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
 )}
 <div className="relative z-[9999] px-3 py-3 md:px-8 md:py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
   <div className="flex items-center justify-between gap-4">
-    <button
+<button
       type="button"
       onClick={() => setShowMobileMenu(true)}
-      className="flex items-center gap-2 rounded-2xl border border-sky-900/20 bg-zinc-950/30 px-2 py-1.5 text-sky-200 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-zinc-950/50"
+      className="flex items-center gap-2 rounded-2xl border border-sky-900/20 bg-zinc-950/30 px-2 py-1.5 text-sky-200 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-zinc-950/50 md:hidden"
       aria-label="Open Virtus menu"
     >
       <img
