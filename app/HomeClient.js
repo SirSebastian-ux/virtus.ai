@@ -1717,10 +1717,8 @@ className={`h-full w-full border-r border-sky-900/25 bg-black p-5 text-sm text-s
 
 <div
   ref={scrollContainerRef}
-  className={`flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 no-scrollbar transition-all duration-500 ${
-    showMobileMenu
-      ? "opacity-0 pointer-events-none scale-[0.97] blur-[2px]"
-      : "opacity-100 scale-100"
+  className={`flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 no-scrollbar ${
+    showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
 
