@@ -1243,25 +1243,7 @@ const renderAssistantActions = (item, index) => {
   }}
 >
 
-      <div className="relative flex h-full">
-        {!showMobileMenu && (
-          <div
-            className="fixed left-0 top-0 z-[9998] h-full w-8 md:hidden"
-            onTouchStart={(e) => {
-              edgeSwipeStartRef.current = e.touches[0].clientX;
-            }}
-            onTouchEnd={(e) => {
-              const startX = edgeSwipeStartRef.current;
-              const endX = e.changedTouches[0].clientX;
-
-              if (startX !== null && endX - startX > 50) {
-                setShowMobileMenu(true);
-              }
-
-              edgeSwipeStartRef.current = null;
-            }}
-          />
-        )}
+      <div className="flex h-full">
         <aside className="hidden md:flex md:w-72 bg-zinc-950 border-r border-zinc-800 h-full flex-col">
           <div className="px-4 pt-4 pb-3 border-b border-zinc-800 flex justify-center">
   <img
