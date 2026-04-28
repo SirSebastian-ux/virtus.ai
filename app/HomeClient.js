@@ -1218,8 +1218,13 @@ const renderAssistantActions = (item, index) => {
 };
 
   return (
-  <main
+<main
   className="h-[100dvh] md:h-screen overflow-hidden bg-black text-white"
+  onClick={() => {
+    if (!showPlanOverlay) return;
+    setShowPlanOverlay(false);
+    localStorage.setItem(planOverlayStorageKey, "true");
+  }}
   onTouchStart={(e) => {
     const x = e.touches[0].clientX;
     if (x < 20) {
@@ -1237,11 +1242,6 @@ const renderAssistantActions = (item, index) => {
     edgeSwipeStartRef.current = null;
   }}
 >
-  onClick={() => {
-    if (!showPlanOverlay) return;
-    setShowPlanOverlay(false);
-    localStorage.setItem(planOverlayStorageKey, "true");
-  }}
 
       <div className="flex h-full">
         <aside className="hidden md:flex md:w-72 bg-zinc-950 border-r border-zinc-800 h-full flex-col">
