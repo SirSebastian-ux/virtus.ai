@@ -1570,7 +1570,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
   <div className="flex items-center justify-between gap-4">
     <button
       type="button"
-      onClick={() => setShowMobileMenu((prev) => !prev)}
+      onClick={() => setShowMobileMenu(true)}
       className="flex items-center gap-2 rounded-2xl border border-sky-900/20 bg-zinc-950/30 px-2 py-1.5 text-sky-200 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-zinc-950/50"
       aria-label="Open Virtus menu"
     >
@@ -1581,117 +1581,116 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
       />
     </button>
 
-<div
- className={`fixed inset-0 z-[9999] bg-black transition-opacity duration-500 md:hidden${
-    showMobileMenu ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-  }`}
-  onClick={() => setShowMobileMenu(false)}
->
-  <div
-className={`h-full w-full border-r border-sky-900/25 bg-black p-5 text-sm text-sky-100 shadow-2xl shadow-black/80 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]${
-      showMobileMenu ? "translate-x-0" : "-translate-x-full"
-    }`}
-    onClick={(e) => e.stopPropagation()}
-    onTouchStart={(e) => {
-      mobileMenuTouchStartXRef.current = e.touches[0].clientX;
-    }}
-    onTouchEnd={(e) => {
-      const startX = mobileMenuTouchStartXRef.current;
-      const endX = e.changedTouches[0].clientX;
-
-      if (startX !== null && startX - endX > 60) {
-        setShowMobileMenu(false);
-      }
-
-      mobileMenuTouchStartXRef.current = null;
-    }}
-  >
-    <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
-      <img
-        src="/virtus-logo.png"
-        alt="Virtus AI"
-        className="h-10 w-auto object-contain"
-      />
-
-      <button
-        type="button"
+    {showMobileMenu && (
+      <div
+        className="fixed inset-0 z-[99999] bg-black md:hidden"
         onClick={() => setShowMobileMenu(false)}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200 transition hover:bg-sky-900/35"
-        aria-label="Close menu"
       >
-        ×
-      </button>
-    </div>
-
-    <div className="space-y-2 pt-3">
-      <button
-        type="button"
-        onClick={() => {
-          const newChatId = getGuestSidebarChatId(
-            guestAccess?.plan,
-            crypto.randomUUID()
-          );
-
-          localStorage.setItem("virtus_chat_id", newChatId);
-          setActiveChatId(newChatId);
-          setConversation([]);
-          setShowMobileMenu(false);
-        }}
-        className="w-full rounded-2xl px-3 py-3 text-left text-sky-100 transition hover:bg-sky-950/35"
-      >
-        + New chat
-      </button>
-
-      <Link href="/account" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
-        Profile
-      </Link>
-
-      <Link href="/account/personalization" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
-        Personalization
-      </Link>
-
-      <Link href="/account/personalization/memory" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
-        Memory
-      </Link>
-
-      <Link href="/upgrade" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
-        Plan
-      </Link>
-
-      <div className="my-3 h-px bg-sky-900/20" />
-
-      {isAuthenticated ? (
-        <button
-          type="button"
-          onClick={() => {
-            setShowMobileMenu(false);
-            handleLogout();
+        <div
+          className="h-full w-full bg-black p-5 text-sm text-sky-100"
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => {
+            mobileMenuTouchStartXRef.current = e.touches[0].clientX;
           }}
-          className="w-full rounded-2xl px-3 py-3 text-left text-red-200 transition hover:bg-red-950/35"
-        >
-          Log out
-        </button>
-      ) : (
-        <Link href="/login" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 transition hover:bg-sky-950/35">
-          Sign in
-        </Link>
-      )}
-    </div>
-  </div>
-</div>
-                <div className="text-right">
-<Link
-  href="/upgrade"
-  className="inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
->
-  Plan: {displayPlanLabel}
-</Link>
+          onTouchEnd={(e) => {
+            const startX = mobileMenuTouchStartXRef.current;
+            const endX = e.changedTouches[0].clientX;
 
-{isTrialGuestExpired && (
-  <p className="mt-2 text-xs text-sky-300/70">
-    Trial complete. Create an account to keep your continuity.
-  </p>
-)}
+            if (startX !== null && startX - endX > 60) {
+              setShowMobileMenu(false);
+            }
+
+            mobileMenuTouchStartXRef.current = null;
+          }}
+        >
+          <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
+            <img
+              src="/virtus-logo.png"
+              alt="Virtus AI"
+              className="h-10 w-auto object-contain"
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowMobileMenu(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200"
+              aria-label="Close menu"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="space-y-2 pt-3">
+            <button
+              type="button"
+              onClick={() => {
+                const newChatId = getGuestSidebarChatId(
+                  guestAccess?.plan,
+                  crypto.randomUUID()
+                );
+
+                localStorage.setItem("virtus_chat_id", newChatId);
+                setActiveChatId(newChatId);
+                setConversation([]);
+                setShowMobileMenu(false);
+              }}
+              className="w-full rounded-2xl px-3 py-3 text-left hover:bg-sky-950/35"
+            >
+              + New chat
+            </button>
+
+            <Link href="/account" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+              Profile
+            </Link>
+
+            <Link href="/account/personalization" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+              Personalization
+            </Link>
+
+            <Link href="/account/personalization/memory" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+              Memory
+            </Link>
+
+            <Link href="/upgrade" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+              Plan
+            </Link>
+
+            <div className="my-3 h-px bg-sky-900/20" />
+
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  handleLogout();
+                }}
+                className="w-full rounded-2xl px-3 py-3 text-left text-red-200 hover:bg-red-950/35"
+              >
+                Log out
+              </button>
+            ) : (
+              <Link href="/login" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+                Sign in
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+
+    <div className="text-right">
+      <Link
+        href="/upgrade"
+        className="inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
+      >
+        Plan: {displayPlanLabel}
+      </Link>
+
+      {isTrialGuestExpired && (
+        <p className="mt-2 text-xs text-sky-300/70">
+          Trial complete. Create an account to keep your continuity.
+        </p>
+      )}
 
       {shouldShowUpgradePrompt && (
         <Link
@@ -1705,16 +1704,15 @@ className={`h-full w-full border-r border-sky-900/25 bg-black p-5 text-sm text-s
           className="inline-block text-xs text-sky-300/70 mt-2 hover:text-sky-200 transition"
         >
           {isTrialGuestExpired
-  ? "Create account to continue"
-  : !isAuthenticated && currentAccess?.plan === "trial_guest"
-  ? "Keep your progress"
-  : displayUpgradeLabel}
+            ? "Create account to continue"
+            : !isAuthenticated && currentAccess?.plan === "trial_guest"
+            ? "Keep your progress"
+            : displayUpgradeLabel}
         </Link>
       )}
     </div>
   </div>
 </div>
-
 <div
   ref={scrollContainerRef}
   className={`flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 no-scrollbar ${
