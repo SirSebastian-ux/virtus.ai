@@ -1566,7 +1566,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     </div>
   </div>
 )}
-<div className="relative px-3 py-3 md:px-8 md:py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
+<div className="relative z-[9999] px-3 py-3 md:px-8 md:py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
   <div className="flex items-center justify-between gap-4">
     <button
       type="button"
