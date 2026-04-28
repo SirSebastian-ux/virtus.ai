@@ -42,6 +42,7 @@ const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
 const mobileMenuTouchStartXRef = useRef(null);
+const edgeSwipeStartRef = useRef(null);
 const [voiceStyle, setVoiceStyle] = useState("default");
 const speechRef = useRef(null);
 
@@ -1219,12 +1220,29 @@ const renderAssistantActions = (item, index) => {
   return (
   <main
   className="h-[100dvh] md:h-screen overflow-hidden bg-black text-white"
+  onTouchStart={(e) => {
+    const x = e.touches[0].clientX;
+    if (x < 20) {
+      edgeSwipeStartRef.current = x;
+    }
+  }}
+  onTouchEnd={(e) => {
+    const startX = edgeSwipeStartRef.current;
+    const endX = e.changedTouches[0].clientX;
+
+    if (startX !== null && endX - startX > 60) {
+      setShowMobileMenu(true);
+    }
+
+    edgeSwipeStartRef.current = null;
+  }}
+>
   onClick={() => {
     if (!showPlanOverlay) return;
     setShowPlanOverlay(false);
     localStorage.setItem(planOverlayStorageKey, "true");
   }}
->
+
       <div className="flex h-full">
         <aside className="hidden md:flex md:w-72 bg-zinc-950 border-r border-zinc-800 h-full flex-col">
           <div className="px-4 pt-4 pb-3 border-b border-zinc-800 flex justify-center">
