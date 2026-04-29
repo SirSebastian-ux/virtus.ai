@@ -857,6 +857,7 @@ If practiceMode is "action":
 - It must be concrete, observable, and executable immediately.
 - Reject vague answers like "I will try" or "I will do better".
 - If unclear, ask one correction question and do not move forward.
+`
   : "";
 
 const selectedRuntime = `${selectedRuntimeBase}
