@@ -739,11 +739,12 @@ const res = await fetch("/api/chat", {
   },
   cache: "no-store",
     signal: abortControllerRef.current.signal,
-  body: JSON.stringify({
-    message: userMessage,
-    chatId: activeChatId,
-    ...(isAuthenticated ? {} : { guestId }),
-  }),
+body: JSON.stringify({
+  message: userMessage,
+  chatId: activeChatId,
+  practiceMode: isPracticeMode,
+  ...(isAuthenticated ? {} : { guestId }),
+}),
 });
 
 let data = null;
@@ -907,8 +908,9 @@ if (assistantReply) {
           });
         }
 
-        setMessage("");
+setMessage("");
 setStreamingReply("");
+setIsPracticeMode(null);
            } else if (data.error) {
         setReply(data.error);
         setConversation((prev) => {
