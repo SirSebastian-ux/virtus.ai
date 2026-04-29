@@ -12,6 +12,7 @@ import {
 
 async function resolveVirtusUserId(guestId) {
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
   const {
     data: { user },
