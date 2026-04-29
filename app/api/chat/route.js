@@ -19,6 +19,7 @@ import {
   DEFAULT_VIRTUS_PLAN,
   DEFAULT_VIRTUS_PLAN_STATUS,
 } from "@/data/virtus-plan-policy";
+import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
 import { createClient } from "@/lib/supabase-server";
 
 const client = new OpenAI({
@@ -403,6 +404,67 @@ const shouldAttemptMemoryExtraction =
 const hasPremiumAccess = isPremiumLikePlan(plan);
 const hasPlusAccess = plan === "plus";
 const hasTrialGuestAccess = isTrialGuestPlan(plan);
+
+const practicePlanRank = {
+  guest: 0,
+  trial_guest: 1,
+  free: 1,
+  plus: 2,
+  premium: 3,
+};
+
+const getPracticePlanRank = (planName) => {
+  return practicePlanRank[planName] ?? 0;
+};
+
+const getPracticeCategoryIdFromMode = (mode) => {
+  return String(mode || "").replace(/^category:/, "").trim();
+};
+
+const isTrialGuestPracticeSample = (category) => {
+  return (
+    plan === "trial_guest" &&
+    !isExpiredPlanStatus(planStatus) &&
+    category?.trialGuestSample === true
+  );
+};
+
+const canUsePracticeCategory = (category) => {
+  if (!category) return true;
+
+  if (isTrialGuestPracticeSample(category)) {
+    return true;
+  }
+
+  const requiredPlan = category.minimumPlan || "free";
+  const currentRank = getPracticePlanRank(plan);
+  const requiredRank = getPracticePlanRank(requiredPlan);
+
+  return currentRank >= requiredRank;
+};
+
+const practiceCategory =
+  practiceMode && String(practiceMode).startsWith("category:")
+    ? getPracticeCategoryById(getPracticeCategoryIdFromMode(practiceMode))
+    : null;
+
+if (practiceMode && practiceCategory && !canUsePracticeCategory(practiceCategory)) {
+  const requiredPlan = practiceCategory.minimumPlan || "premium";
+  const lockedReply = `This practice category requires ${requiredPlan}. Please upgrade to unlock it.`;
+
+  return Response.json({
+    reply: lockedReply,
+    access: {
+      ...getPlanPolicy(plan),
+      plan,
+      planStatus,
+      trialStartedAt,
+      trialEndsAt,
+      dailyMessageLimit,
+      dailyMessagesUsed: 0,
+    },
+  });
+}
 
 const VIRTUS_TRIAL_GUEST_RUNTIME = `
 # TRIAL GUEST PREMIUM SAMPLE RUNTIME
