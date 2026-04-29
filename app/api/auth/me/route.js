@@ -1,17 +1,20 @@
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import {
   getDailyMessageLimit,
   getPlanPolicy,
   getProjectScope,
 } from "@/data/virtus-plan-policy";
+
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const authSupabase = await createClient();
+    const supabase = createAdminClient();
 
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser();
+    } = await authSupabase.auth.getUser();
 
     if (error || !user) {
       return Response.json({
@@ -27,9 +30,8 @@ export async function GET() {
       .eq("id", user.id)
       .single();
 
-        const currentPlan = profile?.plan ?? "free";
-    const currentPlanStatus =
-      profile?.plan_status ?? "active";
+    const currentPlan = profile?.plan ?? "free";
+    const currentPlanStatus = profile?.plan_status ?? "active";
 
     const dailyMessageLimit = getDailyMessageLimit(currentPlan);
 
@@ -47,17 +49,17 @@ export async function GET() {
       .gte("created_at", todayStart.toISOString())
       .lt("created_at", tomorrowStart.toISOString());
 
-        const dailyMessagesUsed = todayUserMessageCount ?? 0;
+    const dailyMessagesUsed = todayUserMessageCount ?? 0;
     const planPolicy = getPlanPolicy(currentPlan);
     const projectScope = getProjectScope(currentPlan);
 
     return Response.json({
       isAuthenticated: true,
       user: {
-  id: user.id,
-  email: user.email,
-  nickname: profile?.nickname ?? null,
-},
+        id: user.id,
+        email: user.email,
+        nickname: profile?.nickname ?? null,
+      },
       access: {
         ...planPolicy,
         projectScope,
