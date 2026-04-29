@@ -279,14 +279,48 @@ const handleMicrophoneClick = () => {
     return practicePlanRank[plan] ?? 0;
   };
 
+  const isTrialGuestPracticeSample = (category) => {
+    return (
+      currentPlanKey === "trial_guest" &&
+      !isTrialGuestExpired &&
+      category.trialGuestSample === true
+    );
+  };
+
   const canUsePracticeCategory = (category) => {
     if (isTrialGuestExpired) return false;
+
+    if (isTrialGuestPracticeSample(category)) {
+      return true;
+    }
 
     const requiredPlan = category.minimumPlan || "free";
     const currentRank = getPracticePlanRank(currentPlanKey);
     const requiredRank = getPracticePlanRank(requiredPlan);
 
     return currentRank >= requiredRank;
+  };
+
+  const getPracticeCategoryPrompt = (category) => {
+    if (isTrialGuestPracticeSample(category)) {
+      return category.trialGuestPrompt || category.prompt;
+    }
+
+    return category.prompt;
+  };
+
+  const getPracticeCategoryAccessLabel = (category, canUseCategory) => {
+    const requiredPlan = category.minimumPlan || "free";
+
+    if (isTrialGuestPracticeSample(category)) {
+      return "Trial Sample";
+    }
+
+    if (requiredPlan === "free") {
+      return "";
+    }
+
+    return canUseCategory ? requiredPlan : `Locked - ${requiredPlan}`;
   };
 
    const fallbackPlanPolicy = getPlanPolicy(currentPlanKey);
@@ -1335,6 +1369,11 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                 {virtusPracticeCategories.map((category) => {
                   const canUseCategory = canUsePracticeCategory(category);
                   const requiredPlan = category.minimumPlan || "free";
+                  const accessLabel = getPracticeCategoryAccessLabel(
+                    category,
+                    canUseCategory
+                  );
+                  const categoryPrompt = getPracticeCategoryPrompt(category);
 
                   return (
                     <button
@@ -1350,7 +1389,7 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                           return;
                         }
 
-                        setMessage(category.prompt);
+                        setMessage(categoryPrompt);
                         setPracticeOpen(false);
                         setIsPracticeMode(category.practiceMode);
                       }}
@@ -1368,9 +1407,9 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                         {category.description}
                       </span>
 
-                      {requiredPlan !== "free" && (
+                      {accessLabel && (
                         <span className="mt-1 inline-flex rounded-full border border-sky-900/25 bg-sky-950/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-sky-300/70">
-                          {canUseCategory ? requiredPlan : `Locked - ${requiredPlan}`}
+                          {accessLabel}
                         </span>
                       )}
                     </button>
