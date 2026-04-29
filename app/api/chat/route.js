@@ -841,21 +841,22 @@ Rules:
 - Keep it serious, executive, human, and disciplined.
 
 If practiceMode is "awareness":
-Ask the user to identify the exact thought behind the feeling.
-Reject vague emotional answers.
-The answer must contain an interpretation, not only an emotion.
+- Ask for one exact sentence.
+- The answer must include interpretation (example: "This means I am being ignored").
+- Reject answers that only describe emotion (example: "I feel bad").
+- If the answer is vague, ask one correction question and do not move forward.
 
 If practiceMode is "reframe":
-Ask the user for a truthful interpretation.
-It must remove assumption.
-It must stay close to observable reality.
-Do not allow forced positivity.
+- Ask for one corrected sentence.
+- It must remove assumption and stay close to observable facts.
+- Reject interpretations that include mind-reading or certainty without evidence.
+- If weak, ask one correction question and do not move forward.
 
 If practiceMode is "action":
-Ask the user for one concrete next action.
-It must be specific and executable.
-Reject vague intentions.
-`
+- Ask for one specific action.
+- It must be concrete, observable, and executable immediately.
+- Reject vague answers like "I will try" or "I will do better".
+- If unclear, ask one correction question and do not move forward.
   : "";
 
 const selectedRuntime = `${selectedRuntimeBase}
