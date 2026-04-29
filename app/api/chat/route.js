@@ -20,6 +20,7 @@ import {
   DEFAULT_VIRTUS_PLAN_STATUS,
 } from "@/data/virtus-plan-policy";
 import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 const client = new OpenAI({
@@ -166,6 +167,7 @@ async function insertGlobalLearningEvent(supabase, payload) {
 
 async function resolveVirtusUserId(guestId) {
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
 
   const {
     data: { user },
@@ -173,7 +175,7 @@ async function resolveVirtusUserId(guestId) {
   } = await supabase.auth.getUser();
 
   if (!error && user?.id) {
-  const { data: profile } = await supabase
+  const { data: profile } = await adminSupabase
     .from("profiles")
     .select("plan, plan_status, trial_started_at, trial_ends_at")
     .eq("id", user.id)
@@ -196,7 +198,7 @@ async function resolveVirtusUserId(guestId) {
   const normalizedGuestId = guestId || crypto.randomUUID();
   const guestUserId = `guest-${normalizedGuestId}`;
 
-  let { data: guestRow } = await supabase
+  let { data: guestRow } = await adminSupabase
     .from("guest_access")
     .select("guest_id, plan, plan_status, trial_started_at, trial_ends_at")
     .eq("guest_id", normalizedGuestId)
@@ -216,7 +218,7 @@ async function resolveVirtusUserId(guestId) {
   trial_ends_at: trialEndsAt.toISOString(),
 };
 
-    await supabase.from("guest_access").insert(insertPayload);
+    await adminSupabase.from("guest_access").insert(insertPayload);
     guestRow = insertPayload;
   }
 
@@ -235,7 +237,7 @@ if (
     plan_status: "expired",
   };
 
-  await supabase
+  await adminSupabase
     .from("guest_access")
     .update(expiredTrialGuestRow)
     .eq("guest_id", normalizedGuestId);
@@ -250,7 +252,7 @@ if (
 ) {
   const normalizedTrialStatus = getDefaultPlanStatusForPlan("trial_guest");
 
-  await supabase
+  await adminSupabase
     .from("guest_access")
     .update({ plan_status: normalizedTrialStatus })
     .eq("guest_id", normalizedGuestId);
@@ -284,7 +286,7 @@ export async function POST(req) {
     const { userId, isGuest, plan, planStatus, trialStartedAt, trialEndsAt } =
       await resolveVirtusUserId(guestId);
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data: personalizationProfile } = !isGuest
       ? await supabase
@@ -4004,6 +4006,7 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 
