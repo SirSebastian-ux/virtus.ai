@@ -1,14 +1,16 @@
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getPlanPolicy } from "@/data/virtus-plan-policy";
 
 export async function POST(req) {
   try {
-    const supabase = await createClient();
+    const authSupabase = await createClient();
+    const supabase = createAdminClient();
 
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await authSupabase.auth.getUser();
 
     if (authError || !user?.id) {
       return Response.json(
