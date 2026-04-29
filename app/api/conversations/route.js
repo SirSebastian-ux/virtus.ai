@@ -129,7 +129,7 @@ export async function POST(req) {
 
     const { userId, isGuest, plan, planStatus, trialStartedAt, trialEndsAt } =
   await resolveVirtusUserId(guestId);
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const effectiveChatId = chatId;
 
     console.log("VIRTUS conversations guestId:", guestId || null);
