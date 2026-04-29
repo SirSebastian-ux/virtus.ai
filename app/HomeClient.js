@@ -41,6 +41,7 @@ const [availableVoices, setAvailableVoices] = useState([]);
 const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
+const [practiceOpen, setPracticeOpen] = useState(false);
 const mobileMenuTouchStartXRef = useRef(null);
 const edgeSwipeStartRef = useRef(null);
 const [voiceStyle, setVoiceStyle] = useState("default");
@@ -1273,6 +1274,39 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
             >
               + New chat
             </button>
+
+            <button
+              type="button"
+              onClick={() => setPracticeOpen(!practiceOpen)}
+              className="mt-3 w-full rounded-2xl border border-sky-900/25 bg-sky-950/20 px-4 py-3 text-left text-sm text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/35"
+            >
+              Practice
+            </button>
+
+            {practiceOpen && (
+              <div className="mt-3 space-y-2 rounded-2xl border border-sky-900/20 bg-zinc-950/40 p-2">
+                <button
+                  type="button"
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
+                >
+                  Thought Awareness
+                </button>
+
+                <button
+                  type="button"
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
+                >
+                  Truthful Reframe
+                </button>
+
+                <button
+                  type="button"
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
+                >
+                  Disciplined Action
+                </button>
+              </div>
+            )}
 
             <div className="mt-6">
 <p className="px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50 mb-2">
