@@ -642,10 +642,9 @@ useEffect(() => {
 
     const textarea = textareaRef.current;
     textarea.style.height = "0px";
-
-    const newHeight = Math.min(textarea.scrollHeight, 160);
-    textarea.style.height = `${newHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > 160 ? "auto" : "hidden";
+const newHeight = Math.min(textarea.scrollHeight, 288);
+textarea.style.height = `${newHeight}px`;
+textarea.style.overflowY = textarea.scrollHeight > 288 ? "auto" : "hidden";
   }, [message]);
     async function handleLogout() {
     try {
@@ -1973,7 +1972,7 @@ setRegenerating(true);
 
                 <textarea
   ref={textareaRef}
-className="w-full min-h-[64px] max-h-40 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-4 py-4 pr-28 md:px-6 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-4 py-4 pr-28 md:px-6 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
     placeholder={
     isTrialGuestExpired
       ? "Your Trial Guest access has ended. Please create an account to continue."
