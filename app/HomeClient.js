@@ -42,6 +42,7 @@ const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
 const [practiceOpen, setPracticeOpen] = useState(false);
+const [isPracticeMode, setIsPracticeMode] = useState(null);
 const mobileMenuTouchStartXRef = useRef(null);
 const edgeSwipeStartRef = useRef(null);
 const [voiceStyle, setVoiceStyle] = useState("default");
@@ -1290,6 +1291,7 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                   onClick={() => {
                     setMessage("What thought is behind what I am feeling right now?");
                     setPracticeOpen(false);
+                    setIsPracticeMode("awareness");
                   }}
                   className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
                 >
@@ -1301,6 +1303,7 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                   onClick={() => {
                     setMessage("What is a more accurate and truthful interpretation of the situation?");
                     setPracticeOpen(false);
+                    setIsPracticeMode("reframe");
                   }}
                   className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
                 >
@@ -1312,6 +1315,7 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                   onClick={() => {
                     setMessage("What is one clear action I will take next?");
                     setPracticeOpen(false);
+                    setIsPracticeMode("action");
                   }}
                   className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
                 >
