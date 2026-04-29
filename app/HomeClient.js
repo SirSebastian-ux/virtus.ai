@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
+import { virtusModules } from "@/data/virtus-modules";
 
 export default function HomeClient() {
   const router = useRouter();
@@ -1287,42 +1288,41 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
             </button>
 
             {practiceOpen && (
-              <div className="mt-3 space-y-2 rounded-2xl border border-sky-900/20 bg-zinc-950/40 p-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMessage("What thought is behind what I am feeling right now?");
-                    setPracticeOpen(false);
-                    setIsPracticeMode("awareness");
-                  }}
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
-                >
-                  Thought Awareness
-                </button>
+              <div className="mt-3 max-h-[420px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/40 p-2 no-scrollbar">
+                <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
+                  Core Modules
+                </p>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMessage("What is a more accurate and truthful interpretation of the situation?");
-                    setPracticeOpen(false);
-                    setIsPracticeMode("reframe");
-                  }}
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
-                >
-                  Truthful Reframe
-                </button>
+                {virtusModules.map((module) => {
+                  const firstDay = module.days?.[0];
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMessage("What is one clear action I will take next?");
-                    setPracticeOpen(false);
-                    setIsPracticeMode("action");
-                  }}
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
-                >
-                  Disciplined Action
-                </button>
+                  return (
+                    <button
+                      key={module.id}
+                      type="button"
+                      onClick={() => {
+                        setMessage(
+                          `Start ${module.displayTitle || module.title}. Begin Day 1: ${
+                            firstDay?.title || "First Practice"
+                          }. Guide me step by step. Ask me one question at a time.`
+                        );
+                        setPracticeOpen(false);
+                        setIsPracticeMode(`${module.id}:day-1`);
+                      }}
+                      className="w-full rounded-xl border border-sky-900/10 bg-black/10 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-800/30 hover:bg-sky-950/35"
+                    >
+                      <span className="block text-xs text-sky-300/60">
+                        Module {module.order} · {module.duration}
+                      </span>
+                      <span className="mt-0.5 block font-medium">
+                        {module.displayTitle || module.title}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-zinc-500">
+                        {module.coreSkill}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
