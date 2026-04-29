@@ -278,7 +278,7 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
-    const { message, guestId, chatId } = body;
+    const { message, guestId, chatId, practiceMode } = body;
 
     const { userId, isGuest, plan, planStatus, trialStartedAt, trialEndsAt } =
       await resolveVirtusUserId(guestId);
@@ -824,9 +824,45 @@ const selectedRuntimeBase =
     ? VIRTUS_PLUS_RUNTIME
     : VIRTUS_RUNTIME;
 
+const VIRTUS_PRACTICE_LAYER = practiceMode
+  ? `
+# PRACTICE CENTER MODE
+
+Current Practice Mode:
+${practiceMode}
+
+This is a structured Virtus exercise.
+
+Rules:
+- Do not answer like a normal chat.
+- Guide the user through the exercise.
+- Ask for one clear response.
+- Do not award points yet.
+- Keep it serious, executive, human, and disciplined.
+
+If practiceMode is "awareness":
+Ask the user to identify the exact thought behind the feeling.
+Reject vague emotional answers.
+The answer must contain an interpretation, not only an emotion.
+
+If practiceMode is "reframe":
+Ask the user for a truthful interpretation.
+It must remove assumption.
+It must stay close to observable reality.
+Do not allow forced positivity.
+
+If practiceMode is "action":
+Ask the user for one concrete next action.
+It must be specific and executable.
+Reject vague intentions.
+`
+  : "";
+
 const selectedRuntime = `${selectedRuntimeBase}
 
-${VIRTUS_SPOKEN_CADENCE_LAYER}`;
+${VIRTUS_SPOKEN_CADENCE_LAYER}
+
+${VIRTUS_PRACTICE_LAYER}`;
  
     const effectiveChatId = String(chatId || "").trim();
 
