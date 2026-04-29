@@ -1282,7 +1282,14 @@ const renderAssistantActions = (item, index) => {
 
                     <div className="flex-1 p-3 overflow-y-auto no-scrollbar">
             <button
-             onClick={() => {
+onClick={() => {
+  if (loading) {
+    abortControllerRef.current?.abort();
+  }
+
+  stopVirtusVoice();
+  abortControllerRef.current = null;
+
   const newChatId = getGuestSidebarChatId(
     guestAccess?.plan,
     crypto.randomUUID()
@@ -1291,11 +1298,20 @@ const renderAssistantActions = (item, index) => {
   localStorage.setItem("virtus_chat_id", newChatId);
   setActiveChatId(newChatId);
   setConversation([]);
+  setMessage("");
+  setReply("");
+  setStreamingReply("");
+  setLoading(false);
+  setRegenerating(false);
+  setEditingIndex(null);
+  setEditingText("");
+  setIsPracticeMode(null);
+  setShouldAutoScroll(true);
 
-        if (!isAuthenticated) {
-      // Do not save empty guest chats in Recent.
-      // A chat should appear in Recent only after the user sends a message.
-    }
+  if (!isAuthenticated) {
+    // Do not save empty guest chats in Recent.
+    // A chat should appear in Recent only after the user sends a message.
+  }
 }}
 className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 text-left text-sm text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
             >
@@ -1979,8 +1995,13 @@ onClick={() => {
     >
       {item.text}
     </ReactMarkdown>
-  ) : (
-    <p className="text-gray-400">Thinking...</p>
+   ) : (
+    <div className="flex items-center gap-2 text-gray-400">
+      <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-sky-300" />
+      <span className="animate-pulse">
+        Virtus is forming the response...
+      </span>
+    </div>
   )
 ) : editingIndex === index ? (
   <div className="space-y-3">

@@ -824,6 +824,168 @@ const selectedRuntimeBase =
     ? VIRTUS_PLUS_RUNTIME
     : VIRTUS_RUNTIME;
 
+const PRACTICE_CATEGORY_GUIDE = {
+  "category:leadership-skills": `
+Practice focus:
+- Leadership awareness
+- Responsibility
+- Decision quality
+- Communication under pressure
+
+Start with one leadership scenario.
+Do not explain all theory first.
+Ask the user for one clear leadership response.
+Then correct the response if it is vague, reactive, blaming, passive, or unclear.
+`,
+
+  "category:executive-training": `
+Practice focus:
+- Executive discipline
+- Strategic thinking
+- Leadership Response Chain
+- Decision architecture
+- Accountability
+- High-pressure communication
+
+Use the internal leadership module library as background intelligence.
+Do not dump the module list.
+Start with one executive-level exercise.
+Ask one question at a time.
+This mode should feel premium, serious, precise, and high-level.
+`,
+
+  "category:emotional-intelligence": `
+Practice focus:
+- Thought before emotion
+- Emotional awareness
+- Regulation
+- Empathy
+- Mature response
+
+Ask the user to identify the thought behind the emotion.
+Reject vague answers like "I feel bad" unless they identify the thought causing it.
+Guide one step at a time.
+`,
+
+  "category:mind-discipline": `
+Practice focus:
+- Thought observation
+- Awareness before reaction
+- Focus
+- Disciplined action
+
+Ask the user for the exact thought currently leading their emotion, behavior, or avoidance.
+Do not move forward until the thought is clear.
+`,
+
+  "category:stress-regulation": `
+Practice focus:
+- Stress awareness
+- Nervous system calming
+- Separation of fact from pressure
+- One controlled next action
+
+Start with a short grounding or clarity exercise.
+Then ask what situation is creating pressure.
+Keep it calm, practical, and safe.
+`,
+
+  "category:anxiety-support": `
+Practice focus:
+- Anxiety as thought plus body activation
+- Identifying feared prediction
+- Grounding
+- Reality-based interpretation
+
+Do not diagnose.
+Do not claim treatment.
+Ask for the exact feared prediction behind the anxiety.
+Guide gently and safely.
+`,
+
+  "category:mood-support": `
+Practice focus:
+- Mood awareness
+- Thought identification
+- Gentle reality check
+- Constructive next step
+
+Do not diagnose depression.
+Do not over-intensify.
+Ask what thought has been repeating today.
+Keep the response humane and grounded.
+`,
+
+  "category:habit-recovery-support": `
+Practice focus:
+- Trigger
+- Thought
+- Urge
+- Pattern interruption
+- Replacement action
+
+Do not shame the user.
+Do not give medical addiction treatment claims.
+Ask for the trigger first, then the thought, then the next disciplined replacement action.
+`,
+
+  "category:relationships": `
+Practice focus:
+- Emotional maturity
+- Assumption checking
+- Boundaries
+- Repair
+- Clear communication
+
+Ask what happened exactly before interpreting motive.
+Guide toward a mature response, not blame or emotional reaction.
+`,
+
+  "category:assertive-communication": `
+Practice focus:
+- Clear message
+- Respectful firmness
+- Emotional control
+- Direct communication
+
+Ask the user what they want to say.
+Then help rewrite it into a clear, respectful, firm message.
+Avoid passive-aggressive wording.
+`,
+
+  "category:marriage-preparation": `
+Practice focus:
+- Values
+- Expectations
+- Communication
+- Roles
+- Commitment
+- Conflict readiness
+
+Ask one reflective readiness question.
+Keep it mature, practical, and respectful.
+Do not make it romantic or overly emotional.
+`,
+
+  "category:spirituality": `
+Practice focus:
+- Inner truth
+- Alignment
+- Meaning
+- Discipline
+- Humility
+
+Keep spirituality grounded and non-dogmatic unless the user asks for a specific tradition.
+Ask one question about alignment between thought, word, and action.
+`,
+};
+
+const selectedPracticeGuide = practiceMode
+  ? PRACTICE_CATEGORY_GUIDE[practiceMode] || ""
+  : "";
+
+const practiceVariationSeed = practiceMode ? crypto.randomUUID() : "";
+
 const VIRTUS_PRACTICE_LAYER = practiceMode
   ? `
 # PRACTICE CENTER MODE
@@ -835,28 +997,24 @@ This is a structured Virtus exercise.
 
 Rules:
 - Do not answer like a normal chat.
-- Guide the user through the exercise.
-- Ask for one clear response.
+- Do not dump theory.
+- Start the exercise immediately.
+- Ask one question at a time.
+- Require one clear user response before moving forward.
+- Do not repeat the same scenario or exercise every time.
+- Create a fresh scenario using the variation seed below.
+- Rotate examples across workplace pressure, communication, accountability, decision-making, conflict, delegation, emotional control, and responsibility.
+- Never default repeatedly to the same missed-deadline example.
+- Correct vague, reactive, distorted, or unclear answers.
 - Do not award points yet.
 - Keep it serious, executive, human, and disciplined.
+- Use the sequence: Thought -> Awareness -> Emotion -> Behavior -> Communication when relevant.
 
-If practiceMode is "awareness":
-- Ask for one exact sentence.
-- The answer must include interpretation (example: "This means I am being ignored").
-- Reject answers that only describe emotion (example: "I feel bad").
-- If the answer is vague, ask one correction question and do not move forward.
+Practice variation seed:
+${practiceVariationSeed}
 
-If practiceMode is "reframe":
-- Ask for one corrected sentence.
-- It must remove assumption and stay close to observable facts.
-- Reject interpretations that include mind-reading or certainty without evidence.
-- If weak, ask one correction question and do not move forward.
-
-If practiceMode is "action":
-- Ask for one specific action.
-- It must be concrete, observable, and executable immediately.
-- Reject vague answers like "I will try" or "I will do better".
-- If unclear, ask one correction question and do not move forward.
+Category guidance:
+${selectedPracticeGuide || "Use the user's selected practice category and guide one structured exercise step by step."}
 `
   : "";
 
@@ -3741,18 +3899,32 @@ const rowsToInsert = [
 
       controller.close();
     } catch (streamError) {
+      const streamErrorMessage = streamError?.message || "Streaming failed";
+      const streamErrorCode = streamError?.code || "";
+
+      if (
+        streamErrorCode === "ERR_INVALID_STATE" ||
+        streamErrorMessage.includes("Controller is already closed")
+      ) {
+        return;
+      }
+
       console.error("STREAM ERROR:", streamError);
 
-      controller.enqueue(
-        encoder.encode(
-          `data: ${JSON.stringify({
-            type: "error",
-            error: streamError?.message || "Streaming failed",
-          })}\n\n`
-        )
-      );
+      try {
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              type: "error",
+              error: streamErrorMessage,
+            })}\n\n`
+          )
+        );
 
-      controller.close();
+        controller.close();
+      } catch {
+        return;
+      }
     }
   },
 });
@@ -3770,4 +3942,6 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
+
 
