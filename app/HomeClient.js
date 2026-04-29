@@ -1287,6 +1287,10 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
               <div className="mt-3 space-y-2 rounded-2xl border border-sky-900/20 bg-zinc-950/40 p-2">
                 <button
                   type="button"
+                  onClick={() => {
+                    setMessage("What thought is behind what I am feeling right now?");
+                    setPracticeOpen(false);
+                  }}
                   className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
                 >
                   Thought Awareness
@@ -1294,6 +1298,10 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
 
                 <button
                   type="button"
+                  onClick={() => {
+                    setMessage("What is a more accurate and truthful interpretation of the situation?");
+                    setPracticeOpen(false);
+                  }}
                   className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
                 >
                   Truthful Reframe
@@ -1301,6 +1309,10 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
 
                 <button
                   type="button"
+                  onClick={() => {
+                    setMessage("What is one clear action I will take next?");
+                    setPracticeOpen(false);
+                  }}
                   className="w-full rounded-xl px-3 py-2 text-left text-sm text-sky-100 transition hover:bg-sky-950/35"
                 >
                   Disciplined Action
