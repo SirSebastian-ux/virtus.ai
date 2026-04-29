@@ -1,3 +1,4 @@
+﻿import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import crypto from "crypto";
 import {
@@ -18,7 +19,7 @@ async function resolveVirtusUserId(guestId) {
   } = await supabase.auth.getUser();
 
   if (!error && user?.id) {
-  const { data: profile } = await supabase
+  const { data: profile } = await adminSupabase
     .from("profiles")
     .select("plan, plan_status, trial_started_at, trial_ends_at")
     .eq("id", user.id)
@@ -40,8 +41,8 @@ async function resolveVirtusUserId(guestId) {
 
   const normalizedGuestId = guestId || crypto.randomUUID();
 
-  let { data: guestRow } = await supabase
-  .from("guest_access")
+  let { data: guestRow } = await adminSupabase
+    .from("guest_access")
   .select("guest_id, plan, plan_status, trial_started_at, trial_ends_at")
   .eq("guest_id", normalizedGuestId)
   .maybeSingle();
@@ -59,7 +60,7 @@ async function resolveVirtusUserId(guestId) {
   trial_ends_at: trialEndsAt.toISOString(),
 };
 
-  await supabase.from("guest_access").insert(insertPayload);
+  await adminSupabase.from("guest_access").insert(insertPayload);
   guestRow = insertPayload;
 }
 
@@ -78,7 +79,7 @@ if (
     plan_status: "expired",
   };
 
-  await supabase
+  await adminSupabase
     .from("guest_access")
     .update(expiredTrialGuestRow)
     .eq("guest_id", normalizedGuestId);
@@ -93,7 +94,7 @@ if (
 ) {
   const normalizedTrialStatus = getDefaultPlanStatusForPlan("trial_guest");
 
-  await supabase
+  await adminSupabase
     .from("guest_access")
     .update({ plan_status: normalizedTrialStatus })
     .eq("guest_id", normalizedGuestId);

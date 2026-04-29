@@ -1,13 +1,14 @@
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const authSupabase = await createClient();
 
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser();
+    } = await authSupabase.auth.getUser();
 
     if (userError || !user) {
       return Response.json({
@@ -15,6 +16,8 @@ export async function GET() {
         sessions: [],
       });
     }
+
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from("chat_sessions")
