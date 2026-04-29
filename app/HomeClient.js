@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
-import { virtusModules } from "@/data/virtus-modules";
+import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
 export default function HomeClient() {
   const router = useRouter();
@@ -266,6 +266,29 @@ const handleMicrophoneClick = () => {
     currentAccess?.planStatus === "expired";
 
     const currentPlanKey = currentAccess?.plan ?? "trial_guest";
+
+  const practicePlanRank = {
+    guest: 0,
+    trial_guest: 1,
+    free: 1,
+    plus: 2,
+    premium: 3,
+  };
+
+  const getPracticePlanRank = (plan) => {
+    return practicePlanRank[plan] ?? 0;
+  };
+
+  const canUsePracticeCategory = (category) => {
+    if (isTrialGuestExpired) return false;
+
+    const requiredPlan = category.minimumPlan || "free";
+    const currentRank = getPracticePlanRank(currentPlanKey);
+    const requiredRank = getPracticePlanRank(requiredPlan);
+
+    return currentRank >= requiredRank;
+  };
+
    const fallbackPlanPolicy = getPlanPolicy(currentPlanKey);
   const displayPlanLabel =
     currentAccess?.label ?? fallbackPlanPolicy.label;
@@ -1290,36 +1313,50 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
             {practiceOpen && (
               <div className="mt-3 max-h-[420px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/40 p-2 no-scrollbar">
                 <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
-                  Core Modules
+                  Practice Categories
                 </p>
 
-                {virtusModules.map((module) => {
-                  const firstDay = module.days?.[0];
+                {virtusPracticeCategories.map((category) => {
+                  const canUseCategory = canUsePracticeCategory(category);
+                  const requiredPlan = category.minimumPlan || "free";
 
                   return (
                     <button
-                      key={module.id}
+                      key={category.id}
                       type="button"
                       onClick={() => {
-                        setMessage(
-                          `Start ${module.displayTitle || module.title}. Begin Day 1: ${
-                            firstDay?.title || "First Practice"
-                          }. Guide me step by step. Ask me one question at a time.`
-                        );
+                        if (!canUseCategory) {
+                          setMessage(
+                            `This practice category requires ${requiredPlan}. Please upgrade to unlock it.`
+                          );
+                          setPracticeOpen(false);
+                          setIsPracticeMode(null);
+                          return;
+                        }
+
+                        setMessage(category.prompt);
                         setPracticeOpen(false);
-                        setIsPracticeMode(`${module.id}:day-1`);
+                        setIsPracticeMode(category.practiceMode);
                       }}
-                      className="w-full rounded-xl border border-sky-900/10 bg-black/10 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-800/30 hover:bg-sky-950/35"
+                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
+                        canUseCategory
+                          ? "border-sky-900/10 bg-black/10 text-sky-100 hover:border-sky-800/30 hover:bg-sky-950/35"
+                          : "border-zinc-800/70 bg-zinc-950/35 text-zinc-500 opacity-70 hover:border-sky-900/20 hover:bg-zinc-950/55"
+                      }`}
                     >
-                      <span className="block text-xs text-sky-300/60">
-                        Module {module.order} · {module.duration}
+                      <span className="block font-medium">
+                        {category.title}
                       </span>
-                      <span className="mt-0.5 block font-medium">
-                        {module.displayTitle || module.title}
+
+                      <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
+                        {category.description}
                       </span>
-                      <span className="mt-0.5 block text-xs text-zinc-500">
-                        {module.coreSkill}
-                      </span>
+
+                      {requiredPlan !== "free" && (
+                        <span className="mt-1 inline-flex rounded-full border border-sky-900/25 bg-sky-950/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-sky-300/70">
+                          {canUseCategory ? requiredPlan : `Locked - ${requiredPlan}`}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
