@@ -1553,49 +1553,33 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                     <div className="border-t border-zinc-800 p-3 space-y-3">
   {isAuthenticated ? (
     <>
-<div className="flex items-center justify-between gap-3 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-3 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/50">
-  <div className="flex min-w-0 flex-1 items-center gap-3">
-    <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
-  <img
-    src="/virtus-logo.png"
-    alt="Virtus AI"
-    className="h-10 w-auto object-contain"
-  />
+      <div className="flex items-center justify-between gap-2 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-2 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={() => router.push("/account")}
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-1 py-1 text-left transition hover:bg-sky-950/30"
+          aria-label="Open account"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-xs font-semibold text-sky-200">
+            {(currentUser?.nickname || currentUser?.email || "S").charAt(0).toUpperCase()}
+          </span>
 
-  <button
-    type="button"
-    onClick={() => setShowMobileMenu(false)}
-    className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200 transition hover:bg-sky-900/35"
-    aria-label="Close menu"
-  >
-    ×
-  </button>
-</div>
-    <button
-  type="button"
-  onClick={() => router.push("/account")}
-  className="h-10 w-10 shrink-0 rounded-full border border-sky-900/40 bg-sky-950/30 text-sm font-semibold text-sky-200 transition hover:bg-sky-900/40"
-  aria-label="Open settings"
->
-  S
-</button>
+          <span className="min-w-0">
+            <span className="block text-sm font-medium leading-4 text-sky-200">Account</span>
+            <span className="block truncate text-xs leading-4 text-zinc-400">
+              {currentUser?.nickname || currentUser?.email?.split("@")[0] || "You are signed in"}
+            </span>
+          </span>
+        </button>
 
-    <div className="min-w-0 text-left">
-      <p className="text-sm font-medium text-sky-200">Account</p>
-      <p className="text-xs text-zinc-400 truncate">
-        {currentUser?.nickname || currentUser?.email?.split("@")[0] || "You are signed in"}
-      </p>
-    </div>
-  </div>
-
-  <button
-  type="button"
-  onClick={handleLogout}
-  className="rounded-xl border border-sky-900/40 bg-sky-950/20 px-4 py-2 text-sm text-sky-200 transition hover:bg-sky-900/35"
->
-  Log out
-</button>
-</div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="shrink-0 rounded-xl border border-sky-900/40 bg-sky-950/20 px-3 py-2 text-xs text-sky-200 transition hover:bg-sky-900/35"
+        >
+          Log out
+        </button>
+      </div>
 
     </>
   ) : (
