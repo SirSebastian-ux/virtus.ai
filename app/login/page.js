@@ -22,12 +22,17 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: "https://virtusaiworld.com/auth/callback",
+          },
         });
 
         if (error) {
-          setMessage(error.message);
+          setMessage("❌ " + error.message);
         } else {
-          setMessage("Account created. Check your email if confirmation is required.");
+          setMessage("✅ Account created. Check your email and confirm your account before signing in.");
+          setEmail("");
+          setPassword("");
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -93,8 +98,9 @@ export default function LoginPage() {
             <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
               Email
             </label>
-            <input
-              type="email"
+<input
+  type="email"
+  pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-3 w-full rounded-2xl border border-sky-900/25 bg-zinc-950/45 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-sky-800/50 focus:bg-zinc-950/65"
@@ -131,7 +137,7 @@ export default function LoginPage() {
         </form>
 
         {message ? (
-          <p className="mt-4 rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-3 text-sm text-sky-300/70">
+          <p className="mt-4 rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-3 text-sm text-white">
             {message}
           </p>
         ) : null}
