@@ -12,9 +12,17 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
   useEffect(() => {
     const success = searchParams.get("success");
+    const selectedPlan = searchParams.get("plan");
 
     if (success === "true") {
-      setSuccessMessage("Premium activated successfully.");
+      const planLabel =
+        selectedPlan === "plus"
+          ? "Plus"
+          : selectedPlan === "premium"
+          ? "Premium / Virtus Prime"
+          : "Plan";
+
+      setSuccessMessage(`${planLabel} activated successfully.`);
       router.refresh();
 
       setTimeout(() => {
@@ -22,6 +30,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
       }, 1200);
     }
   }, [searchParams, router]);
+
 
   const isGuestSelection = !isAuthenticated;
 

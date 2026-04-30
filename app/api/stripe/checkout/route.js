@@ -41,14 +41,6 @@ export async function POST(req) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-console.log("STRIPE CHECKOUT DEBUG:", {
-  plan,
-  priceId,
-  appUrl,
-  userId: user.id,
-  userEmail: user.email,
-});
-
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: user.email,
@@ -58,7 +50,7 @@ console.log("STRIPE CHECKOUT DEBUG:", {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/upgrade?success=true`,
+      success_url: `${appUrl}/upgrade?success=true&plan=${plan}`,
       cancel_url: `${appUrl}/upgrade?canceled=true`,
       metadata: {
         user_id: user.id,

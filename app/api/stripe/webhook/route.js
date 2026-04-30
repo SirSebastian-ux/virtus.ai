@@ -50,38 +50,43 @@ const supabase = createAdminClient(
     if (
       event.type === "checkout.session.completed" ||
       event.type === "invoice.payment_succeeded" ||
+      event.type === "invoice.payment_failed" ||
       event.type === "customer.subscription.updated" ||
       event.type === "customer.subscription.deleted"
     ) {
       let subscription = null;
 
       if (event.type === "checkout.session.completed") {
-  const session = event.data.object;
+        const session = event.data.object;
 
-  if (session.mode === "subscription" && session.subscription) {
-    subscription = await stripe.subscriptions.retrieve(session.subscription);
-  }
-} else if (event.type === "invoice.payment_succeeded") {
-  const invoice = event.data.object;
+        if (session.mode === "subscription" && session.subscription) {
+          subscription = await stripe.subscriptions.retrieve(session.subscription);
+        }
+      } else if (
+        event.type === "invoice.payment_succeeded" ||
+        event.type === "invoice.payment_failed"
+      ) {
+        const invoice = event.data.object;
 
-  if (invoice.subscription) {
-    subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-  }
-} else {
-  subscription = event.data.object;
-}
+        if (invoice.subscription) {
+          subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        }
+      } else {
+        subscription = event.data.object;
+      }
 
       if (subscription) {
+        const priceId = subscription.items?.data?.[0]?.price?.id || null;
 
-        const userId =
-  subscription.metadata?.user_id ||
-  subscription.customer ||
-  null;
+        const userId = subscription.metadata?.user_id || null;
 
-const virtusPlan =
-  subscription.metadata?.virtus_plan ||
-  subscription.items?.data?.[0]?.price?.nickname ||
-  "premium";
+        const virtusPlan =
+          subscription.metadata?.virtus_plan ||
+          (priceId === process.env.STRIPE_PLUS_MONTHLY_PRICE_ID
+            ? "plus"
+            : priceId === process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID
+            ? "premium"
+            : null);
 
         if (userId && virtusPlan) {
           const statusMap = {
