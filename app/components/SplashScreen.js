@@ -71,7 +71,7 @@ const showTimer = setTimeout(() => setVisible(true), 50);
   <img
     src="/virtus-logo.png"
     alt="Virtus AI"
-    className="relative w-[300px] md:w-[380px] h-auto brightness-110 contrast-110 saturate-125 drop-shadow-[0_0_10px_rgba(56,189,248,0.18)]"
+   className="relative w-[840px] md:w-[1120px] h-auto brightness-110 contrast-110 saturate-125 drop-shadow-[0_0_10px_rgba(56,189,248,0.18)]"
   />
 
 </div>
