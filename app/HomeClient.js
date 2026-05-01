@@ -1,5 +1,6 @@
 "use client";
 
+import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import { useMemo } from "react";
@@ -10,6 +11,7 @@ import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
 import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
 export default function HomeClient() {
+const [showSplash, setShowSplash] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState("");
@@ -160,6 +162,9 @@ const speakVirtusReply = (text, styleOverride = voiceStyle) => {
 };
 
 useEffect(() => {
+setShowSplash(true);
+sessionStorage.removeItem("virtus_splash_seen");
+  const storedTrialUsed = localStorage.getItem("virtus_trial_used") === "true";
   if (typeof window === "undefined") return;
 
   if (!("speechSynthesis" in window)) return;
@@ -1278,7 +1283,12 @@ const renderAssistantActions = (item, index) => {
   );
 };
 
-  return (
+return (
+<>
+  {showSplash && (
+    <SplashScreen onFinish={() => setShowSplash(false)} />
+  )}
+
 <main
   className="h-[100dvh] md:h-screen overflow-hidden bg-black text-white"
   onClick={() => {
@@ -1304,7 +1314,7 @@ const renderAssistantActions = (item, index) => {
   }}
 >
 
-      <div className="flex h-full">
+ <div className="flex h-full">
         <aside className="hidden md:flex md:w-72 bg-zinc-950 border-r border-zinc-800 h-full flex-col">
           <div className="px-4 pt-4 pb-3 border-b border-zinc-800 flex justify-center">
   <img
@@ -2258,5 +2268,6 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
         </section>
       </div>
     </main>
+  </>
   );
 }
