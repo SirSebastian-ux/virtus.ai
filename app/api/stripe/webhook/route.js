@@ -111,11 +111,17 @@ const supabase = createAdminClient(
               ? "active"
               : statusMap[subscription.status] || "inactive";
 
-          const { data: updateData, error: updateError } = await supabase
+const stripeCustomerId =
+  typeof subscription.customer === "string"
+    ? subscription.customer
+    : subscription.customer?.id || null;
+
+const { data: updateData, error: updateError } = await supabase
   .from("profiles")
   .update({
     plan: nextPlan,
     plan_status: nextPlanStatus,
+    stripe_customer_id: stripeCustomerId,
   })
   .eq("id", userId)
   .select();

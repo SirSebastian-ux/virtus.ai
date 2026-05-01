@@ -1,4 +1,6 @@
 import Link from "next/link";
+import BillingPortalButton from "./BillingPortalButton";
+import LogoutButton from "./LogoutButton";
 import { createClient } from "@/lib/supabase-server";
 import {
   getPlanLabel,
@@ -153,6 +155,8 @@ export default async function AccountPage() {
                 href="/upgrade"
               />
 
+              <BillingPortalButton />
+
               <SettingsRow
                 label="Plan status"
                 value={currentPlanStatus}
@@ -179,11 +183,7 @@ export default async function AccountPage() {
                 value="Support and guidance area"
               />
 
-              <SettingsRow
-                label="Log out"
-                value="Use the sidebar logout button for now"
-                danger
-              />
+                        <LogoutButton />
             </div>
           </section>
         </div>
