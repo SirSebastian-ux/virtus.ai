@@ -22,6 +22,7 @@ const [activeFile, setActiveFile] = useState(null);
 const [activeFiles, setActiveFiles] = useState([]);
 const [showDocumentLibrary, setShowDocumentLibrary] = useState(false);
 const [confirmDeleteFileId, setConfirmDeleteFileId] = useState(null);
+const [fileNotice, setFileNotice] = useState("");
   const [reply, setReply] = useState("");
   const [lastMessage, setLastMessage] = useState("");
   const [conversation, setConversation] = useState([]);
@@ -830,9 +831,15 @@ async function handleFileUpload(event) {
     const data = await response.json();
 
     if (!response.ok) {
-      alert(data.error || "File upload failed.");
+      setFileNotice(
+        data.error === "Not authenticated"
+          ? "Sign in required to upload documents."
+          : data.error || "File upload failed."
+      );
       return;
     }
+
+    setFileNotice("");
 await loadUploadedFiles();
 
 if (data.file?.id) {
@@ -856,7 +863,7 @@ setTimeout(() => {
   textareaRef.current?.focus();
 }, 50);
   } catch (error) {
-    alert(error.message || "File upload failed.");
+    setFileNotice(error.message || "File upload failed.");
   } finally {
     setUploadingFile(false);
     event.target.value = "";
@@ -867,9 +874,11 @@ async function handleCreateDocxFile({ title, content, fileName }) {
   const cleanContent = String(content || "").trim();
 
   if (!cleanContent) {
-    alert("There is no content to create a Word document from.");
+    setFileNotice("There is no content to create a Word document from.");
     return;
   }
+
+  setFileNotice("");
 
   try {
     const response = await fetch("/api/files/create-docx", {
@@ -887,7 +896,11 @@ async function handleCreateDocxFile({ title, content, fileName }) {
     const data = await response.json();
 
     if (!response.ok) {
-      alert(data.error || "Document creation failed.");
+      setFileNotice(
+        data.error === "Not authenticated"
+          ? "Sign in required to create Word documents."
+          : data.error || "Document creation failed."
+      );
       return;
     }
 
@@ -902,7 +915,7 @@ async function handleCreateDocxFile({ title, content, fileName }) {
     setShowDocumentLibrary(false);
     setShowFileMenu(false);
   } catch (error) {
-    alert(error.message || "Document creation failed.");
+    setFileNotice(error.message || "Document creation failed.");
   }
 }
 
@@ -2597,6 +2610,27 @@ setRegenerating(true);
         ))
       );
     })()}
+</div>
+)}
+
+{fileNotice && (
+  <div className="ml-16 mt-3 max-w-[70%] rounded-2xl border border-sky-900/30 bg-zinc-950/70 px-4 py-3 text-sm text-sky-100 shadow-lg shadow-black/20">
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <p className="font-medium text-sky-200">File access notice</p>
+        <p className="mt-1 text-xs leading-5 text-zinc-300">
+          {fileNotice}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setFileNotice("")}
+        className="rounded-full border border-sky-900/30 px-2 py-0.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+      >
+        ×
+      </button>
+    </div>
   </div>
 )}
 
