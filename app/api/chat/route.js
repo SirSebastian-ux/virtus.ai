@@ -1096,6 +1096,25 @@ if (!effectiveChatId) {
     { status: 400 }
   );
 }
+
+const uploadedFileIds = Array.from(
+  new Set(
+    [...String(message || "").matchAll(/File ID:\s*([0-9a-fA-F-]{36})/gi)].map(
+      (match) => match[1]
+    )
+  )
+);
+
+const uploadedFileId = uploadedFileIds[0] || null;
+
+if (uploadedFileId && !userId.startsWith("guest-")) {
+  await supabase
+    .from("chat_sessions")
+    .update({ active_file_id: uploadedFileId })
+    .eq("id", effectiveChatId)
+    .eq("user_id", userId);
+}
+
 const normalizedProjectMessage = String(message || "").toLowerCase();
 
 const normalizeProjectSlug = (value) =>
@@ -1211,7 +1230,9 @@ if (!existingChatSession && !userId.startsWith("guest-")) {
   await supabase.from("chat_sessions").insert({
     id: effectiveChatId,
     user_id: userId,
-    title: message.trim().slice(0, 60) || "New chat",
+    title: message.includes("File ID:")
+  ? "File workspace"
+  : message.trim().slice(0, 60) || "New chat",
   });
 } else if (
   existingChatSession &&
@@ -1221,7 +1242,9 @@ if (!existingChatSession && !userId.startsWith("guest-")) {
   await supabase
     .from("chat_sessions")
     .update({
-      title: message.trim().slice(0, 60) || "New chat",
+      title: message.includes("File ID:")
+  ? "File workspace"
+  : message.trim().slice(0, 60) || "New chat",
     })
     .eq("user_id", userId)
     .eq("id", effectiveChatId);
@@ -1431,6 +1454,63 @@ const prioritizedRuntimeFacts = [...dedupedMergedFacts].sort((a, b) => {
 
   return bScore - aScore;
 });
+
+// Load latest uploaded file (if any)
+let latestFileText = "";
+
+const { data: activeChatSession } = await supabase
+  .from("chat_sessions")
+  .select("active_file_id")
+  .eq("id", effectiveChatId)
+  .eq("user_id", userId)
+  .maybeSingle();
+
+let latestFiles = [];
+
+if (!userId.startsWith("guest-") && uploadedFileIds.length > 0) {
+  const { data: attachedFiles } = await supabase
+    .from("user_files")
+    .select("id, file_name, extracted_text")
+    .eq("user_id", userId)
+    .in("id", uploadedFileIds);
+
+  latestFiles = attachedFiles || [];
+} else {
+  let latestFileQuery = supabase
+    .from("user_files")
+    .select("id, file_name, extracted_text")
+    .eq("user_id", userId);
+
+  if (activeChatSession?.active_file_id) {
+    latestFileQuery = latestFileQuery.eq("id", activeChatSession.active_file_id);
+  } else {
+    latestFileQuery = latestFileQuery
+      .order("created_at", { ascending: false })
+      .limit(1);
+  }
+
+  const { data: latestFile } = await latestFileQuery.maybeSingle();
+  latestFiles = latestFile ? [latestFile] : [];
+}
+
+const filesWithText = latestFiles.filter((file) => file?.extracted_text);
+
+if (filesWithText.length > 0) {
+  latestFileText = `
+User attached ${filesWithText.length} document(s):
+
+${filesWithText
+  .map(
+    (file, index) => `
+Document ${index + 1}: ${file.file_name}
+
+Content:
+${String(file.extracted_text || "").slice(0, 5000)}
+`
+  )
+  .join("\n\n")}
+`;
+}
 
 const runtimeFacts =
   runtimeFactsLimit > 0
@@ -3550,7 +3630,12 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
     virtus_plan_status: planStatus,
     virtus_support_layer: supportLayer,
   },
-  input: message,
+  input: latestFileText
+  ? `${latestFileText}
+
+User request:
+${message}`
+  : message,
 });
 
 let memoryWriteReply = null;

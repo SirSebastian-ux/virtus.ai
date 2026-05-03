@@ -15,6 +15,13 @@ const [showSplash, setShowSplash] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState("");
+const [uploadingFile, setUploadingFile] = useState(false);
+const [uploadedFiles, setUploadedFiles] = useState([]);
+const [showFileMenu, setShowFileMenu] = useState(false);
+const [activeFile, setActiveFile] = useState(null);
+const [activeFiles, setActiveFiles] = useState([]);
+const [showDocumentLibrary, setShowDocumentLibrary] = useState(false);
+const [confirmDeleteFileId, setConfirmDeleteFileId] = useState(null);
   const [reply, setReply] = useState("");
   const [lastMessage, setLastMessage] = useState("");
   const [conversation, setConversation] = useState([]);
@@ -752,6 +759,153 @@ textarea.style.overflowY = textarea.scrollHeight > 288 ? "auto" : "hidden";
     router.push("/");
   }
 
+async function loadUploadedFiles() {
+  try {
+    const response = await fetch("/api/files/list");
+    const data = await response.json();
+
+    if (!response.ok) {
+      return;
+    }
+
+    setUploadedFiles(data.files || []);
+  } catch {
+    setUploadedFiles([]);
+  }
+}
+
+async function handleDeleteFile(file) {
+  if (!file?.id) return;
+
+
+  try {
+    const response = await fetch("/api/files/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fileId: file.id,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.error || "File delete failed.");
+      return;
+    }
+
+    setUploadedFiles((currentFiles) =>
+      currentFiles.filter((item) => item.id !== file.id)
+    );
+
+    setActiveFiles((currentFiles) =>
+      currentFiles.filter((item) => item.id !== file.id)
+    );
+
+    if (activeFile?.id === file.id) {
+      setActiveFile(null);
+    }
+  } catch (error) {
+    alert(error.message || "File delete failed.");
+  }
+}
+
+async function handleFileUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  setUploadingFile(true);
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch("/api/files/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.error || "File upload failed.");
+      return;
+    }
+await loadUploadedFiles();
+
+if (data.file?.id) {
+  setActiveFile(data.file);
+  setActiveFiles((currentFiles) => {
+    const alreadyAttached = currentFiles.some(
+      (item) => item.id === data.file.id
+    );
+
+    if (alreadyAttached) {
+      return currentFiles;
+    }
+
+    return [...currentFiles, data.file];
+  });
+}
+
+setShowDocumentLibrary(false);
+setShowFileMenu(false);
+setTimeout(() => {
+  textareaRef.current?.focus();
+}, 50);
+  } catch (error) {
+    alert(error.message || "File upload failed.");
+  } finally {
+    setUploadingFile(false);
+    event.target.value = "";
+  }
+}
+
+async function handleCreateDocxFile({ title, content, fileName }) {
+  const cleanContent = String(content || "").trim();
+
+  if (!cleanContent) {
+    alert("There is no content to create a Word document from.");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/files/create-docx", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: title || "Virtus Document",
+        content: cleanContent,
+        fileName: fileName || title || "virtus-document",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.error || "Document creation failed.");
+      return;
+    }
+
+    await loadUploadedFiles();
+
+      if (data.file?.id) {
+      window.location.href = `/api/files/download?fileId=${encodeURIComponent(
+        data.file.id
+      )}`;
+    }
+
+    setShowDocumentLibrary(false);
+    setShowFileMenu(false);
+  } catch (error) {
+    alert(error.message || "Document creation failed.");
+  }
+}
+
 async function sendMessage() {
   if (!message.trim()) return;
 
@@ -771,17 +925,33 @@ async function sendMessage() {
       cleaned.pop();
     }
 
-    return [
+     return [
       ...cleaned,
-      { role: "user", text: message },
+      {
+        role: "user",
+        text: message,
+        attachedFiles: activeFiles.map((file) => ({
+          id: file.id,
+          file_name: file.file_name,
+        })),
+      },
       { role: "assistant", text: "" },
     ];
   });
 
-const userMessage = message;
+const attachedFileText =
+  activeFiles.length > 0
+    ? `\n\nAttached documents:\n${activeFiles
+        .map((file) => `${file.file_name}\nFile ID: ${file.id}`)
+        .join("\n\n")}`
+    : "";
+
+const userMessage = `${message}${attachedFileText}`;
 
 setMessage("");
 setLastMessage(userMessage);
+setActiveFile(null);
+setActiveFiles([]);
 setLoading(true);
   setShouldAutoScroll(true);
   abortControllerRef.current = new AbortController();
@@ -939,15 +1109,14 @@ if (assistantReply) {
                 ? getGuestSidebarChatId(resolvedPlan, activeChatId)
                 : activeChatId;
 
-            const newItem = !isAuthenticated
-              ? {
-                  id: resolvedSidebarChatId,
-                  title: message.trim().slice(0, 60) || "New chat",
-                }
-              : {
-                  id: resolvedSidebarChatId,
-                  title: message.trim().slice(0, 60) || "New chat",
-                };
+            const newItemTitle = userMessage.includes("File ID:")
+              ? "Executive File Studio"
+              : userMessage.trim().slice(0, 60) || "New chat";
+
+            const newItem = {
+              id: resolvedSidebarChatId,
+              title: newItemTitle,
+            };
 
             const nextRecentConversations = [
               newItem,
@@ -974,6 +1143,7 @@ if (assistantReply) {
 setMessage("");
 setStreamingReply("");
 setIsPracticeMode(null);
+setActiveFile(null);
            } else if (data.error) {
         setReply(data.error);
         setConversation((prev) => {
@@ -1170,6 +1340,29 @@ const renderAssistantActions = (item, index) => {
           <path d="M12 11v6" />
           <path d="M9 14h6" />
         </svg>
+      </button>
+
+      <button
+        type="button"
+        title="Create Word file"
+        onClick={async () => {
+          const firstLine =
+            String(item.text || "")
+              .split("\n")
+              .find((line) => line.trim())
+              ?.replace(/[#*_`]/g, "")
+              .trim() || "Virtus Document";
+
+          await handleCreateDocxFile({
+            title: firstLine,
+            content: item.text || "",
+            fileName: firstLine,
+          });
+        }}
+        className={iconClass}
+        aria-label="Create Word document from Virtus answer"
+      >
+        <span className="text-[10px] font-semibold tracking-wide">DOCX</span>
       </button>
 
       {isLastAssistantAnswer && (
@@ -1434,23 +1627,35 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
 </p>
 
   <div className="space-y-2">
-  {recentConversations.filter(
-    (item) =>
+  {recentConversations.filter((item) => {
+    const title = item?.title?.trim().toLowerCase() || "";
+
+    return (
       item?.id &&
-      item?.title &&
-      item.title.trim().toLowerCase() !== "new chat"
-  ).length === 0 ? (
+      title &&
+      title !== "new chat" &&
+      title !== "file workspace" &&
+      title !== "executive file studio" &&
+      !title.startsWith("uploaded file:")
+    );
+  }).length === 0 ? (
     <div className="rounded-xl px-3 py-2 text-sm text-zinc-400 bg-zinc-900/60 border border-zinc-800">
       Recent conversations will appear here
     </div>
   ) : (
     recentConversations
-      .filter(
-        (item) =>
+      .filter((item) => {
+        const title = item?.title?.trim().toLowerCase() || "";
+
+        return (
           item?.id &&
-          item?.title &&
-          item.title.trim().toLowerCase() !== "new chat"
-      )
+          title &&
+          title !== "new chat" &&
+          title !== "file workspace" &&
+          title !== "executive file studio" &&
+          !title.startsWith("uploaded file:")
+        );
+      })
       .map((item) => (
   
                     <button
@@ -2011,8 +2216,11 @@ onClick={() => {
       <button
         type="button"
 onClick={() => {
-  setEditingIndex(index);
-  setEditingText(item.text || "");
+  setShowDocumentLibrary(false);
+  setShowFileMenu(false);
+  setTimeout(() => {
+    textareaRef.current?.focus();
+  }, 50);
 }}
         className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-950/20 text-sky-300/70 hover:bg-sky-900/35 hover:text-sky-100"
         aria-label="Edit message"
@@ -2146,9 +2354,27 @@ setRegenerating(true);
     </div>
   </div>
 ) : (
-  <p className="whitespace-pre-wrap leading-7">
-    {item.text}
-  </p>
+  <div className="space-y-2">
+    {item.attachedFiles?.length > 0 && (
+      <div className="flex flex-wrap gap-2">
+        {item.attachedFiles.map((file) => (
+          <div
+            key={file.id}
+            className="inline-flex max-w-full items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100"
+          >
+            <span className="shrink-0 text-sky-300">📎</span>
+            <span className="max-w-[220px] truncate">
+              {file.file_name}
+            </span>
+          </div>
+        ))}
+      </div>
+    )}
+
+    <p className="whitespace-pre-wrap leading-7">
+      {String(item.text || "").replace(/\n?File ID:\s*[0-9a-fA-F-]{36}/g, "")}
+    </p>
+  </div>
 )}
                     </div>
                   ))}
@@ -2181,9 +2407,249 @@ setRegenerating(true);
 >
   <div className="relative rounded-[30px] border border-sky-900/25 bg-zinc-950/35 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/50">
 
+<div className="absolute left-3 top-1/2 -translate-y-1/2">
+  <button
+    type="button"
+    onClick={() => {
+      setShowFileMenu((value) => !value);
+      loadUploadedFiles();
+    }}
+    disabled={uploadingFile || loading}
+    className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    {uploadingFile ? "…" : "+"}
+  </button>
+
+  <input
+    id="virtus-file-upload"
+    type="file"
+    accept=".pdf,.doc,.docx,.ppt,.pptx"
+    className="hidden"
+    onChange={handleFileUpload}
+    disabled={uploadingFile || loading}
+  />
+</div>
+{showFileMenu && (
+  <div
+    onMouseLeave={() => {
+      setShowFileMenu(false);
+      setShowDocumentLibrary(false);
+    }}
+    onWheel={(event) => {
+      event.stopPropagation();
+    }}
+    className="absolute bottom-14 left-0 z-40 max-h-[62vh] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-sky-900/30 bg-zinc-950/95 p-3 text-sm text-sky-100 shadow-xl shadow-black/50 backdrop-blur-sm no-scrollbar"
+  >
+    <div className="mb-3 rounded-2xl border border-sky-900/20 bg-sky-950/15 px-3 py-2">
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/60">
+        Executive File Studio
+      </p>
+
+      <p className="mt-1 text-xs leading-5 text-zinc-400">
+        Upload, select, and use documents inside Virtus.
+      </p>
+
+
+    </div>
+
+    <button
+      type="button"
+      onClick={() => document.getElementById("virtus-file-upload")?.click()}
+      className="flex w-full items-center gap-3 rounded-xl border border-sky-900/20 bg-zinc-950/45 px-3 py-2 text-left transition hover:bg-sky-950/35"
+    >
+      <span>📎</span>
+      <span>Upload file</span>
+    </button>
+
+    <div className="my-3 h-px bg-sky-900/20" />
+
+    <button
+      type="button"
+      onClick={() => {
+        if (showDocumentLibrary) {
+          setShowDocumentLibrary(false);
+          setShowFileMenu(false);
+        } else {
+          setShowDocumentLibrary(true);
+        }
+      }}
+      className="mb-2 flex w-full items-center justify-between rounded-xl border border-sky-900/20 bg-zinc-950/45 px-3 py-2 text-left transition hover:bg-sky-950/30"
+    >
+      <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-sky-300/60">
+        Document Library
+      </span>
+      <span className="text-xs text-sky-300/70">
+        {showDocumentLibrary ? "Close" : "Open"}
+      </span>
+    </button>
+
+    {showDocumentLibrary && (() => {
+      const cleanUploadedFiles = Array.from(
+        new Map(
+          (uploadedFiles || [])
+            .filter((file) => file?.id && file?.file_name)
+            .map((file) => [file.file_name.toLowerCase(), file])
+        ).values()
+      ).slice(0, 6);
+
+      return cleanUploadedFiles.length === 0 ? (
+        <p className="rounded-xl border border-zinc-800 bg-zinc-950/45 px-3 py-2 text-xs text-zinc-500">
+          No uploaded files yet
+        </p>
+      ) : (
+        cleanUploadedFiles.map((file) => (
+          <div
+            key={file.id}
+            className={`w-full rounded-xl border px-3 py-2 transition ${
+              activeFile?.id === file.id
+                ? "border-sky-500/50 bg-sky-950/45"
+                : "border-transparent hover:border-sky-900/25 hover:bg-sky-950/35"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setActiveFile(file);
+                setActiveFiles((currentFiles) => {
+                  const alreadyAttached = currentFiles.some(
+                    (item) => item.id === file.id
+                  );
+
+                  if (alreadyAttached) {
+                    return currentFiles;
+                  }
+
+                  return [...currentFiles, file];
+                });
+              }}
+              className="w-full text-left"
+            >
+              <span className="block truncate text-sky-100">
+                {file.file_name}
+              </span>
+              <span className="block text-[11px] text-zinc-500">
+                Click to open this document for Virtus
+              </span>
+            </button>
+
+            {activeFile?.id === file.id && (
+              <div className="mt-3 rounded-xl border border-sky-900/25 bg-zinc-950/45 px-3 py-2">
+                <p className="text-[11px] text-sky-200">
+                  File attached to the message box.
+                </p>
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMessage("Review this document.");
+                      setShowFileMenu(false);
+                      textareaRef.current?.focus();
+                    }}
+                    className="rounded-lg border border-sky-700/40 bg-sky-950/35 px-3 py-1.5 text-xs text-sky-100 transition hover:bg-sky-900/45"
+                  >
+                    Open file
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.href = `/api/files/download?fileId=${encodeURIComponent(
+                        file.id
+                      )}`;
+                    }}
+                    className="rounded-lg border border-sky-900/30 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+                  >
+                    Download
+                  </button>
+
+                  {confirmDeleteFileId === file.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteFile(file)}
+                        className="rounded-lg border border-red-700/40 bg-red-950/30 px-3 py-1.5 text-xs text-red-100 transition hover:bg-red-900/40"
+                      >
+                        Confirm
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteFileId(null)}
+                        className="rounded-lg border border-sky-900/30 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteFileId(file.id)}
+                      className="rounded-lg border border-red-900/30 px-3 py-1.5 text-xs text-red-300 transition hover:bg-red-950/30 hover:text-red-100"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ))
+      );
+    })()}
+  </div>
+)}
+
+{activeFiles.length > 0 && (
+  <div className="ml-16 mt-3 flex max-w-[70%] flex-wrap items-center gap-2">
+    {activeFiles.map((file) => (
+      <div
+        key={file.id}
+        className="inline-flex max-w-[260px] items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100 md:max-w-[360px]"
+      >
+        <span className="shrink-0 text-sky-300">📎</span>
+
+        <span className="truncate">
+          {file.file_name}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveFiles((currentFiles) =>
+              currentFiles.filter((item) => item.id !== file.id)
+            );
+
+            if (activeFile?.id === file.id) {
+              setActiveFile(null);
+            }
+          }}
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-sky-900/30 text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+          title="Remove attached file"
+        >
+          ×
+        </button>
+      </div>
+    ))}
+
+    {activeFiles.length > 1 && (
+      <button
+        type="button"
+        onClick={() => {
+          setActiveFiles([]);
+          setActiveFile(null);
+        }}
+        className="rounded-full border border-sky-900/30 bg-zinc-950/45 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+      >
+        Clear all
+      </button>
+    )}
+  </div>
+)}
+
                 <textarea
   ref={textareaRef}
-className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-4 py-4 pr-28 md:px-6 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-14 py-4 pr-28 md:px-16 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
     placeholder={
     isTrialGuestExpired
       ? "Your Trial Guest access has ended. Please create an account to continue."
