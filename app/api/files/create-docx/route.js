@@ -17,28 +17,142 @@ function makeSafeFileName(name) {
     .slice(0, 80);
 }
 
-function textToParagraphs(text) {
+function cleanInlineText(text) {
+  return String(text || "")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/→/g, "->")
+    .replace(/←/g, "<-")
+    .replace(/™/g, "TM")
+    .replace(/©/g, "(c)")
+    .replace(/®/g, "(R)")
+    .replace(/`/g, "")
+    .trim();
+}
+
+function markdownTextRuns(text, size = 24) {
+  const cleanText = cleanInlineText(text);
+  const parts = cleanText.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+
+  return parts.map((part) => {
+    const isBold = part.startsWith("**") && part.endsWith("**");
+    const textValue = isBold ? part.replace(/\*\*/g, "") : part;
+
+    return new TextRun({
+      text: textValue,
+      size,
+      bold: isBold,
+    });
+  });
+}
+
+function textToParagraphs(text, title = "") {
   const lines = String(text || "")
     .split("\n")
     .map((line) => line.trimEnd());
 
-  return lines.map((line) => {
-    if (!line.trim()) {
-      return new Paragraph({ text: "" });
-    }
+  const titleClean = cleanInlineText(title)
+    .replace(/^#{1,6}\s*/, "")
+    .replace(/\*\*/g, "")
+    .toLowerCase();
 
-    return new Paragraph({
-      children: [
-        new TextRun({
-          text: line,
-          size: 24,
-        }),
-      ],
-      spacing: {
-        after: 160,
-      },
+  return lines
+    .filter((line, index) => {
+      const cleanLine = cleanInlineText(line)
+        .replace(/^#{1,6}\s*/, "")
+        .replace(/\*\*/g, "")
+        .toLowerCase();
+
+        const isDuplicateTitle = cleanLine === titleClean;
+
+      const isGenericDocumentHeading =
+        index < 8 &&
+        (cleanLine === "proposal" ||
+          cleanLine === "short proposal" ||
+          cleanLine === "clean proposal" ||
+          cleanLine === "professional proposal" ||
+          cleanLine === "leadership proposal" ||
+          cleanLine === "development proposal" ||
+          cleanLine === "training proposal");
+
+      const isConversationalOpening =
+        index < 4 &&
+        (cleanLine.startsWith("yes") ||
+          cleanLine.startsWith("here is") ||
+          cleanLine.startsWith("certainly") ||
+          cleanLine.startsWith("of course")) &&
+        (cleanLine.includes("proposal") ||
+          cleanLine.includes("document") ||
+          cleanLine.includes("file") ||
+          cleanLine.includes("module"));
+
+      return (
+        !isDuplicateTitle &&
+        !isGenericDocumentHeading &&
+        !isConversationalOpening
+      );
+    })
+    .map((line) => {
+      const trimmed = line.trim();
+
+      if (!trimmed) {
+        return new Paragraph({ text: "" });
+      }
+
+      if (/^---+$/.test(trimmed)) {
+        return new Paragraph({ text: "" });
+      }
+
+      if (trimmed.startsWith("# ")) {
+        return new Paragraph({
+          text: cleanInlineText(trimmed.replace(/^#\s+/, "")),
+          heading: HeadingLevel.HEADING_1,
+          spacing: {
+            before: 260,
+            after: 160,
+          },
+        });
+      }
+
+      if (trimmed.startsWith("## ")) {
+        return new Paragraph({
+          text: cleanInlineText(trimmed.replace(/^##\s+/, "")),
+          heading: HeadingLevel.HEADING_2,
+          spacing: {
+            before: 220,
+            after: 140,
+          },
+        });
+      }
+
+      if (trimmed.startsWith("### ")) {
+        return new Paragraph({
+          text: cleanInlineText(trimmed.replace(/^###\s+/, "")),
+          heading: HeadingLevel.HEADING_3,
+          spacing: {
+            before: 180,
+            after: 120,
+          },
+        });
+      }
+
+      if (/^[-*]\s+/.test(trimmed)) {
+        return new Paragraph({
+          children: markdownTextRuns(`• ${trimmed.replace(/^[-*]\s+/, "")}`, 24),
+          spacing: {
+            after: 120,
+          },
+        });
+      }
+
+      return new Paragraph({
+        children: markdownTextRuns(trimmed, 24),
+        spacing: {
+          after: 160,
+        },
+      });
     });
-  });
 }
 
 export async function POST(req) {
@@ -87,7 +201,7 @@ export async function POST(req) {
                 after: 300,
               },
             }),
-            ...textToParagraphs(content),
+               ...textToParagraphs(content, title),
           ],
         },
       ],

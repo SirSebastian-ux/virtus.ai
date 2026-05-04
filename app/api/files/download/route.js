@@ -2,7 +2,15 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 function getSafeDownloadName(fileName) {
-  return (fileName || "virtus-file").replace(/[\r\n"]/g, "_");
+  const name = String(fileName || "virtus-file")
+    .replace(/[\r\n"]/g, "_")
+    .replace(/[^\x20-\x7E]/g, "_")
+    .replace(/[\\/:*?<>|]+/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 140)
+    .trim();
+
+  return name || "virtus-file";
 }
 
 export async function GET(req) {

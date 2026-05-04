@@ -919,6 +919,55 @@ async function handleCreateDocxFile({ title, content, fileName }) {
   }
 }
 
+async function handleCreatePdfFile({ title, content, fileName }) {
+  const cleanContent = String(content || "").trim();
+
+  if (!cleanContent) {
+    setFileNotice("There is no content to create a PDF document from.");
+    return;
+  }
+
+  setFileNotice("");
+
+  try {
+    const response = await fetch("/api/files/create-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: title || "Virtus Document",
+        content: cleanContent,
+        fileName: fileName || title || "virtus-document",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setFileNotice(
+        data.error === "Not authenticated"
+          ? "Sign in required to create PDF documents."
+          : data.error || "PDF creation failed."
+      );
+      return;
+    }
+
+    await loadUploadedFiles();
+
+    if (data.file?.id) {
+      window.location.href = `/api/files/download?fileId=${encodeURIComponent(
+        data.file.id
+      )}`;
+    }
+
+    setShowDocumentLibrary(false);
+    setShowFileMenu(false);
+  } catch (error) {
+    setFileNotice(error.message || "PDF creation failed.");
+  }
+}
+
 async function sendMessage() {
   if (!message.trim()) return;
 
@@ -1228,6 +1277,92 @@ setActiveFile(null);
 setLoading(false);
   }
 
+function getGeneratedDocumentTitle(text) {
+  const rawLines = String(text || "").split("\n");
+
+  const cleanedLines = rawLines
+    .map((line) => {
+      const original = line.trim();
+
+      const clean = original
+        .replace(/[#*_`]/g, "")
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/[–—]/g, "-")
+        .replace(/™/g, "TM")
+        .trim();
+
+      return {
+        original,
+        clean,
+        lower: clean.toLowerCase(),
+      };
+    })
+    .filter((line) => line.clean);
+
+  const isGenericTitle = (line) => {
+    const lower = line.lower;
+
+    return (
+      lower === "proposal" ||
+      lower === "short proposal" ||
+      lower === "clean proposal" ||
+      lower === "professional proposal" ||
+      lower === "leadership proposal" ||
+      lower === "development proposal" ||
+      lower === "training proposal"
+    );
+  };
+
+  const realLines = cleanedLines.filter((line) => {
+    return (
+      !isGenericTitle(line) &&
+      !line.lower.startsWith("yes") &&
+      !line.lower.startsWith("here is") &&
+      !line.lower.startsWith("certainly") &&
+      !line.lower.startsWith("of course") &&
+      !line.lower.includes("based on the document") &&
+      !line.lower.includes("based on the file") &&
+      !line.lower.includes("based on module")
+    );
+  });
+
+  const specificProgramTitle = realLines.find((line) => {
+    return (
+      line.lower.includes("training") ||
+      line.lower.includes("program") ||
+      line.lower.includes("framework") ||
+      line.lower.includes("response chain") ||
+      line.lower.includes("decision architecture") ||
+      line.lower.includes("awareness")
+    );
+  });
+
+  const strongerTitle = realLines.find((line) => {
+    return (
+      line.lower.includes("report") ||
+      line.lower.includes("plan") ||
+      line.lower.includes("proposal")
+    );
+  });
+
+  const markdownHeading = realLines.find((line) => {
+    return (
+      line.original.startsWith("# ") ||
+      line.original.startsWith("## ") ||
+      line.original.startsWith("### ")
+    );
+  });
+
+  return (
+    specificProgramTitle?.clean ||
+    strongerTitle?.clean ||
+    markdownHeading?.clean ||
+    realLines[0]?.clean ||
+    "Virtus Document"
+  );
+}
+
 const renderAssistantActions = (item, index) => {
   if (item.role !== "assistant" || !item.text?.trim() || loading) {
     return null;
@@ -1355,27 +1490,40 @@ const renderAssistantActions = (item, index) => {
         </svg>
       </button>
 
-      <button
+       <button
         type="button"
         title="Create Word file"
         onClick={async () => {
-          const firstLine =
-            String(item.text || "")
-              .split("\n")
-              .find((line) => line.trim())
-              ?.replace(/[#*_`]/g, "")
-              .trim() || "Virtus Document";
+          const documentTitle = getGeneratedDocumentTitle(item.text);
 
           await handleCreateDocxFile({
-            title: firstLine,
+            title: documentTitle,
             content: item.text || "",
-            fileName: firstLine,
+            fileName: documentTitle,
           });
         }}
         className={iconClass}
         aria-label="Create Word document from Virtus answer"
       >
         <span className="text-[10px] font-semibold tracking-wide">DOCX</span>
+      </button>
+
+      <button
+        type="button"
+        title="Create PDF file"
+        onClick={async () => {
+           const documentTitle = getGeneratedDocumentTitle(item.text);
+
+          await handleCreatePdfFile({
+            title: documentTitle,
+            content: item.text || "",
+            fileName: documentTitle,
+          });
+        }}
+        className={iconClass}
+        aria-label="Create PDF document from Virtus answer"
+      >
+        <span className="text-[10px] font-semibold tracking-wide">PDF</span>
       </button>
 
       {isLastAssistantAnswer && (
