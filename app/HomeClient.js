@@ -968,9 +968,57 @@ async function handleCreatePdfFile({ title, content, fileName }) {
   }
 }
 
+async function handleCreatePptxFile({ title, content, fileName }) {
+  const cleanContent = String(content || "").trim();
+
+  if (!cleanContent) {
+    setFileNotice("There is no content to create a PowerPoint presentation from.");
+    return;
+  }
+
+  setFileNotice("");
+
+  try {
+    const response = await fetch("/api/files/create-pptx", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: title || "Virtus Presentation",
+        content: cleanContent,
+        fileName: fileName || title || "virtus-presentation",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setFileNotice(
+        data.error === "Not authenticated"
+          ? "Sign in required to create PowerPoint presentations."
+          : data.error || "PowerPoint creation failed."
+      );
+      return;
+    }
+
+    await loadUploadedFiles();
+
+    if (data.file?.id) {
+      window.location.href = `/api/files/download?fileId=${encodeURIComponent(
+        data.file.id
+      )}`;
+    }
+
+    setShowDocumentLibrary(false);
+    setShowFileMenu(false);
+  } catch (error) {
+    setFileNotice(error.message || "PowerPoint creation failed.");
+  }
+}
+
 async function sendMessage() {
   if (!message.trim()) return;
-
   stopVirtusVoice();
 
   setEditingIndex(null);
@@ -1538,7 +1586,7 @@ const renderAssistantActions = (item, index) => {
         type="button"
         title="Create PDF file"
         onClick={async () => {
-           const documentTitle = getGeneratedDocumentTitle(item.text);
+          const documentTitle = getGeneratedDocumentTitle(item.text);
 
           await handleCreatePdfFile({
             title: documentTitle,
@@ -1550,6 +1598,24 @@ const renderAssistantActions = (item, index) => {
         aria-label="Create PDF document from Virtus answer"
       >
         <span className="text-[10px] font-semibold tracking-wide">PDF</span>
+      </button>
+
+      <button
+        type="button"
+        title="Create PowerPoint file"
+        onClick={async () => {
+          const documentTitle = getGeneratedDocumentTitle(item.text);
+
+          await handleCreatePptxFile({
+            title: documentTitle,
+            content: item.text || "",
+            fileName: documentTitle,
+          });
+        }}
+        className={iconClass}
+        aria-label="Create PowerPoint presentation from Virtus answer"
+      >
+        <span className="text-[10px] font-semibold tracking-wide">PPTX</span>
       </button>
 
       {isLastAssistantAnswer && (
