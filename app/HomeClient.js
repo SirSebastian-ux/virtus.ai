@@ -1296,6 +1296,7 @@ function getGeneratedDocumentTitle(text) {
         original,
         clean,
         lower: clean.toLowerCase(),
+        wordCount: clean.split(/\s+/).filter(Boolean).length,
       };
     })
     .filter((line) => line.clean);
@@ -1314,51 +1315,76 @@ function getGeneratedDocumentTitle(text) {
     );
   };
 
-  const realLines = cleanedLines.filter((line) => {
+  const isConversationalOpening = (line) => {
     return (
-      !isGenericTitle(line) &&
-      !line.lower.startsWith("yes") &&
-      !line.lower.startsWith("here is") &&
-      !line.lower.startsWith("certainly") &&
-      !line.lower.startsWith("of course") &&
-      !line.lower.includes("based on the document") &&
-      !line.lower.includes("based on the file") &&
-      !line.lower.includes("based on module")
+      line.lower.startsWith("yes") ||
+      line.lower.startsWith("here is") ||
+      line.lower.startsWith("certainly") ||
+      line.lower.startsWith("of course") ||
+      line.lower.includes("based on the document") ||
+      line.lower.includes("based on the file") ||
+      line.lower.includes("based on module")
+    );
+  };
+
+  const realLines = cleanedLines.filter((line) => {
+    return !isGenericTitle(line) && !isConversationalOpening(line);
+  });
+
+  const labeledTitle = realLines.find((line) => {
+    return (
+      line.wordCount <= 12 &&
+      (line.lower.startsWith("proposal:") ||
+        line.lower.startsWith("program:") ||
+        line.lower.startsWith("title:"))
+    );
+  });
+
+  if (labeledTitle?.clean) {
+    return labeledTitle.clean
+      .replace(/^proposal:\s*/i, "")
+      .replace(/^program:\s*/i, "")
+      .replace(/^title:\s*/i, "")
+      .trim();
+  }
+
+  const markdownHeading = realLines.find((line) => {
+    return (
+      line.wordCount <= 12 &&
+      (line.original.startsWith("# ") ||
+        line.original.startsWith("## ") ||
+        line.original.startsWith("### "))
     );
   });
 
   const specificProgramTitle = realLines.find((line) => {
     return (
-      line.lower.includes("training") ||
-      line.lower.includes("program") ||
-      line.lower.includes("framework") ||
-      line.lower.includes("response chain") ||
-      line.lower.includes("decision architecture") ||
-      line.lower.includes("awareness")
+      line.wordCount <= 12 &&
+      (line.lower.includes("training") ||
+        line.lower.includes("program") ||
+        line.lower.includes("framework") ||
+        line.lower.includes("response chain") ||
+        line.lower.includes("decision architecture") ||
+        line.lower.includes("awareness") ||
+        line.lower.includes("stabilization"))
     );
   });
 
   const strongerTitle = realLines.find((line) => {
     return (
-      line.lower.includes("report") ||
-      line.lower.includes("plan") ||
-      line.lower.includes("proposal")
-    );
-  });
-
-  const markdownHeading = realLines.find((line) => {
-    return (
-      line.original.startsWith("# ") ||
-      line.original.startsWith("## ") ||
-      line.original.startsWith("### ")
+      line.wordCount <= 10 &&
+      (line.lower.includes("report") ||
+        line.lower.includes("plan") ||
+        line.lower.includes("proposal"))
     );
   });
 
   return (
+    labeledTitle?.clean ||
+    markdownHeading?.clean ||
     specificProgramTitle?.clean ||
     strongerTitle?.clean ||
-    markdownHeading?.clean ||
-    realLines[0]?.clean ||
+    realLines.find((line) => line.wordCount <= 10)?.clean ||
     "Virtus Document"
   );
 }
