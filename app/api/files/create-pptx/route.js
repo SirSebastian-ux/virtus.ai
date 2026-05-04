@@ -36,10 +36,14 @@ function cleanSlideText(text) {
 }
 
 function isWeakSlideLine(text) {
-  const lower = cleanSlideText(text).toLowerCase();
+  const lower = cleanSlideText(text)
+    .replace(/^#{1,6}\s*/, "")
+    .toLowerCase();
 
   return (
     !lower ||
+    lower === "title" ||
+    lower === "slide title" ||
     lower === "proposal" ||
     lower === "short proposal" ||
     lower === "clean proposal" ||
@@ -57,12 +61,22 @@ function isWeakSlideLine(text) {
 function makeSlideTitleFromLine(line, fallback = "Key Focus") {
   const clean = cleanSlideText(line)
     .replace(/^#{1,6}\s*/, "")
+    .replace(/^slide\s+\d+\s*:\s*/i, "")
     .replace(/^proposal:\s*/i, "")
     .replace(/^program:\s*/i, "")
     .replace(/^title:\s*/i, "")
     .trim();
 
-  if (!clean || clean.split(/\s+/).length > 12) {
+  const lower = clean.toLowerCase();
+
+  if (
+    !clean ||
+    clean.split(/\s+/).length > 12 ||
+    lower === "title" ||
+    lower === "slide title" ||
+    lower === "proposal" ||
+    lower === "short proposal"
+  ) {
     return fallback;
   }
 
@@ -160,6 +174,44 @@ function splitIntoSlideSections(content) {
 
   return sections
     .filter((section) => section.title && section.bullets.length > 0)
+    .map((section, index) => {
+      const titleLower = cleanSlideText(section.title).toLowerCase();
+
+      const hasWeakTitle =
+        titleLower === "title" ||
+        titleLower === "slide title" ||
+        /^slide\s+\d+\s*:\s*title$/i.test(titleLower) ||
+        titleLower === "core message" ||
+        titleLower === "key point" ||
+        titleLower === "key focus";
+
+      if (!hasWeakTitle) {
+        return section;
+      }
+
+      const firstStrongBullet = section.bullets.find((bullet) => {
+        const cleanBullet = cleanSlideText(bullet);
+        const wordCount = cleanBullet.split(/\s+/).filter(Boolean).length;
+
+        return wordCount >= 2 && wordCount <= 8;
+      });
+
+      if (firstStrongBullet) {
+        return {
+          ...section,
+          title: cleanSlideText(firstStrongBullet)
+            .replace(/^\d+\.\s*/, "")
+            .replace(/^[-*]\s*/, ""),
+          bullets: section.bullets.filter((bullet) => bullet !== firstStrongBullet),
+        };
+      }
+
+      return {
+        ...section,
+        title: `Key Insight ${index + 1}`,
+      };
+    })
+    .filter((section) => section.bullets.length > 0)
     .slice(0, 7);
 }
 
