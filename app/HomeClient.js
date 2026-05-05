@@ -1433,10 +1433,10 @@ function getGeneratedDocumentTitle(text) {
 
       const clean = original
         .replace(/[#*_`]/g, "")
-        .replace(/[â€œâ€]/g, '"')
-        .replace(/[â€˜â€™]/g, "'")
-        .replace(/[â€“â€”]/g, "-")
-        .replace(/â„¢/g, "TM")
+        .replace(/[Ã¢â‚¬Å“Ã¢â‚¬Â]/g, '"')
+        .replace(/[Ã¢â‚¬ËœÃ¢â‚¬â„¢]/g, "'")
+        .replace(/[Ã¢â‚¬â€œÃ¢â‚¬â€]/g, "-")
+        .replace(/Ã¢â€žÂ¢/g, "TM")
         .trim();
 
       return {
@@ -1566,7 +1566,7 @@ const renderAssistantActions = (item, index) => {
         aria-label="Copy Virtus answer"
       >
         {copiedIndex === index ? (
-          <span className="text-xs font-semibold text-sky-300">âœ“</span>
+          <span className="text-xs font-semibold text-sky-300">Ã¢Å“â€œ</span>
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1782,7 +1782,7 @@ const renderAssistantActions = (item, index) => {
         className={iconClass}
         aria-label="Open assistant menu"
       >
-        <span className="text-lg leading-none">Â·Â·Â·</span>
+        <span className="text-lg leading-none">Ã‚Â·Ã‚Â·Ã‚Â·</span>
       </button>
 
       {openMessageMenuIndex === index && (
@@ -1795,7 +1795,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>ðŸ”Š</span>
+            <span>Ã°Å¸â€Å </span>
             <span>{speaking ? "Restart read aloud" : "Read aloud"}</span>
           </button>
 
@@ -1809,7 +1809,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>ðŸ—£ï¸</span>
+            <span>Ã°Å¸â€”Â£Ã¯Â¸Â</span>
             <span>Male voice</span>
           </button>
 
@@ -1823,7 +1823,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>ðŸŽ™ï¸</span>
+            <span>Ã°Å¸Å½â„¢Ã¯Â¸Â</span>
             <span>Female voice</span>
           </button>
 
@@ -1839,7 +1839,7 @@ const renderAssistantActions = (item, index) => {
                 }}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-red-200 transition hover:bg-red-950/35"
               >
-                <span>â– </span>
+                <span>Ã¢â€“Â </span>
                 <span>Stop reading</span>
               </button>
             </>
@@ -2388,7 +2388,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
               className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200"
               aria-label="Close menu"
             >
-              Ã—
+              Ãƒâ€”
             </button>
           </div>
 
@@ -2599,7 +2599,7 @@ onClick={() => {
         aria-label="Copy message"
       >
    {copiedIndex === index ? (
-  <span className="text-xs font-semibold">âœ“</span>
+  <span className="text-xs font-semibold">Ã¢Å“â€œ</span>
 ) : (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2649,32 +2649,51 @@ onClick={() => {
 
                      {item.role === "assistant" ? (
   item.generatedImage?.id ? (
-    <div className="space-y-3">
-      <img
-        src={`/api/files/download?fileId=${encodeURIComponent(item.generatedImage.id)}&preview=1`}
-        alt={item.generatedImage.file_name || "Virtus generated image"}
-        className="max-h-[520px] w-full rounded-2xl border border-sky-900/30 object-contain"
-      />
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setImagePreviewFile(item.generatedImage)}
-          className="rounded-lg border border-sky-700/40 bg-sky-950/35 px-3 py-1.5 text-xs text-sky-100 transition hover:bg-sky-900/45"
-        >
-          Open large
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            window.location.href = `/api/files/download?fileId=${encodeURIComponent(
-              item.generatedImage.id
-            )}`;
-          }}
-          className="rounded-lg border border-sky-900/30 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
-        >
-          Download
-        </button>
+    <div className="overflow-hidden rounded-2xl border border-sky-900/35 bg-zinc-950/70 shadow-[0_0_30px_rgba(14,165,233,0.08)]">
+      <div className="flex items-center justify-between gap-3 border-b border-sky-900/25 bg-zinc-950/80 px-3 py-2 sm:px-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/80">
+            Generated image
+          </p>
+          <p className="truncate text-xs text-zinc-400">
+            {item.generatedImage.file_name || "Virtus image"}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setImagePreviewFile(item.generatedImage)}
+            className="rounded-full border border-sky-700/45 bg-sky-950/30 px-3 py-1.5 text-[11px] font-medium text-sky-100 transition hover:border-sky-500/70 hover:bg-sky-900/45"
+          >
+            Open large
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = `/api/files/download?fileId=${encodeURIComponent(
+                item.generatedImage.id
+              )}`;
+            }}
+            className="rounded-full border border-zinc-700/70 bg-zinc-900/50 px-3 py-1.5 text-[11px] font-medium text-zinc-300 transition hover:border-sky-700/60 hover:bg-sky-950/35 hover:text-sky-100"
+          >
+            Download
+          </button>
+        </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setImagePreviewFile(item.generatedImage)}
+        className="block w-full bg-black/30 p-2 transition hover:bg-sky-950/10"
+        aria-label="Open generated image preview"
+      >
+        <img
+          src={`/api/files/download?fileId=${encodeURIComponent(item.generatedImage.id)}&preview=1`}
+          alt={item.generatedImage.file_name || "Virtus generated image"}
+          className="mx-auto max-h-[440px] w-full rounded-xl object-contain"
+        />
+      </button>
     </div>
   ) : item.text?.trim() ? (
     <ReactMarkdown
@@ -2792,7 +2811,7 @@ setRegenerating(true);
             key={file.id}
             className="inline-flex max-w-full items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100"
           >
-            <span className="shrink-0 text-sky-300">ðŸ“Ž</span>
+            <span className="shrink-0 text-sky-300">Ã°Å¸â€œÅ½</span>
             <span className="max-w-[220px] truncate">
               {file.file_name}
             </span>
@@ -2847,7 +2866,7 @@ setRegenerating(true);
     disabled={uploadingFile || loading}
     className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50"
   >
-    {uploadingFile ? "â€¦" : "+"}
+    {uploadingFile ? "Ã¢â‚¬Â¦" : "+"}
   </button>
 
   <input
@@ -2887,7 +2906,7 @@ setRegenerating(true);
       onClick={() => document.getElementById("virtus-file-upload")?.click()}
       className="flex w-full items-center gap-3 rounded-xl border border-sky-900/20 bg-zinc-950/45 px-3 py-2 text-left transition hover:bg-sky-950/35"
     >
-      <span>ðŸ“Ž</span>
+      <span>Ã°Å¸â€œÅ½</span>
       <span>Upload file</span>
     </button>
 
@@ -3066,7 +3085,7 @@ setRegenerating(true);
         onClick={() => setFileNotice("")}
         className="rounded-full border border-sky-900/30 px-2 py-0.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
       >
-        Ã—
+        Ãƒâ€”
       </button>
     </div>
   </div>
@@ -3079,7 +3098,7 @@ setRegenerating(true);
         key={file.id}
         className="inline-flex max-w-[260px] items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100 md:max-w-[360px]"
       >
-        <span className="shrink-0 text-sky-300">ðŸ“Ž</span>
+        <span className="shrink-0 text-sky-300">Ã°Å¸â€œÅ½</span>
 
         <span className="truncate">
           {file.file_name}
@@ -3099,7 +3118,7 @@ setRegenerating(true);
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-sky-900/30 text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
           title="Remove attached file"
         >
-          Ã—
+          Ãƒâ€”
         </button>
       </div>
     ))}
