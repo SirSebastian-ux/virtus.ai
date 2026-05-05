@@ -86,6 +86,41 @@ function splitLongTextIntoPoints(text) {
     .slice(0, 4);
 }
 
+function makeSmartFallbackTitle(section, index) {
+  const joined = cleanSlideText(
+    [section?.title, ...(section?.bullets || [])].join(" ")
+  ).toLowerCase();
+
+  if (joined.includes("thought") && joined.includes("awareness")) {
+    return "The Discipline Chain";
+  }
+
+  if (joined.includes("emotion") || joined.includes("react")) {
+    return "From Reaction to Response";
+  }
+
+  if (joined.includes("communication") || joined.includes("speak")) {
+    return "Communication With Clarity";
+  }
+
+  if (joined.includes("exercise") || joined.includes("practice")) {
+    return "Practical Awareness Exercise";
+  }
+
+  if (joined.includes("example") || joined.includes("scenario")) {
+    return "Real-Life Application";
+  }
+
+  if (joined.includes("decision") || joined.includes("choice")) {
+    return "Disciplined Decision-Making";
+  }
+
+  if (joined.includes("behavior") || joined.includes("habit")) {
+    return "Behavior Under Discipline";
+  }
+
+  return `Core Insight ${index + 1}`;
+}
 function splitIntoSlideSections(content) {
   const lines = String(content || "")
     .split("\n")
@@ -150,7 +185,7 @@ function splitIntoSlideSections(content) {
       }
 
       current = {
-        title: cleanLine,
+        title: makeSlideTitleFromLine(cleanLine),
         bullets: [],
       };
 
@@ -207,16 +242,14 @@ function splitIntoSlideSections(content) {
       if (firstStrongBullet) {
         return {
           ...section,
-          title: cleanSlideText(firstStrongBullet)
-            .replace(/^\d+\.\s*/, "")
-            .replace(/^[-*]\s*/, ""),
+          title: makeSlideTitleFromLine(firstStrongBullet, makeSmartFallbackTitle(section, index)),
           bullets: section.bullets.filter((bullet) => bullet !== firstStrongBullet),
         };
       }
 
       return {
         ...section,
-        title: `Key Insight ${index + 1}`,
+        title: makeSmartFallbackTitle(section, index),
       };
     })
     .filter((section) => section.bullets.length > 0)
