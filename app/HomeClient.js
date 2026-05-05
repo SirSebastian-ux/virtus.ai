@@ -1433,10 +1433,10 @@ function getGeneratedDocumentTitle(text) {
 
       const clean = original
         .replace(/[#*_`]/g, "")
-        .replace(/[Ã¢â‚¬Å“Ã¢â‚¬Â]/g, '"')
-        .replace(/[Ã¢â‚¬ËœÃ¢â‚¬â„¢]/g, "'")
-        .replace(/[Ã¢â‚¬â€œÃ¢â‚¬â€]/g, "-")
-        .replace(/Ã¢â€žÂ¢/g, "TM")
+        .replace(/[ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã‚Â]/g, '"')
+        .replace(/[ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢]/g, "'")
+        .replace(/[ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â]/g, "-")
+        .replace(/ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢/g, "TM")
         .trim();
 
       return {
@@ -1566,7 +1566,7 @@ const renderAssistantActions = (item, index) => {
         aria-label="Copy Virtus answer"
       >
         {copiedIndex === index ? (
-          <span className="text-xs font-semibold text-sky-300">Ã¢Å“â€œ</span>
+          <span className="text-xs font-semibold text-sky-300">ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“</span>
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1782,7 +1782,7 @@ const renderAssistantActions = (item, index) => {
         className={iconClass}
         aria-label="Open assistant menu"
       >
-        <span className="text-lg leading-none">Ã‚Â·Ã‚Â·Ã‚Â·</span>
+        <span className="text-lg leading-none">Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚Â·Ãƒâ€šÃ‚Â·</span>
       </button>
 
       {openMessageMenuIndex === index && (
@@ -1795,7 +1795,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>Ã°Å¸â€Å </span>
+            <span>ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ…Â </span>
             <span>{speaking ? "Restart read aloud" : "Read aloud"}</span>
           </button>
 
@@ -1809,7 +1809,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>Ã°Å¸â€”Â£Ã¯Â¸Â</span>
+            <span>ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã‚Â£ÃƒÂ¯Ã‚Â¸Ã‚Â</span>
             <span>Male voice</span>
           </button>
 
@@ -1823,7 +1823,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>Ã°Å¸Å½â„¢Ã¯Â¸Â</span>
+            <span>ÃƒÂ°Ã…Â¸Ã…Â½Ã¢â€žÂ¢ÃƒÂ¯Ã‚Â¸Ã‚Â</span>
             <span>Female voice</span>
           </button>
 
@@ -1839,7 +1839,7 @@ const renderAssistantActions = (item, index) => {
                 }}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-red-200 transition hover:bg-red-950/35"
               >
-                <span>Ã¢â€“Â </span>
+                <span>ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â </span>
                 <span>Stop reading</span>
               </button>
             </>
@@ -2388,7 +2388,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
               className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200"
               aria-label="Close menu"
             >
-              Ãƒâ€”
+              ÃƒÆ’Ã¢â‚¬â€
             </button>
           </div>
 
@@ -2599,7 +2599,7 @@ onClick={() => {
         aria-label="Copy message"
       >
    {copiedIndex === index ? (
-  <span className="text-xs font-semibold">Ã¢Å“â€œ</span>
+  <span className="text-xs font-semibold">ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“</span>
 ) : (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2811,7 +2811,7 @@ setRegenerating(true);
             key={file.id}
             className="inline-flex max-w-full items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100"
           >
-            <span className="shrink-0 text-sky-300">Ã°Å¸â€œÅ½</span>
+            <span className="shrink-0 text-sky-300">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â½</span>
             <span className="max-w-[220px] truncate">
               {file.file_name}
             </span>
@@ -2866,7 +2866,7 @@ setRegenerating(true);
     disabled={uploadingFile || loading}
     className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50"
   >
-    {uploadingFile ? "Ã¢â‚¬Â¦" : "+"}
+    {uploadingFile ? "ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" : "+"}
   </button>
 
   <input
@@ -2906,7 +2906,7 @@ setRegenerating(true);
       onClick={() => document.getElementById("virtus-file-upload")?.click()}
       className="flex w-full items-center gap-3 rounded-xl border border-sky-900/20 bg-zinc-950/45 px-3 py-2 text-left transition hover:bg-sky-950/35"
     >
-      <span>Ã°Å¸â€œÅ½</span>
+      <span>ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â½</span>
       <span>Upload file</span>
     </button>
 
@@ -3085,43 +3085,69 @@ setRegenerating(true);
         onClick={() => setFileNotice("")}
         className="rounded-full border border-sky-900/30 px-2 py-0.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
       >
-        Ãƒâ€”
+        ÃƒÆ’Ã¢â‚¬â€
       </button>
     </div>
   </div>
 )}
 
 {activeFiles.length > 0 && (
-  <div className="ml-16 mt-3 flex max-w-[70%] flex-wrap items-center gap-2">
-    {activeFiles.map((file) => (
-      <div
-        key={file.id}
-        className="inline-flex max-w-[260px] items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100 md:max-w-[360px]"
-      >
-        <span className="shrink-0 text-sky-300">Ã°Å¸â€œÅ½</span>
+  <div className="ml-16 mt-3 flex max-w-[70%] flex-wrap items-center gap-2 max-md:ml-2 max-md:max-w-[96%]">
+    {activeFiles.map((file) => {
+      const isImageFile = String(file.file_type || "").startsWith("image/");
+      const previewUrl = `/api/files/download?fileId=${encodeURIComponent(file.id)}&preview=1`;
 
-        <span className="truncate">
-          {file.file_name}
-        </span>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveFiles((currentFiles) =>
-              currentFiles.filter((item) => item.id !== file.id)
-            );
-
-            if (activeFile?.id === file.id) {
-              setActiveFile(null);
-            }
-          }}
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-sky-900/30 text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
-          title="Remove attached file"
+      return (
+        <div
+          key={file.id}
+          className={`inline-flex max-w-[280px] items-center gap-2 rounded-2xl border px-2 py-1.5 text-xs text-sky-100 shadow-[0_0_18px_rgba(14,165,233,0.06)] md:max-w-[380px] ${
+            isImageFile
+              ? "border-sky-700/40 bg-zinc-950/75"
+              : "border-sky-800/35 bg-sky-950/30"
+          }`}
         >
-          Ãƒâ€”
-        </button>
-      </div>
-    ))}
+          {isImageFile ? (
+            <button
+              type="button"
+              onClick={() => setImagePreviewFile(file)}
+              className="h-9 w-12 shrink-0 overflow-hidden rounded-xl border border-sky-900/35 bg-black/50"
+              title="Preview image"
+            >
+              <img
+                src={previewUrl}
+                alt={file.file_name || "Attached image"}
+                className="h-full w-full object-cover"
+              />
+            </button>
+          ) : (
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-800/40 bg-sky-950/45 text-[10px] font-semibold text-sky-300">
+              FILE
+            </span>
+          )}
+
+          <span className="min-w-0 truncate">
+            {file.file_name}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveFiles((currentFiles) =>
+                currentFiles.filter((item) => item.id !== file.id)
+              );
+
+              if (activeFile?.id === file.id) {
+                setActiveFile(null);
+              }
+            }}
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-sky-900/30 text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+            title="Remove attached file"
+          >
+            x
+          </button>
+        </div>
+      );
+    })}
 
     {activeFiles.length > 1 && (
       <button
@@ -3137,8 +3163,7 @@ setRegenerating(true);
     )}
   </div>
 )}
-
-                <textarea
+<textarea
   ref={textareaRef}
 className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-14 py-4 pr-28 md:px-16 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
     placeholder={
