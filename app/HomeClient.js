@@ -1022,11 +1022,11 @@ async function handleCreatePptxFile({ title, content, fileName }) {
 function isImageCreationRequest(text) {
   const clean = String(text || "").toLowerCase();
 
-  if (/\b(do not|don't|dont|no)\s+(create|generate|make)\s+(an?\s+)?image\b/i.test(clean)) {
+  if (/\b(do not|don't|dont|no)\s+(create|generate|make|draw)\b.{0,40}\b(image|picture|visual|illustration|photo)\b/i.test(clean)) {
     return false;
   }
 
-  return /\b(create|generate|make|draw)\s+(an?\s+)?(image|picture|visual|illustration|photo)\b/i.test(clean);
+  return /\b(create|generate|make|draw)\b.{0,60}\b(image|picture|visual|illustration|photo)\b/i.test(clean);
 }
 
 async function handleCreateImageFile({ title, content, fileName }) {
@@ -1433,10 +1433,10 @@ function getGeneratedDocumentTitle(text) {
 
       const clean = original
         .replace(/[#*_`]/g, "")
-        .replace(/[“”]/g, '"')
-        .replace(/[‘’]/g, "'")
-        .replace(/[–—]/g, "-")
-        .replace(/™/g, "TM")
+        .replace(/[â€œâ€]/g, '"')
+        .replace(/[â€˜â€™]/g, "'")
+        .replace(/[â€“â€”]/g, "-")
+        .replace(/â„¢/g, "TM")
         .trim();
 
       return {
@@ -1566,7 +1566,7 @@ const renderAssistantActions = (item, index) => {
         aria-label="Copy Virtus answer"
       >
         {copiedIndex === index ? (
-          <span className="text-xs font-semibold text-sky-300">✓</span>
+          <span className="text-xs font-semibold text-sky-300">âœ“</span>
         ) : (
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1782,7 +1782,7 @@ const renderAssistantActions = (item, index) => {
         className={iconClass}
         aria-label="Open assistant menu"
       >
-        <span className="text-lg leading-none">···</span>
+        <span className="text-lg leading-none">Â·Â·Â·</span>
       </button>
 
       {openMessageMenuIndex === index && (
@@ -1795,7 +1795,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>🔊</span>
+            <span>ðŸ”Š</span>
             <span>{speaking ? "Restart read aloud" : "Read aloud"}</span>
           </button>
 
@@ -1809,7 +1809,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>🗣️</span>
+            <span>ðŸ—£ï¸</span>
             <span>Male voice</span>
           </button>
 
@@ -1823,7 +1823,7 @@ const renderAssistantActions = (item, index) => {
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35"
           >
-            <span>🎙️</span>
+            <span>ðŸŽ™ï¸</span>
             <span>Female voice</span>
           </button>
 
@@ -1839,7 +1839,7 @@ const renderAssistantActions = (item, index) => {
                 }}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-red-200 transition hover:bg-red-950/35"
               >
-                <span>■</span>
+                <span>â– </span>
                 <span>Stop reading</span>
               </button>
             </>
@@ -2388,7 +2388,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
               className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200"
               aria-label="Close menu"
             >
-              ×
+              Ã—
             </button>
           </div>
 
@@ -2599,7 +2599,7 @@ onClick={() => {
         aria-label="Copy message"
       >
    {copiedIndex === index ? (
-  <span className="text-xs font-semibold">✓</span>
+  <span className="text-xs font-semibold">âœ“</span>
 ) : (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2792,7 +2792,7 @@ setRegenerating(true);
             key={file.id}
             className="inline-flex max-w-full items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100"
           >
-            <span className="shrink-0 text-sky-300">📎</span>
+            <span className="shrink-0 text-sky-300">ðŸ“Ž</span>
             <span className="max-w-[220px] truncate">
               {file.file_name}
             </span>
@@ -2847,7 +2847,7 @@ setRegenerating(true);
     disabled={uploadingFile || loading}
     className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50"
   >
-    {uploadingFile ? "…" : "+"}
+    {uploadingFile ? "â€¦" : "+"}
   </button>
 
   <input
@@ -2887,7 +2887,7 @@ setRegenerating(true);
       onClick={() => document.getElementById("virtus-file-upload")?.click()}
       className="flex w-full items-center gap-3 rounded-xl border border-sky-900/20 bg-zinc-950/45 px-3 py-2 text-left transition hover:bg-sky-950/35"
     >
-      <span>📎</span>
+      <span>ðŸ“Ž</span>
       <span>Upload file</span>
     </button>
 
@@ -3066,7 +3066,7 @@ setRegenerating(true);
         onClick={() => setFileNotice("")}
         className="rounded-full border border-sky-900/30 px-2 py-0.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
       >
-        ×
+        Ã—
       </button>
     </div>
   </div>
@@ -3079,7 +3079,7 @@ setRegenerating(true);
         key={file.id}
         className="inline-flex max-w-[260px] items-center gap-2 rounded-full border border-sky-800/35 bg-sky-950/30 px-3 py-1.5 text-xs text-sky-100 md:max-w-[360px]"
       >
-        <span className="shrink-0 text-sky-300">📎</span>
+        <span className="shrink-0 text-sky-300">ðŸ“Ž</span>
 
         <span className="truncate">
           {file.file_name}
@@ -3099,7 +3099,7 @@ setRegenerating(true);
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-sky-900/30 text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
           title="Remove attached file"
         >
-          ×
+          Ã—
         </button>
       </div>
     ))}
@@ -3209,6 +3209,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
