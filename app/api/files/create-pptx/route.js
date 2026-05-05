@@ -442,6 +442,29 @@ async function createPptxBuffer({ title, content }) {
         },
       ];
 
+  const visualSectionTargets = usableSections
+    .map((section, index) => ({ section, index }))
+    .filter(({ index }) => index === 1 || index === 3)
+    .slice(0, 2);
+
+  const sectionImageMap = new Map();
+
+  const sectionImages = await Promise.all(
+    visualSectionTargets.map(async ({ section, index }) => ({
+      index,
+      data: await generatePresentationImageData({
+        title: section.title,
+        content: `${section.title}\n${section.bullets.join("\n")}`,
+      }),
+    }))
+  );
+
+  sectionImages.forEach(({ index, data }) => {
+    if (data) {
+      sectionImageMap.set(index, data);
+    }
+  });
+
   usableSections.forEach((section, index) => {
     const slide = pptx.addSlide();
     slide.background = { color: "09090B" };
@@ -488,19 +511,55 @@ async function createPptxBuffer({ title, content }) {
       })
       .join("\n\n");
 
-    slide.addText(bulletText, {
-      x: 0.95,
-      y: 1.65,
-      w: 11.1,
-      h: 4.55,
-      fontFace: "Aptos",
-      fontSize: 22,
-      color: "F8FAFC",
-      breakLine: false,
-      fit: "shrink",
-      margin: 0.05,
-      valign: "mid",
-    });
+    const sectionImageData = sectionImageMap.get(index);
+
+    if (sectionImageData) {
+      slide.addText(bulletText, {
+        x: 0.85,
+        y: 1.55,
+        w: 6.6,
+        h: 4.65,
+        fontFace: "Aptos",
+        fontSize: 18,
+        color: "F8FAFC",
+        breakLine: false,
+        fit: "shrink",
+        margin: 0.05,
+        valign: "mid",
+      });
+
+      slide.addImage({
+        data: sectionImageData,
+        x: 8.05,
+        y: 1.65,
+        w: 3.7,
+        h: 3.7,
+      });
+
+      slide.addShape(pptx.ShapeType.rect, {
+        x: 8.05,
+        y: 1.65,
+        w: 3.7,
+        h: 3.7,
+        fill: { color: "09090B", transparency: 100 },
+        line: { color: "0EA5E9", transparency: 45, width: 1.1 },
+        radius: 0.18,
+      });
+    } else {
+      slide.addText(bulletText, {
+        x: 0.95,
+        y: 1.65,
+        w: 11.1,
+        h: 4.55,
+        fontFace: "Aptos",
+        fontSize: 22,
+        color: "F8FAFC",
+        breakLine: false,
+        fit: "shrink",
+        margin: 0.05,
+        valign: "mid",
+      });
+    }
 
     slide.addText(`Virtus AI | ${index + 1}`, {
       x: 10.8,
