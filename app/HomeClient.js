@@ -23,6 +23,7 @@ const [activeFiles, setActiveFiles] = useState([]);
 const [showDocumentLibrary, setShowDocumentLibrary] = useState(false);
 const [confirmDeleteFileId, setConfirmDeleteFileId] = useState(null);
 const [fileNotice, setFileNotice] = useState("");
+const [imagePreviewFile, setImagePreviewFile] = useState(null);
   const [reply, setReply] = useState("");
   const [lastMessage, setLastMessage] = useState("");
   const [conversation, setConversation] = useState([]);
@@ -1017,6 +1018,89 @@ async function handleCreatePptxFile({ title, content, fileName }) {
   }
 }
 
+
+function isImageCreationRequest(text) {
+  const clean = String(text || "").toLowerCase();
+
+  if (/\b(do not|don't|dont|no)\s+(create|generate|make)\s+(an?\s+)?image\b/i.test(clean)) {
+    return false;
+  }
+
+  return /\b(create|generate|make|draw)\s+(an?\s+)?(image|picture|visual|illustration|photo)\b/i.test(clean);
+}
+
+async function handleCreateImageFile({ title, content, fileName }) {
+  const cleanContent = String(content || "").trim();
+
+  if (!cleanContent) {
+    setFileNotice("There is no content to create an image from.");
+    return;
+  }
+
+  setFileNotice("");
+
+  try {
+    const response = await fetch("/api/files/create-image", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: title || "Virtus AI Image",
+        content: cleanContent,
+        fileName: fileName || title || "virtus-image",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setFileNotice(
+        data.error === "Not authenticated"
+          ? "Sign in required to create images."
+          : data.error || "Image creation failed."
+      );
+      return;
+    }
+
+    await loadUploadedFiles();
+
+    if (data.file?.id) {
+      setConversation((prev) => {
+        const next = [...prev];
+        const lastIndex = next.length - 1;
+
+        if (
+          lastIndex >= 0 &&
+          next[lastIndex]?.role === "assistant" &&
+          !next[lastIndex]?.text?.trim()
+        ) {
+          next[lastIndex] = {
+            role: "assistant",
+            text: "",
+            generatedImage: data.file,
+          };
+
+          return next;
+        }
+
+        return [
+          ...next,
+          {
+            role: "assistant",
+            text: "",
+            generatedImage: data.file,
+          },
+        ];
+      });
+    }
+
+    setShowDocumentLibrary(false);
+    setShowFileMenu(false);
+  } catch (error) {
+    setFileNotice(error.message || "Image creation failed.");
+  }
+}
 async function sendMessage() {
   if (!message.trim()) return;
   stopVirtusVoice();
@@ -1057,6 +1141,7 @@ const attachedFileText =
     : "";
 
 const userMessage = `${message}${attachedFileText}`;
+const shouldGenerateImageDirectly = isImageCreationRequest(message);
 
 setMessage("");
 setLastMessage(userMessage);
@@ -1069,6 +1154,20 @@ setLoading(true);
   setStreamingReply("");
 
     try {
+      if (shouldGenerateImageDirectly) {
+        await handleCreateImageFile({
+          title: getGeneratedDocumentTitle(message),
+          content: message,
+          fileName: getGeneratedDocumentTitle(message),
+        });
+
+        setLoading(false);
+        setReply("");
+        setStreamingReply("");
+        setIsPracticeMode(null);
+        return;
+      }
+
       let guestId = null;
 
       if (!isAuthenticated) {
@@ -1618,6 +1717,28 @@ const renderAssistantActions = (item, index) => {
         <span className="text-[10px] font-semibold tracking-wide">PPTX</span>
       </button>
 
+      <button
+        type="button"
+        title="Create image file"
+        onClick={async () => {
+          const documentTitle = getGeneratedDocumentTitle(item.text);
+
+          const userImageRequest = conversation[index - 1]?.role === "user"
+            ? conversation[index - 1]?.text || ""
+            : item.text || "";
+
+          await handleCreateImageFile({
+            title: documentTitle,
+            content: userImageRequest,
+            fileName: documentTitle,
+          });
+        }}
+        className={iconClass}
+        aria-label="Create image from Virtus answer"
+      >
+        <span className="text-[10px] font-semibold tracking-wide">IMAGE</span>
+      </button>
+
       {isLastAssistantAnswer && (
         <button
           type="button"
@@ -1759,6 +1880,34 @@ return (
     edgeSwipeStartRef.current = null;
   }}
 >
+
+{imagePreviewFile && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 px-4 py-6 backdrop-blur-sm">
+    <div className="flex max-h-[90vh] w-full max-w-5xl flex-col rounded-2xl border border-sky-900/40 bg-zinc-950/95 p-4 shadow-2xl shadow-sky-950/30">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-sky-100">Virtus image preview</p>
+          <p className="max-w-md truncate text-xs text-zinc-500">{imagePreviewFile.file_name}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setImagePreviewFile(null)}
+          className="rounded-full border border-sky-900/40 px-3 py-1 text-xs text-sky-200 transition hover:bg-sky-950/60 hover:text-sky-50"
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="flex h-[70vh] items-center justify-center overflow-hidden rounded-xl border border-sky-900/25 bg-black">
+        <img
+          src={`/api/files/download?fileId=${encodeURIComponent(imagePreviewFile.id)}&preview=1`}
+          alt={imagePreviewFile.file_name}
+          className="h-full w-full object-contain"
+        />
+      </div>
+    </div>
+  </div>
+)}
 
  <div className="flex h-full">
         <aside className="hidden md:flex md:w-72 bg-zinc-950 border-r border-zinc-800 h-full flex-col">
@@ -2499,7 +2648,35 @@ onClick={() => {
 </div>
 
                      {item.role === "assistant" ? (
-  item.text?.trim() ? (
+  item.generatedImage?.id ? (
+    <div className="space-y-3">
+      <img
+        src={`/api/files/download?fileId=${encodeURIComponent(item.generatedImage.id)}&preview=1`}
+        alt={item.generatedImage.file_name || "Virtus generated image"}
+        className="max-h-[520px] w-full rounded-2xl border border-sky-900/30 object-contain"
+      />
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setImagePreviewFile(item.generatedImage)}
+          className="rounded-lg border border-sky-700/40 bg-sky-950/35 px-3 py-1.5 text-xs text-sky-100 transition hover:bg-sky-900/45"
+        >
+          Open large
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = `/api/files/download?fileId=${encodeURIComponent(
+              item.generatedImage.id
+            )}`;
+          }}
+          className="rounded-lg border border-sky-900/30 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+        >
+          Download
+        </button>
+      </div>
+    </div>
+  ) : item.text?.trim() ? (
     <ReactMarkdown
       components={{
         p: ({ children }) => (
@@ -2750,7 +2927,11 @@ setRegenerating(true);
           No uploaded files yet
         </p>
       ) : (
-        cleanUploadedFiles.map((file) => (
+        cleanUploadedFiles.map((file) => {
+          const isImageFile = String(file.file_type || "").startsWith("image/");
+          const previewUrl = `/api/files/download?fileId=${encodeURIComponent(file.id)}&preview=1`;
+
+          return (
           <div
             key={file.id}
             className={`w-full rounded-xl border px-3 py-2 transition ${
@@ -2784,6 +2965,22 @@ setRegenerating(true);
                 Click to open this document for Virtus
               </span>
             </button>
+
+            {isImageFile && (
+              <div className="mt-2 overflow-hidden rounded-lg border border-sky-900/30 bg-black/40">
+                <button
+                  type="button"
+                  onClick={() => setImagePreviewFile(file)}
+                  className="block w-full"
+                >
+                  <img
+                    src={previewUrl}
+                    alt={file.file_name}
+                    className="h-28 w-full object-cover"
+                  />
+                </button>
+              </div>
+            )}
 
             {activeFile?.id === file.id && (
               <div className="mt-3 rounded-xl border border-sky-900/25 bg-zinc-950/45 px-3 py-2">
@@ -2847,7 +3044,8 @@ setRegenerating(true);
               </div>
             )}
           </div>
-        ))
+          );
+        })
       );
     })()}
 </div>
@@ -3011,3 +3209,16 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

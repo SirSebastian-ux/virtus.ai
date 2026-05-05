@@ -29,6 +29,7 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const fileId = searchParams.get("fileId");
+    const preview = searchParams.get("preview") === "1";
 
     if (!fileId) {
       return Response.json({ error: "Missing fileId" }, { status: 400 });
@@ -63,7 +64,9 @@ export async function GET(req) {
       status: 200,
       headers: {
         "Content-Type": file.file_type || "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${safeFileName}"`,
+        "Content-Disposition": `${
+          preview ? "inline" : "attachment"
+        }; filename="${safeFileName}"`,
       },
     });
   } catch (error) {
