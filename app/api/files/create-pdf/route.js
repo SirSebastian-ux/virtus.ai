@@ -24,15 +24,24 @@ function cleanPdfText(text) {
     .replace(/\u2122/g, "TM")
     .replace(/\u00A9/g, "(c)")
     .replace(/\u00AE/g, "(R)")
-    .replace(/Ã¢â‚¬Å“|Ã¢â‚¬/g, '"')
-    .replace(/Ã¢â‚¬Ëœ|Ã¢â‚¬â„¢/g, "'")
-    .replace(/Ã¢â‚¬â€œ|Ã¢â‚¬â€/g, "-")
-    .replace(/Ã¢â€ â€™/g, "->")
-    .replace(/Ã¢â€ /g, "<-")
-    .replace(/Ã¢â€žÂ¢/g, "TM")
-    .replace(/Ã‚Â©/g, "(c)")
-    .replace(/Ã‚Â®/g, "(R)")
+    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ|ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬/g, '"')
+    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“|ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢/g, "'")
+    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“|ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â/g, "-")
+    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢/g, "->")
+    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â /g, "<-")
+    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢/g, "TM")
+    .replace(/ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©/g, "(c)")
+    .replace(/ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â®/g, "(R)")
     .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "");
+}
+
+function cleanGeneratedFileContent(text) {
+  return String(text || "")
+    .replace(/This version is ready to place into a DOCX or PDF\./gi, "")
+    .replace(/DOCX\/PDF content ready\. Click DOCX or PDF below to generate and save it\./gi, "")
+    .replace(/\bwiil\b/gi, "will")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function cleanMarkdownLine(line) {
@@ -255,7 +264,7 @@ export async function POST(req) {
     const body = await req.json();
 
     const title = String(body.title || "Virtus Document").trim();
-    const content = String(body.content || "").trim();
+    const content = cleanGeneratedFileContent(body.content);
     const requestedFileName = String(
       body.fileName || title || "virtus-document"
     );
