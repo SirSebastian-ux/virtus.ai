@@ -24,14 +24,14 @@ function cleanPdfText(text) {
     .replace(/\u2122/g, "TM")
     .replace(/\u00A9/g, "(c)")
     .replace(/\u00AE/g, "(R)")
-    .replace(/â€œ|â€/g, '"')
-    .replace(/â€˜|â€™/g, "'")
-    .replace(/â€“|â€”/g, "-")
-    .replace(/â†’/g, "->")
-    .replace(/â†/g, "<-")
-    .replace(/â„¢/g, "TM")
-    .replace(/Â©/g, "(c)")
-    .replace(/Â®/g, "(R)")
+    .replace(/Ã¢â‚¬Å“|Ã¢â‚¬/g, '"')
+    .replace(/Ã¢â‚¬Ëœ|Ã¢â‚¬â„¢/g, "'")
+    .replace(/Ã¢â‚¬â€œ|Ã¢â‚¬â€/g, "-")
+    .replace(/Ã¢â€ â€™/g, "->")
+    .replace(/Ã¢â€ /g, "<-")
+    .replace(/Ã¢â€žÂ¢/g, "TM")
+    .replace(/Ã‚Â©/g, "(c)")
+    .replace(/Ã‚Â®/g, "(R)")
     .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "");
 }
 
@@ -228,6 +228,28 @@ export async function POST(req) {
 
     if (userError || !user) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("plan, plan_status")
+      .eq("id", user.id)
+      .single();
+
+    const currentPlan = profile?.plan ?? "free";
+    const currentPlanStatus = profile?.plan_status ?? "active";
+    const canCreateFiles =
+      currentPlanStatus === "active" &&
+      ["plus", "premium"].includes(currentPlan);
+
+    if (!canCreateFiles) {
+      return Response.json(
+        {
+          error:
+            "File creation is available on Plus and Premium. Free accounts cannot create Word, PDF, PowerPoint, or image files.",
+        },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();

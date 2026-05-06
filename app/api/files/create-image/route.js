@@ -28,13 +28,20 @@ Style rules:
 - no childish style
 - no horror or gore
 - no distorted anatomy
-- no text
+- pure symbolic visual only
+- no poster design
+- no infographic labels
+- no written headings
+- no readable text of any kind
+- no fake text
 - no words
 - no letters
+- no numbers
 - no titles
 - no captions
 - no logos
 - no typography
+- no labels inside the image
 - do not write "Virtus"
 - do not write "Virtus AI"
 `.trim();
@@ -52,6 +59,28 @@ export async function POST(req) {
 
     if (userError || !user) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("plan, plan_status")
+      .eq("id", user.id)
+      .single();
+
+    const currentPlan = profile?.plan ?? "free";
+    const currentPlanStatus = profile?.plan_status ?? "active";
+    const canCreateFiles =
+      currentPlanStatus === "active" &&
+      ["plus", "premium"].includes(currentPlan);
+
+    if (!canCreateFiles) {
+      return Response.json(
+        {
+          error:
+            "File creation is available on Plus and Premium. Free accounts cannot create Word, PDF, PowerPoint, or image files.",
+        },
+        { status: 403 }
+      );
     }
 
     if (!process.env.OPENAI_API_KEY) {

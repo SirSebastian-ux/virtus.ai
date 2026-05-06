@@ -626,6 +626,28 @@ export async function POST(req) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("plan, plan_status")
+      .eq("id", user.id)
+      .single();
+
+    const currentPlan = profile?.plan ?? "free";
+    const currentPlanStatus = profile?.plan_status ?? "active";
+    const canCreateFiles =
+      currentPlanStatus === "active" &&
+      ["plus", "premium"].includes(currentPlan);
+
+    if (!canCreateFiles) {
+      return Response.json(
+        {
+          error:
+            "File creation is available on Plus and Premium. Free accounts cannot create Word, PDF, PowerPoint, or image files.",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
 
     const title = String(body.title || "Virtus Presentation").trim();

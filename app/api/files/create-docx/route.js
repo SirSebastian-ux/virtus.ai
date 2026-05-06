@@ -19,14 +19,14 @@ function makeSafeFileName(name) {
 
 function cleanInlineText(text) {
   return String(text || "")
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
-    .replace(/[–—]/g, "-")
-    .replace(/→/g, "->")
-    .replace(/←/g, "<-")
-    .replace(/™/g, "TM")
-    .replace(/©/g, "(c)")
-    .replace(/®/g, "(R)")
+    .replace(/[ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã‚Â]/g, '"')
+    .replace(/[ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢]/g, "'")
+    .replace(/[ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â]/g, "-")
+    .replace(/ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢/g, "->")
+    .replace(/ÃƒÂ¢Ã¢â‚¬Â Ã‚Â/g, "<-")
+    .replace(/ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢/g, "TM")
+    .replace(/Ãƒâ€šÃ‚Â©/g, "(c)")
+    .replace(/Ãƒâ€šÃ‚Â®/g, "(R)")
     .replace(/`/g, "")
     .trim();
 }
@@ -139,7 +139,7 @@ function textToParagraphs(text, title = "") {
 
       if (/^[-*]\s+/.test(trimmed)) {
         return new Paragraph({
-          children: markdownTextRuns(`• ${trimmed.replace(/^[-*]\s+/, "")}`, 24),
+          children: markdownTextRuns(`- ${trimmed.replace(/^[-*]\s+/, "")}`, 24),
           spacing: {
             after: 120,
           },
@@ -167,6 +167,28 @@ export async function POST(req) {
 
     if (userError || !user) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("plan, plan_status")
+      .eq("id", user.id)
+      .single();
+
+    const currentPlan = profile?.plan ?? "free";
+    const currentPlanStatus = profile?.plan_status ?? "active";
+    const canCreateFiles =
+      currentPlanStatus === "active" &&
+      ["plus", "premium"].includes(currentPlan);
+
+    if (!canCreateFiles) {
+      return Response.json(
+        {
+          error:
+            "File creation is available on Plus and Premium. Free accounts cannot create Word, PDF, PowerPoint, or image files.",
+        },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();
