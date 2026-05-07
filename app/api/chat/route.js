@@ -2182,7 +2182,7 @@ const reply = (() => {
 
   if (isEmotionalProjectMessage) {
   return [
-    "I hear you. This project is taking a lot of energy because you are not just building an app â€” you are carrying vision, pressure, time, money, expectation, and responsibility inside it.",
+    "I hear you. This project is taking a lot of energy because you are not just building an app Ã¢â‚¬â€ you are carrying vision, pressure, time, money, expectation, and responsibility inside it.",
     "",
     "do not turn today's heaviness into a conclusion about the whole project.",
     "",
