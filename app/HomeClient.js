@@ -49,6 +49,8 @@ const [showPlanOverlay, setShowPlanOverlay] = useState(false);
 const [paymentSyncing, setPaymentSyncing] = useState(false);
 const [listening, setListening] = useState(false);
 const recognitionRef = useRef(null);
+const speechBaseMessageRef = useRef("");
+const speechFinalTranscriptRef = useRef("");
 const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
 const [speaking, setSpeaking] = useState(false);
 const [availableVoices, setAvailableVoices] = useState([]);
@@ -3367,6 +3369,8 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
 
 
 
