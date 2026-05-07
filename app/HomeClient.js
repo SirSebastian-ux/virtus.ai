@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -257,14 +257,40 @@ const handleMicrophoneClick = () => {
     setListening(true);
   };
 
-  recognition.onresult = (event) => {
-  let transcript = "";
+ recognition.onresult = (event) => {
+  let finalTranscript = "";
+  let interimTranscript = "";
 
-  for (let i = 0; i < event.results.length; i += 1) {
-    transcript += event.results[i][0].transcript;
+  for (let i = event.resultIndex; i < event.results.length; i += 1) {
+    const transcript = event.results[i][0].transcript;
+
+    if (event.results[i].isFinal) {
+      finalTranscript += transcript;
+    } else {
+      interimTranscript += transcript;
+    }
   }
 
-  setMessage(transcript.trim());
+  const cleanFinal = finalTranscript.trim();
+  const cleanInterim = interimTranscript.trim();
+
+  setMessage((prev) => {
+    const base = String(prev || "").trim();
+
+    if (cleanFinal && base.endsWith(cleanFinal)) {
+      return base;
+    }
+
+    if (cleanFinal) {
+      return `${base ? `${base} ` : ""}${cleanFinal}`.trim();
+    }
+
+    if (cleanInterim) {
+      return `${base ? `${base} ` : ""}${cleanInterim}`.trim();
+    }
+
+    return base;
+  });
 };
 
   recognition.onerror = () => {
