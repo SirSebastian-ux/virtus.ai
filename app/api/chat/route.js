@@ -22,6 +22,7 @@ import {
 import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
+import { getVirtusLibraryContext } from "@/lib/virtus-library";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -1583,6 +1584,12 @@ ${String(file.extracted_text || "").slice(0, 5000)}
 `;
 }
 
+
+const virtusLibraryContext = await getVirtusLibraryContext({
+  supabase: adminSupabase,
+  message,
+  limit: 6,
+});
 const runtimeFacts =
   runtimeFactsLimit > 0
     ? prioritizedRuntimeFacts.slice(0, runtimeFactsLimit)
@@ -2182,7 +2189,7 @@ const reply = (() => {
 
   if (isEmotionalProjectMessage) {
   return [
-    "I hear you. This project is taking a lot of energy because you are not just building an app Ã¢â‚¬â€ you are carrying vision, pressure, time, money, expectation, and responsibility inside it.",
+    "I hear you. This project is taking a lot of energy because you are not just building an app ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â you are carrying vision, pressure, time, money, expectation, and responsibility inside it.",
     "",
     "do not turn today's heaviness into a conclusion about the whole project.",
     "",
@@ -3770,6 +3777,8 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
   input: `${webSearchContext ? `${webSearchContext}
 
 ` : ""}${latestFileText ? `${latestFileText}
+
+` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
 ` : ""}User request:
 ${message}`,
