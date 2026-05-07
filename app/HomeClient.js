@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -244,68 +244,83 @@ const handleMicrophoneClick = () => {
   }
 
   if (listening && recognitionRef.current) {
-  recognitionRef.current.abort();
-  recognitionRef.current = null;
-  setListening(false);
-  return;
-}
+    recognitionRef.current.stop();
+    recognitionRef.current = null;
+    setListening(false);
+    return;
+  }
+
+  if (recognitionRef.current) {
+    recognitionRef.current.stop();
+    recognitionRef.current = null;
+  }
+
+  const startingMessage = String(message || "").trim();
+  let committedTranscript = "";
 
   const recognition = new SpeechRecognition();
   recognition.lang = "en-US";
   recognition.interimResults = true;
-  recognition.continuous = true;
+  recognition.continuous = false;
 
   recognition.onstart = () => {
     setListening(true);
   };
 
- recognition.onresult = (event) => {
-  let finalTranscript = "";
-  let interimTranscript = "";
+  recognition.onresult = (event) => {
+    let interimTranscript = "";
 
-  for (let i = event.resultIndex; i < event.results.length; i += 1) {
-    const transcript = event.results[i][0].transcript;
+    for (let i = event.resultIndex; i < event.results.length; i += 1) {
+      const transcript = String(event.results[i][0].transcript || "").trim();
 
-    if (event.results[i].isFinal) {
-      finalTranscript += transcript;
-    } else {
-      interimTranscript += transcript;
-    }
-  }
+      if (!transcript) continue;
 
-  const cleanFinal = finalTranscript.trim();
-  const cleanInterim = interimTranscript.trim();
-
-  setMessage((prev) => {
-    const base = String(prev || "").trim();
-
-    if (cleanFinal && base.endsWith(cleanFinal)) {
-      return base;
+      if (event.results[i].isFinal) {
+        if (!committedTranscript.endsWith(transcript)) {
+          committedTranscript = `${committedTranscript} ${transcript}`.trim();
+        }
+      } else {
+        interimTranscript = transcript;
+      }
     }
 
-    if (cleanFinal) {
-      return `${base ? `${base} ` : ""}${cleanFinal}`.trim();
-    }
+    const displayText = [
+      startingMessage,
+      committedTranscript,
+      interimTranscript,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
 
-    if (cleanInterim) {
-      return `${base ? `${base} ` : ""}${cleanInterim}`.trim();
-    }
-
-    return base;
-  });
-};
+    setMessage(displayText);
+  };
 
   recognition.onerror = () => {
     setListening(false);
+    recognitionRef.current = null;
   };
 
   recognition.onend = () => {
     setListening(false);
+    recognitionRef.current = null;
+
+    const finalText = [startingMessage, committedTranscript]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (finalText) {
+      setMessage(finalText);
+    }
   };
 
   recognitionRef.current = recognition;
   recognition.start();
 };
+
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const scrollContainerRef = useRef(null);
