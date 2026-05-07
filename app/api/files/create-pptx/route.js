@@ -37,11 +37,16 @@ function isWeakSlideLine(text) {
     !lower ||
     lower === "title" ||
     lower === "slide title" ||
+    lower === "title slide" ||
+    /^slide\s+\d+\s*[-:]\s*title slide$/i.test(lower) ||
     lower === "proposal" ||
     lower === "short proposal" ||
     lower === "clean proposal" ||
     lower === "professional proposal" ||
     lower.startsWith("yes") ||
+    lower.startsWith("good, i understand") ||
+    lower.startsWith("i understand") ||
+    lower.startsWith("got it") ||
     lower.startsWith("here is") ||
     lower.startsWith("certainly") ||
     lower.startsWith("of course") ||
@@ -67,6 +72,8 @@ function makeSlideTitleFromLine(line, fallback = "Key Focus") {
     clean.split(/\s+/).length > 12 ||
     lower === "title" ||
     lower === "slide title" ||
+    lower === "title slide" ||
+    /^slide\s+\d+\s*[-:]\s*title slide$/i.test(lower) ||
     lower === "proposal" ||
     lower === "short proposal"
   ) {
@@ -121,8 +128,85 @@ function makeSmartFallbackTitle(section, index) {
 
   return `Core Insight ${index + 1}`;
 }
+function cleanGeneratedPresentationContent(content) {
+  const cleanedLines = [];
+  let skippingVisualDirection = false;
+  let skippingImageIdea = false;
+  let skippingDesignNotes = false;
+
+  const lines = String(content || "").split("\n");
+
+  for (const rawLine of lines) {
+    const line = String(rawLine || "").trim();
+    const lower = cleanSlideText(line).toLowerCase();
+
+    if (!line) {
+      continue;
+    }
+
+    if (/^slide\s+\d+\s*[-:\u2013\u2014]\s*/i.test(line)) {
+      skippingVisualDirection = false;
+      skippingImageIdea = false;
+    }
+
+    if (/^design notes\b/i.test(line)) {
+      skippingDesignNotes = true;
+      continue;
+    }
+
+    if (skippingDesignNotes) {
+      continue;
+    }
+
+    if (/^visual direction\s*:/i.test(line)) {
+      skippingVisualDirection = true;
+      continue;
+    }
+
+    if (/^image idea\s*:/i.test(line) || /^image\s*:/i.test(line)) {
+      skippingImageIdea = true;
+      continue;
+    }
+
+    if (skippingVisualDirection || skippingImageIdea) {
+      continue;
+    }
+
+    if (
+      lower.startsWith("sir sebastian, here is") ||
+      lower.startsWith("here is a polished") ||
+      lower.startsWith("good,") ||
+      lower.startsWith("good.") ||
+      lower.startsWith("okay,") ||
+      lower.startsWith("okay.") ||
+      lower.startsWith("ok.") ||
+      lower.startsWith("ok,") ||
+      lower.startsWith("good, i understand") ||
+      lower.startsWith("good, i'll keep") ||
+      lower.startsWith("good, i will keep") ||
+      lower.startsWith("i understand") ||
+      lower.startsWith("got it") ||
+      lower.startsWith("powerpoint content ready") ||
+      lower.startsWith("pptx content ready") ||
+      lower.startsWith("docx/pdf content ready") ||
+      lower.startsWith("click pptx below") ||
+      lower.startsWith("design notes for the presentation") ||
+      lower === "---" ||
+      lower === "----" ||
+      lower === "short explanation on slide:" ||
+      lower === "closing line:"
+    ) {
+      continue;
+    }
+
+    cleanedLines.push(line);
+  }
+
+  return cleanedLines.join("\n");
+}
+
 function splitIntoSlideSections(content) {
-  const lines = String(content || "")
+  const lines = cleanGeneratedPresentationContent(content)
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
@@ -341,8 +425,14 @@ async function createPptxBuffer({ title, content }) {
     lang: "en-US",
   };
 
-  const safeTitle = cleanSlideText(title || "Virtus Presentation");
   const sections = splitIntoSlideSections(content);
+  const rawSafeTitle = cleanSlideText(title || "Virtus Presentation");
+  const safeTitle = cleanSlideText(
+    makeSlideTitleFromLine(
+      rawSafeTitle,
+      cleanSlideText(sections?.[0]?.title || "Virtus Presentation")
+    )
+  );
   const presentationImageData = await generatePresentationImageData({
     title: safeTitle,
     content,
