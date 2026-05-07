@@ -1,4 +1,4 @@
-﻿import { createAdminClient } from "@/lib/supabase-admin";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 const MODULE_TITLES = {
@@ -112,11 +112,19 @@ export async function POST(req) {
       );
     }
 
-    const { data: files, error: filesError } = await admin
+    const isSystemLibraryManager =
+      String(user.email || "").toLowerCase() === "sebastian@ewellnessolutions.com";
+
+    let filesQuery = admin
       .from("user_files")
       .select("id, file_name, file_type, extracted_text")
-      .eq("user_id", user.id)
       .in("id", fileIds);
+
+    if (!isSystemLibraryManager) {
+      filesQuery = filesQuery.eq("user_id", user.id);
+    }
+
+    const { data: files, error: filesError } = await filesQuery;
 
     if (filesError) {
       return Response.json({ error: filesError.message }, { status: 500 });
