@@ -2,16 +2,16 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 const MODULE_TITLES = {
-  1: "Leadership Response ChainÃ¢â€žÂ¢",
+  1: "Leadership Response ChainÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢",
   2: "Responsibility vs. Blame",
   3: "Trigger Mapping & Emotional Patterns",
   4: "Leadership Identity & Blind Spots",
-  5: "Awareness & Thought ObservationÃ¢â€žÂ¢",
-  6: "Operational Decision ArchitectureÃ¢â€žÂ¢",
+  5: "Awareness & Thought ObservationÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢",
+  6: "Operational Decision ArchitectureÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢",
   7: "Mental Focus & Cognitive Energy",
-  8: "Leadership Regulation FoundationÃ¢â€žÂ¢",
+  8: "Leadership Regulation FoundationÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢",
   9: "Behavioral Discipline & Habit Control",
-  10: "High-Stress Environment StabilizationÃ¢â€žÂ¢",
+  10: "High-Stress Environment StabilizationÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢",
 };
 const CATEGORY_RULES = [
   {
@@ -177,7 +177,27 @@ const CATEGORY_RULES = [
 ];
 
 function detectWorkbookCategory(fileName = "", text = "") {
+  const name = String(fileName || "").toLowerCase();
   const combined = `${fileName}\n${String(text).slice(0, 2500)}`.toLowerCase();
+
+  const directFileNameRules = [
+    { category: "emotional-intelligence", words: ["emotional intelligence", "emotional mastery", "emotional regulation", "emotional maturity"] },
+    { category: "relationships", words: ["relationship", "relationships", "trust", "betrayal", "attachment", "intimacy", "partnership"] },
+    { category: "marriage", words: ["marriage", "couple", "conscious partnership", "spiritual intimacy"] },
+    { category: "communication", words: ["communication", "assertive", "public speaking", "voice", "dialogue", "media relations", "cadence"] },
+    { category: "stress-regulation", words: ["stress", "anxiety", "crisis", "grounding", "breathing", "coping", "stabilization"] },
+    { category: "habit-discipline", words: ["habit", "procrastination", "self-sabotage", "discipline", "routine"] },
+    { category: "decision-thinking", words: ["decision", "analytical", "strategic thinking", "planning", "organizing", "project management", "time management", "delegation", "data analysis", "stakeholder"] },
+    { category: "spirituality", words: ["spiritual", "faith", "meditation", "silence", "sacred", "purpose", "energy mastery"] },
+    { category: "mind-discipline", words: ["mind discipline", "self-awareness", "awareness map", "self-talk", "overthinking", "negative thinking", "higher self"] },
+    { category: "leadership", words: ["leadership", "leader", "self-leadership", "authority", "mentorship", "team", "executive"] },
+  ];
+
+  for (const rule of directFileNameRules) {
+    if (rule.words.some((word) => name.includes(word))) {
+      return rule.category;
+    }
+  }
 
   const scored = CATEGORY_RULES.map((rule) => {
     const score = rule.words.reduce((total, word) => {
@@ -210,7 +230,7 @@ function detectModuleNumber(fileName = "", text = "") {
   }
 
   for (const [number, title] of Object.entries(MODULE_TITLES)) {
-    if (combined.toLowerCase().includes(title.toLowerCase().replace("Ã¢â€žÂ¢", ""))) {
+    if (combined.toLowerCase().includes(title.toLowerCase().replace("ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢", ""))) {
       return Number(number);
     }
   }
@@ -385,7 +405,7 @@ export async function POST(req) {
         module_number: moduleNumber,
         module_title: moduleTitle,
         chunk_type: detectChunkType(content),
-        title: `${moduleTitle} Ã¢â‚¬â€ Part ${index + 1}`,
+        title: `${moduleTitle} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Part ${index + 1}`,
         content,
         tags: buildTags(moduleNumber, category, content),
         use_cases: ["chat", "practice", "docx", "pdf", "pptx"],
