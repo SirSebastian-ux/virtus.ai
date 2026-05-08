@@ -3197,7 +3197,7 @@ setRegenerating(true);
             .filter((file) => file?.id && file?.file_name)
             .map((file) => [file.file_name.toLowerCase(), file])
         ).values()
-      ).slice(0, 6);
+      );
 
       return cleanUploadedFiles.length === 0 ? (
         <p className="rounded-xl border border-zinc-800 bg-zinc-950/45 px-3 py-2 text-xs text-zinc-500">
