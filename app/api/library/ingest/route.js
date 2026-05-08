@@ -2,17 +2,203 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 const MODULE_TITLES = {
-  1: "Leadership Response Chain™",
+  1: "Leadership Response ChainÃ¢â€žÂ¢",
   2: "Responsibility vs. Blame",
   3: "Trigger Mapping & Emotional Patterns",
   4: "Leadership Identity & Blind Spots",
-  5: "Awareness & Thought Observation™",
-  6: "Operational Decision Architecture™",
+  5: "Awareness & Thought ObservationÃ¢â€žÂ¢",
+  6: "Operational Decision ArchitectureÃ¢â€žÂ¢",
   7: "Mental Focus & Cognitive Energy",
-  8: "Leadership Regulation Foundation™",
+  8: "Leadership Regulation FoundationÃ¢â€žÂ¢",
   9: "Behavioral Discipline & Habit Control",
-  10: "High-Stress Environment Stabilization™",
+  10: "High-Stress Environment StabilizationÃ¢â€žÂ¢",
 };
+const CATEGORY_RULES = [
+  {
+    category: "relationships",
+    title: "Relationships Coaching Library",
+    words: [
+      "relationship",
+      "relationships",
+      "attachment",
+      "trust",
+      "betrayal",
+      "intimacy",
+      "partnership",
+      "partner",
+      "love",
+      "emotional safety",
+      "vulnerability",
+      "repair",
+      "masculine",
+      "feminine",
+    ],
+  },
+  {
+    category: "marriage",
+    title: "Marriage Preparation Library",
+    words: [
+      "marriage",
+      "couple",
+      "sacred purpose of marriage",
+      "marriage vision",
+      "conscious partnership",
+      "togetherness",
+      "spiritual intimacy",
+    ],
+  },
+  {
+    category: "communication",
+    title: "Communication Coaching Library",
+    words: [
+      "communication",
+      "assertive",
+      "speaking",
+      "public speaking",
+      "voice",
+      "dialogue",
+      "persuasion",
+      "being heard",
+      "media relations",
+      "cadence",
+    ],
+  },
+  {
+    category: "mind-discipline",
+    title: "Mind Discipline Library",
+    words: [
+      "mind discipline",
+      "self-awareness",
+      "awareness",
+      "self-talk",
+      "overthinking",
+      "negative thinking",
+      "focus",
+      "analytical thinking",
+      "mental focus",
+      "cognitive",
+      "higher self",
+    ],
+  },
+  {
+    category: "emotional-intelligence",
+    title: "Emotional Intelligence Library",
+    words: [
+      "emotional intelligence",
+      "emotional mastery",
+      "emotional regulation",
+      "emotional maturity",
+      "emotional release",
+      "emotional wounds",
+      "validation",
+      "triggers",
+    ],
+  },
+  {
+    category: "stress-regulation",
+    title: "Stress Regulation Library",
+    words: [
+      "stress",
+      "anxiety",
+      "crisis",
+      "grounding",
+      "breathing",
+      "coping",
+      "stabilization",
+      "chaos",
+      "pressure",
+      "renewal",
+    ],
+  },
+  {
+    category: "habit-discipline",
+    title: "Habit Discipline Library",
+    words: [
+      "habit",
+      "habits",
+      "procrastination",
+      "discipline",
+      "self-sabotage",
+      "routine",
+      "behavioral discipline",
+      "30-day discipline",
+      "lifestyle redesign",
+    ],
+  },
+  {
+    category: "decision-thinking",
+    title: "Decision Thinking Library",
+    words: [
+      "decision",
+      "decision-making",
+      "analytical",
+      "strategic thinking",
+      "planning",
+      "organizing",
+      "project management",
+      "time management",
+      "delegation",
+      "data analysis",
+      "stakeholder",
+    ],
+  },
+  {
+    category: "spirituality",
+    title: "Spiritual Growth Library",
+    words: [
+      "spiritual",
+      "spirituality",
+      "faith",
+      "meditation",
+      "silence",
+      "heart-mind",
+      "sacred",
+      "purpose",
+      "service",
+      "energy mastery",
+      "becoming the light",
+    ],
+  },
+  {
+    category: "leadership",
+    title: "Leadership Coaching Library",
+    words: [
+      "leadership",
+      "leader",
+      "self-leadership",
+      "responsibility",
+      "authority",
+      "mentorship",
+      "team",
+      "performance",
+      "executive",
+    ],
+  },
+];
+
+function detectWorkbookCategory(fileName = "", text = "") {
+  const combined = `${fileName}\n${String(text).slice(0, 2500)}`.toLowerCase();
+
+  const scored = CATEGORY_RULES.map((rule) => {
+    const score = rule.words.reduce((total, word) => {
+      return combined.includes(word.toLowerCase()) ? total + 1 : total;
+    }, 0);
+
+    return {
+      category: rule.category,
+      score,
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  return scored[0]?.score > 0 ? scored[0].category : "leadership";
+}
+
+function getCategoryTitle(category = "leadership") {
+  return (
+    CATEGORY_RULES.find((rule) => rule.category === category)?.title ||
+    "Virtus Coaching Library"
+  );
+}
 
 function detectModuleNumber(fileName = "", text = "") {
   const combined = `${fileName}\n${String(text).slice(0, 1000)}`;
@@ -24,7 +210,7 @@ function detectModuleNumber(fileName = "", text = "") {
   }
 
   for (const [number, title] of Object.entries(MODULE_TITLES)) {
-    if (combined.toLowerCase().includes(title.toLowerCase().replace("™", ""))) {
+    if (combined.toLowerCase().includes(title.toLowerCase().replace("Ã¢â€žÂ¢", ""))) {
       return Number(number);
     }
   }
@@ -43,8 +229,8 @@ function detectChunkType(text = "") {
   return "concept";
 }
 
-function buildTags(moduleNumber, content = "") {
-  const tags = ["leadership", "virtus", "coaching"];
+function buildTags(moduleNumber, category = "leadership", content = "") {
+  const tags = [category, "virtus", "coaching"];
 
   const clean = content.toLowerCase();
 
@@ -52,9 +238,12 @@ function buildTags(moduleNumber, content = "") {
   if (clean.includes("emotion") || clean.includes("trigger")) tags.push("emotional-regulation");
   if (clean.includes("decision")) tags.push("decision-making");
   if (clean.includes("responsibility") || clean.includes("blame")) tags.push("responsibility");
-  if (clean.includes("stress")) tags.push("stress-regulation");
+  if (clean.includes("stress") || clean.includes("anxiety")) tags.push("stress-regulation");
   if (clean.includes("habit") || clean.includes("discipline")) tags.push("discipline");
-  if (clean.includes("communication")) tags.push("communication");
+  if (clean.includes("communication") || clean.includes("dialogue")) tags.push("communication");
+  if (clean.includes("relationship") || clean.includes("trust")) tags.push("relationships");
+  if (clean.includes("marriage") || clean.includes("couple")) tags.push("marriage");
+  if (clean.includes("spiritual") || clean.includes("faith")) tags.push("spirituality");
 
   return [...new Set(tags)];
 }
@@ -145,13 +334,17 @@ export async function POST(req) {
 
     for (const file of validFiles) {
       const moduleNumber = detectModuleNumber(file.file_name, file.extracted_text);
+      const category = moduleNumber
+        ? "leadership"
+        : detectWorkbookCategory(file.file_name, file.extracted_text);
+
       const moduleTitle = moduleNumber
         ? MODULE_TITLES[moduleNumber]
-        : "Leadership Coaching Library";
+        : getCategoryTitle(category);
 
       const libraryKey = moduleNumber
         ? `ews-leadership-module-${moduleNumber}`
-        : `ews-leadership-${file.id}`;
+        : `ews-${category}-${file.id}`;
 
       const { data: source, error: sourceError } = await admin
         .from("virtus_library_sources")
@@ -160,7 +353,7 @@ export async function POST(req) {
             library_key: libraryKey,
             title: file.file_name,
             source_type: "uploaded_workbook",
-            category: "leadership",
+            category,
             module_number: moduleNumber,
             module_title: moduleTitle,
             visibility: "system",
@@ -188,13 +381,13 @@ export async function POST(req) {
 
       const rows = chunks.map((content, index) => ({
         source_id: source.id,
-        category: "leadership",
+        category,
         module_number: moduleNumber,
         module_title: moduleTitle,
         chunk_type: detectChunkType(content),
-        title: `${moduleTitle} — Part ${index + 1}`,
+        title: `${moduleTitle} Ã¢â‚¬â€ Part ${index + 1}`,
         content,
-        tags: buildTags(moduleNumber, content),
+        tags: buildTags(moduleNumber, category, content),
         use_cases: ["chat", "practice", "docx", "pdf", "pptx"],
       }));
 
@@ -217,6 +410,7 @@ export async function POST(req) {
         file_name: file.file_name,
         success: true,
         module_number: moduleNumber,
+        category,
         module_title: moduleTitle,
         chunks: rows.length,
       });
