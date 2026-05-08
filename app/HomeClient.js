@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -966,54 +966,85 @@ async function handleDeleteFile(file) {
 }
 
 async function handleFileUpload(event) {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  const files = Array.from(event.target.files || []);
+  if (files.length === 0) return;
 
   setUploadingFile(true);
 
-  const formData = new FormData();
-  formData.append("file", file);
+  let successCount = 0;
+  let lastUploadedFile = null;
+  const failedFiles = [];
 
   try {
-    const response = await fetch("/api/files/upload", {
-      method: "POST",
-      body: formData,
-    });
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
 
-    const data = await response.json();
-
-    if (!response.ok) {
       setFileNotice(
-        data.error === "Not authenticated"
-          ? "Sign in required to upload documents."
-          : data.error || "File upload failed."
+        files.length === 1
+          ? `Uploading ${file.name}...`
+          : `Uploading ${index + 1} of ${files.length}: ${file.name}`
       );
-      return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/files/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const message =
+          data.error === "Not authenticated"
+            ? "Sign in required to upload documents."
+            : data.error || "File upload failed.";
+
+        failedFiles.push(`${file.name}: ${message}`);
+        continue;
+      }
+
+      successCount += 1;
+
+      if (data.file?.id) {
+        lastUploadedFile = data.file;
+      }
     }
 
-    setFileNotice("");
-await loadUploadedFiles();
+    await loadUploadedFiles();
 
-if (data.file?.id) {
-  setActiveFile(data.file);
-  setActiveFiles((currentFiles) => {
-    const alreadyAttached = currentFiles.some(
-      (item) => item.id === data.file.id
-    );
+    if (files.length === 1 && lastUploadedFile?.id) {
+      setActiveFile(lastUploadedFile);
+      setActiveFiles((currentFiles) => {
+        const alreadyAttached = currentFiles.some(
+          (item) => item.id === lastUploadedFile.id
+        );
 
-    if (alreadyAttached) {
-      return currentFiles;
+        if (alreadyAttached) {
+          return currentFiles;
+        }
+
+        return [...currentFiles, lastUploadedFile];
+      });
     }
 
-    return [...currentFiles, data.file];
-  });
-}
+    if (failedFiles.length > 0) {
+      setFileNotice(
+        `Uploaded ${successCount} of ${files.length} files. Failed: ${failedFiles[0]}`
+      );
+    } else {
+      setFileNotice(
+        files.length === 1 ? "" : `Uploaded ${successCount} files successfully.`
+      );
+    }
 
-setShowDocumentLibrary(false);
-setShowFileMenu(false);
-setTimeout(() => {
-  textareaRef.current?.focus();
-}, 50);
+    setShowDocumentLibrary(false);
+    setShowFileMenu(false);
+
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
   } catch (error) {
     setFileNotice(error.message || "File upload failed.");
   } finally {
@@ -3088,6 +3119,7 @@ setRegenerating(true);
   <input
     id="virtus-file-upload"
     type="file"
+    multiple
     accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
     className="hidden"
     onChange={handleFileUpload}
