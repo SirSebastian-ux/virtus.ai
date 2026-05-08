@@ -973,6 +973,7 @@ async function handleFileUpload(event) {
 
   let successCount = 0;
   let lastUploadedFile = null;
+  const uploadedFilesForChat = [];
   const failedFiles = [];
 
   try {
@@ -1009,23 +1010,28 @@ async function handleFileUpload(event) {
 
       if (data.file?.id) {
         lastUploadedFile = data.file;
+
+        if (files.length <= 10) {
+          uploadedFilesForChat.push(data.file);
+        }
       }
     }
 
     await loadUploadedFiles();
 
-    if (files.length === 1 && lastUploadedFile?.id) {
+    if (uploadedFilesForChat.length > 0) {
       setActiveFile(lastUploadedFile);
+
       setActiveFiles((currentFiles) => {
-        const alreadyAttached = currentFiles.some(
-          (item) => item.id === lastUploadedFile.id
+        const existingIds = new Set(
+          currentFiles.map((item) => item.id).filter(Boolean)
         );
 
-        if (alreadyAttached) {
-          return currentFiles;
-        }
+        const newFiles = uploadedFilesForChat.filter(
+          (item) => item?.id && !existingIds.has(item.id)
+        );
 
-        return [...currentFiles, lastUploadedFile];
+        return [...currentFiles, ...newFiles];
       });
     }
 
@@ -1033,9 +1039,13 @@ async function handleFileUpload(event) {
       setFileNotice(
         `Uploaded ${successCount} of ${files.length} files. Failed: ${failedFiles[0]}`
       );
+    } else if (files.length === 1) {
+      setFileNotice("");
+    } else if (files.length <= 10) {
+      setFileNotice(`Uploaded and attached ${successCount} files successfully.`);
     } else {
       setFileNotice(
-        files.length === 1 ? "" : `Uploaded ${successCount} files successfully.`
+        `Uploaded ${successCount} files successfully. They were saved to the Document Library.`
       );
     }
 
