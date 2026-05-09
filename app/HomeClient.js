@@ -2877,9 +2877,8 @@ onClick={() => {
 onClick={() => {
   setShowDocumentLibrary(false);
   setShowFileMenu(false);
-  setTimeout(() => {
-    textareaRef.current?.focus();
-  }, 50);
+  setEditingIndex(index);
+  setEditingText(item.text || "");
 }}
         className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-950/20 text-sky-300/70 hover:bg-sky-900/35 hover:text-sky-100"
         aria-label="Edit message"
