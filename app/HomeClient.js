@@ -2797,7 +2797,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
 
       {isTrialGuestExpired && (
         <p className="mt-2 text-xs text-sky-300/70">
-          Trial complete. Create an account to keep your continuity.
+          Trial complete. Create a free account or choose Plus or Premium to keep your continuity.
         </p>
       )}
 
@@ -2813,9 +2813,9 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
           className="inline-block text-xs text-sky-300/70 mt-2 hover:text-sky-200 transition"
         >
           {isTrialGuestExpired
-            ? "Create account to continue"
+            ? "Continue with account or plan"
             : !isAuthenticated && currentAccess?.plan === "trial_guest"
-            ? "Keep your progress"
+            ? "Keep your progress with a free account"
             : displayUpgradeLabel}
         </Link>
       )}
@@ -3437,9 +3437,15 @@ setRegenerating(true);
 className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-14 py-4 pr-28 md:px-16 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
     placeholder={
     isTrialGuestExpired
-      ? "Your Trial Guest access has ended. Please create an account to continue."
+      ? "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue."
       : isDailyLimitReached
-      ? "Daily limit reached for your current plan"
+      ? currentPlanKey === "trial_guest"
+      ? "Trial Guest daily sample limit reached. Create a free account or choose Plus or Premium to continue."
+      : currentPlanKey === "free"
+      ? "Free daily limit reached. Plus unlocks more daily use and stronger coaching."
+      : currentPlanKey === "plus"
+      ? "Plus daily limit reached. Premium / Virtus Prime unlocks unlimited daily use."
+      : "Daily limit reached for your current plan"
       : "Message Virtus..."
   }
   value={message}
