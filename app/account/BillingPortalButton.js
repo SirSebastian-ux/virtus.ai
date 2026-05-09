@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -34,18 +34,18 @@ export default function BillingPortalButton() {
         type="button"
         onClick={openBillingPortal}
         disabled={loading}
-        className="flex w-full items-center justify-between rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-4 text-left text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55 disabled:cursor-not-allowed disabled:opacity-60"
+        className="virtus-theme-card flex w-full items-center justify-between rounded-2xl border border-sky-900/25 px-4 py-4 text-left shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <div>
-          <p className="text-sm font-medium text-sky-100">
+          <p className="text-sm font-medium virtus-theme-title">
             Manage subscription
           </p>
-          <p className="mt-1 text-xs text-zinc-400">
+          <p className="mt-1 text-xs virtus-theme-muted">
             Cancel, update payment, or manage billing
           </p>
         </div>
 
-        <span className="text-sky-300/60">
+        <span className="text-sky-300/70">
           {loading ? "..." : "›"}
         </span>
       </button>

@@ -33,3 +33,54 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+/* Virtus appearance themes */
+:root,
+:root[data-virtus-appearance="dark"] {
+  --virtus-page-bg: #09090b;
+  --virtus-surface-bg: rgba(9, 9, 11, 0.72);
+  --virtus-card-bg: rgba(9, 9, 11, 0.55);
+  --virtus-card-soft-bg: rgba(39, 39, 42, 0.32);
+  --virtus-text-main: #f4f4f5;
+  --virtus-text-soft: #a1a1aa;
+  --virtus-border: rgba(14, 165, 233, 0.22);
+}
+
+:root[data-virtus-appearance="light"] {
+  --virtus-page-bg: #f4f4f5;
+  --virtus-surface-bg: rgba(255, 255, 255, 0.86);
+  --virtus-card-bg: rgba(255, 255, 255, 0.9);
+  --virtus-card-soft-bg: rgba(228, 228, 231, 0.72);
+  --virtus-text-main: #18181b;
+  --virtus-text-soft: #52525b;
+  --virtus-border: rgba(14, 165, 233, 0.24);
+}
+
+.virtus-theme-page {
+  background: var(--virtus-page-bg);
+  color: var(--virtus-text-main);
+}
+
+.virtus-theme-surface {
+  background: var(--virtus-surface-bg);
+  border-color: var(--virtus-border);
+  color: var(--virtus-text-main);
+}
+
+.virtus-theme-card {
+  background: var(--virtus-card-bg);
+  border-color: var(--virtus-border);
+  color: var(--virtus-text-main);
+}
+
+.virtus-theme-card-soft {
+  background: var(--virtus-card-soft-bg);
+  border-color: var(--virtus-border);
+}
+
+.virtus-theme-title {
+  color: var(--virtus-text-main);
+}
+
+.virtus-theme-muted {
+  color: var(--virtus-text-soft);
+}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -32,18 +32,18 @@ export default function LogoutButton() {
         type="button"
         onClick={handleLogout}
         disabled={loading}
-        className="flex w-full items-center justify-between rounded-2xl border border-red-900/40 bg-red-950/20 px-4 py-4 text-left text-red-200 shadow-sm backdrop-blur-sm transition hover:bg-red-950/30 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex w-full items-center justify-between rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-4 text-left text-red-300 shadow-sm backdrop-blur-sm transition hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <div>
           <p className="text-sm font-medium">
             Log out
           </p>
-          <p className="mt-1 text-xs text-red-200/70">
+          <p className="mt-1 text-xs text-red-300/80">
             Sign out of this account
           </p>
         </div>
 
-        <span className="text-red-200/70">
+        <span className="text-red-300/80">
           {loading ? "..." : "›"}
         </span>
       </button>
