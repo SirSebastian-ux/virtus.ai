@@ -44,6 +44,22 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     }
   }, [searchParams, router]);
 
+  useEffect(() => {
+    function resetCheckoutLoading() {
+      setLoadingPlan(null);
+    }
+
+    resetCheckoutLoading();
+
+    window.addEventListener("focus", resetCheckoutLoading);
+    window.addEventListener("pageshow", resetCheckoutLoading);
+
+    return () => {
+      window.removeEventListener("focus", resetCheckoutLoading);
+      window.removeEventListener("pageshow", resetCheckoutLoading);
+    };
+  }, []);
+
   const isGuestSelection = !isAuthenticated;
   const isYearly = billingCycle === "yearly";
 
@@ -54,10 +70,13 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
   async function handlePlanChange(plan) {
     try {
-      setLoadingPlan(plan);
+      setLoadingPlan(null);
       setError("");
 
       if (plan === "plus" || plan === "premium") {
+        const checkoutWindow =
+          typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
+
         const res = await fetch("/api/stripe/checkout", {
           method: "POST",
           headers: {
@@ -69,12 +88,23 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
         const data = await res.json();
 
         if (!res.ok || !data.url) {
+          if (checkoutWindow) {
+            checkoutWindow.close();
+          }
+
           setError(data.error || "Failed to start checkout.");
           setLoadingPlan(null);
           return;
         }
 
-        window.location.href = data.url;
+        setLoadingPlan(null);
+
+        if (checkoutWindow) {
+          checkoutWindow.location.href = data.url;
+        } else {
+          window.location.href = data.url;
+        }
+
         return;
       }
 
@@ -295,7 +325,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             ) : canChoosePlus ? (
               <button
                 type="button"
-                disabled={currentPlan === "plus" || loadingPlan !== null}
+                disabled={currentPlan === "plus"}
                 onClick={() => handlePlanChange("plus")}
                 className={
                   currentPlan === "plus" ? currentButtonClass : activeButtonClass
@@ -303,8 +333,6 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               >
                 {currentPlan === "plus"
                   ? "Current plan"
-                  : loadingPlan === "plus"
-                  ? "Opening checkout..."
                   : isYearly
                   ? "Upgrade to Plus Yearly"
                   : "Upgrade to Plus Monthly"}
@@ -379,7 +407,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             ) : canChoosePremium ? (
               <button
                 type="button"
-                disabled={currentPlan === "premium" || loadingPlan !== null}
+                disabled={currentPlan === "premium"}
                 onClick={() => handlePlanChange("premium")}
                 className={
                   currentPlan === "premium" ? currentButtonClass : primaryButtonClass
@@ -387,8 +415,6 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               >
                 {currentPlan === "premium"
                   ? "Current plan"
-                  : loadingPlan === "premium"
-                  ? "Opening checkout..."
                   : isYearly
                   ? "Upgrade to Premium Yearly"
                   : "Upgrade to Premium Monthly"}
