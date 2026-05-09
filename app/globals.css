@@ -46,13 +46,13 @@ body {
 }
 
 :root[data-virtus-appearance="light"] {
-  --virtus-page-bg: #f4f4f5;
-  --virtus-surface-bg: rgba(255, 255, 255, 0.86);
-  --virtus-card-bg: rgba(255, 255, 255, 0.9);
-  --virtus-card-soft-bg: rgba(228, 228, 231, 0.72);
+  --virtus-page-bg: #cfd6df;
+  --virtus-surface-bg: rgba(218, 225, 234, 0.96);
+  --virtus-card-bg: rgba(224, 230, 238, 0.97);
+  --virtus-card-soft-bg: rgba(193, 204, 218, 0.9);
   --virtus-text-main: #18181b;
-  --virtus-text-soft: #52525b;
-  --virtus-border: rgba(14, 165, 233, 0.24);
+  --virtus-text-soft: #334155;
+  --virtus-border: rgba(2, 96, 145, 0.5);
 }
 
 .virtus-theme-page {
@@ -83,4 +83,122 @@ body {
 
 .virtus-theme-muted {
   color: var(--virtus-text-soft);
+}
+/* Virtus chat light mode */
+:root[data-virtus-appearance="light"] .virtus-chat-root {
+  background: #cfd6df !important;
+  color: #18181b !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="bg-black"],
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="bg-zinc-950"],
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="bg-zinc-900"],
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="bg-zinc-800"] {
+  background-color: rgba(224, 230, 238, 0.94) !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="bg-sky-950"] {
+  background-color: rgba(125, 211, 252, 0.38) !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="border-zinc"],
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="border-sky"] {
+  border-color: rgba(2, 96, 145, 0.42) !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-white,
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-zinc-100,
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-zinc-200,
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-zinc-300,
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-gray-300 {
+  color: #18181b !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-zinc-400,
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-zinc-500,
+:root[data-virtus-appearance="light"] .virtus-chat-root .text-gray-400 {
+  color: #334155 !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root [class*="text-sky"] {
+  color: #075985 !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-theme-page [class*="text-sky"] {
+  color: #075985 !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-theme-page [class*="border-sky"] {
+  border-color: rgba(2, 96, 145, 0.42) !important;
+}
+/* Virtus danger button */
+.virtus-danger-button {
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.virtus-danger-button:hover {
+  background: rgba(127, 29, 29, 0.28);
+}
+
+.virtus-danger-text {
+  color: #fca5a5;
+}
+
+.virtus-danger-muted {
+  color: rgba(252, 165, 165, 0.82);
+}
+
+:root[data-virtus-appearance="light"] .virtus-danger-button {
+  color: #991b1b;
+  background: rgba(254, 226, 226, 0.9);
+  border-color: rgba(220, 38, 38, 0.48);
+}
+
+:root[data-virtus-appearance="light"] .virtus-danger-button:hover {
+  background: rgba(254, 202, 202, 0.92);
+}
+
+:root[data-virtus-appearance="light"] .virtus-danger-text {
+  color: #991b1b;
+}
+
+:root[data-virtus-appearance="light"] .virtus-danger-muted {
+  color: #b91c1c;
+}
+/* Virtus light mode input readability */
+:root[data-virtus-appearance="light"] .virtus-chat-root input,
+:root[data-virtus-appearance="light"] .virtus-chat-root textarea {
+  color: #111827 !important;
+  caret-color: #075985 !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root input::placeholder,
+:root[data-virtus-appearance="light"] .virtus-chat-root textarea::placeholder {
+  color: #64748b !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root .whitespace-pre-wrap {
+  color: #111827 !important;
+}
+/* Virtus light mode small action buttons */
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-6"],
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-7"],
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-8"] {
+  background-color: rgba(226, 232, 240, 0.55) !important;
+  color: #075985 !important;
+  border-color: rgba(2, 96, 145, 0.28) !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-6"]:hover,
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-7"]:hover,
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-8"]:hover {
+  background-color: rgba(203, 213, 225, 0.72) !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-6"]:active,
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-7"]:active,
+:root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-8"]:active {
+  background-color: rgba(186, 199, 215, 0.82) !important;
 }

@@ -64,6 +64,28 @@ const edgeSwipeStartRef = useRef(null);
 const [voiceStyle, setVoiceStyle] = useState("default");
 const speechRef = useRef(null);
 
+useEffect(() => {
+  function syncVirtusAppearance() {
+    const savedAppearance = localStorage.getItem("virtus_appearance");
+    const nextAppearance = savedAppearance === "light" ? "light" : "dark";
+
+    document.documentElement.setAttribute(
+      "data-virtus-appearance",
+      nextAppearance
+    );
+  }
+
+  syncVirtusAppearance();
+
+  window.addEventListener("storage", syncVirtusAppearance);
+  window.addEventListener("focus", syncVirtusAppearance);
+
+  return () => {
+    window.removeEventListener("storage", syncVirtusAppearance);
+    window.removeEventListener("focus", syncVirtusAppearance);
+  };
+}, []);
+
 function beginFileCreation(type) {
   if (creatingFileLockRef.current) return false;
 
@@ -2114,7 +2136,7 @@ return (
   )}
 
 <main
-  className="h-[100dvh] md:h-screen overflow-hidden bg-zinc-900 text-zinc-100"
+  className="virtus-chat-root h-[100dvh] md:h-screen overflow-hidden bg-zinc-900 text-zinc-100"
   onClick={() => {
     if (!showPlanOverlay) return;
     setShowPlanOverlay(false);

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -43,7 +43,7 @@ export default function CustomizeAppearance() {
         <h3 className="mt-2 text-lg font-semibold text-sky-100">
           Appearance
         </h3>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm virtus-theme-muted">
           Choose how Virtus looks on your device.
         </p>
       </div>
@@ -70,7 +70,7 @@ export default function CustomizeAppearance() {
           <p className="mt-4 text-sm font-semibold text-sky-100">
             Virtus Dark
           </p>
-          <p className="mt-1 text-xs leading-5 text-zinc-400">
+          <p className="mt-1 text-sm leading-6 virtus-theme-muted">
             Premium dark grey, white writing, and sky-blue accents.
           </p>
         </button>
@@ -96,7 +96,7 @@ export default function CustomizeAppearance() {
           <p className="mt-4 text-sm font-semibold text-sky-100">
             Virtus Light
           </p>
-          <p className="mt-1 text-xs leading-5 text-zinc-400">
+          <p className="mt-1 text-sm leading-6 virtus-theme-muted">
             Light clarity, dark readable writing, and soft sky-blue accents.
           </p>
         </button>
