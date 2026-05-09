@@ -8,6 +8,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState("login");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,9 +29,9 @@ export default function LoginPage() {
         });
 
         if (error) {
-          setMessage("❌ " + error.message);
+          setMessage("Error: " + error.message);
         } else {
-          setMessage("✅ Account created. Check your email and confirm your account before signing in.");
+          setMessage("Account created. Check your email and confirm your account before signing in.");
           setEmail("");
           setPassword("");
         }
@@ -113,14 +114,37 @@ export default function LoginPage() {
             <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-3 w-full rounded-2xl border border-sky-900/25 bg-zinc-950/45 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-sky-800/50 focus:bg-zinc-950/65"
-              placeholder="Enter password"
-              required
-            />
+            <div className="relative mt-3">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/45 px-4 py-3 pr-14 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-sky-800/50 focus:bg-zinc-950/65"
+                placeholder="Enter password"
+                required
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-sky-300/70 transition hover:bg-sky-950/35 hover:text-sky-100"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                    <path d="M3 3l18 18" />
+                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                    <path d="M9.88 4.24A10.72 10.72 0 0 1 12 4c7 0 10 8 10 8a15.88 15.88 0 0 1-3.21 4.46" />
+                    <path d="M6.61 6.61C3.98 8.36 2 12 2 12s3 8 10 8a10.84 10.84 0 0 0 5.39-1.39" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                    <path d="M2 12s3-8 10-8 10 8 10 8-3 8-10 8S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <button
