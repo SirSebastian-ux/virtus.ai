@@ -619,12 +619,12 @@ function getPlanCapabilityCard(plan) {
   if (plan === "trial_guest") {
     return {
       title: "Trial Guest",
-      subtitle: "You are testing the stronger Virtus experience.",
+      subtitle: "3-day premium-style sample.",
       bullets: [
-        "Strong premium-style feel for a limited trial",
-        "Can guide reflection, planning, and pattern awareness",
-        "Keeps continuity during the trial period",
-        "After trial end, create an account to continue",
+        "A strong preview of the deeper Virtus experience",
+        "Good for reflection, planning, and pattern awareness",
+        "Keeps short-term continuity during the trial",
+        "After the trial, create an account to keep using Virtus",
       ],
     };
   }
@@ -632,12 +632,12 @@ function getPlanCapabilityCard(plan) {
   if (plan === "free") {
     return {
       title: "Free",
-      subtitle: "A lighter Virtus layer for everyday use.",
+      subtitle: "$0 entry account.",
       bullets: [
-        "Clear and useful answers",
-        "Light awareness and challenge",
-        "Basic saved-chat continuity",
-        "Good for normal daily support",
+        "Saved chats for basic continuity",
+        "Light guidance for practical questions and daily reflection",
+        "Standard usage for simple support",
+        "Best for trying Virtus before upgrading",
       ],
     };
   }
@@ -645,24 +645,24 @@ function getPlanCapabilityCard(plan) {
   if (plan === "plus") {
     return {
       title: "Plus",
-      subtitle: "A stronger personal coaching layer.",
+      subtitle: "$19/month or $15.99/month yearly.",
       bullets: [
-        "Stronger pattern detection and thought awareness",
-        "More direct coaching-style guidance",
-        "Stronger personal continuity",
-        "Better support for reflection, planning, and decisions",
+        "Stronger personal coaching and emotional support",
+        "Better memory and continuity across chats",
+        "More guided help with decisions, habits, and self-discipline",
+        "Includes support for up to 3 project spaces",
       ],
     };
   }
 
   return {
     title: "Premium / Virtus Prime",
-    subtitle: "The strongest Virtus layer.",
+    subtitle: "$49/month or $44.99/month yearly.",
     bullets: [
-      "Deepest personalization and continuity",
-      "Strongest cognitive discipline and correction",
-      "Strategic guidance and project continuity",
-      "Highest support depth across personal and project work",
+      "Deepest strategic and executive guidance",
+      "Strongest personalization, correction, and continuity",
+      "Best for leadership, coaching, projects, and long-term transformation",
+      "Includes advanced support for up to 50 project spaces",
     ],
   };
 }
@@ -2523,42 +2523,42 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
         {[
           {
             title: "Trial Guest",
-            subtitle: "Premium-style trial access",
+            subtitle: "3-day premium-style sample",
             bullets: [
-              "Strong guided experience during the trial",
-              "Can support reflection, planning, and awareness work",
-              "Keeps continuity during the trial period",
-              "Ends after the trial and then requires account continuation",
+              "A strong preview of the deeper Virtus experience",
+              "Good for testing reflection, planning, and pattern awareness",
+              "Keeps short-term continuity during the trial",
+              "After the trial, create an account to keep using Virtus",
             ],
           },
           {
             title: "Free",
-            subtitle: "Light Virtus layer",
+            subtitle: "$0 entry account",
             bullets: [
-              "Clear and useful help",
-              "Lighter awareness and challenge",
-              "Basic saved-chat continuity",
-              "Best for normal daily support",
+              "Saved chats for basic continuity",
+              "Light guidance for practical questions and daily reflection",
+              "Standard usage for simple support",
+              "Best for trying Virtus before upgrading",
             ],
           },
           {
             title: "Plus",
-            subtitle: "Stronger personal coaching layer",
+            subtitle: "$19/month or $15.99/month yearly",
             bullets: [
-              "More direct coaching-style support",
-              "Stronger pattern and thought awareness",
-              "Better personal continuity",
-              "Better for reflection, planning, and decisions",
+              "Stronger personal coaching and emotional support",
+              "Better memory and continuity across chats",
+              "More guided help with decisions, habits, and self-discipline",
+              "Includes support for up to 3 project spaces",
             ],
           },
           {
             title: "Premium / Virtus Prime",
-            subtitle: "Strongest Virtus layer",
+            subtitle: "$49/month or $44.99/month yearly",
             bullets: [
-              "Deepest personalization",
-              "Strongest guidance and correction",
-              "Strategic and project continuity",
-              "Highest support depth",
+              "Deepest strategic and executive guidance",
+              "Strongest personalization, correction, and continuity",
+              "Best for leadership, coaching, projects, and long-term transformation",
+              "Includes advanced support for up to 50 project spaces",
             ],
           },
         ].map((card) => (
