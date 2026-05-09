@@ -1986,7 +1986,7 @@ const renderAssistantActions = (item, index) => {
           type="button"
           title="Upgrade to create files"
           onClick={() => {
-            setMessage("File creation is available on Trial Guest, Plus, and Premium. Free accounts can use chat, but cannot create Word, PDF, PowerPoint, or image files.");
+            setMessage("File creation is part of Plus and Premium. Upgrade to create Word, PDF, PowerPoint, and image files directly from Virtus answers. Free accounts can continue using chat normally.");
             textareaRef.current?.focus();
           }}
           className={iconClass}
