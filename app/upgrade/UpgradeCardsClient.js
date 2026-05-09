@@ -180,6 +180,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
           <p className="mt-1 text-sm text-zinc-400">
             Choose monthly flexibility or yearly savings before upgrading.
           </p>
+          <p className="mt-3 max-w-2xl rounded-2xl border border-sky-900/25 bg-black/25 px-4 py-3 text-xs leading-5 text-sky-100/75">
+            Checkout opens in a new tab. Complete your payment there. After payment,
+            Virtus will activate your plan automatically.
+          </p>
         </div>
 
         <div className="inline-flex w-full rounded-full border border-sky-900/25 bg-black/30 p-1 sm:w-auto">
