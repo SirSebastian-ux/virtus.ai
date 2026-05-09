@@ -5,11 +5,18 @@ import { createClient } from "@/lib/supabase-server";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { plan } = body;
+    const { plan, billingCycle = "monthly" } = body;
 
     if (!plan || (plan !== "plus" && plan !== "premium")) {
       return NextResponse.json(
         { error: "Invalid plan selected." },
+        { status: 400 }
+      );
+    }
+
+    if (billingCycle !== "monthly" && billingCycle !== "yearly") {
+      return NextResponse.json(
+        { error: "Invalid billing cycle selected." },
         { status: 400 }
       );
     }
@@ -28,9 +35,13 @@ export async function POST(req) {
     }
 
     const priceId =
-      plan === "plus"
+      plan === "plus" && billingCycle === "monthly"
         ? process.env.STRIPE_PLUS_MONTHLY_PRICE_ID
-        : process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID;
+        : plan === "plus" && billingCycle === "yearly"
+        ? process.env.STRIPE_PLUS_YEARLY_PRICE_ID
+        : plan === "premium" && billingCycle === "monthly"
+        ? process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID
+        : process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID;
 
     if (!priceId) {
       return NextResponse.json(
@@ -50,21 +61,23 @@ export async function POST(req) {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/upgrade?success=true&plan=${plan}`,
+      success_url: `${appUrl}/upgrade?success=true&plan=${plan}&billing=${billingCycle}`,
       cancel_url: `${appUrl}/upgrade?canceled=true`,
       metadata: {
         user_id: user.id,
         virtus_plan: plan,
+        virtus_billing_cycle: billingCycle,
       },
       subscription_data: {
         metadata: {
           user_id: user.id,
           virtus_plan: plan,
+          virtus_billing_cycle: billingCycle,
         },
       },
     });
 
-        return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("STRIPE CHECKOUT ERROR FULL:", {
       message: error.message,
