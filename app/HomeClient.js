@@ -2114,7 +2114,7 @@ return (
   )}
 
 <main
-  className="h-[100dvh] md:h-screen overflow-hidden bg-black text-white"
+  className="h-[100dvh] md:h-screen overflow-hidden bg-zinc-900 text-zinc-100"
   onClick={() => {
     if (!showPlanOverlay) return;
     setShowPlanOverlay(false);
@@ -2481,7 +2481,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
         </aside>
 
 <section
-  className="relative flex-1 min-w-0 flex justify-center bg-black"
+  className="relative flex-1 min-w-0 flex justify-center bg-zinc-900"
   onWheel={(e) => {
     if (!scrollContainerRef.current) return;
     scrollContainerRef.current.scrollTop += e.deltaY;
@@ -2834,7 +2834,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                   {conversation.map((item, index) => (
                     <div
                       key={index}
-className={`relative max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 break-words ${
+className={`relative max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
 item.role === "user" && !loading
   ? "mb-12"
   : ""
