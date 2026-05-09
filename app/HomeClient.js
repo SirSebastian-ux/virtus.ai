@@ -2244,7 +2244,13 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                       onClick={() => {
                         if (!canUseCategory) {
                           setMessage(
-                            `This practice category requires ${requiredPlan}. Please upgrade to unlock it.`
+                            isTrialGuestExpired
+                              ? "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue using Virtus practice."
+                              : requiredPlan === "plus"
+                              ? "This practice is part of Plus. Plus unlocks guided coaching categories for decisions, emotions, habits, and regular self-discipline work."
+                              : requiredPlan === "premium"
+                              ? "This practice is part of Premium / Virtus Prime. Premium unlocks the deepest strategic, leadership, project, and transformation practices."
+                              : "Create a free account to unlock this practice category."
                           );
                           setPracticeOpen(false);
                           setIsPracticeMode(null);
@@ -2698,7 +2704,13 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                       onClick={() => {
                         if (!canUseCategory) {
                           setMessage(
-                            `This practice category requires ${requiredPlan}. Please upgrade to unlock it.`
+                            isTrialGuestExpired
+                              ? "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue using Virtus practice."
+                              : requiredPlan === "plus"
+                              ? "This practice is part of Plus. Plus unlocks guided coaching categories for decisions, emotions, habits, and regular self-discipline work."
+                              : requiredPlan === "premium"
+                              ? "This practice is part of Premium / Virtus Prime. Premium unlocks the deepest strategic, leadership, project, and transformation practices."
+                              : "Create a free account to unlock this practice category."
                           );
                           setPracticeOpen(false);
                           setShowMobileMenu(false);
@@ -3510,7 +3522,6 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
-
 
 
 
