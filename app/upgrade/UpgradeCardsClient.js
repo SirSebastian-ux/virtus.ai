@@ -12,6 +12,28 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
+    function syncUpgradeAppearance() {
+      const savedAppearance = localStorage.getItem("virtus_appearance");
+      const nextAppearance = savedAppearance === "light" ? "light" : "dark";
+
+      document.documentElement.setAttribute(
+        "data-virtus-appearance",
+        nextAppearance
+      );
+    }
+
+    syncUpgradeAppearance();
+
+    window.addEventListener("storage", syncUpgradeAppearance);
+    window.addEventListener("focus", syncUpgradeAppearance);
+
+    return () => {
+      window.removeEventListener("storage", syncUpgradeAppearance);
+      window.removeEventListener("focus", syncUpgradeAppearance);
+    };
+  }, []);
+
+  useEffect(() => {
     const success = searchParams.get("success");
     const selectedPlan = searchParams.get("plan");
     const selectedBilling = searchParams.get("billing");
@@ -133,22 +155,22 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   }
 
   const cardClass =
-    "flex h-full flex-col rounded-3xl border border-sky-900/20 bg-zinc-950/35 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/45 hover:bg-zinc-950/55";
+    "virtus-theme-card flex h-full flex-col rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/45 hover:bg-sky-950/10";
 
   const premiumCardClass =
-    "flex h-full flex-col rounded-3xl border border-sky-700/45 bg-sky-950/20 p-6 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-500/55 hover:bg-sky-950/30";
+    "virtus-theme-card flex h-full flex-col rounded-3xl border border-sky-700/45 p-6 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-500/55 hover:bg-sky-950/10";
 
   const planLabelClass =
     "text-xs uppercase tracking-[0.18em] text-sky-300/55";
 
   const titleClass =
-    "mt-3 text-xl font-semibold text-sky-100";
+    "mt-3 text-xl font-semibold virtus-theme-title";
 
   const descriptionClass =
-    "mt-3 text-sm leading-6 text-zinc-400";
+    "mt-3 text-sm leading-6 virtus-theme-muted";
 
   const featureListClass =
-    "mt-5 space-y-3 text-sm leading-6 text-zinc-300";
+    "mt-5 space-y-3 text-sm leading-6 virtus-theme-title";
 
   const featureDotClass =
     "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/80";
@@ -160,10 +182,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     "mt-6 rounded-2xl border border-sky-500/50 bg-sky-500/15 px-4 py-2.5 text-sm font-semibold text-sky-50 shadow-sm shadow-sky-950/20 transition hover:border-sky-400/70 hover:bg-sky-500/25 disabled:opacity-50";
 
   const currentButtonClass =
-    "mt-6 rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-2.5 text-sm text-sky-300/50";
+    "mt-6 rounded-2xl border border-sky-900/20 bg-sky-950/10 px-4 py-2.5 text-sm text-sky-700/70";
 
   const noteClass =
-    "mt-4 rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-3 text-xs leading-5 text-zinc-500";
+    "virtus-theme-card-soft mt-4 rounded-2xl border border-sky-900/20 px-4 py-3 text-sm leading-6 virtus-theme-muted";
 
   const toggleButtonClass = (value) =>
     billingCycle === value
@@ -172,21 +194,21 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-3xl border border-sky-900/20 bg-zinc-950/30 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="virtus-theme-card flex flex-col gap-3 rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-sky-300/55">
             Billing
           </p>
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1 text-sm virtus-theme-muted">
             Choose monthly flexibility or yearly savings before upgrading.
           </p>
-          <p className="mt-3 max-w-2xl rounded-2xl border border-sky-900/25 bg-black/25 px-4 py-3 text-xs leading-5 text-sky-100/75">
+          <p className="virtus-theme-card-soft mt-3 max-w-2xl rounded-2xl border border-sky-900/25 px-4 py-3 text-sm leading-6 virtus-theme-muted">
             Checkout opens in a new tab. Complete your payment there. After payment,
             Virtus will activate your plan automatically.
           </p>
         </div>
 
-        <div className="inline-flex w-full rounded-full border border-sky-900/25 bg-black/30 p-1 sm:w-auto">
+        <div className="inline-flex w-full rounded-full border border-sky-900/25 bg-sky-950/10 p-1 sm:w-auto">
           <button
             type="button"
             onClick={() => setBillingCycle("monthly")}
@@ -213,10 +235,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <h2 className={titleClass}>Start with clarity</h2>
 
-              <div className="mt-4 rounded-2xl border border-sky-900/25 bg-black/25 px-4 py-3">
-                <p className="text-2xl font-semibold text-sky-50">
+              <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-sky-900/25 px-4 py-3">
+                <p className="text-2xl font-semibold virtus-theme-title">
                   $0{" "}
-                  <span className="text-sm font-normal text-zinc-400">
+                  <span className="text-sm font-normal virtus-theme-muted">
                     / free account
                   </span>
                 </p>
@@ -278,10 +300,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <h2 className={titleClass}>Guided coaching layer</h2>
 
-              <div className="mt-4 rounded-2xl border border-sky-900/25 bg-black/25 px-4 py-3">
-                <p className="text-2xl font-semibold text-sky-50">
+              <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-sky-900/25 px-4 py-3">
+                <p className="text-2xl font-semibold virtus-theme-title">
                   {isYearly ? "$15.99" : "$19"}{" "}
-                  <span className="text-sm font-normal text-zinc-400">
+                  <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
                 </p>
@@ -360,10 +382,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <h2 className={titleClass}>Strategic executive layer</h2>
 
-              <div className="mt-4 rounded-2xl border border-sky-500/30 bg-black/25 px-4 py-3 shadow-sm shadow-sky-950/20">
-                <p className="text-2xl font-semibold text-sky-50">
+              <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-sky-500/30 px-4 py-3 shadow-sm shadow-sky-950/20">
+                <p className="text-2xl font-semibold virtus-theme-title">
                   {isYearly ? "$44.99" : "$49"}{" "}
-                  <span className="text-sm font-normal text-zinc-400">
+                  <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
                 </p>

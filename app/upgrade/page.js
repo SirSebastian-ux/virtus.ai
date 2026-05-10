@@ -22,18 +22,18 @@ export default async function UpgradePage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen virtus-theme-page">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-8 py-12">
-        <div className="mb-10 rounded-3xl border border-sky-900/20 bg-zinc-950/25 px-6 py-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+        <div className="virtus-theme-surface mb-10 rounded-3xl border border-sky-900/20 px-6 py-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
           <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
             Virtus AI
           </p>
 
-          <h1 className="mt-3 text-3xl font-semibold text-sky-100">
+          <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
             Choose your Virtus plan
           </h1>
 
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
+          <p className="mt-3 max-w-2xl text-sm leading-6 virtus-theme-muted">
             Choose the level of Virtus support and continuity that matches your
             current stage. Billing is active and plan upgrades now work through
             the real payment flow.
@@ -43,7 +43,7 @@ export default async function UpgradePage() {
             Current plan: {getPlanLabel(currentPlan)}
           </div>
 
-          <p className="mt-3 text-sm text-zinc-500">
+          <p className="mt-3 text-sm virtus-theme-muted">
             Your selected plan will activate based on your account billing state.
           </p>
         </div>
