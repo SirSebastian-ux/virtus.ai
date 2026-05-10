@@ -489,11 +489,30 @@ const handleMicrophoneClick = () => {
   };
 
   const getPracticeCategoryPrompt = (category) => {
+    const pickRandomPrompt = (prompts) => {
+      if (!Array.isArray(prompts) || prompts.length === 0) {
+        return null;
+      }
+
+      const randomIndex = Math.floor(Math.random() * prompts.length);
+      return prompts[randomIndex];
+    };
+
     if (isTrialGuestPracticeSample(category)) {
-      return category.trialGuestPrompt || category.prompt;
+      return (
+        pickRandomPrompt(category.trialGuestPrompts) ||
+        category.trialGuestPrompt ||
+        pickRandomPrompt(category.prompts) ||
+        category.prompt ||
+        `I want to practice ${category.title}. Start with one simple exercise.`
+      );
     }
 
-    return category.prompt;
+    return (
+      pickRandomPrompt(category.prompts) ||
+      category.prompt ||
+      `I want to practice ${category.title}. Start with one simple exercise.`
+    );
   };
 
   const getPracticeCategoryAccessLabel = (category, canUseCategory) => {
@@ -3550,6 +3569,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
