@@ -202,3 +202,19 @@ body {
 :root[data-virtus-appearance="light"] .virtus-chat-root button[class*="h-8"]:active {
   background-color: rgba(186, 199, 215, 0.82) !important;
 }
+/* Virtus themed form controls */
+.virtus-theme-input {
+  background: var(--virtus-card-bg);
+  border-color: var(--virtus-border);
+  color: var(--virtus-text-main);
+}
+
+.virtus-theme-input::placeholder {
+  color: var(--virtus-text-soft);
+  opacity: 0.72;
+}
+
+.virtus-theme-input:focus {
+  border-color: rgba(2, 132, 199, 0.58);
+  background: var(--virtus-surface-bg);
+}

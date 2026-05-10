@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
@@ -12,6 +12,28 @@ export default function LoginPage() {
   const [mode, setMode] = useState("login");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    function syncLoginAppearance() {
+      const savedAppearance = localStorage.getItem("virtus_appearance");
+      const nextAppearance = savedAppearance === "light" ? "light" : "dark";
+
+      document.documentElement.setAttribute(
+        "data-virtus-appearance",
+        nextAppearance
+      );
+    }
+
+    syncLoginAppearance();
+
+    window.addEventListener("storage", syncLoginAppearance);
+    window.addEventListener("focus", syncLoginAppearance);
+
+    return () => {
+      window.removeEventListener("storage", syncLoginAppearance);
+      window.removeEventListener("focus", syncLoginAppearance);
+    };
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -80,22 +102,22 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-3xl border border-sky-900/20 bg-zinc-950/35 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+    <main className="min-h-screen virtus-theme-page flex items-center justify-center px-6">
+      <div className="virtus-theme-surface w-full max-w-md rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
         <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
           Virtus AI
         </p>
 
-        <h1 className="mt-3 text-3xl font-semibold text-sky-100">
+        <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
           {mode === "signup" ? "Create account" : "Sign in"}
         </h1>
 
-        <p className="mt-2 mb-6 text-sm leading-6 text-zinc-400">
+        <p className="mt-2 mb-6 text-sm leading-6 virtus-theme-muted">
           Access Virtus AI with your personal account.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-4 shadow-sm shadow-sky-950/10">
+          <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10">
             <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
               Email
             </label>
@@ -104,13 +126,13 @@ export default function LoginPage() {
   pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-3 w-full rounded-2xl border border-sky-900/25 bg-zinc-950/45 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-sky-800/50 focus:bg-zinc-950/65"
+              className="virtus-theme-input mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-sm outline-none transition"
               placeholder="you@example.com"
               required
             />
           </div>
 
-          <div className="rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-4 shadow-sm shadow-sky-950/10">
+          <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10">
             <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
               Password
             </label>
@@ -119,7 +141,7 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/45 px-4 py-3 pr-14 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-sky-800/50 focus:bg-zinc-950/65"
+                className="virtus-theme-input w-full rounded-2xl border border-sky-900/25 px-4 py-3 pr-14 text-sm outline-none transition"
                 placeholder="Enter password"
                 required
               />
@@ -161,7 +183,7 @@ export default function LoginPage() {
         </form>
 
         {message ? (
-          <p className="mt-4 rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-3 text-sm text-white">
+          <p className="virtus-theme-card mt-4 rounded-2xl border border-sky-900/20 px-4 py-3 text-sm virtus-theme-title">
             {message}
           </p>
         ) : null}
