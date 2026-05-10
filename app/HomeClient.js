@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -527,6 +527,62 @@ const handleMicrophoneClick = () => {
     }
 
     return canUseCategory ? requiredPlan : `Locked - ${requiredPlan}`;
+  };
+
+  const getLockedPracticeCategoryMessage = (category, requiredPlan) => {
+    if (isTrialGuestExpired) {
+      return "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue using Virtus Practice.";
+    }
+
+    const practiceName = category?.title || "This practice";
+
+    const categoryMessages = {
+      "mind-discipline":
+        "Mind Discipline is a Plus practice because it trains thought observation, awareness before emotion, and disciplined action. Upgrade to Plus to unlock deeper cognitive training.",
+      "anxiety-support":
+        "Anxiety Support is a Plus practice because it uses deeper thought clarity, grounding, and calmer interpretation. Upgrade to Plus to unlock this guided support.",
+      "leadership-skills":
+        "Leadership Skills is a Plus practice because it trains responsibility, decision quality, and communication under pressure. Upgrade to Plus to unlock leadership practice.",
+      "emotional-intelligence":
+        "Emotional Intelligence is a Plus practice because it trains emotional awareness, regulation, empathy, and mature response. Upgrade to Plus to unlock this category.",
+      "relationships":
+        "Relationships is a Plus practice because it supports emotional maturity, boundaries, repair, and clear communication. Upgrade to Plus to unlock relationship practice.",
+      "habit-recovery-support":
+        "Habit & Recovery Support is a Plus practice because it works with triggers, urges, pattern interruption, and replacement action. Upgrade to Plus to unlock this discipline path.",
+      "spirituality":
+        "Spirituality is a Plus practice because it supports inner truth, alignment, meaning, humility, and disciplined action. Upgrade to Plus to unlock deeper spiritual reflection.",
+      "marriage-preparation":
+        "Preparation for Marriage is a Plus practice because it works with values, expectations, communication, commitment, and conflict readiness. Upgrade to Plus to unlock this path.",
+
+      "assertive-communication":
+        "Assertive Communication is a Premium / Virtus Prime practice because it uses stronger message control, respectful firmness, and emotional discipline. Upgrade to Virtus Prime to unlock it.",
+      "decision-clarity":
+        "Decision Clarity is a Premium / Virtus Prime practice because it uses deeper strategic reasoning, consequence mapping, and executive decision structure. Upgrade to Virtus Prime to unlock it.",
+      "communication-discipline":
+        "Communication Discipline is a Premium / Virtus Prime practice because it trains precise speech, timing, restraint, and message control. Upgrade to Virtus Prime to unlock it.",
+      "conflict-control":
+        "Conflict Control is a Premium / Virtus Prime practice because it works with de-escalation, boundaries, responsibility, and calm repair under pressure. Upgrade to Virtus Prime to unlock it.",
+      "focus-procrastination":
+        "Focus & Procrastination is a Premium / Virtus Prime practice because it trains attention control, resistance awareness, task clarity, and immediate disciplined action. Upgrade to Virtus Prime to unlock it.",
+      "resilience-training":
+        "Resilience Training is a Premium / Virtus Prime practice because it supports strength under pressure, recovery, meaning, and forward movement. Upgrade to Virtus Prime to unlock it.",
+      "executive-training":
+        "Executive Training is a Premium / Virtus Prime practice because it uses strategic thinking, decision architecture, accountability, and high-pressure leadership communication. Upgrade to Virtus Prime to unlock it.",
+    };
+
+    if (categoryMessages[category?.id]) {
+      return categoryMessages[category.id];
+    }
+
+    if (requiredPlan === "plus") {
+      return `${practiceName} is a Plus practice. Plus unlocks deeper coaching categories for emotional discipline, habits, relationships, leadership, and self-mastery.`;
+    }
+
+    if (requiredPlan === "premium") {
+      return `${practiceName} is a Premium / Virtus Prime practice. Premium unlocks the deepest strategic, leadership, project, transformation, and executive practices.`;
+    }
+
+    return "Create a free account to unlock this practice category.";
   };
 
    const fallbackPlanPolicy = getPlanPolicy(currentPlanKey);
@@ -2284,15 +2340,7 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                       type="button"
                       onClick={() => {
                         if (!canUseCategory) {
-                          setMessage(
-                            isTrialGuestExpired
-                              ? "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue using Virtus practice."
-                              : requiredPlan === "plus"
-                              ? "This practice is part of Plus. Plus unlocks guided coaching categories for decisions, emotions, habits, and regular self-discipline work."
-                              : requiredPlan === "premium"
-                              ? "This practice is part of Premium / Virtus Prime. Premium unlocks the deepest strategic, leadership, project, and transformation practices."
-                              : "Create a free account to unlock this practice category."
-                          );
+                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
                           setPracticeOpen(false);
                           setIsPracticeMode(null);
                           return;
@@ -2744,15 +2792,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                       type="button"
                       onClick={() => {
                         if (!canUseCategory) {
-                          setMessage(
-                            isTrialGuestExpired
-                              ? "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue using Virtus practice."
-                              : requiredPlan === "plus"
-                              ? "This practice is part of Plus. Plus unlocks guided coaching categories for decisions, emotions, habits, and regular self-discipline work."
-                              : requiredPlan === "premium"
-                              ? "This practice is part of Premium / Virtus Prime. Premium unlocks the deepest strategic, leadership, project, and transformation practices."
-                              : "Create a free account to unlock this practice category."
-                          );
+                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
                           setPracticeOpen(false);
                           setShowMobileMenu(false);
                           setIsPracticeMode(null);
@@ -3569,6 +3609,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
