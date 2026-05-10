@@ -45,16 +45,16 @@ export default function ProfileForm({
   }
 
   const fieldCardClass =
-    "rounded-2xl border border-sky-900/20 bg-black/25 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm";
+    "virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm";
 
   const labelClass =
     "text-xs uppercase tracking-[0.18em] text-sky-300/50";
 
   const inputClass =
-    "mt-3 w-full rounded-2xl border border-sky-900/25 bg-zinc-950/45 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600 transition focus:border-sky-800/50 focus:bg-zinc-950/65";
+    "virtus-theme-input mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-sm outline-none transition";
 
   const textareaClass =
-    "mt-3 min-h-[260px] w-full resize-y rounded-2xl border border-sky-900/25 bg-zinc-950/45 px-4 py-3 text-sm leading-6 text-white outline-none placeholder:text-zinc-600 transition focus:border-sky-800/50 focus:bg-zinc-950/65 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+    "virtus-theme-input mt-3 min-h-[260px] w-full resize-y rounded-2xl border border-sky-900/25 px-4 py-3 text-sm leading-6 outline-none transition [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
 
   return (
     <div className="space-y-4">
@@ -107,7 +107,7 @@ export default function ProfileForm({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded-2xl border border-sky-900/30 bg-sky-950/20 px-4 py-2 text-sm text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35 disabled:opacity-50"
+          className="rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-2 text-sm text-sky-700 transition hover:border-sky-800/40 hover:bg-sky-950/15 disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save profile"}
         </button>

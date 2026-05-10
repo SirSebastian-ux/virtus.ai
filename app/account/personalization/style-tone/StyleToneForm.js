@@ -51,15 +51,15 @@ export default function StyleToneForm({ initialStyle = "default" }) {
             type="button"
             onClick={() => saveStyle(value)}
             disabled={saving}
-            className={`group flex w-full items-center justify-between gap-6 rounded-2xl border px-4 py-4 text-left shadow-sm backdrop-blur-sm transition disabled:opacity-50 ${
+            className={`group virtus-theme-card flex w-full items-center justify-between gap-6 rounded-2xl border px-4 py-4 text-left shadow-sm backdrop-blur-sm transition disabled:opacity-50 ${
               active
-                ? "border-sky-700/60 bg-sky-950/35 shadow-sky-950/20"
-                : "border-sky-900/20 bg-black/25 shadow-sky-950/10 hover:border-sky-800/40 hover:bg-zinc-950/55"
+                ? "border-sky-700/60 bg-sky-950/20 shadow-sky-950/20"
+                : "border-sky-900/20 shadow-sky-950/10 hover:border-sky-800/40 hover:bg-sky-950/10"
             }`}
           >
             <div className="min-w-0">
-              <p className="text-sm font-medium text-sky-100">{label}</p>
-              <p className="mt-1 text-xs leading-5 text-zinc-400">
+              <p className="text-sm font-medium virtus-theme-title">{label}</p>
+              <p className="mt-1 text-sm leading-6 virtus-theme-muted">
                 {description}
               </p>
             </div>
@@ -67,17 +67,17 @@ export default function StyleToneForm({ initialStyle = "default" }) {
             <div
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
                 active
-                  ? "border-sky-600/60 bg-sky-900/40 text-sky-100"
-                  : "border-sky-900/30 bg-sky-950/20 text-sky-300/50 group-hover:bg-sky-900/35 group-hover:text-sky-200"
+                  ? "border-sky-600/60 bg-sky-900/30 text-sky-100"
+                  : "border-sky-900/30 bg-sky-950/10 text-sky-700 group-hover:bg-sky-950/15"
               }`}
             >
-              {active ? "✓" : "›"}
+              {active ? "\u2713" : "\u203A"}
             </div>
           </button>
         );
       })}
 
-      {status ? <p className="text-sm text-sky-300/70">{status}</p> : null}
+      {status ? <p className="text-sm text-sky-700">{status}</p> : null}
     </div>
   );
 }
