@@ -289,3 +289,9 @@ body {
   border-color: transparent !important;
   box-shadow: none !important;
 }
+/* Virtus clean chat bars all themes */
+.virtus-chat-root .virtus-chat-clear-bar {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
