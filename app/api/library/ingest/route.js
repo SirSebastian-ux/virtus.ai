@@ -311,6 +311,13 @@ export async function POST(req) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    const isSystemLibraryManager =
+      String(user.email || "").toLowerCase() === "sebastian@ewellnessolutions.com";
+
+    if (!isSystemLibraryManager) {
+      return Response.json({ error: "Admin access required" }, { status: 403 });
+    }
+
     const body = await req.json().catch(() => ({}));
     const fileIds = Array.isArray(body.fileIds) ? body.fileIds : [];
 
@@ -321,17 +328,11 @@ export async function POST(req) {
       );
     }
 
-    const isSystemLibraryManager =
-      String(user.email || "").toLowerCase() === "sebastian@ewellnessolutions.com";
-
     let filesQuery = admin
       .from("user_files")
       .select("id, file_name, file_type, extracted_text")
       .in("id", fileIds);
 
-    if (!isSystemLibraryManager) {
-      filesQuery = filesQuery.eq("user_id", user.id);
-    }
 
     const { data: files, error: filesError } = await filesQuery;
 
@@ -444,3 +445,4 @@ export async function POST(req) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
