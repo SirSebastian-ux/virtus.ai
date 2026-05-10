@@ -1,344 +1,443 @@
 ﻿export const virtusPracticeCategories = [
-  {
-    id: "stress-regulation",
-    title: "Stress Regulation",
-    description: "Practice calming the nervous system and responding with clarity.",
-    prompts: [
-      "I want to practice stress regulation. Start with one simple exercise and guide me step by step. Ask me one question at a time.",
-      "I feel pressure building. Help me calm my body, slow my thoughts, and return to clarity. Ask me one question at a time.",
-      "Guide me through a short stress regulation practice so I can respond instead of react. Ask me one question at a time.",
-      "Help me release tension and organize my thoughts with one practical stress exercise. Ask me one question at a time.",
-      "I want to calm my nervous system and think clearly again. Guide me step by step. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice stress regulation. Start with one simple exercise and guide me step by step. Ask me one question at a time.",
-    trialGuestPrompts: [
-      "I want to try a Trial Guest stress regulation sample. Give me one strong calming practice and guide me step by step. Ask me one question at a time.",
-      "I want a short premium-style stress reset. Help me calm down and regain control. Ask me one question at a time."
-    ],
-    practiceMode: "category:stress-regulation",
-    minimumPlan: "free",
-    trialGuestSample: true,
-  },
-  {
-    id: "mood-support",
-    title: "Mood Support",
-    description: "Practice gentle reflection, emotional clarity, and constructive next steps.",
-    prompts: [
-      "I want mood support. Help me understand what thought may be affecting my mood and guide me through one simple exercise. Ask me one question at a time.",
-      "My mood feels heavy or unclear. Help me identify the thought underneath it and choose one constructive step. Ask me one question at a time.",
-      "Guide me through a simple mood clarity exercise using thought awareness and emotional discipline. Ask me one question at a time.",
-      "Help me understand what is influencing my mood and how to respond with maturity. Ask me one question at a time."
-    ],
-    prompt:
-      "I want mood support. Help me understand what thought may be affecting my mood and guide me through one simple exercise. Ask me one question at a time.",
-    practiceMode: "category:mood-support",
-    minimumPlan: "free",
-    trialGuestSample: true,
-  },
-  {
-    id: "self-awareness",
-    title: "Self-Awareness",
-    description: "Practice seeing thoughts, motives, patterns, and hidden reactions clearly.",
-    prompts: [
-      "I want to practice self-awareness. Help me observe what is happening inside me without judgment. Ask me one question at a time.",
-      "Guide me through a self-awareness exercise to identify the thought, emotion, and pattern behind my current state. Ask me one question at a time.",
-      "Help me see what I may not be noticing in my reaction, decision, or communication. Ask me one question at a time.",
-      "I want to understand myself more honestly. Guide me through one deep but practical reflection. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice self-awareness. Help me observe what is happening inside me without judgment. Ask me one question at a time.",
-    practiceMode: "category:self-awareness",
-    minimumPlan: "free",
-    trialGuestSample: true,
-  },
-  {
-    id: "mind-discipline",
-    title: "Mind Discipline",
-    description: "Train thought observation, awareness, focus, and disciplined action.",
-    prompts: [
-      "I want to practice mind discipline. Help me observe the thought behind my emotion or behavior. Ask me one question at a time.",
-      "Train my mind to pause before emotion becomes behavior. Guide me through one mind discipline exercise. Ask me one question at a time.",
-      "Help me separate thought, emotion, and action so I can respond with discipline. Ask me one question at a time.",
-      "I want to strengthen control over my attention, interpretation, and reaction. Guide me step by step. Ask me one question at a time.",
-      "Help me identify the first thought movement behind my current state and bring awareness before emotion. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice mind discipline. Help me observe the thought behind my emotion or behavior. Ask me one question at a time.",
-    trialGuestPrompts: [
-      "I want to try a Trial Guest mind discipline practice. Help me observe the thought behind my emotion or behavior. Ask me one question at a time.",
-      "I want a premium-style mind discipline sample. Help me see the thought before it becomes emotion. Ask me one question at a time."
-    ],
-    trialGuestPrompt:
-      "I want to try a Trial Guest mind discipline practice. Help me observe the thought behind my emotion or behavior. Ask me one question at a time.",
-    practiceMode: "category:mind-discipline",
-    minimumPlan: "plus",
-    trialGuestSample: true,
-  },
-  {
-    id: "anxiety-support",
-    title: "Anxiety Support",
-    description: "Practice thought clarity, grounding, and calmer interpretation.",
-    prompts: [
-      "I want anxiety support. Help me identify the thought behind the anxiety and guide me through one safe structured exercise. Ask me one question at a time.",
-      "I feel anxious. Help me slow down, identify the interpretation, and return to clarity. Ask me one question at a time.",
-      "Guide me through a calm anxiety support practice based on thought awareness and grounding. Ask me one question at a time.",
-      "Help me understand what my mind is predicting or fearing and how to respond with discipline. Ask me one question at a time.",
-      "I want to reduce anxiety by separating facts, thoughts, emotions, and next actions. Ask me one question at a time."
-    ],
-    prompt:
-      "I want anxiety support. Help me identify the thought behind the anxiety and guide me through one safe structured exercise. Ask me one question at a time.",
-    trialGuestPrompts: [
-      "I want to try a Trial Guest anxiety support practice. Help me identify the thought behind the anxiety and guide me through one safe structured exercise. Ask me one question at a time.",
-      "I want a short premium-style anxiety support sample. Help me calm the mind and find the thought behind the fear. Ask me one question at a time."
-    ],
-    trialGuestPrompt:
-      "I want to try a Trial Guest anxiety support practice. Help me identify the thought behind the anxiety and guide me through one safe structured exercise. Ask me one question at a time.",
-    practiceMode: "category:anxiety-support",
-    minimumPlan: "plus",
-    trialGuestSample: true,
-  },
-  {
-    id: "leadership-skills",
-    title: "Leadership Skills",
-    description: "Practice leadership awareness, responsibility, decision-making, and communication.",
-    prompts: [
-      "I want to practice leadership skills. Start with one structured exercise and guide me step by step. Ask me one question at a time.",
-      "Help me practice leadership responsibility in a difficult situation. Guide me step by step. Ask me one question at a time.",
-      "I want to train calm leadership under pressure. Give me one practical leadership exercise. Ask me one question at a time.",
-      "Help me improve my leadership communication, ownership, and decision clarity. Ask me one question at a time.",
-      "Guide me through a leadership reflection that exposes my reaction pattern and strengthens my response. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice leadership skills. Start with one structured exercise and guide me step by step. Ask me one question at a time.",
-    trialGuestPrompts: [
-      "I want to try a Trial Guest leadership practice. Give me one strong leadership exercise as a sample and guide me step by step. Ask me one question at a time.",
-      "I want a premium-style leadership sample. Help me practice calm authority and responsibility. Ask me one question at a time."
-    ],
-    trialGuestPrompt:
-      "I want to try a Trial Guest leadership practice. Give me one strong leadership exercise as a sample and guide me step by step. Ask me one question at a time.",
-    practiceMode: "category:leadership-skills",
-    minimumPlan: "plus",
-    trialGuestSample: true,
-  },
-  {
-    id: "emotional-intelligence",
-    title: "Emotional Intelligence",
-    description: "Practice emotional awareness, regulation, empathy, and mature response.",
-    prompts: [
-      "I want to practice emotional intelligence. Guide me through one structured exercise. Ask me one question at a time.",
-      "Help me understand the thought behind my emotion and choose a mature response. Ask me one question at a time.",
-      "Guide me through an emotional intelligence practice using awareness, empathy, and responsibility. Ask me one question at a time.",
-      "I want to respond with emotional maturity instead of reacting. Guide me step by step. Ask me one question at a time.",
-      "Help me identify what I feel, what I am interpreting, and what response would show discipline. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice emotional intelligence. Guide me through one structured exercise. Ask me one question at a time.",
-    practiceMode: "category:emotional-intelligence",
-    minimumPlan: "plus",
-    trialGuestSample: false,
-  },
-  {
-    id: "relationships",
-    title: "Relationships",
-    description: "Practice emotional maturity, communication, boundaries, and repair.",
-    prompts: [
-      "I want to practice relationship skills. Help me understand the situation clearly and guide me through one structured exercise. Ask me one question at a time.",
-      "Help me handle a relationship situation with maturity, honesty, and emotional discipline. Ask me one question at a time.",
-      "Guide me through a relationship reflection focused on communication, responsibility, and repair. Ask me one question at a time.",
-      "I want to understand my part in a relationship conflict without blaming or avoiding. Ask me one question at a time.",
-      "Help me prepare a clear and respectful relationship conversation. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice relationship skills. Help me understand the situation clearly and guide me through one structured exercise. Ask me one question at a time.",
-    practiceMode: "category:relationships",
-    minimumPlan: "plus",
-    trialGuestSample: false,
-  },
-  {
-    id: "habit-recovery-support",
-    title: "Habit & Recovery Support",
-    description: "Practice awareness, interruption, replacement, and responsibility.",
-    prompts: [
-      "I want habit and recovery support. Help me identify the trigger, thought, urge, and next disciplined action. Ask me one question at a time.",
-      "Help me interrupt a habit pattern before it becomes automatic behavior. Ask me one question at a time.",
-      "Guide me through a recovery support exercise focused on awareness, responsibility, and replacement action. Ask me one question at a time.",
-      "I want to understand the trigger and thought behind an urge and choose a better response. Ask me one question at a time.",
-      "Help me build discipline around a habit I want to change. Guide me step by step. Ask me one question at a time."
-    ],
-    prompt:
-      "I want habit and recovery support. Help me identify the trigger, thought, urge, and next disciplined action. Ask me one question at a time.",
-    practiceMode: "category:habit-recovery-support",
-    minimumPlan: "plus",
-    trialGuestSample: false,
-  },
-  {
-    id: "spirituality",
-    title: "Spirituality",
-    description: "Practice inner truth, alignment, reflection, discipline, and meaning.",
-    prompts: [
-      "I want to practice spirituality. Guide me through one grounded spiritual reflection exercise. Ask me one question at a time.",
-      "Help me reflect on truth, alignment, and disciplined action in my current situation. Ask me one question at a time.",
-      "Guide me through a spiritual practice that connects inner awareness with responsible behavior. Ask me one question at a time.",
-      "I want to examine whether my thoughts, words, and actions are aligned with truth. Ask me one question at a time.",
-      "Help me practice spiritual discipline in a grounded and practical way. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice spirituality. Guide me through one grounded spiritual reflection exercise. Ask me one question at a time.",
-    trialGuestPrompts: [
-      "I want to try a Trial Guest spirituality practice. Guide me through one grounded spiritual reflection exercise. Ask me one question at a time.",
-      "I want a premium-style spiritual reflection sample focused on truth, discipline, and alignment. Ask me one question at a time."
-    ],
-    trialGuestPrompt:
-      "I want to try a Trial Guest spirituality practice. Guide me through one grounded spiritual reflection exercise. Ask me one question at a time.",
-    practiceMode: "category:spirituality",
-    minimumPlan: "plus",
-    trialGuestSample: true,
-  },
-  {
-    id: "marriage-preparation",
-    title: "Preparation for Marriage",
-    description: "Practice readiness, values, communication, expectations, and commitment.",
-    prompts: [
-      "I want to begin preparation for marriage. Guide me through one structured reflection exercise. Ask me one question at a time.",
-      "Help me reflect on marriage readiness, values, expectations, and emotional maturity. Ask me one question at a time.",
-      "Guide me through a marriage preparation exercise focused on communication and commitment. Ask me one question at a time.",
-      "I want to examine what kind of partner I am becoming before marriage. Ask me one question at a time.",
-      "Help me prepare for marriage with honesty, responsibility, and spiritual maturity. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to begin preparation for marriage. Guide me through one structured reflection exercise. Ask me one question at a time.",
-    practiceMode: "category:marriage-preparation",
-    minimumPlan: "plus",
-    trialGuestSample: false,
-  },
-  {
-    id: "assertive-communication",
-    title: "Assertive Communication",
-    description: "Practice clear, respectful, strong, and emotionally disciplined expression.",
-    prompts: [
-      "I want to practice assertive communication. Help me turn my thoughts into a clear and respectful message. Ask me one question at a time.",
-      "Help me say something difficult with clarity, respect, and strength. Ask me one question at a time.",
-      "Guide me through an assertive communication practice so I can speak without aggression or avoidance. Ask me one question at a time.",
-      "I want to prepare a message that is honest, calm, and firm. Ask me one question at a time.",
-      "Help me express a boundary clearly while staying emotionally disciplined. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice assertive communication. Help me turn my thoughts into a clear and respectful message. Ask me one question at a time.",
-    practiceMode: "category:assertive-communication",
-    minimumPlan: "premium",
-    trialGuestSample: false,
-  },
-  {
-    id: "decision-clarity",
-    title: "Decision Clarity",
-    description: "Practice separating facts, emotions, risk, values, and next action.",
-    prompts: [
-      "I want decision clarity. Help me separate facts, emotions, risks, values, and next action. Ask me one question at a time.",
-      "Guide me through a decision practice so I can stop circling and choose clearly. Ask me one question at a time.",
-      "Help me examine a decision with calm reasoning and disciplined awareness. Ask me one question at a time.",
-      "I need to make a decision. Help me identify what is true, what is fear, and what matters most. Ask me one question at a time.",
-      "Guide me through a structured decision clarity exercise using responsibility and long-term thinking. Ask me one question at a time."
-    ],
-    prompt:
-      "I want decision clarity. Help me separate facts, emotions, risks, values, and next action. Ask me one question at a time.",
-    practiceMode: "category:decision-clarity",
-    minimumPlan: "premium",
-    trialGuestSample: false,
-  },
-  {
-    id: "communication-discipline",
-    title: "Communication Discipline",
-    description: "Practice precise speech, listening, timing, restraint, and message control.",
-    prompts: [
-      "I want to practice communication discipline. Help me speak clearly, calmly, and responsibly. Ask me one question at a time.",
-      "Guide me through a communication discipline exercise before I respond to someone. Ask me one question at a time.",
-      "Help me clean my message so it is truthful, direct, and not emotionally reactive. Ask me one question at a time.",
-      "I want to practice listening, restraint, and precise speech. Guide me step by step. Ask me one question at a time.",
-      "Help me prepare communication that shows maturity, clarity, and control. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice communication discipline. Help me speak clearly, calmly, and responsibly. Ask me one question at a time.",
-    practiceMode: "category:communication-discipline",
-    minimumPlan: "premium",
-    trialGuestSample: false,
-  },
-  {
-    id: "conflict-control",
-    title: "Conflict Control",
-    description: "Practice de-escalation, responsibility, boundaries, and calm repair.",
-    prompts: [
-      "I want to practice conflict control. Help me de-escalate, think clearly, and respond with discipline. Ask me one question at a time.",
-      "Guide me through a conflict control exercise before I react or send a message. Ask me one question at a time.",
-      "Help me separate facts, interpretations, emotions, and responsible action in a conflict. Ask me one question at a time.",
-      "I want to handle conflict without avoidance, aggression, or blame. Guide me step by step. Ask me one question at a time.",
-      "Help me prepare a calm and strong response in a conflict situation. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice conflict control. Help me de-escalate, think clearly, and respond with discipline. Ask me one question at a time.",
-    practiceMode: "category:conflict-control",
-    minimumPlan: "premium",
-    trialGuestSample: false,
-  },
-  {
-    id: "focus-procrastination",
-    title: "Focus & Procrastination",
-    description: "Practice attention control, task clarity, resistance awareness, and action.",
-    prompts: [
-      "I want to practice focus and reduce procrastination. Help me identify the resistance and choose one disciplined action. Ask me one question at a time.",
-      "Help me stop delaying and clarify the next practical step. Ask me one question at a time.",
-      "Guide me through a focus exercise that turns confusion into one clear action. Ask me one question at a time.",
-      "I am procrastinating. Help me identify the thought behind it and move with discipline. Ask me one question at a time.",
-      "Help me train attention, reduce mental noise, and start the important task. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to practice focus and reduce procrastination. Help me identify the resistance and choose one disciplined action. Ask me one question at a time.",
-    practiceMode: "category:focus-procrastination",
-    minimumPlan: "premium",
-    trialGuestSample: false,
-  },
-  {
-    id: "resilience-training",
-    title: "Resilience Training",
-    description: "Practice strength, recovery, meaning, discipline, and adaptive response.",
-    prompts: [
-      "I want resilience training. Help me turn pressure into strength and choose one disciplined response. Ask me one question at a time.",
-      "Guide me through a resilience exercise for a difficult situation. Ask me one question at a time.",
-      "Help me build resilience by clarifying the thought, meaning, lesson, and next action. Ask me one question at a time.",
-      "I want to respond to difficulty with courage, discipline, and wisdom. Guide me step by step. Ask me one question at a time.",
-      "Help me recover mentally from pressure and return to responsibility. Ask me one question at a time."
-    ],
-    prompt:
-      "I want resilience training. Help me turn pressure into strength and choose one disciplined response. Ask me one question at a time.",
-    practiceMode: "category:resilience-training",
-    minimumPlan: "premium",
-    trialGuestSample: false,
-  },
-  {
-    id: "executive-training",
-    title: "Executive Training",
-    description: "Use the internal leadership module system for deeper executive practice.",
-    prompts: [
-      "I want to begin Executive Training. Use the internal leadership module library and guide me through the right exercise step by step. Ask me one question at a time.",
-      "Guide me through an executive-level practice focused on leadership stability, decision quality, and communication control. Ask me one question at a time.",
-      "I want a deeper executive training exercise that strengthens strategic thinking and disciplined leadership. Ask me one question at a time.",
-      "Help me practice executive presence, responsibility, and decision architecture. Ask me one question at a time.",
-      "Use Virtus executive training to help me handle a leadership challenge with clarity and authority. Ask me one question at a time."
-    ],
-    prompt:
-      "I want to begin Executive Training. Use the internal leadership module library and guide me through the right exercise step by step. Ask me one question at a time.",
-    trialGuestPrompts: [
-      "I want to try an Executive Training sample. Use the internal leadership module library as background and guide me through one premium-style sample exercise. Ask me one question at a time.",
-      "I want a premium-style executive training sample focused on leadership stability and decision clarity. Ask me one question at a time."
-    ],
-    trialGuestPrompt:
-      "I want to try an Executive Training sample. Use the internal leadership module library as background and guide me through one premium-style sample exercise. Ask me one question at a time.",
-    practiceMode: "category:executive-training",
-    minimumPlan: "premium",
-    trialGuestSample: true,
-  },
+ {
+ id: "stress-regulation",
+ title: "Stress Regulation",
+ description: "Practice calming the nervous system and responding with clarity.",
+ prompts: [
+ "Start a stress regulation practice. Start with one simple exercise.",
+ "Pressure is building. calm my body, slow my thoughts, and return to clarity.",
+ "Take me through a short stress regulation practice so I can respond instead of react.",
+ "Release tension and organize my thoughts with one practical stress exercise.",
+ "Create a practice to calm my nervous system and think clearly again.",
+      "Create a quick pause before I respond to pressure.",
+      "Create a calm reset before I continue with my day.",
+      "Lower the pressure in my body and organize my next move.",
+      "Move from stress reaction into clear response.",
+      "Slow down my nervous system before I make a decision."
+ ],
+ prompt:
+ "Start a stress regulation practice. Start with one simple exercise.",
+ trialGuestPrompts: [
+ "Start a Trial Guest stress regulation sample. Give me one strong calming practice.",
+ "Create a short premium-style stress reset. calm down and regain control.",
+      "Create a short Trial Guest stress reset that helps me regain control."
+ ],
+ practiceMode: "category:stress-regulation",
+ minimumPlan: "free",
+ trialGuestSample: true,
+ },
+ {
+ id: "mood-support",
+ title: "Mood Support",
+ description: "Practice gentle reflection, emotional clarity, and constructive next steps.",
+ prompts: [
+ "Start a mood support practice. understand what thought may be affecting my mood and take me through one simple exercise.",
+ "The mood feels heavy or unclear. identify the thought underneath it and choose one constructive step.",
+ "Take me through a simple mood clarity exercise using thought awareness and emotional discipline.",
+ "Understand what is influencing my mood and how to respond with maturity.",
+      "Understand why my mood shifted and what I can do next.",
+      "Run a check on the thought pattern behind my mood today.",
+      "Move from heaviness into one constructive action.",
+      "Create a simple emotional reset that does not avoid responsibility.",
+      "Name what I feel and choose a healthy next step.",
+      "Open an examination of my mood with honesty and calm discipline."
+ ],
+ prompt:
+ "Start a mood support practice. understand what thought may be affecting my mood and take me through one simple exercise.",
+ practiceMode: "category:mood-support",
+ minimumPlan: "free",
+ trialGuestSample: true,
+ },
+ {
+ id: "self-awareness",
+ title: "Self-Awareness",
+ description: "Practice seeing thoughts, motives, patterns, and hidden reactions clearly.",
+ prompts: [
+ "Start a self-awareness practice. observe what is happening inside me without judgment.",
+ "Take me through a self-awareness exercise to identify the thought, emotion, and pattern behind my current state.",
+ "See what I may not be noticing in my reaction, decision, or communication.",
+ "Explore myself more honestly. Take me through one deep but practical reflection.",
+      "Notice the pattern behind my current reaction.",
+      "Reveal what I am avoiding, exaggerating, or assuming.",
+      "Observe my inner state before I act from it.",
+      "Explore what this situation is revealing about me.",
+      "Separate my true intention from my automatic reaction.",
+      "Build the ability to become more conscious of the story I am telling myself."
+ ],
+ prompt:
+ "Start a self-awareness practice. observe what is happening inside me without judgment.",
+ practiceMode: "category:self-awareness",
+ minimumPlan: "free",
+ trialGuestSample: true,
+ },
+ {
+ id: "mind-discipline",
+ title: "Mind Discipline",
+ description: "Train thought observation, awareness, focus, and disciplined action.",
+ prompts: [
+ "Start a mind discipline practice. observe the thought behind my emotion or behavior.",
+ "Train my mind to pause before emotion becomes behavior. Take me through one mind discipline exercise.",
+ "Separate thought, emotion, and action so I can respond with discipline.",
+ "Strengthen control over my attention, interpretation, and reaction.",
+ "Identify the first thought movement behind my current state and bring awareness before emotion.",
+      "Train the pause between thought and reaction.",
+      "Train my attention and stop feeding mental noise.",
+      "Identify the thought that is trying to take control.",
+      "Train command over my interpretation.",
+      "Return my mind to truth, focus, and responsible action."
+ ],
+ prompt:
+ "Start a mind discipline practice. observe the thought behind my emotion or behavior.",
+ trialGuestPrompts: [
+ "Start a Trial Guest mind discipline practice. observe the thought behind my emotion or behavior.",
+ "Create a premium-style mind discipline sample. see the thought before it becomes emotion.",
+      "Create a short Trial Guest mind discipline sample focused on thought control."
+ ],
+ trialGuestPrompt:
+ "Start a Trial Guest mind discipline practice. observe the thought behind my emotion or behavior.",
+ practiceMode: "category:mind-discipline",
+ minimumPlan: "plus",
+ trialGuestSample: true,
+ },
+ {
+ id: "anxiety-support",
+ title: "Anxiety Support",
+ description: "Practice thought clarity, grounding, and calmer interpretation.",
+ prompts: [
+ "Start anxiety support. identify the thought behind the anxiety and take me through one safe structured exercise.",
+ "Anxiety is present. slow down, identify the interpretation, and return to clarity.",
+ "Take me through a calm anxiety support practice based on thought awareness and grounding.",
+ "Understand what my mind is predicting or fearing and how to respond with discipline.",
+ "Reduce anxiety by separating facts, thoughts, emotions, and next actions.",
+      "Calm the fear story my mind is creating.",
+      "Separate real danger from imagined danger.",
+      "Reduce anxious interpretation and return to present facts.",
+      "Explore what my anxiety is trying to protect me from.",
+      "Ground my mind before I continue."
+ ],
+ prompt:
+ "Start anxiety support. identify the thought behind the anxiety and take me through one safe structured exercise.",
+ trialGuestPrompts: [
+ "Start a Trial Guest anxiety support practice. identify the thought behind the anxiety and take me through one safe structured exercise.",
+ "Create a short premium-style anxiety support sample. calm the mind and find the thought behind the fear.",
+      "Create a short Trial Guest anxiety reset focused on facts, grounding, and calm."
+ ],
+ trialGuestPrompt:
+ "Start a Trial Guest anxiety support practice. identify the thought behind the anxiety and take me through one safe structured exercise.",
+ practiceMode: "category:anxiety-support",
+ minimumPlan: "plus",
+ trialGuestSample: true,
+ },
+ {
+ id: "leadership-skills",
+ title: "Leadership Skills",
+ description: "Practice leadership awareness, responsibility, decision-making, and communication.",
+ prompts: [
+ "Start a leadership skills practice. Start with one structured exercise.",
+ "Practice leadership responsibility in a difficult situation.",
+ "Train calm leadership under pressure. Give me one practical leadership exercise.",
+ "Improve my leadership communication, ownership, and decision clarity.",
+ "Take me through a leadership reflection that exposes my reaction pattern and strengthens my response.",
+      "Practice leadership ownership in a situation I am facing.",
+      "Train leadership presence under pressure.",
+      "Move from emotional reaction into leadership responsibility.",
+      "Clarify what strong leadership requires from me now.",
+      "Practice leading with standards, calm, and direction."
+ ],
+ prompt:
+ "Start a leadership skills practice. Start with one structured exercise.",
+ trialGuestPrompts: [
+ "Start a Trial Guest leadership practice. Give me one strong leadership exercise as a sample.",
+ "Create a premium-style leadership sample. practice calm authority and responsibility.",
+      "Create a short Trial Guest leadership sample focused on calm responsibility."
+ ],
+ trialGuestPrompt:
+ "Start a Trial Guest leadership practice. Give me one strong leadership exercise as a sample.",
+ practiceMode: "category:leadership-skills",
+ minimumPlan: "plus",
+ trialGuestSample: true,
+ },
+ {
+ id: "emotional-intelligence",
+ title: "Emotional Intelligence",
+ description: "Practice emotional awareness, regulation, empathy, and mature response.",
+ prompts: [
+ "Start an emotional intelligence practice. Take me through one structured exercise.",
+ "Understand the thought behind my emotion and choose a mature response.",
+ "Take me through an emotional intelligence practice using awareness, empathy, and responsibility.",
+ "Practice responding with emotional maturity instead of reacting.",
+ "Identify what I feel, what I am interpreting, and what response would show discipline.",
+      "Understand the emotion without becoming controlled by it.",
+      "Practice emotional maturity in a real situation.",
+      "Identify the interpretation that created this emotional response.",
+      "Practice responding with empathy and responsibility.",
+      "Move from emotional impulse into conscious choice."
+ ],
+ prompt:
+ "Start an emotional intelligence practice. Take me through one structured exercise.",
+ practiceMode: "category:emotional-intelligence",
+ minimumPlan: "plus",
+ trialGuestSample: false,
+ },
+ {
+ id: "relationships",
+ title: "Relationships",
+ description: "Practice emotional maturity, communication, boundaries, and repair.",
+ prompts: [
+ "Start a relationship skills practice. understand the situation clearly and take me through one structured exercise.",
+ "Handle a relationship situation with maturity, honesty, and emotional discipline.",
+ "Take me through a relationship reflection focused on communication, responsibility, and repair.",
+ "Explore my part in a relationship conflict without blaming or avoiding.",
+ "Prepare a clear and respectful relationship conversation.",
+      "See my part in this relationship situation clearly.",
+      "Prepare communication with maturity instead of defensiveness.",
+      "Understand the emotional pattern between me and the other person.",
+      "Create a repair path for a relationship situation with honesty and respect.",
+      "Prepare for a difficult relationship conversation."
+ ],
+ prompt:
+ "Start a relationship skills practice. understand the situation clearly and take me through one structured exercise.",
+ practiceMode: "category:relationships",
+ minimumPlan: "plus",
+ trialGuestSample: false,
+ },
+ {
+ id: "habit-recovery-support",
+ title: "Habit & Recovery Support",
+ description: "Practice awareness, interruption, replacement, and responsibility.",
+ prompts: [
+ "Start habit and recovery support. identify the trigger, thought, urge, and next disciplined action.",
+ "Interrupt a habit pattern before it becomes automatic behavior.",
+ "Take me through a recovery support exercise focused on awareness, responsibility, and replacement action.",
+ "Explore the trigger and thought behind an urge and choose a better response.",
+ "Build discipline around a habit that needs change.",
+      "Interrupt the pattern before it becomes action.",
+      "Explore the thought and emotion behind this habit.",
+      "Replace an old habit with one disciplined action.",
+      "Open an examination of the trigger without shame and choose responsibility.",
+      "Build recovery strength through awareness and structure."
+ ],
+ prompt:
+ "Start habit and recovery support. identify the trigger, thought, urge, and next disciplined action.",
+ practiceMode: "category:habit-recovery-support",
+ minimumPlan: "plus",
+ trialGuestSample: false,
+ },
+ {
+ id: "spirituality",
+ title: "Spirituality",
+ description: "Practice inner truth, alignment, reflection, discipline, and meaning.",
+ prompts: [
+ "Start a spirituality practice. Take me through one grounded spiritual reflection exercise.",
+ "Reflect on truth, alignment, and disciplined action in my current situation.",
+ "Take me through a spiritual practice that connects inner awareness with responsible behavior.",
+ "Open an examination of whether my thoughts, words, and actions are aligned with truth.",
+ "Practice spiritual discipline in a grounded and practical way.",
+      "Examine whether my inner state is aligned with truth.",
+      "Create a grounded spiritual reflection for the current situation.",
+      "Turn spiritual awareness into disciplined action.",
+      "Reflect on meaning, responsibility, and inner alignment.",
+      "Return to truth without escaping practical responsibility."
+ ],
+ prompt:
+ "Start a spirituality practice. Take me through one grounded spiritual reflection exercise.",
+ trialGuestPrompts: [
+ "Start a Trial Guest spirituality practice. Take me through one grounded spiritual reflection exercise.",
+ "Create a premium-style spiritual reflection sample focused on truth, discipline, and alignment.",
+      "Create a short Trial Guest spiritual reflection focused on truth and discipline."
+ ],
+ trialGuestPrompt:
+ "Start a Trial Guest spirituality practice. Take me through one grounded spiritual reflection exercise.",
+ practiceMode: "category:spirituality",
+ minimumPlan: "plus",
+ trialGuestSample: true,
+ },
+ {
+ id: "marriage-preparation",
+ title: "Preparation for Marriage",
+ description: "Practice readiness, values, communication, expectations, and commitment.",
+ prompts: [
+ "Start preparation for marriage. Take me through one structured reflection exercise.",
+ "Reflect on marriage readiness, values, expectations, and emotional maturity.",
+ "Take me through a marriage preparation exercise focused on communication and commitment.",
+ "Open an examination of what kind of partner I am becoming before marriage.",
+ "Prepare for marriage with honesty, responsibility, and spiritual maturity.",
+      "Reflect on the kind of spouse I am preparing to become.",
+      "Open an examination of expectations, values, and emotional readiness for marriage.",
+      "Clarify what commitment requires from me in daily behavior.",
+      "Prepare for marriage with maturity and honest self-examination.",
+      "Reflect on communication, loyalty, responsibility, and shared vision."
+ ],
+ prompt:
+ "Start preparation for marriage. Take me through one structured reflection exercise.",
+ practiceMode: "category:marriage-preparation",
+ minimumPlan: "plus",
+ trialGuestSample: false,
+ },
+ {
+ id: "assertive-communication",
+ title: "Assertive Communication",
+ description: "Practice clear, respectful, strong, and emotionally disciplined expression.",
+ prompts: [
+ "Start assertive communication practice. turn my thoughts into a clear and respectful message.",
+ "Say something difficult with clarity, respect, and strength.",
+ "Take me through an assertive communication practice so I can speak without aggression or avoidance.",
+ "Prepare a message that is honest, calm, and firm.",
+ "Express a boundary clearly while staying emotionally disciplined.",
+      "Say what needs to be said without fear or aggression.",
+      "Create a message that is clear, calm, and firm.",
+      "Express my boundary with respect and strength.",
+      "Stop avoiding the conversation and speak responsibly.",
+      "Turn emotional pressure into clean communication."
+ ],
+ prompt:
+ "Start assertive communication practice. turn my thoughts into a clear and respectful message.",
+ practiceMode: "category:assertive-communication",
+ minimumPlan: "premium",
+ trialGuestSample: false,
+ },
+ {
+ id: "decision-clarity",
+ title: "Decision Clarity",
+ description: "Practice separating facts, emotions, risk, values, and next action.",
+ prompts: [
+ "Start decision clarity. separate facts, emotions, risks, values, and next action.",
+ "Take me through a decision practice so I can stop circling and choose clearly.",
+ "Examine a decision with calm reasoning and disciplined awareness.",
+ "A decision needs clarity. identify what is true, what is fear, and what matters most.",
+ "Take me through a structured decision clarity exercise using responsibility and long-term thinking.",
+      "Stop overthinking and identify the strongest next decision.",
+      "Separate emotion, fear, facts, and wisdom in this decision.",
+      "Evaluate this decision through consequences and values.",
+      "Clarify what choice is aligned with responsibility.",
+      "Find the cleanest next step without rushing."
+ ],
+ prompt:
+ "Start decision clarity. separate facts, emotions, risks, values, and next action.",
+ practiceMode: "category:decision-clarity",
+ minimumPlan: "premium",
+ trialGuestSample: false,
+ },
+ {
+ id: "communication-discipline",
+ title: "Communication Discipline",
+ description: "Practice precise speech, listening, timing, restraint, and message control.",
+ prompts: [
+ "Start communication discipline practice. speak clearly, calmly, and responsibly.",
+ "Take me through a communication discipline exercise before I respond to someone.",
+ "Clean my message so it is truthful, direct, and not emotionally reactive.",
+ "Practice listening, restraint, and precise speech.",
+ "Prepare communication that shows maturity, clarity, and control.",
+      "Control my words before I respond emotionally.",
+      "Refine my message so it is precise and mature.",
+      "Practice restraint, timing, and clear expression.",
+      "Prepare communication truth without unnecessary force.",
+      "Remove emotional noise from what I need to say."
+ ],
+ prompt:
+ "Start communication discipline practice. speak clearly, calmly, and responsibly.",
+ practiceMode: "category:communication-discipline",
+ minimumPlan: "premium",
+ trialGuestSample: false,
+ },
+ {
+ id: "conflict-control",
+ title: "Conflict Control",
+ description: "Practice de-escalation, responsibility, boundaries, and calm repair.",
+ prompts: [
+ "Start conflict control practice. de-escalate, think clearly, and respond with discipline.",
+ "Take me through a conflict control exercise before I react or send a message.",
+ "Separate facts, interpretations, emotions, and responsible action in a conflict.",
+ "Handle conflict without avoidance, aggression, or blame.",
+ "Prepare a calm and strong response in a conflict situation.",
+      "Stay calm and strong in a conflict situation.",
+      "De-escalate conflict without becoming weak or aggressive.",
+      "Identify what I control and what I must stop feeding.",
+      "Practice responding to conflict with clarity, boundaries, and maturity.",
+      "Prepare a response that reduces damage and increases truth."
+ ],
+ prompt:
+ "Start conflict control practice. de-escalate, think clearly, and respond with discipline.",
+ practiceMode: "category:conflict-control",
+ minimumPlan: "premium",
+ trialGuestSample: false,
+ },
+ {
+ id: "focus-procrastination",
+ title: "Focus & Procrastination",
+ description: "Practice attention control, task clarity, resistance awareness, and action.",
+ prompts: [
+ "Start a focus and procrastination practice. Identify the resistance and choose one disciplined action.",
+ "Stop delaying and clarify the next practical step.",
+ "Take me through a focus exercise that turns confusion into one clear action.",
+ "Procrastination is active. identify the thought behind it and move with discipline.",
+ "Train attention, reduce mental noise, and start the important task.",
+      "Break the first wall of procrastination and start.",
+      "Identify the resistance behind the delay.",
+      "Choose the smallest serious action that creates movement.",
+      "Train focus and stop negotiating with distraction.",
+      "Convert mental pressure into one clear task."
+ ],
+ prompt:
+ "Start a focus and procrastination practice. Identify the resistance and choose one disciplined action.",
+ practiceMode: "category:focus-procrastination",
+ minimumPlan: "premium",
+ trialGuestSample: false,
+ },
+ {
+ id: "resilience-training",
+ title: "Resilience Training",
+ description: "Practice strength, recovery, meaning, discipline, and adaptive response.",
+ prompts: [
+ "Start resilience training. turn pressure into strength and choose one disciplined response.",
+ "Take me through a resilience exercise for a difficult situation.",
+ "Build resilience by clarifying the thought, meaning, lesson, and next action.",
+ "Practice responding to difficulty with courage, discipline, and wisdom.",
+ "Recover mentally from pressure and return to responsibility.",
+      "Recover strength after pressure or disappointment.",
+      "Turn this challenge into disciplined growth.",
+      "Identify the lesson, the responsibility, and the next action.",
+      "Practice resilience without denying what happened.",
+      "Return to courage, structure, and forward movement."
+ ],
+ prompt:
+ "Start resilience training. turn pressure into strength and choose one disciplined response.",
+ practiceMode: "category:resilience-training",
+ minimumPlan: "premium",
+ trialGuestSample: false,
+ },
+ {
+ id: "executive-training",
+ title: "Executive Training",
+ description: "Use the internal leadership module system for deeper executive practice.",
+ prompts: [
+ "Start Executive Training. Use the internal leadership module library and choose the right exercise.",
+ "Take me through an executive-level practice focused on leadership stability, decision quality, and communication control.",
+ "Create a deeper executive training exercise that strengthens strategic thinking and disciplined leadership.",
+ "Practice executive presence, responsibility, and decision architecture.",
+ "Use Virtus executive training to handle a leadership challenge with clarity and authority.",
+      "Practice executive thinking in a complex leadership situation.",
+      "Strengthen decision quality, communication, and ownership.",
+      "Think like a stable executive under pressure.",
+      "Open an examination of a leadership challenge with strategic clarity.",
+      "Practice executive discipline, standards, and consequence awareness."
+ ],
+ prompt:
+ "Start Executive Training. Use the internal leadership module library and choose the right exercise.",
+ trialGuestPrompts: [
+ "Start an Executive Training sample. Use the internal leadership module library as background and take me through one premium-style sample exercise.",
+ "Create a premium-style executive training sample focused on leadership stability and decision clarity.",
+      "Create a short Trial Guest executive sample focused on stable leadership."
+ ],
+ trialGuestPrompt:
+ "Start an Executive Training sample. Use the internal leadership module library as background and take me through one premium-style sample exercise.",
+ practiceMode: "category:executive-training",
+ minimumPlan: "premium",
+ trialGuestSample: true,
+ },
 ];
 
 export function getPracticeCategoryById(id) {
-  return virtusPracticeCategories.find((category) => category.id === id) || null;
+ return virtusPracticeCategories.find((category) => category.id === id) || null;
 }
+
