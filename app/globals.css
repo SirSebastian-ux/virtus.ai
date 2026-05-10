@@ -243,3 +243,49 @@ body {
 :root[data-virtus-appearance="light"] .virtus-mobile-menu-item {
   color: #18181b;
 }
+/* Virtus file menu */
+.virtus-file-menu {
+  background: var(--virtus-surface-bg);
+  border-color: var(--virtus-border);
+  color: var(--virtus-text-main);
+}
+
+.virtus-file-card {
+  background: var(--virtus-card-bg);
+  border-color: var(--virtus-border);
+  color: var(--virtus-text-main);
+}
+
+.virtus-file-soft {
+  background: var(--virtus-card-soft-bg);
+  border-color: var(--virtus-border);
+}
+
+.virtus-file-muted {
+  color: var(--virtus-text-soft);
+}
+
+.virtus-file-action {
+  background: rgba(14, 165, 233, 0.1);
+  border-color: var(--virtus-border);
+  color: #7dd3fc;
+}
+
+.virtus-file-action:hover {
+  background: rgba(14, 165, 233, 0.18);
+}
+
+:root[data-virtus-appearance="light"] .virtus-file-action {
+  color: #075985;
+  background: rgba(186, 230, 253, 0.36);
+}
+
+:root[data-virtus-appearance="light"] .virtus-file-action:hover {
+  background: rgba(125, 211, 252, 0.32);
+}
+/* Virtus light mode clean chat bars */
+:root[data-virtus-appearance="light"] .virtus-chat-root .virtus-chat-clear-bar {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}

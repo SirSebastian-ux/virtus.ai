@@ -2613,7 +2613,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     </div>
   </div>
 )}
-<div className="virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-8 md:py-4">
+<div className="virtus-chat-clear-bar virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-8 md:py-4">
   <div className="flex items-center justify-between gap-4">
 <div className="md:hidden">
   <button
@@ -3131,7 +3131,7 @@ setRegenerating(true);
 <div className="h-full flex items-center justify-center px-6">
   <div className="rounded-3xl border border-sky-900/20 bg-zinc-950/25 px-8 py-6 text-center shadow-sm shadow-sky-950/10 backdrop-blur-sm">
     <p className="text-sm font-medium text-sky-200">Ask Virtus anything.</p>
-    <p className="mt-2 text-xs text-zinc-500">
+    <p className="mt-2 text-xs virtus-theme-muted">
       Think clearly. Act deliberately. Build with discipline.
     </p>
   </div>
@@ -3140,11 +3140,11 @@ setRegenerating(true);
             </div>
 
 <div
-  className={`px-3 py-3 md:px-8 md:py-5 border-t border-zinc-900 ${
+  className={`virtus-chat-clear-bar virtus-theme-card-soft border-t border-sky-900/20 px-3 py-3 md:px-8 md:py-5 ${
     showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
-  <div className="relative rounded-[30px] border border-sky-900/25 bg-zinc-950/35 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/50">
+  <div className="virtus-theme-card relative rounded-[30px] border border-sky-900/25 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10">
 
 <div className="absolute left-3 top-1/2 -translate-y-1/2">
   <button
@@ -3154,7 +3154,7 @@ setRegenerating(true);
       loadUploadedFiles();
     }}
     disabled={uploadingFile || loading}
-    className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50"
+    className="virtus-file-action flex h-10 w-10 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-50"
   >
     {uploadingFile ? "..." : "+"}
   </button>
@@ -3178,14 +3178,14 @@ setRegenerating(true);
     onWheel={(event) => {
       event.stopPropagation();
     }}
-    className="absolute bottom-14 left-0 z-40 max-h-[62vh] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-sky-900/30 bg-zinc-950/95 p-3 text-sm text-sky-100 shadow-xl shadow-black/50 backdrop-blur-sm no-scrollbar"
+    className="virtus-file-menu absolute bottom-14 left-0 z-40 max-h-[62vh] w-72 overflow-y-auto overscroll-contain rounded-2xl border p-3 text-sm shadow-xl shadow-black/20 backdrop-blur-sm no-scrollbar"
   >
-    <div className="mb-3 rounded-2xl border border-sky-900/20 bg-sky-950/15 px-3 py-2">
+    <div className="virtus-file-soft mb-3 rounded-2xl border border-sky-900/20 px-3 py-2">
       <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/60">
         Executive File Studio
       </p>
 
-      <p className="mt-1 text-xs leading-5 text-zinc-400">
+      <p className="mt-1 text-xs leading-5 virtus-file-muted">
         Upload, select, and use documents inside Virtus.
       </p>
 
@@ -3195,7 +3195,7 @@ setRegenerating(true);
     <button
       type="button"
       onClick={() => document.getElementById("virtus-file-upload")?.click()}
-      className="flex w-full items-center gap-3 rounded-xl border border-sky-900/20 bg-zinc-950/45 px-3 py-2 text-left transition hover:bg-sky-950/35"
+      className="virtus-file-action flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition"
     >
       <span className="text-sky-300">+</span>
       <span>Upload file</span>
@@ -3213,7 +3213,7 @@ setRegenerating(true);
           setShowDocumentLibrary(true);
         }
       }}
-      className="mb-2 flex w-full items-center justify-between rounded-xl border border-sky-900/20 bg-zinc-950/45 px-3 py-2 text-left transition hover:bg-sky-950/30"
+      className="virtus-file-action mb-2 flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition"
     >
       <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-sky-300/60">
         Document Library
@@ -3233,7 +3233,7 @@ setRegenerating(true);
       );
 
       return cleanUploadedFiles.length === 0 ? (
-        <p className="rounded-xl border border-zinc-800 bg-zinc-950/45 px-3 py-2 text-xs text-zinc-500">
+        <p className="virtus-file-card rounded-xl border px-3 py-2 text-xs virtus-file-muted">
           No uploaded files yet
         </p>
       ) : (
@@ -3268,16 +3268,16 @@ setRegenerating(true);
               }}
               className="w-full text-left"
             >
-              <span className="block truncate text-sky-100">
+              <span className="block truncate text-sky-700">
                 {file.file_name}
               </span>
-              <span className="block text-[11px] text-zinc-500">
+              <span className="block text-[11px] virtus-file-muted">
                 Click to open this document for Virtus
               </span>
             </button>
 
             {isImageFile && (
-              <div className="mt-2 overflow-hidden rounded-lg border border-sky-900/30 bg-black/40">
+              <div className="virtus-file-soft mt-2 overflow-hidden rounded-lg border border-sky-900/30">
                 <button
                   type="button"
                   onClick={() => setImagePreviewFile(file)}
@@ -3293,7 +3293,7 @@ setRegenerating(true);
             )}
 
             {activeFile?.id === file.id && (
-              <div className="mt-3 rounded-xl border border-sky-900/25 bg-zinc-950/45 px-3 py-2">
+              <div className="virtus-file-soft mt-3 rounded-xl border border-sky-900/25 px-3 py-2">
                 <p className="text-[11px] text-sky-200">
                   File attached to the message box.
                 </p>
@@ -3306,7 +3306,7 @@ setRegenerating(true);
                       setShowFileMenu(false);
                       textareaRef.current?.focus();
                     }}
-                    className="rounded-lg border border-sky-700/40 bg-sky-950/35 px-3 py-1.5 text-xs text-sky-100 transition hover:bg-sky-900/45"
+                    className="virtus-file-action rounded-lg border px-3 py-1.5 text-xs transition"
                   >
                     Open file
                   </button>
@@ -3318,7 +3318,7 @@ setRegenerating(true);
                         file.id
                       )}`;
                     }}
-                    className="rounded-lg border border-sky-900/30 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+                    className="virtus-file-action rounded-lg border px-3 py-1.5 text-xs transition"
                   >
                     Download
                   </button>
@@ -3336,7 +3336,7 @@ setRegenerating(true);
                       <button
                         type="button"
                         onClick={() => setConfirmDeleteFileId(null)}
-                        className="rounded-lg border border-sky-900/30 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+                        className="virtus-file-action rounded-lg border px-3 py-1.5 text-xs transition"
                       >
                         Cancel
                       </button>
@@ -3362,11 +3362,11 @@ setRegenerating(true);
 )}
 
 {fileNotice && (
-  <div className="ml-16 mt-3 max-w-[70%] rounded-2xl border border-sky-900/30 bg-zinc-950/70 px-4 py-3 text-sm text-sky-100 shadow-lg shadow-black/20">
+  <div className="virtus-file-menu ml-16 mt-3 max-w-[70%] rounded-2xl border border-sky-900/30 px-4 py-3 text-sm shadow-lg shadow-black/20">
     <div className="flex items-start justify-between gap-4">
       <div>
         <p className="font-medium text-sky-200">File access notice</p>
-        <p className="mt-1 text-xs leading-5 text-zinc-300">
+        <p className="mt-1 text-xs leading-5 virtus-file-muted">
           {fileNotice}
         </p>
       </div>
