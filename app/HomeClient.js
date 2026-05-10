@@ -2239,13 +2239,13 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
             <button
               type="button"
               onClick={() => setPracticeOpen(!practiceOpen)}
-              className="mt-3 w-full rounded-2xl border border-sky-900/25 bg-sky-950/20 px-4 py-3 text-left text-sm text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/35"
+              className="virtus-theme-card mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-left text-sm text-sky-200 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10"
             >
               Practice
             </button>
 
             {practiceOpen && (
-              <div className="mt-3 max-h-[420px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/40 p-2 no-scrollbar">
+              <div className="virtus-practice-panel mt-3 max-h-[420px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
                 <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
                   Practice Categories
                 </p>
@@ -2285,20 +2285,20 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                       }}
                       className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
                         canUseCategory
-                          ? "border-sky-900/10 bg-black/10 text-sky-100 hover:border-sky-800/30 hover:bg-sky-950/35"
-                          : "border-zinc-800/70 bg-zinc-950/35 text-zinc-500 opacity-70 hover:border-sky-900/20 hover:bg-zinc-950/55"
+                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
+                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
                       }`}
                     >
                       <span className="block font-medium">
                         {category.title}
                       </span>
 
-                      <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
+                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
                         {category.description}
                       </span>
 
                       {accessLabel && (
-                        <span className="mt-1 inline-flex rounded-full border border-sky-900/25 bg-sky-950/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-sky-300/70">
+                        <span className="virtus-practice-badge mt-1 inline-flex rounded-full border border-sky-900/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]">
                           {accessLabel}
                         </span>
                       )}
@@ -2705,7 +2705,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
             </button>
 
             {practiceOpen && (
-              <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/40 p-2 no-scrollbar">
+              <div className="virtus-practice-panel max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
                 <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
                   Practice Categories
                 </p>
@@ -2747,20 +2747,20 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                       }}
                       className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
                         canUseCategory
-                          ? "border-sky-900/10 bg-black/10 text-sky-100 hover:border-sky-800/30 hover:bg-sky-950/35"
-                          : "border-zinc-800/70 bg-zinc-950/35 text-zinc-500 opacity-70 hover:border-sky-900/20 hover:bg-zinc-950/55"
+                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
+                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
                       }`}
                     >
                       <span className="block font-medium">
                         {category.title}
                       </span>
 
-                      <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
+                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
                         {category.description}
                       </span>
 
                       {accessLabel && (
-                        <span className="mt-1 inline-flex rounded-full border border-sky-900/25 bg-sky-950/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-sky-300/70">
+                        <span className="virtus-practice-badge mt-1 inline-flex rounded-full border border-sky-900/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]">
                           {accessLabel}
                         </span>
                       )}

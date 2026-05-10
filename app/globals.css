@@ -295,3 +295,51 @@ body {
   border-color: transparent !important;
   box-shadow: none !important;
 }
+/* Virtus practice menu */
+.virtus-practice-panel {
+  background: var(--virtus-surface-bg);
+  border-color: var(--virtus-border);
+  color: var(--virtus-text-main);
+}
+
+.virtus-practice-item {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: var(--virtus-border);
+  color: var(--virtus-text-main);
+}
+
+.virtus-practice-item:hover {
+  background: rgba(14, 165, 233, 0.14);
+}
+
+.virtus-practice-item-locked {
+  background: var(--virtus-card-soft-bg);
+  color: var(--virtus-text-soft);
+}
+
+.virtus-practice-item-locked:hover {
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.virtus-practice-description {
+  color: var(--virtus-text-soft);
+}
+
+.virtus-practice-badge {
+  background: rgba(14, 165, 233, 0.1);
+  border-color: var(--virtus-border);
+  color: #7dd3fc;
+}
+
+:root[data-virtus-appearance="light"] .virtus-practice-item {
+  background: rgba(224, 230, 238, 0.84);
+}
+
+:root[data-virtus-appearance="light"] .virtus-practice-item:hover {
+  background: rgba(203, 213, 225, 0.86);
+}
+
+:root[data-virtus-appearance="light"] .virtus-practice-badge {
+  color: #075985;
+  background: rgba(186, 230, 253, 0.34);
+}
