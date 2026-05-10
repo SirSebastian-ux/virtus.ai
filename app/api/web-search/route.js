@@ -11,6 +11,20 @@ export async function POST(req) {
       });
     }
 
+    const internalKey = req.headers.get("x-virtus-internal-key");
+
+    if (internalKey !== apiKey) {
+      return Response.json(
+        {
+          ok: false,
+          error: "FORBIDDEN",
+          message: "Forbidden.",
+          results: [],
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const query = String(body?.query || "").trim();
 
@@ -87,3 +101,4 @@ export async function POST(req) {
     });
   }
 }
+
