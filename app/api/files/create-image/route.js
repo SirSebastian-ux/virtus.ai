@@ -4,6 +4,8 @@ import OpenAI from "openai";
 
 export const runtime = "nodejs";
 
+const MAX_IMAGE_CONTENT_CHARS = 3000;
+
 function makeSafeFileName(name) {
   return String(name || "virtus-image")
     .replace(/\.(png|jpg|jpeg|webp)$/i, "")
@@ -103,6 +105,13 @@ export async function POST(req) {
       );
     }
 
+    if (content.length > MAX_IMAGE_CONTENT_CHARS) {
+      return Response.json(
+        { error: "Image request is too long. Please shorten it and try again." },
+        { status: 400 }
+      );
+    }
+
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -174,5 +183,6 @@ export async function POST(req) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 

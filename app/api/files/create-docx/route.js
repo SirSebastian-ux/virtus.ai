@@ -10,6 +10,8 @@ import {
 
 export const runtime = "nodejs";
 
+const MAX_GENERATED_CONTENT_CHARS = 60000;
+
 function makeSafeFileName(name) {
   return String(name || "virtus-document")
     .replace(/\.docx$/i, "")
@@ -215,6 +217,13 @@ export async function POST(req) {
       );
     }
 
+    if (content.length > MAX_GENERATED_CONTENT_CHARS) {
+      return Response.json(
+        { error: "Document content is too long. Please shorten it and try again." },
+        { status: 400 }
+      );
+    }
+
     const safeName = makeSafeFileName(requestedFileName);
     const fileName = `${safeName}.docx`;
     const fileType =
@@ -282,3 +291,4 @@ export async function POST(req) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+

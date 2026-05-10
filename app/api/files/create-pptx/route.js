@@ -5,6 +5,8 @@ import OpenAI from "openai";
 
 export const runtime = "nodejs";
 
+const MAX_GENERATED_CONTENT_CHARS = 30000;
+
 function makeSafeFileName(name) {
   return String(name || "virtus-presentation")
     .replace(/\.pptx$/i, "")
@@ -749,6 +751,13 @@ export async function POST(req) {
     if (!content) {
       return Response.json(
         { error: "Presentation content is required" },
+        { status: 400 }
+      );
+    }
+
+    if (content.length > MAX_GENERATED_CONTENT_CHARS) {
+      return Response.json(
+        { error: "Presentation content is too long. Please shorten it and try again." },
         { status: 400 }
       );
     }
