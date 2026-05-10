@@ -160,7 +160,7 @@ const { data: savedFile, error: dbError } = await admin
         file_name: fileName,
         file_type: fileType,
         storage_path: storagePath,
-        extracted_text: `${title}\n\n${content}\n\nImage prompt:\n${prompt}`,
+        extracted_text: `${title}\n\n${content}`,
       })
       .select()
       .single();
@@ -177,6 +177,7 @@ const { data: savedFile, error: dbError } = await admin
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 
