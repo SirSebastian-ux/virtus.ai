@@ -6,6 +6,7 @@ import OpenAI from "openai";
 export const runtime = "nodejs";
 
 const MAX_GENERATED_CONTENT_CHARS = 30000;
+const DAILY_PPTX_GENERATION_LIMIT = 5;
 
 function makeSafeFileName(name) {
   return String(name || "virtus-presentation")
@@ -740,6 +741,27 @@ export async function POST(req) {
       );
     }
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const { count: todayPptxCount } = await admin
+      .from("user_files")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("file_type", "application/vnd.openxmlformats-officedocument.presentationml.presentation")
+      .gte("created_at", todayStart.toISOString())
+      .lt("created_at", tomorrowStart.toISOString());
+
+    if ((todayPptxCount ?? 0) >= DAILY_PPTX_GENERATION_LIMIT) {
+      return Response.json(
+        { error: "Daily PowerPoint generation limit reached. Please try again tomorrow." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
 
     const title = String(body.title || "Virtus Presentation").trim();
@@ -808,4 +830,5 @@ const { data: savedFile, error: dbError } = await admin
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 

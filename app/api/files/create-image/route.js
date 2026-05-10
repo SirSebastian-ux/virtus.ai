@@ -5,6 +5,7 @@ import OpenAI from "openai";
 export const runtime = "nodejs";
 
 const MAX_IMAGE_CONTENT_CHARS = 3000;
+const DAILY_IMAGE_GENERATION_LIMIT = 10;
 
 function makeSafeFileName(name) {
   return String(name || "virtus-image")
@@ -82,6 +83,27 @@ export async function POST(req) {
             "File creation is available on Plus and Premium. Free accounts cannot create Word, PDF, PowerPoint, or image files.",
         },
         { status: 403 }
+      );
+    }
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const tomorrowStart = new Date(todayStart);
+    tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+
+    const { count: todayImageCount } = await admin
+      .from("user_files")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("file_type", "image/png")
+      .gte("created_at", todayStart.toISOString())
+      .lt("created_at", tomorrowStart.toISOString());
+
+    if ((todayImageCount ?? 0) >= DAILY_IMAGE_GENERATION_LIMIT) {
+      return Response.json(
+        { error: "Daily image generation limit reached. Please try again tomorrow." },
+        { status: 429 }
       );
     }
 
@@ -177,6 +199,7 @@ const { data: savedFile, error: dbError } = await admin
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 
