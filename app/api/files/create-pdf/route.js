@@ -306,12 +306,7 @@ export async function POST(req) {
     if (uploadError) {
       return Response.json({ error: uploadError.message }, { status: 500 });
     }
-
-    const { data: publicUrlData } = admin.storage
-      .from("user-files")
-      .getPublicUrl(storagePath);
-
-    const { data: savedFile, error: dbError } = await admin
+const { data: savedFile, error: dbError } = await admin
       .from("user_files")
       .insert({
         user_id: user.id,
@@ -330,9 +325,9 @@ export async function POST(req) {
     return Response.json({
       success: true,
       file: savedFile,
-      publicUrl: publicUrlData.publicUrl,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
