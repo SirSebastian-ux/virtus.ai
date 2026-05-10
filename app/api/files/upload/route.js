@@ -4,6 +4,9 @@ import { createRequire } from "module";
 import mammoth from "mammoth";
 
 const require = createRequire(import.meta.url);
+
+const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
+
 export async function POST(req) {
   try {
    const supabase = await createClient();
@@ -27,6 +30,38 @@ export async function POST(req) {
 
     const fileName = file.name || "uploaded-file";
     const fileType = file.type || "application/octet-stream";
+    const fileSize = Number(file.size || 0);
+
+    const isPdf =
+      fileType === "application/pdf" ||
+      fileName.toLowerCase().endsWith(".pdf");
+
+    const isDocx =
+      fileType ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      fileName.toLowerCase().endsWith(".docx");
+
+    if (!isPdf && !isDocx) {
+      return Response.json(
+        { error: "Only PDF and DOCX files are allowed." },
+        { status: 400 }
+      );
+    }
+
+    if (fileSize <= 0) {
+      return Response.json(
+        { error: "Uploaded file is empty." },
+        { status: 400 }
+      );
+    }
+
+    if (fileSize > MAX_UPLOAD_SIZE_BYTES) {
+      return Response.json(
+        { error: "File is too large. Maximum upload size is 20 MB." },
+        { status: 400 }
+      );
+    }
+
    const bytes = await file.arrayBuffer();
 const fileData = new Uint8Array(bytes);
 let extractedText = "";
@@ -90,3 +125,4 @@ if (
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
