@@ -1,4 +1,4 @@
-﻿import { createAdminClient } from "@/lib/supabase-admin";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import crypto from "crypto";
 import {
@@ -133,13 +133,6 @@ export async function POST(req) {
     const supabase = createAdminClient();
     const effectiveChatId = chatId;
 
-    console.log("VIRTUS conversations guestId:", guestId || null);
-console.log("VIRTUS conversations userId:", userId);
-console.log("VIRTUS conversations isGuest:", isGuest);
-console.log("VIRTUS conversations plan:", plan);
-console.log("VIRTUS conversations planStatus:", planStatus);
-console.log("VIRTUS conversations chatId:", effectiveChatId);
-
     const { data, error } = await supabase
       .from("conversations")
       .select("role, content, created_at")
@@ -193,3 +186,4 @@ const conversation = conversationRows.map((item) => ({
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
