@@ -218,3 +218,28 @@ body {
   border-color: rgba(2, 132, 199, 0.58);
   background: var(--virtus-surface-bg);
 }
+/* Virtus mobile menu */
+.virtus-mobile-overlay {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.virtus-mobile-panel {
+  background: var(--virtus-page-bg);
+  color: var(--virtus-text-main);
+}
+
+.virtus-mobile-menu-item {
+  color: var(--virtus-text-main);
+}
+
+.virtus-mobile-menu-item:hover {
+  background: rgba(14, 165, 233, 0.12);
+}
+
+:root[data-virtus-appearance="light"] .virtus-mobile-overlay {
+  background: rgba(15, 23, 42, 0.28);
+}
+
+:root[data-virtus-appearance="light"] .virtus-mobile-menu-item {
+  color: #18181b;
+}

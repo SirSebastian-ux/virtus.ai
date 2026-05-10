@@ -2613,13 +2613,13 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     </div>
   </div>
 )}
-<div className="relative z-[9999] px-3 py-3 md:px-8 md:py-4 border-b border-sky-900/20 bg-zinc-950/20 backdrop-blur-sm">
+<div className="virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-8 md:py-4">
   <div className="flex items-center justify-between gap-4">
 <div className="md:hidden">
   <button
     type="button"
     onClick={() => setShowMobileMenu(true)}
-    className="flex items-center gap-2 rounded-2xl border border-sky-900/20 bg-zinc-950/30 px-2 py-1.5 text-sky-200 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-zinc-950/50"
+    className="virtus-theme-card flex items-center gap-2 rounded-2xl border border-sky-900/20 px-2 py-1.5 text-sky-700 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-sky-950/10"
     aria-label="Open Virtus menu"
   >
     <img
@@ -2640,11 +2640,11 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
 
     {showMobileMenu && (
       <div
-        className="fixed inset-0 z-[99999] bg-black md:hidden"
+        className="virtus-mobile-overlay fixed inset-0 z-[99999] md:hidden"
         onClick={() => setShowMobileMenu(false)}
       >
         <div
-          className="h-full w-full bg-black p-5 text-sm text-sky-100"
+          className="virtus-mobile-panel h-full w-full p-5 text-sm"
           onClick={(e) => e.stopPropagation()}
           onTouchStart={(e) => {
             mobileMenuTouchStartXRef.current = e.touches[0].clientX;
@@ -2691,7 +2691,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                 setConversation([]);
                 setShowMobileMenu(false);
               }}
-              className="w-full rounded-2xl px-3 py-3 text-left hover:bg-sky-950/35"
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
             >
               + New chat
             </button>
@@ -2699,7 +2699,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
             <button
               type="button"
               onClick={() => setPracticeOpen(!practiceOpen)}
-              className="w-full rounded-2xl px-3 py-3 text-left text-sky-100 hover:bg-sky-950/35"
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
             >
               Practice
             </button>
@@ -2770,19 +2770,19 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
               </div>
             )}
 
-            <Link href="/account" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+            <Link href="/account" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
               Profile
             </Link>
 
-            <Link href="/account/personalization" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+            <Link href="/account/personalization" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
               Personalization
             </Link>
 
-            <Link href="/account/personalization/memory" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+            <Link href="/account/personalization/memory" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
               Memory
             </Link>
 
-            <Link href="/upgrade" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+            <Link href="/upgrade" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
               Plan
             </Link>
 
@@ -2795,12 +2795,12 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
                   setShowMobileMenu(false);
                   handleLogout();
                 }}
-                className="w-full rounded-2xl px-3 py-3 text-left text-red-200 hover:bg-red-950/35"
+                className="virtus-danger-button w-full rounded-2xl border px-3 py-3 text-left transition"
               >
                 Log out
               </button>
             ) : (
-              <Link href="/login" onClick={() => setShowMobileMenu(false)} className="block rounded-2xl px-3 py-3 hover:bg-sky-950/35">
+              <Link href="/login" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
                 Sign in
               </Link>
             )}
