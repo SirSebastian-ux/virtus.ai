@@ -1,4 +1,4 @@
-
+﻿
 
 export const DEFAULT_VIRTUS_PLAN = "trial_guest";
 

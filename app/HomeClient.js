@@ -58,6 +58,16 @@ const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
 const [practiceOpen, setPracticeOpen] = useState(false);
+const [searchOpen, setSearchOpen] = useState(false);
+const [projectsOpen, setProjectsOpen] = useState(false);
+const [projectSpaces, setProjectSpaces] = useState([]);
+const [projectChats, setProjectChats] = useState({});
+const [projectStorageReady, setProjectStorageReady] = useState(false);
+const [activeProject, setActiveProject] = useState(null);
+const [projectHomeOpen, setProjectHomeOpen] = useState(false);
+const [newProjectTitle, setNewProjectTitle] = useState("");
+const [showProjectInput, setShowProjectInput] = useState(false);
+const [chatSearchQuery, setChatSearchQuery] = useState("");
 const [isPracticeMode, setIsPracticeMode] = useState(null);
 const mobileMenuTouchStartXRef = useRef(null);
 const edgeSwipeStartRef = useRef(null);
@@ -85,6 +95,106 @@ useEffect(() => {
     window.removeEventListener("focus", syncVirtusAppearance);
   };
 }, []);
+function getProjectStoragePrefix() {
+  if (typeof window === "undefined") return null;
+
+  if (isAuthenticated) {
+    if (!currentUser?.email) return null;
+
+    return `virtus_projects_account_${currentUser.email.toLowerCase()}`;
+  }
+
+  const guestId =
+    localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
+
+  localStorage.setItem("virtus_guest_id", guestId);
+
+  return `virtus_projects_guest_${guestId}`;
+}
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const storagePrefix = getProjectStoragePrefix();
+
+  if (!storagePrefix) return;
+
+  setProjectStorageReady(false);
+
+  try {
+    const savedProjects = JSON.parse(
+      localStorage.getItem(`${storagePrefix}_spaces`) || "[]"
+    );
+
+    const savedProjectChats = JSON.parse(
+      localStorage.getItem(`${storagePrefix}_chats`) || "{}"
+    );
+
+    const savedActiveProject = JSON.parse(
+      localStorage.getItem(`${storagePrefix}_active`) || "null"
+    );
+
+    setProjectSpaces(Array.isArray(savedProjects) ? savedProjects : []);
+
+    if (
+      savedProjectChats &&
+      typeof savedProjectChats === "object" &&
+      !Array.isArray(savedProjectChats)
+    ) {
+      setProjectChats(savedProjectChats);
+    } else {
+      setProjectChats({});
+    }
+
+    // Do not auto-open the last project on refresh.
+    // A project page should appear only after the user clicks that project.
+    setActiveProject(null);
+    setProjectHomeOpen(false);
+  } catch {
+    setProjectSpaces([]);
+    setProjectChats({});
+    setActiveProject(null);
+    setProjectHomeOpen(false);
+  } finally {
+    setProjectStorageReady(true);
+  }
+}, [isAuthenticated, currentUser?.email]);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (!projectStorageReady) return;
+
+  const storagePrefix = getProjectStoragePrefix();
+
+  if (!storagePrefix) return;
+
+  localStorage.setItem(
+    `${storagePrefix}_spaces`,
+    JSON.stringify(projectSpaces)
+  );
+
+  localStorage.setItem(
+    `${storagePrefix}_chats`,
+    JSON.stringify(projectChats)
+  );
+
+  if (activeProject?.id && activeProject?.title) {
+    localStorage.setItem(
+      `${storagePrefix}_active`,
+      JSON.stringify(activeProject)
+    );
+  } else {
+    localStorage.removeItem(`${storagePrefix}_active`);
+  }
+}, [
+  projectSpaces,
+  projectChats,
+  activeProject,
+  projectStorageReady,
+  isAuthenticated,
+  currentUser?.email,
+]);
+
 
 function beginFileCreation(type) {
   if (creatingFileLockRef.current) return false;
@@ -1396,9 +1506,19 @@ async function sendMessage() {
 
   setEditingIndex(null);
   setEditingText("");
+  const isStartingNewProjectChat = !!activeProject?.id && projectHomeOpen;
+  const chatIdForRequest = isStartingNewProjectChat
+    ? crypto.randomUUID()
+    : activeChatId;
+
+  if (isStartingNewProjectChat) {
+    localStorage.setItem("virtus_chat_id", chatIdForRequest);
+    setActiveChatId(chatIdForRequest);
+    setProjectHomeOpen(false);
+  }
 
   setConversation((prev) => {
-    const cleaned = [...prev];
+    const cleaned = isStartingNewProjectChat ? [] : [...prev];
 
     while (
       cleaned.length > 0 &&
@@ -1472,8 +1592,10 @@ const res = await fetch("/api/chat", {
     signal: abortControllerRef.current.signal,
 body: JSON.stringify({
   message: userMessage,
-  chatId: activeChatId,
+  chatId: chatIdForRequest,
   practiceMode: isPracticeMode,
+  activeProjectId: activeProject?.id || null,
+  activeProjectTitle: activeProject?.title || null,
   ...(isAuthenticated ? {} : { guestId }),
 }),
 });
@@ -1597,24 +1719,69 @@ if (assistantReply) {
 
 
 
-                if (activeChatId) {
+                if (chatIdForRequest) {
           setRecentConversations((prev) => {
             const resolvedPlan =
               !isAuthenticated && data.access ? data.access.plan : guestAccess?.plan;
 
             const resolvedSidebarChatId =
               !isAuthenticated
-                ? getGuestSidebarChatId(resolvedPlan, activeChatId)
-                : activeChatId;
+                ? getGuestSidebarChatId(resolvedPlan, chatIdForRequest)
+                : chatIdForRequest;
 
-            const newItemTitle = userMessage.includes("File ID:")
-              ? "Executive File Studio"
-              : userMessage.trim().slice(0, 60) || "New chat";
+            const existingItem = prev.find(
+              (item) => item.id === resolvedSidebarChatId
+            );
+
+            const existingTitle = existingItem?.title?.trim() || "";
+            const normalizedExistingTitle = existingTitle.toLowerCase();
+
+            const existingTitleIsWeak =
+              !existingTitle ||
+              normalizedExistingTitle === "new chat" ||
+              normalizedExistingTitle === "file workspace" ||
+              normalizedExistingTitle === "executive file studio" ||
+              normalizedExistingTitle.startsWith("uploaded file:");
+
+            const newItemTitle = existingTitleIsWeak
+              ? userMessage.includes("File ID:")
+                ? "Executive File Studio"
+                : userMessage.trim().slice(0, 60) || "New chat"
+              : existingTitle;
 
             const newItem = {
               id: resolvedSidebarChatId,
               title: newItemTitle,
             };
+
+            
+            if (activeProject?.id) {
+              setProjectChats((prevProjectChats) => {
+                const currentProjectChats =
+                  prevProjectChats[activeProject.id] || [];
+
+                const nextProjectChat = {
+                  chatId: resolvedSidebarChatId,
+                  title: newItemTitle,
+                  createdAt: new Date().toISOString(),
+                };
+
+                return {
+                  ...prevProjectChats,
+                  [activeProject.id]: [
+                    nextProjectChat,
+                    ...currentProjectChats.filter(
+                      (chat) => chat.chatId !== resolvedSidebarChatId
+                    ),
+                  ],
+                };
+              });
+            }
+
+            if (activeProject?.id) {
+              return prev;
+            }
+
 
             const nextRecentConversations = [
               newItem,
@@ -2273,51 +2440,184 @@ return (
   />
 </div>
 
-                    <div className="flex-1 p-3 overflow-y-auto no-scrollbar">
-            <button
-onClick={() => {
-  if (loading) {
-    abortControllerRef.current?.abort();
-  }
+                    <div className="virtus-scrollbar flex-1 p-3 overflow-y-auto">
+            <div className="grid grid-cols-4 gap-2">
+              <button
+                type="button"
+                title="Search"
+                aria-label="Search"
+                onClick={() => { setSearchOpen(!searchOpen); setProjectsOpen(false); setPracticeOpen(false); }}
+                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
+              >
+                🔎
+              </button>
 
-  stopVirtusVoice();
-  abortControllerRef.current = null;
+              <button
+                type="button"
+                title="Projects"
+                aria-label="Projects"
+                onClick={() => { setProjectsOpen(!projectsOpen); setSearchOpen(false); setPracticeOpen(false); }}
+                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
+              >
+                ◇
+              </button>
 
-  const newChatId = getGuestSidebarChatId(
-    guestAccess?.plan,
-    crypto.randomUUID()
-  );
+              <button
+                type="button"
+                title="New Chat"
+                aria-label="New Chat"
+                onClick={() => {
+                  if (loading) {
+                    abortControllerRef.current?.abort();
+                  }
 
-  localStorage.setItem("virtus_chat_id", newChatId);
-  setActiveChatId(newChatId);
-  setConversation([]);
-  setMessage("");
-  setReply("");
-  setStreamingReply("");
-  setLoading(false);
-  setRegenerating(false);
-  setEditingIndex(null);
-  setEditingText("");
-  setIsPracticeMode(null);
-  setShouldAutoScroll(true);
+                  stopVirtusVoice();
+                  abortControllerRef.current = null;
 
-  if (!isAuthenticated) {
-    // Do not save empty guest chats in Recent.
-    // A chat should appear in Recent only after the user sends a message.
-  }
-}}
-className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 text-left text-sm text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
-            >
-              + New chat
-            </button>
+                  const newChatId = getGuestSidebarChatId(
+                    guestAccess?.plan,
+                    crypto.randomUUID()
+                  );
 
-            <button
-              type="button"
-              onClick={() => setPracticeOpen(!practiceOpen)}
-              className="virtus-theme-card mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-left text-sm text-sky-200 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10"
-            >
-              Practice
-            </button>
+                  localStorage.setItem("virtus_chat_id", newChatId);
+                  setActiveChatId(newChatId);
+                  setConversation([]);
+                  setMessage("");
+                  setReply("");
+                  setStreamingReply("");
+                  setLoading(false);
+                  setRegenerating(false);
+                  setEditingIndex(null);
+                  setEditingText("");
+                  setIsPracticeMode(null);
+                  setShouldAutoScroll(true);
+
+                  if (!isAuthenticated) {
+                    // Do not save empty guest chats in Recent.
+                    // A chat should appear in Recent only after the user sends a message.
+                  }
+                }}
+                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
+              >
+                ✚
+              </button>
+
+              <button
+                type="button"
+                title="Practices"
+                aria-label="Practices"
+                onClick={() => setPracticeOpen(!practiceOpen)}
+                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10"
+              >
+                ◎
+              </button>
+            </div>
+
+            {searchOpen && (
+              <div className="mt-3 rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 shadow-sm shadow-sky-950/10">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/60">
+                  Search Chats
+                </p>
+                <input
+                  value={chatSearchQuery}
+                  onChange={(event) => setChatSearchQuery(event.target.value)}
+                  placeholder="Search recent chats..."
+                  className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-700/50"
+                />
+              </div>
+            )}
+            {projectsOpen && (
+              <div className="mt-3 rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 shadow-sm shadow-sky-950/10">
+                <button
+                  type="button"
+                  onClick={() => setShowProjectInput(true)}
+                  className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
+                >
+                  + Project
+                </button>
+
+                {showProjectInput && (
+                  <input
+                    value={newProjectTitle}
+                    onChange={(event) => setNewProjectTitle(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+
+                      const cleanTitle = newProjectTitle.trim();
+
+                      if (!cleanTitle) return;
+
+                      const projectId = `project-${cleanTitle
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")
+                        .replace(/[^a-z0-9-]/g, "")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "")}-${crypto.randomUUID().slice(0, 8)}`;
+
+                      const nextProject = {
+                        id: projectId,
+                        title: cleanTitle,
+                        chatId: crypto.randomUUID(),
+                      };
+
+                      setProjectSpaces((prev) => [
+                        nextProject,
+                        ...prev.filter((project) => project.id !== projectId),
+                      ]);
+                      setActiveProject(nextProject);
+                      setProjectHomeOpen(true);
+                      setNewProjectTitle("");
+                      setShowProjectInput(false);
+                    }}
+                    placeholder="Project name..."
+                    className="mt-2 w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-700/50"
+                    autoFocus
+                  />
+                )}
+
+                <div className="mt-3 space-y-2">
+                  {projectSpaces.map((project) => (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() => {
+                        const projectChatId = project.chatId || crypto.randomUUID();
+                        const nextProject = {
+                          ...project,
+                          chatId: projectChatId,
+                        };
+
+                        setActiveProject(nextProject);
+                        setProjectSpaces((prev) =>
+                          prev.map((savedProject) =>
+                            savedProject.id === project.id ? nextProject : savedProject
+                          )
+                        );
+
+                        localStorage.setItem("virtus_chat_id", projectChatId);
+                        setActiveChatId(projectChatId);
+                        setConversation([]);
+                        setMessage("");
+                        setReply("");
+                        setStreamingReply("");
+                        setEditingIndex(null);
+                        setEditingText("");
+                        setIsPracticeMode(null);
+                        setShouldAutoScroll(true);
+                        setProjectHomeOpen(true);
+                      }}
+                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
+                        activeProject?.id === project.id
+                          ? "border-sky-700/40 bg-sky-950/25 text-sky-100"
+                          : "border-sky-900/15 bg-zinc-950/35 text-zinc-300 hover:border-sky-800/35 hover:bg-zinc-950/55"
+                      }`}
+                    >
+                      {project.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {practiceOpen && (
               <div className="virtus-practice-panel mt-3 max-h-[420px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
@@ -2376,22 +2676,22 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
             )}
 
             <div className="mt-6">
-<p className="px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50 mb-2">
-  Recent
-</p>
+<p className="px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50 mb-2">{chatSearchQuery.trim() ? "Search Results" : "Recent"}</p>
 
   <div className="space-y-2">
   {recentConversations.filter((item) => {
     const title = item?.title?.trim().toLowerCase() || "";
+        const searchTerm = chatSearchQuery.trim().toLowerCase();
 
-    return (
-      item?.id &&
-      title &&
-      title !== "new chat" &&
-      title !== "file workspace" &&
-      title !== "executive file studio" &&
-      !title.startsWith("uploaded file:")
-    );
+        return (
+          item?.id &&
+          title &&
+          title !== "new chat" &&
+          title !== "file workspace" &&
+          title !== "executive file studio" &&
+          !title.startsWith("uploaded file:") &&
+          (!searchTerm || title.includes(searchTerm))
+        );
   }).length === 0 ? (
     <div className="rounded-xl px-3 py-2 text-sm text-zinc-400 bg-zinc-900/60 border border-zinc-800">
       Recent conversations will appear here
@@ -2400,6 +2700,7 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
     recentConversations
       .filter((item) => {
         const title = item?.title?.trim().toLowerCase() || "";
+        const searchTerm = chatSearchQuery.trim().toLowerCase();
 
         return (
           item?.id &&
@@ -2407,7 +2708,8 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
           title !== "new chat" &&
           title !== "file workspace" &&
           title !== "executive file studio" &&
-          !title.startsWith("uploaded file:")
+          !title.startsWith("uploaded file:") &&
+          (!searchTerm || title.includes(searchTerm))
         );
       })
       .map((item) => (
@@ -2420,6 +2722,18 @@ className="w-full rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-4 py-3 
                           crypto.randomUUID();
 
                         localStorage.setItem("virtus_guest_id", guestId);
+
+                        abortControllerRef.current?.abort();
+                        stopVirtusVoice();
+                        abortControllerRef.current = null;
+
+                        setShouldAutoScroll(true);
+                        setMessage("");
+                        setReply("");
+                        setStreamingReply("");
+                        setEditingIndex(null);
+                        setEditingText("");
+                        setIsPracticeMode(null);
                         setLoading(true);
 
                         try {
@@ -2905,7 +3219,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
 </div>
 <div
   ref={scrollContainerRef}
-  className={`flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 no-scrollbar ${
+  className={`virtus-scrollbar flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 ${
     showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
@@ -3187,13 +3501,114 @@ setRegenerating(true);
                   <div ref={messagesEndRef} />
                 </div>
                             ) : (
-<div className="h-full flex items-center justify-center px-6">
-  <div className="rounded-3xl border border-sky-900/20 bg-zinc-950/25 px-8 py-6 text-center shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-    <p className="text-sm font-medium text-sky-200">Ask Virtus anything.</p>
-    <p className="mt-2 text-xs virtus-theme-muted">
-      Think clearly. Act deliberately. Build with discipline.
-    </p>
-  </div>
+<div className="h-full flex items-start justify-center px-6 py-10">
+  {activeProject?.title ? (
+    <div className="w-full max-w-4xl">
+      <div className="mb-8">
+        <p className="text-3xl font-semibold text-sky-100">
+          {activeProject.title}
+        </p>
+        <p className="mt-3 text-sm virtus-theme-muted">
+          New chat in {activeProject.title}
+        </p>
+      </div>
+
+      <div className="mb-5 flex items-center gap-3">
+        <span className="rounded-full bg-zinc-950/60 px-5 py-3 text-sm font-medium text-sky-100">
+          Chats
+        </span>
+        <span className="px-3 py-3 text-sm text-zinc-500">
+          Sources
+        </span>
+      </div>
+
+      <div className="divide-y divide-zinc-800/80">
+        {(projectChats[activeProject.id] || []).length === 0 ? (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-500">
+            Project chats will appear here
+          </div>
+        ) : (
+          (projectChats[activeProject.id] || []).map((projectChat) => (
+            <button
+              key={projectChat.chatId}
+              type="button"
+              onClick={async () => {
+                const projectChatId = projectChat.chatId;
+
+                if (!projectChatId) return;
+
+                const guestId =
+                  localStorage.getItem("virtus_guest_id") ||
+                  crypto.randomUUID();
+
+                localStorage.setItem("virtus_guest_id", guestId);
+
+                abortControllerRef.current?.abort();
+                stopVirtusVoice();
+                abortControllerRef.current = null;
+
+                setShouldAutoScroll(true);
+                setMessage("");
+                setReply("");
+                setStreamingReply("");
+                setEditingIndex(null);
+                setEditingText("");
+                setIsPracticeMode(null);
+                setProjectHomeOpen(false);
+                setLoading(true);
+
+                try {
+                  const res = await fetch("/api/conversations", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      chatId: projectChatId,
+                      ...(isAuthenticated ? {} : { guestId }),
+                    }),
+                  });
+
+                  const data = await res.json();
+
+                  if (data.access && !isAuthenticated) {
+                    localStorage.setItem(
+                      "virtus_guest_access",
+                      JSON.stringify(data.access)
+                    );
+                    setGuestAccess(normalizeGuestAccess(data.access));
+                  }
+
+                  setConversation(data.conversation || []);
+                  setActiveChatId(projectChatId);
+                  localStorage.setItem("virtus_chat_id", projectChatId);
+                } catch (error) {
+                  setConversation([]);
+                }
+
+                setLoading(false);
+              }}
+              className="block w-full px-2 py-5 text-left transition hover:bg-zinc-950/30"
+            >
+              <span className="block text-base font-semibold text-zinc-100">
+                {projectChat.title}
+              </span>
+              <span className="mt-1 block truncate text-sm text-zinc-400">
+                Chat inside {activeProject.title}
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-3xl border border-sky-900/20 bg-zinc-950/25 px-8 py-6 text-center shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+      <p className="text-sm font-medium text-sky-200">Ask Virtus anything.</p>
+      <p className="mt-2 text-xs virtus-theme-muted">
+        Think clearly. Act deliberately. Build with discipline.
+      </p>
+    </div>
+  )}
 </div>
               )}
             </div>
@@ -3527,7 +3942,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       : currentPlanKey === "plus"
       ? "Plus daily limit reached. Premium / Virtus Prime unlocks unlimited daily use."
       : "Daily limit reached for your current plan"
-      : "Message Virtus..."
+      : activeProject?.title ? `New chat in ${activeProject.title}...` : "Message Virtus..."
   }
   value={message}
   disabled={loading || isDailyLimitReached || isTrialGuestExpired}
