@@ -1,4 +1,4 @@
-﻿import OpenAI from "openai";
+import OpenAI from "openai";
 import crypto from "crypto";
 import { VIRTUS_RUNTIME } from "@/data/virtus-runtime";
 import { VIRTUS_PLUS_RUNTIME } from "@/data/virtus-plus";
@@ -1464,7 +1464,7 @@ if (!activeProjectId && normalizedProjectMessage.includes("this project")) {
     ? { data: null }
     : await supabase
         .from("chat_sessions")
-        .select("id, title")
+        .select("id, title, hidden_from_sidebar")
         .eq("user_id", userId)
         .eq("id", effectiveChatId)
         .maybeSingle();
@@ -1476,11 +1476,13 @@ if (!existingChatSession && !userId.startsWith("guest-")) {
     title: message.includes("File ID:")
   ? "File workspace"
   : message.trim().slice(0, 60) || "New chat",
+    hidden_from_sidebar: false,
   });
 } else if (
   existingChatSession &&
   !userId.startsWith("guest-") &&
-  existingChatSession.title === "New chat"
+  existingChatSession.title === "New chat" &&
+  existingChatSession.hidden_from_sidebar !== true
 ) {
   await supabase
     .from("chat_sessions")
@@ -4531,6 +4533,8 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
+
 
 
 

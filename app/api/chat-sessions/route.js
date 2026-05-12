@@ -1,4 +1,4 @@
-﻿import { createAdminClient } from "@/lib/supabase-admin";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
 function cleanChatTitleFromMessage(content) {
@@ -46,6 +46,7 @@ export async function GET() {
       .from("chat_sessions")
       .select("id, title, created_at")
       .eq("user_id", user.id)
+      .eq("hidden_from_sidebar", false)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -108,3 +109,4 @@ export async function GET() {
     );
   }
 }
+

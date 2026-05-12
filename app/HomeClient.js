@@ -1273,6 +1273,7 @@ async function handleDeleteChat(chatId, options = {}) {
 
     const data = await response.json();
 
+
     if (!response.ok) {
       alert(data.error || "Chat delete failed.");
       return;
@@ -4331,6 +4332,8 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
 
 
 

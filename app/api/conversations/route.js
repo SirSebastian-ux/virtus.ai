@@ -199,10 +199,10 @@ export async function DELETE(req) {
     const supabase = createAdminClient();
 
     const { error } = await supabase
-      .from("conversations")
-      .delete()
+      .from("chat_sessions")
+      .update({ hidden_from_sidebar: true })
       .eq("user_id", userId)
-      .eq("chat_id", chatId);
+      .eq("id", chatId);
 
     if (error) {
       return Response.json({ error: error.message }, { status: 500 });
@@ -213,3 +213,6 @@ export async function DELETE(req) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+

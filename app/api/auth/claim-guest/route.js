@@ -99,6 +99,7 @@ export async function POST(req) {
           id: chatId,
           user_id: user.id,
           title,
+          hidden_from_sidebar: false,
         });
       }
     }
@@ -145,3 +146,4 @@ export async function POST(req) {
     );
   }
 }
+
