@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -22,6 +22,7 @@ const [activeFile, setActiveFile] = useState(null);
 const [activeFiles, setActiveFiles] = useState([]);
 const [showDocumentLibrary, setShowDocumentLibrary] = useState(false);
 const [confirmDeleteFileId, setConfirmDeleteFileId] = useState(null);
+const [confirmDialog, setConfirmDialog] = useState(null);
 const [fileNotice, setFileNotice] = useState("");
 const [creatingFileType, setCreatingFileType] = useState("");
 const creatingFileLockRef = useRef("");
@@ -1169,6 +1170,160 @@ async function handleDeleteFile(file) {
     }
   } catch (error) {
     alert(error.message || "File delete failed.");
+  }
+}
+
+function askVirtusConfirm(message) {
+  return new Promise((resolve) => {
+    setConfirmDialog({
+      message,
+      resolve,
+    });
+  });
+}
+
+async function handleDeleteProject(project) {
+  if (!project?.id) return;
+
+  const confirmed = await askVirtusConfirm("Delete this project?");
+  if (!confirmed) return;
+
+  const guestId =
+    localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
+
+  localStorage.setItem("virtus_guest_id", guestId);
+
+  const projectChatIds = [
+    project.chatId,
+    ...(projectChats[project.id] || []).map((item) => item.chatId),
+  ].filter(Boolean);
+
+  const uniqueProjectChatIds = [...new Set(projectChatIds)];
+
+  for (const chatId of uniqueProjectChatIds) {
+    try {
+      await fetch("/api/conversations", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          chatId,
+          ...(isAuthenticated ? {} : { guestId }),
+        }),
+      });
+    } catch {
+      // Keep the UI cleanup stable even if one saved chat delete fails.
+    }
+  }
+
+  setProjectSpaces((currentProjects) =>
+    currentProjects.filter((item) => item.id !== project.id)
+  );
+
+  setProjectChats((currentProjectChats) => {
+    const nextProjectChats = { ...currentProjectChats };
+    delete nextProjectChats[project.id];
+    return nextProjectChats;
+  });
+
+  if (activeProject?.id === project.id) {
+    const newChatId = getGuestSidebarChatId(
+      guestAccess?.plan,
+      crypto.randomUUID()
+    );
+
+    setActiveProject(null);
+    setProjectHomeOpen(false);
+    setActiveChatId(newChatId);
+    localStorage.setItem("virtus_chat_id", newChatId);
+    setConversation([]);
+    setMessage("");
+    setReply("");
+    setStreamingReply("");
+    setEditingIndex(null);
+    setEditingText("");
+    setIsPracticeMode(null);
+  }
+}
+async function handleDeleteChat(chatId, options = {}) {
+  if (!chatId) return;
+
+  if (!options.skipConfirm) {
+    const confirmed = await askVirtusConfirm("Delete this chat?");
+    if (!confirmed) return;
+  }
+
+  const guestId =
+    localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
+
+  localStorage.setItem("virtus_guest_id", guestId);
+
+  try {
+    const response = await fetch("/api/conversations", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chatId,
+        ...(isAuthenticated ? {} : { guestId }),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      alert(data.error || "Chat delete failed.");
+      return;
+    }
+
+    if (options.projectId) {
+      setProjectChats((currentProjectChats) => ({
+        ...currentProjectChats,
+        [options.projectId]: (currentProjectChats[options.projectId] || []).filter(
+          (item) => item.chatId !== chatId
+        ),
+      }));
+    } else {
+      setRecentConversations((currentChats) =>
+        currentChats.filter((item) => item.id !== chatId)
+      );
+
+      if (!isAuthenticated) {
+        try {
+          const storedGuestChats = JSON.parse(
+            localStorage.getItem("virtus_guest_recent_chats") || "[]"
+          );
+
+          if (Array.isArray(storedGuestChats)) {
+            localStorage.setItem(
+              "virtus_guest_recent_chats",
+              JSON.stringify(storedGuestChats.filter((item) => item.id !== chatId))
+            );
+          }
+        } catch {
+          localStorage.removeItem("virtus_guest_recent_chats");
+        }
+      }
+    }
+
+    if (activeChatId === chatId) {
+      const newChatId = getGuestSidebarChatId(
+        guestAccess?.plan,
+        crypto.randomUUID()
+      );
+
+      localStorage.setItem("virtus_chat_id", newChatId);
+      setActiveChatId(newChatId);
+      setConversation([]);
+      setMessage("");
+      setReply("");
+      setStreamingReply("");
+      setLoading(false);
+    }
+  } catch (error) {
+    alert(error.message || "Chat delete failed.");
   }
 }
 
@@ -2430,9 +2585,46 @@ return (
   </div>
 )}
 
+{confirmDialog && (
+  <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+    <div className="w-full max-w-sm rounded-3xl border border-sky-900/35 bg-zinc-950/95 p-5 shadow-2xl shadow-sky-950/30">
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-sky-300/60">
+        Virtus confirmation
+      </p>
+      <p className="mt-3 text-base font-medium text-zinc-100">
+        {confirmDialog.message}
+      </p>
+
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            confirmDialog.resolve(false);
+            setConfirmDialog(null);
+          }}
+          className="rounded-full border border-zinc-800 bg-zinc-950/70 px-4 py-2 text-sm text-zinc-300 transition hover:border-sky-900/35 hover:bg-zinc-900"
+        >
+          No
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            confirmDialog.resolve(true);
+            setConfirmDialog(null);
+          }}
+          className="rounded-full border border-sky-700/50 bg-sky-950/50 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-500/70 hover:bg-sky-900/60"
+        >
+          Yes
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
  <div className="flex h-full">
-        <aside className="hidden md:flex md:w-72 bg-zinc-950 border-r border-zinc-800 h-full flex-col">
-          <div className="px-4 pt-4 pb-3 border-b border-zinc-800 flex justify-center">
+        <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-zinc-950 via-sky-950/10 to-black border-r border-sky-900/25 h-full flex-col shadow-[inset_-1px_0_0_rgba(14,165,233,0.12)]">
+          <div className="px-4 pt-4 pb-3 border-b border-sky-900/20 bg-black/20 flex justify-center">
   <img
     src="/virtus-logo.png"
     alt="Virtus AI logo"
@@ -2440,45 +2632,42 @@ return (
   />
 </div>
 
-                    <div className="virtus-scrollbar flex-1 p-3 overflow-y-auto">
+                    <div className="virtus-scrollbar flex-1 overflow-y-auto overflow-x-hidden p-3">
             <div className="grid grid-cols-4 gap-2">
               <button
                 type="button"
-                title="Search"
                 aria-label="Search"
                 onClick={() => { setSearchOpen(!searchOpen); setProjectsOpen(false); setPracticeOpen(false); }}
-                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
+                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
               >
-                🔎
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Search</span>
               </button>
 
               <button
                 type="button"
-                title="Projects"
                 aria-label="Projects"
-                onClick={() => { setProjectsOpen(!projectsOpen); setSearchOpen(false); setPracticeOpen(false); }}
-                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
+                onClick={() => {
+                  const nextState = !projectsOpen;
+                  setProjectsOpen(nextState);
+                  setSearchOpen(false);
+                  setPracticeOpen(false);
+                  if (!nextState) { setProjectHomeOpen(false); setActiveProject(null); }
+                }}
+                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
               >
-                ◇
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2" /></svg>
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Projects</span>
               </button>
 
               <button
                 type="button"
-                title="New Chat"
                 aria-label="New Chat"
                 onClick={() => {
-                  if (loading) {
-                    abortControllerRef.current?.abort();
-                  }
-
+                  if (loading) { abortControllerRef.current?.abort(); }
                   stopVirtusVoice();
                   abortControllerRef.current = null;
-
-                  const newChatId = getGuestSidebarChatId(
-                    guestAccess?.plan,
-                    crypto.randomUUID()
-                  );
-
+                  const newChatId = getGuestSidebarChatId(guestAccess?.plan, crypto.randomUUID());
                   localStorage.setItem("virtus_chat_id", newChatId);
                   setActiveChatId(newChatId);
                   setConversation([]);
@@ -2491,25 +2680,21 @@ return (
                   setEditingText("");
                   setIsPracticeMode(null);
                   setShouldAutoScroll(true);
-
-                  if (!isAuthenticated) {
-                    // Do not save empty guest chats in Recent.
-                    // A chat should appear in Recent only after the user sends a message.
-                  }
                 }}
-                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
+                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
               >
-                ✚
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">New Chat</span>
               </button>
 
               <button
                 type="button"
-                title="Practices"
                 aria-label="Practices"
                 onClick={() => setPracticeOpen(!practiceOpen)}
-                className="flex h-11 items-center justify-center rounded-2xl border border-sky-900/25 bg-zinc-950/35 text-lg text-sky-100 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10"
+                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
               >
-                ◎
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M2 12h3" /><path d="M19 12h3" /></svg>
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Practices</span>
               </button>
             </div>
 
@@ -2577,43 +2762,71 @@ return (
 
                 <div className="mt-3 space-y-2">
                   {projectSpaces.map((project) => (
-                    <button
+                    <div
                       key={project.id}
-                      type="button"
-                      onClick={() => {
-                        const projectChatId = project.chatId || crypto.randomUUID();
-                        const nextProject = {
-                          ...project,
-                          chatId: projectChatId,
-                        };
-
-                        setActiveProject(nextProject);
-                        setProjectSpaces((prev) =>
-                          prev.map((savedProject) =>
-                            savedProject.id === project.id ? nextProject : savedProject
-                          )
-                        );
-
-                        localStorage.setItem("virtus_chat_id", projectChatId);
-                        setActiveChatId(projectChatId);
-                        setConversation([]);
-                        setMessage("");
-                        setReply("");
-                        setStreamingReply("");
-                        setEditingIndex(null);
-                        setEditingText("");
-                        setIsPracticeMode(null);
-                        setShouldAutoScroll(true);
-                        setProjectHomeOpen(true);
-                      }}
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
+                      className={`group flex items-center gap-2 rounded-xl border pr-2 transition ${
                         activeProject?.id === project.id
                           ? "border-sky-700/40 bg-sky-950/25 text-sky-100"
                           : "border-sky-900/15 bg-zinc-950/35 text-zinc-300 hover:border-sky-800/35 hover:bg-zinc-950/55"
                       }`}
                     >
-                      {project.title}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const projectChatId = project.chatId || crypto.randomUUID();
+                          const nextProject = {
+                            ...project,
+                            chatId: projectChatId,
+                          };
+
+                          setActiveProject(nextProject);
+                          setProjectSpaces((prev) =>
+                            prev.map((savedProject) =>
+                              savedProject.id === project.id ? nextProject : savedProject
+                            )
+                          );
+
+                          localStorage.setItem("virtus_chat_id", projectChatId);
+                          setActiveChatId(projectChatId);
+                          setConversation([]);
+                          setMessage("");
+                          setReply("");
+                          setStreamingReply("");
+                          setEditingIndex(null);
+                          setEditingText("");
+                          setIsPracticeMode(null);
+                          setShouldAutoScroll(true);
+                          setProjectHomeOpen(true);
+                        }}
+                        className="min-w-0 flex-1 px-3 py-2 text-left text-sm"
+                      >
+                        <span className="block truncate">{project.title}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        aria-label="Delete project"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteProject(project);
+                        }}
+                        className="group relative overflow-visible flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-zinc-500 opacity-70 transition hover:bg-red-950/30 hover:text-red-200 group-hover:opacity-100"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="h-3.5 w-3.5"
+                        >
+                          <circle cx="5" cy="12" r="1.5" />
+                          <circle cx="12" cy="12" r="1.5" />
+                          <circle cx="19" cy="12" r="1.5" />
+                        </svg>
+                        <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition duration-150 group-hover:opacity-100">Delete</span>
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -2676,7 +2889,51 @@ return (
             )}
 
             <div className="mt-6">
-<p className="px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50 mb-2">{chatSearchQuery.trim() ? "Search Results" : "Recent"}</p>
+<div className="mb-2 flex items-center justify-between px-2">
+  <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
+    {chatSearchQuery.trim() ? "Search Results" : "Recent"}
+  </p>
+
+  {!chatSearchQuery.trim() && recentConversations.length > 0 && (
+    <button
+      type="button"
+      aria-label="Delete all recent chats"
+      onClick={async () => {
+        const confirmed = await askVirtusConfirm("Delete all recent chats?");
+        if (!confirmed) return;
+
+        const chatsToDelete = recentConversations.filter((item) => item?.id);
+
+        setRecentConversations([]);
+        localStorage.removeItem("virtus_guest_recent_chats");
+
+        await Promise.allSettled(
+          chatsToDelete.map((chat) =>
+            handleDeleteChat(chat.id, { skipConfirm: true, silent: true })
+          )
+        );
+      }}
+      className="group relative flex h-7 w-7 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-red-950/30 hover:text-red-200"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-3.5 w-3.5"
+      >
+        <circle cx="5" cy="12" r="1.5" />
+        <circle cx="12" cy="12" r="1.5" />
+        <circle cx="19" cy="12" r="1.5" />
+      </svg>
+
+      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">
+        Delete all
+      </span>
+    </button>
+  )}
+</div>
 
   <div className="space-y-2">
   {recentConversations.filter((item) => {
@@ -2714,9 +2971,13 @@ return (
       })
       .map((item) => (
   
-                    <button
+                    <div
                       key={item.id}
-                      onClick={async () => {
+                      className="group flex items-center gap-2 rounded-2xl border border-sky-900/15 bg-zinc-950/30 pr-2 text-zinc-200 transition hover:border-sky-800/35 hover:bg-zinc-950/55"
+                    >
+                      <button
+                        type="button"
+                        onClick={async () => {
                         const guestId =
                           localStorage.getItem("virtus_guest_id") ||
                           crypto.randomUUID();
@@ -2823,10 +3084,37 @@ if (data.conversation) {
 
                         setLoading(false);
                       }}
-className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-950/30 border border-sky-900/15 transition hover:border-sky-800/35 hover:bg-zinc-950/55"
+                        className="min-w-0 flex-1 px-3 py-2 text-left text-sm"
                     >
-                      {item.title}
-                    </button>
+                        <span className="block truncate">{item.title}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        aria-label="Delete chat"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDeleteChat(
+                            getGuestSidebarChatId(guestAccess?.plan, item.id)
+                          );
+                        }}
+                        className="group relative overflow-visible flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-zinc-500 opacity-70 transition hover:bg-red-950/30 hover:text-red-200 group-hover:opacity-100"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="h-3.5 w-3.5"
+                        >
+                          <circle cx="5" cy="12" r="1.5" />
+                          <circle cx="12" cy="12" r="1.5" />
+                          <circle cx="19" cy="12" r="1.5" />
+                        </svg>
+                        <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition duration-150 group-hover:opacity-100">Delete</span>
+                      </button>
+                    </div>
                   ))
                 )}
               </div>
@@ -2890,7 +3178,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     scrollContainerRef.current.scrollTop += e.deltaY;
   }}
 >
-          <div className="w-full max-w-6xl h-full flex flex-col">
+          <div className="w-full h-full flex flex-col">
             {showPlanOverlay && (
   <div
     className="absolute inset-0 z-20 flex items-start md:items-center justify-center overflow-y-auto md:overflow-hidden bg-black/70 px-3 py-4 md:px-6 md:py-0 no-scrollbar"
@@ -2994,8 +3282,8 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
     </div>
   </div>
 )}
-<div className="virtus-chat-clear-bar virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-8 md:py-4">
-  <div className="flex items-center justify-between gap-4">
+<div className="virtus-chat-clear-bar virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-4 md:py-3">
+  <div className="flex min-h-[44px] items-center gap-4">
 <div className="md:hidden">
   <button
     type="button"
@@ -3011,11 +3299,11 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
   </button>
 </div>
 
-<div className="hidden md:flex items-center">
+<div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
   <img
     src="/virtus-logo.png"
     alt="Virtus AI"
-    className="h-9 w-auto object-contain"
+    className="h-8 w-auto object-contain"
   />
 </div>
 
@@ -3182,7 +3470,7 @@ className="w-full rounded-2xl px-3 py-2 text-left text-sm text-zinc-200 bg-zinc-
       </div>
     )}
 
-    <div className="text-right">
+    <div className="ml-auto shrink-0 text-right">
       <Link
         href="/upgrade"
         className="inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
@@ -3514,23 +3802,19 @@ setRegenerating(true);
       </div>
 
       <div className="mb-5 flex items-center gap-3">
-        <span className="rounded-full bg-zinc-950/60 px-5 py-3 text-sm font-medium text-sky-100">
+        <span className="rounded-full border border-sky-900/25 bg-sky-950/20 px-5 py-2.5 text-sm font-medium text-sky-100 shadow-sm shadow-sky-950/10">
           Chats
-        </span>
-        <span className="px-3 py-3 text-sm text-zinc-500">
-          Sources
         </span>
       </div>
 
-      <div className="divide-y divide-zinc-800/80">
-        {(projectChats[activeProject.id] || []).length === 0 ? (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 text-sm text-zinc-500">
-            Project chats will appear here
-          </div>
-        ) : (
+      <div className="space-y-2">
+        {(projectChats[activeProject.id] || []).length > 0 &&
           (projectChats[activeProject.id] || []).map((projectChat) => (
-            <button
+            <div
               key={projectChat.chatId}
+              className="group flex items-center gap-2 rounded-2xl border border-sky-900/15 bg-zinc-950/25 text-left shadow-sm shadow-black/10 transition hover:border-sky-800/35 hover:bg-sky-950/15 hover:shadow-sky-950/10"
+            >
+            <button
               type="button"
               onClick={async () => {
                 const projectChatId = projectChat.chatId;
@@ -3588,17 +3872,40 @@ setRegenerating(true);
 
                 setLoading(false);
               }}
-              className="block w-full px-2 py-5 text-left transition hover:bg-zinc-950/30"
+              className="min-w-0 flex-1 px-4 py-4 text-left"
             >
-              <span className="block text-base font-semibold text-zinc-100">
-                {projectChat.title}
+              <span className="block truncate text-base font-semibold text-zinc-100 transition group-hover:text-sky-100">
+                {projectChat.title || "Untitled project chat"}
               </span>
-              <span className="mt-1 block truncate text-sm text-zinc-400">
+              <span className="mt-1 block truncate text-sm text-zinc-500 transition group-hover:text-zinc-400">
                 Chat inside {activeProject.title}
               </span>
             </button>
-          ))
-        )}
+
+            <button
+              type="button"
+              aria-label="Delete chat"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleDeleteChat(projectChat.chatId, { projectId: activeProject.id });
+              }}
+              className="group relative overflow-visible mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-zinc-500 opacity-70 transition hover:bg-red-950/30 hover:text-red-200 group-hover:opacity-100"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-3.5 w-3.5"
+              >
+                <circle cx="5" cy="12" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
+              </svg>
+            </button>
+          </div>
+          ))}
       </div>
     </div>
   ) : (
@@ -4024,6 +4331,31 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

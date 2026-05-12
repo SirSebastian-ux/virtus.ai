@@ -186,4 +186,30 @@ const conversation = conversationRows.map((item) => ({
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+export async function DELETE(req) {
+  try {
+    const body = await req.json();
+    const { guestId, chatId } = body;
 
+    if (!chatId) {
+      return Response.json({ error: "Missing chatId" }, { status: 400 });
+    }
+
+    const { userId } = await resolveVirtusUserId(guestId);
+    const supabase = createAdminClient();
+
+    const { error } = await supabase
+      .from("conversations")
+      .delete()
+      .eq("user_id", userId)
+      .eq("chat_id", chatId);
+
+    if (error) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
+
+    return Response.json({ success: true });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
