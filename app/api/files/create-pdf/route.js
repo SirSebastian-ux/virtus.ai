@@ -66,13 +66,33 @@ function cleanGeneratedFileContent(text) {
 
     if (/^(docx|pdf|pptx|image|\.\.\.)$/i.test(value)) return false;
 
+    const openingWithoutName = lower.replace(/^sir sebastian,\s*/, "");
+
+    const isChatStyleDocumentOpening =
+      index < 12 &&
+      (/^(here is|here's|below is|i prepared|i have prepared|i created|this is)\b/.test(
+        openingWithoutName
+      ) ||
+        openingWithoutName.startsWith("good.")) &&
+      (openingWithoutName.includes("document") ||
+        openingWithoutName.includes("pdf") ||
+        openingWithoutName.includes("docx") ||
+        openingWithoutName.includes("board-ready") ||
+        openingWithoutName.includes("proposal") ||
+        openingWithoutName.includes("draft") ||
+        openingWithoutName.includes("content") ||
+        openingWithoutName.includes("version"));
+
+    const isInterfaceInstruction =
+      lower.includes("click pdf below to generate") ||
+      lower.includes("click docx below to generate") ||
+      lower.includes("pdf content ready") ||
+      lower.includes("docx/pdf content ready");
+
     if (
-      index < 10 &&
-      (lower === "good. the direction is now clear." ||
-        lower === "good. we move from discussing values to writing them." ||
-        lower === "below is the clean pdf content." ||
-        lower === "below is clean pdf content." ||
-        lower === "pdf content ready. click pdf below to generate and save it." ||
+      index < 12 &&
+      (isChatStyleDocumentOpening ||
+        isInterfaceInstruction ||
         lower === "prepared for ews academy foundational development")
     ) {
       return false;
