@@ -1,4 +1,4 @@
-﻿
+
 
 export const DEFAULT_VIRTUS_PLAN = "trial_guest";
 
@@ -179,7 +179,7 @@ export function getRecentConversationLimit(plan) {
   if (planKey === "trial_guest") return 20;
   if (planKey === "free") return 4;
   if (planKey === "plus") return 12;
-  if (planKey === "premium") return 20;
+  if (planKey === "premium") return null;
 
   return 4;
 }
@@ -194,7 +194,7 @@ export function getRuntimeFactsLimit(plan) {
   if (planKey === "trial_guest") return 20;
   if (planKey === "free") return 4;
   if (planKey === "plus") return 12;
-  if (planKey === "premium") return 20;
+  if (planKey === "premium") return null;
 
   return 4;
 }
@@ -252,3 +252,4 @@ export function getUpgradeLabel(plan) {
 export function isPremiumLikePlan(plan) {
   return hasPremiumExperience(plan);
 }
+

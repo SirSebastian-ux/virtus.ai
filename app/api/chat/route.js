@@ -398,7 +398,8 @@ const domainsRequiringExtraCaution =
    const hasCrossChatMemory = allowsCrossChatMemory(plan);
   const canWritePersonalMemory = allowsPersonalMemoryWrites(plan);
   const canWriteProjectMemory = allowsProjectMemoryWrites(plan);
-  const hasSingleChatConversationMemory = singleChatConversationLimit > 0;
+  const hasSingleChatConversationMemory =
+    singleChatConversationLimit === null || singleChatConversationLimit > 0;
   const supportLayer = getSupportLayer(plan);
   const shouldWriteCrossChatMemory =
     canWritePersonalMemory || canWriteProjectMemory;
@@ -1514,9 +1515,9 @@ if (!existingChatSession && !userId.startsWith("guest-")) {
        : []),
    ];
 
-   const memoryFetchLimit = hasPremiumAccess ? 60 : hasPlusAccess ? 40 : 25;
+   const memoryFetchLimit = hasPremiumAccess ? null : hasPlusAccess ? 40 : 25;
 
-const memoryQuery =
+let memoryQuery =
   memoryEnabled && hasCrossChatMemory && allowedMemorySources.length > 0
     ? supabase
         .from("memories")
@@ -1524,8 +1525,11 @@ const memoryQuery =
         .eq("user_id", userId)
         .in("source", allowedMemorySources)
         .order("created_at", { ascending: false })
-        .limit(memoryFetchLimit)
     : null;
+
+if (memoryQuery && memoryFetchLimit !== null) {
+  memoryQuery = memoryQuery.limit(memoryFetchLimit);
+}
 
 if (memoryQuery) {
   if (activeProjectId) {
@@ -1764,7 +1768,9 @@ const virtusLibraryContext = await getVirtusLibraryContext({
   limit: 6,
 });
 const runtimeFacts =
-  runtimeFactsLimit > 0
+  runtimeFactsLimit === null
+    ? prioritizedRuntimeFacts
+    : runtimeFactsLimit > 0
     ? prioritizedRuntimeFacts.slice(0, runtimeFactsLimit)
     : [];
 
@@ -1780,9 +1786,73 @@ const projectRuntimeFacts = runtimeFacts.filter(
     fact?.projectId === activeProjectId
 );
 
-   const conversationRows = hasSingleChatConversationMemory
-  ? (supabaseConversations || []).slice(-singleChatConversationLimit)
+const allCurrentChatRows = hasSingleChatConversationMemory
+  ? supabaseConversations || []
   : [];
+
+const conversationRows =
+  singleChatConversationLimit === null
+    ? allCurrentChatRows
+    : allCurrentChatRows.slice(-singleChatConversationLimit);
+
+const shouldUseSameChatAnchor =
+  plan === "premium" || plan === "trial_guest";
+
+const importantSameChatRows = shouldUseSameChatAnchor
+  ? allCurrentChatRows
+      .filter((item) => {
+        const role = String(item?.role || "");
+        const text = String(item?.content || "").trim();
+
+        if (role !== "user" || !text) {
+          return false;
+        }
+
+        const isLongUserContent = text.length > 1800;
+
+        const looksLikeCaseOrSession =
+          /\b(transcript|session|client|case|therapy|therapist|coach|mentor|daisy|intake|assessment)\b/i.test(
+            text
+          );
+
+        const looksLikeRoleCorrection =
+          /\b(daisy|client|therapist|coach|mentor|session)\b/i.test(text) &&
+          /\b(i am|i'm|user is|you are|daisy is|client is|therapist|coach|mentor)\b/i.test(
+            text
+          );
+
+        return (isLongUserContent && looksLikeCaseOrSession) || looksLikeRoleCorrection;
+      })
+      .slice(-8)
+  : [];
+
+const sameChatAnchorContext =
+  importantSameChatRows.length > 0
+    ? `
+# SAME-CHAT ANCHOR CONTEXT
+
+These are important earlier messages from the same active chat. Treat them as active working context, especially for long transcripts, client sessions, case material, and role corrections.
+
+${importantSameChatRows
+  .map((item, index) => {
+    const text = String(item?.content || "").trim();
+    const snippetLimit = plan === "premium" ? 12000 : 4000;
+
+    return `Anchor ${index + 1}
+Role: ${item.role}
+Created at: ${item.created_at}
+Content:
+${text.slice(0, snippetLimit)}`;
+  })
+  .join("\n\n")}
+
+Same-chat continuity rules:
+- Use this anchor before claiming earlier material is missing.
+- If the user says "look again", "the session", "the transcript", "Daisy", "my client", or corrects the role frame, apply this anchor.
+- If this anchor contains the relevant transcript, case, or role correction, do not ask the user to paste it again.
+- For private client material, keep continuity inside the active chat and do not treat full sensitive details as general personal memory.
+`
+    : "";
 
 const conversations = conversationRows.map((item) => ({
       role: item.role,
@@ -2134,10 +2204,15 @@ if (isMemoryRecallCommand) {
     );
   }
 
-  const { data: storedMemories } = await storedMemoriesQuery
+  let orderedStoredMemoriesQuery = storedMemoriesQuery
     .order("confidence_score", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(20);
+    .order("created_at", { ascending: false });
+
+  if (!hasPremiumAccess) {
+    orderedStoredMemoriesQuery = orderedStoredMemoriesQuery.limit(20);
+  }
+
+  const { data: storedMemories } = await orderedStoredMemoriesQuery;
 
   const personalMemories = (storedMemories || []).filter((item) =>
     String(item.source || "").toLowerCase().includes("personal")
@@ -3146,6 +3221,7 @@ Memory behavior rules:
 - If Record History Enabled is off, do not claim that anything has been stored, saved, or remembered.
 - If Record History Enabled is off and the user asks you to remember something, say that memory recording is currently turned off.
 - If Chat History Enabled is off, do not rely on earlier messages in the current chat.
+${sameChatAnchorContext}
 # PERSISTENT MEMORY
 
 Personal Facts:
@@ -4533,20 +4609,4 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
