@@ -1477,7 +1477,7 @@ if (!existingChatSession && !userId.startsWith("guest-")) {
     title: message.includes("File ID:")
   ? "File workspace"
   : message.trim().slice(0, 60) || "New chat",
-    hidden_from_sidebar: false,
+    hidden_from_sidebar: activeProjectId ? true : false,
   });
 } else if (
   existingChatSession &&

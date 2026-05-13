@@ -145,7 +145,8 @@ export async function POST(req) {
     }
     const singleChatConversationLimit = getSingleChatMemoryLimit(plan);
 const dailyMessageLimit = getDailyMessageLimit(plan);
-const hasSingleChatConversationMemory = singleChatConversationLimit > 0;
+const hasSingleChatConversationMemory =
+  singleChatConversationLimit === null || singleChatConversationLimit > 0;
 const todayStart = new Date();
 todayStart.setHours(0, 0, 0, 0);
 
@@ -163,7 +164,9 @@ const { count: todayUserMessageCount } = await supabase
 
 const dailyMessagesUsed = todayUserMessageCount ?? 0;
 const conversationRows = hasSingleChatConversationMemory
-  ? (data || []).slice(-singleChatConversationLimit)
+  ? singleChatConversationLimit === null
+    ? data || []
+    : (data || []).slice(-singleChatConversationLimit)
   : [];
 
 const conversation = conversationRows.map((item) => ({
