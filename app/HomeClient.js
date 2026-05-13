@@ -2037,6 +2037,8 @@ setLoading(false);
   }
 
 function getGeneratedDocumentTitle(text) {
+  const fallbackTitle = "Virtus Document";
+
   const rawLines = String(text || "").split("\n");
 
   const cleanedLines = rawLines
@@ -2044,14 +2046,20 @@ function getGeneratedDocumentTitle(text) {
       const original = line.trim();
 
       const clean = original
+        .replace(/^[-*]\s+/, "")
+        .replace(/^\d+[.)]\s+/, "")
         .replace(/[#*_`]/g, "")
         .trim();
+
+      const isBullet =
+        /^[-*]\s+/.test(original) || /^\d+[.)]\s+/.test(original);
 
       return {
         original,
         clean,
         lower: clean.toLowerCase(),
         wordCount: clean.split(/\s+/).filter(Boolean).length,
+        isBullet,
       };
     })
     .filter((line) => line.clean);
@@ -2066,19 +2074,30 @@ function getGeneratedDocumentTitle(text) {
       lower === "professional proposal" ||
       lower === "leadership proposal" ||
       lower === "development proposal" ||
-      lower === "training proposal"
+      lower === "training proposal" ||
+      lower === "board document" ||
+      lower === "board summary" ||
+      lower === "board-ready document" ||
+      lower === "document" ||
+      lower === "report"
     );
   };
 
   const isConversationalOpening = (line) => {
+    const lower = line.lower.replace(/^sir sebastian,\s*/, "");
+
     return (
-      line.lower.startsWith("yes") ||
-      line.lower.startsWith("here is") ||
-      line.lower.startsWith("certainly") ||
-      line.lower.startsWith("of course") ||
-      line.lower.includes("based on the document") ||
-      line.lower.includes("based on the file") ||
-      line.lower.includes("based on module")
+      lower.startsWith("yes") ||
+      lower.startsWith("here is") ||
+      lower.startsWith("here's") ||
+      lower.startsWith("certainly") ||
+      lower.startsWith("of course") ||
+      lower.startsWith("i prepared") ||
+      lower.startsWith("i have prepared") ||
+      lower.startsWith("below is") ||
+      lower.includes("based on the document") ||
+      lower.includes("based on the file") ||
+      lower.includes("based on module")
     );
   };
 
@@ -2088,10 +2107,12 @@ function getGeneratedDocumentTitle(text) {
 
   const labeledTitle = realLines.find((line) => {
     return (
+      !line.isBullet &&
       line.wordCount <= 12 &&
       (line.lower.startsWith("proposal:") ||
         line.lower.startsWith("program:") ||
-        line.lower.startsWith("title:"))
+        line.lower.startsWith("title:") ||
+        line.lower.startsWith("document title:"))
     );
   });
 
@@ -2100,11 +2121,13 @@ function getGeneratedDocumentTitle(text) {
       .replace(/^proposal:\s*/i, "")
       .replace(/^program:\s*/i, "")
       .replace(/^title:\s*/i, "")
+      .replace(/^document title:\s*/i, "")
       .trim();
   }
 
   const markdownHeading = realLines.find((line) => {
     return (
+      !line.isBullet &&
       line.wordCount <= 12 &&
       (line.original.startsWith("# ") ||
         line.original.startsWith("## ") ||
@@ -2112,35 +2135,39 @@ function getGeneratedDocumentTitle(text) {
     );
   });
 
-  const specificProgramTitle = realLines.find((line) => {
+  const firstStrongTitleLine = realLines.find((line, index) => {
     return (
-      line.wordCount <= 12 &&
-      (line.lower.includes("training") ||
-        line.lower.includes("program") ||
-        line.lower.includes("framework") ||
-        line.lower.includes("response chain") ||
-        line.lower.includes("decision architecture") ||
-        line.lower.includes("awareness") ||
-        line.lower.includes("stabilization"))
+      !line.isBullet &&
+      index <= 5 &&
+      line.wordCount <= 8 &&
+      /^[A-Z0-9][A-Za-z0-9&.'’:\-\s]+$/.test(line.clean) &&
+      !line.lower.includes("training") &&
+      !line.lower.includes("integrates")
     );
   });
 
   const strongerTitle = realLines.find((line) => {
     return (
+      !line.isBullet &&
       line.wordCount <= 10 &&
       (line.lower.includes("report") ||
         line.lower.includes("plan") ||
-        line.lower.includes("proposal"))
+        line.lower.includes("proposal") ||
+        line.lower.includes("blueprint") ||
+        line.lower.includes("summary document"))
     );
   });
 
+  const firstNonBulletShortLine = realLines.find((line) => {
+    return !line.isBullet && line.wordCount <= 10;
+  });
+
   return (
-    labeledTitle?.clean ||
     markdownHeading?.clean ||
-    specificProgramTitle?.clean ||
+    firstStrongTitleLine?.clean ||
     strongerTitle?.clean ||
-    realLines.find((line) => line.wordCount <= 10)?.clean ||
-    "Virtus Document"
+    firstNonBulletShortLine?.clean ||
+    fallbackTitle
   );
 }
 
