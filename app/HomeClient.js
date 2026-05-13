@@ -3960,7 +3960,7 @@ setRegenerating(true);
     onWheel={(event) => {
       event.stopPropagation();
     }}
-    className="virtus-file-menu absolute bottom-14 left-0 z-40 max-h-[62vh] w-72 overflow-y-auto overscroll-contain rounded-2xl border p-3 text-sm shadow-xl shadow-black/20 backdrop-blur-sm no-scrollbar"
+    className="virtus-file-menu absolute bottom-14 left-0 z-40 max-h-[62vh] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-sky-900/55 bg-zinc-950/95 p-3 text-sm shadow-2xl shadow-black/70 backdrop-blur-xl no-scrollbar"
   >
     <div className="virtus-file-soft mb-3 rounded-2xl border border-sky-900/20 px-3 py-2">
       <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/60">
