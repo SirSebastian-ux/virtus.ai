@@ -245,9 +245,16 @@ body {
 }
 /* Virtus file menu */
 .virtus-file-menu {
-  background: var(--virtus-surface-bg);
-  border-color: var(--virtus-border);
+  background: #020617 !important;
+  border-color: rgba(14, 165, 233, 0.55) !important;
   color: var(--virtus-text-main);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.92) !important;
+}
+
+:root[data-virtus-appearance="light"] .virtus-file-menu {
+  background: #ffffff !important;
+  border-color: rgba(14, 116, 144, 0.28) !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22) !important;
 }
 
 .virtus-file-card {
