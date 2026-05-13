@@ -18,32 +18,70 @@ function makeSafeFileName(name) {
 
 function cleanPdfText(text) {
   return String(text || "")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2018\u2019]/g, "'")
+    .normalize("NFKC")
+    .replace(/\uFEFF/g, "")
+    .replace(/[\u201C\u201D\u2033]/g, '"')
+    .replace(/[\u2018\u2019\u2032]/g, "'")
     .replace(/[\u2013\u2014]/g, "-")
+    .replace(/\u2026/g, "...")
     .replace(/\u2192/g, "->")
     .replace(/\u2190/g, "<-")
     .replace(/\u2122/g, "TM")
     .replace(/\u00A9/g, "(c)")
     .replace(/\u00AE/g, "(R)")
-    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ|ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬/g, '"')
-    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¹Ãƒâ€¦Ã¢â‚¬Å“|ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢/g, "'")
-    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“|ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â/g, "-")
-    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢/g, "->")
-    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â /g, "<-")
-    .replace(/ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢/g, "TM")
-    .replace(/ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©/g, "(c)")
-    .replace(/ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â®/g, "(R)")
+    .replace(/\u00A0/g, " ")
+    .replace(/\u00E2\u20AC[\u0153\u009D]/g, '"')
+    .replace(/\u00E2\u20AC[\u02DC\u2122]/g, "'")
+    .replace(/\u00E2\u20AC[\u201C\u201D]/g, "-")
+    .replace(/\u00E2\u20AC\u00A6/g, "...")
+    .replace(/\u00E2\u2020\u2019/g, "->")
+    .replace(/\u00E2\u2020\u0090/g, "<-")
     .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "");
 }
 
 function cleanGeneratedFileContent(text) {
-  return String(text || "")
+  const doubleQuote = String.fromCharCode(34);
+
+  const cleaned = String(text || "")
+    .normalize("NFKC")
+    .replace(/\uFEFF/g, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
     .replace(/This version is ready to place into a DOCX or PDF\./gi, "")
     .replace(/DOCX\/PDF content ready\. Click DOCX or PDF below to generate and save it\./gi, "")
+    .replace(/PDF content ready\. Click PDF below to generate and save it\./gi, "")
+    .replace(/Click PDF below to generate and save it\./gi, "")
     .replace(/\bwiil\b/gi, "will")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+    .replace(new RegExp(`\\bone${doubleQuote}s\\b`, "g"), "one's")
+    .replace(new RegExp(`\\bperson${doubleQuote}s\\b`, "g"), "person's")
+    .replace(new RegExp(`\\bacademy${doubleQuote}s\\b`, "g"), "academy's")
+    .replace(new RegExp(`\\bstudent${doubleQuote}s\\b`, "g"), "student's")
+    .replace(new RegExp(`\\bchild${doubleQuote}s\\b`, "g"), "child's");
+
+  const lines = cleaned.split("\n").filter((line, index) => {
+    const value = line.trim();
+    const lower = value.toLowerCase();
+
+    if (!value) return true;
+
+    if (/^(docx|pdf|pptx|image|\.\.\.)$/i.test(value)) return false;
+
+    if (
+      index < 10 &&
+      (lower === "good. the direction is now clear." ||
+        lower === "good. we move from discussing values to writing them." ||
+        lower === "below is the clean pdf content." ||
+        lower === "below is clean pdf content." ||
+        lower === "pdf content ready. click pdf below to generate and save it." ||
+        lower === "prepared for ews academy foundational development")
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function cleanMarkdownLine(line) {
