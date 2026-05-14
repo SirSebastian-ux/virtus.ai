@@ -1710,49 +1710,51 @@ const prioritizedRuntimeFacts = [...dedupedMergedFacts].sort((a, b) => {
   return bScore - aScore;
 });
 
-// Load latest uploaded file (if any)
+// Load file context only when the user attaches or clearly asks about a file.
 let latestFileText = "";
-
-const { data: activeChatSession } = await supabase
-  .from("chat_sessions")
-  .select("active_file_id")
-  .eq("id", effectiveChatId)
-  .eq("user_id", userId)
-  .maybeSingle();
-
 let latestFiles = [];
 
-if (!userId.startsWith("guest-") && uploadedFileIds.length > 0) {
-  const { data: attachedFiles } = await supabase
-    .from("user_files")
-    .select("id, file_name, extracted_text")
-    .eq("user_id", userId)
-    .in("id", uploadedFileIds);
+const fileContextRequested =
+  uploadedFileIds.length > 0 ||
+  /\b(file|document|pdf|docx|word file|active file|attached file|uploaded file|this file|this document|this pdf|this word file|summarize the file|summarize this file|use the file|use this document|based on the file|based on this document|content from the file|content from this document)\b/i.test(
+    message || ""
+  );
 
-  latestFiles = attachedFiles || [];
-} else {
-  let latestFileQuery = supabase
-    .from("user_files")
-    .select("id, file_name, extracted_text")
-    .eq("user_id", userId);
+if (!userId.startsWith("guest-") && fileContextRequested) {
+  if (uploadedFileIds.length > 0) {
+    const { data: attachedFiles } = await supabase
+      .from("user_files")
+      .select("id, file_name, extracted_text")
+      .eq("user_id", userId)
+      .in("id", uploadedFileIds);
 
-  if (activeChatSession?.active_file_id) {
-    latestFileQuery = latestFileQuery.eq("id", activeChatSession.active_file_id);
+    latestFiles = attachedFiles || [];
   } else {
-    latestFileQuery = latestFileQuery
-      .order("created_at", { ascending: false })
-      .limit(1);
-  }
+    const { data: activeChatSession } = await supabase
+      .from("chat_sessions")
+      .select("active_file_id")
+      .eq("id", effectiveChatId)
+      .eq("user_id", userId)
+      .maybeSingle();
 
-  const { data: latestFile } = await latestFileQuery.maybeSingle();
-  latestFiles = latestFile ? [latestFile] : [];
+    if (activeChatSession?.active_file_id) {
+      const { data: activeFile } = await supabase
+        .from("user_files")
+        .select("id, file_name, extracted_text")
+        .eq("user_id", userId)
+        .eq("id", activeChatSession.active_file_id)
+        .maybeSingle();
+
+      latestFiles = activeFile ? [activeFile] : [];
+    }
+  }
 }
 
 const filesWithText = latestFiles.filter((file) => file?.extracted_text);
 
 if (filesWithText.length > 0) {
   latestFileText = `
-User attached ${filesWithText.length} document(s):
+User attached or selected ${filesWithText.length} document(s):
 
 ${filesWithText
   .map(
