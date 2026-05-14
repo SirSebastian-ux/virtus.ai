@@ -96,6 +96,31 @@ useEffect(() => {
     window.removeEventListener("focus", syncVirtusAppearance);
   };
 }, []);
+
+useEffect(() => {
+  if (typeof window === "undefined") return;
+
+  const hasOpenMobilePanel =
+    showMobileMenu || projectsOpen || practiceOpen || searchOpen;
+
+  if (!hasOpenMobilePanel) return;
+
+  window.history.pushState({ virtusPanelOpen: true }, "");
+
+  const closePanelsOnBack = () => {
+    setShowMobileMenu(false);
+    setProjectsOpen(false);
+    setPracticeOpen(false);
+    setSearchOpen(false);
+    setShowProjectInput(false);
+  };
+
+  window.addEventListener("popstate", closePanelsOnBack);
+
+  return () => {
+    window.removeEventListener("popstate", closePanelsOnBack);
+  };
+}, [showMobileMenu, projectsOpen, practiceOpen, searchOpen]);
 function getProjectStoragePrefix() {
   if (typeof window === "undefined") return null;
 
