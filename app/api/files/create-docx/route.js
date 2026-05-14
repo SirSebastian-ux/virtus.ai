@@ -13,6 +13,10 @@ export const runtime = "nodejs";
 
 const MAX_GENERATED_CONTENT_CHARS = 60000;
 
+const BOARD_DOCUMENT_TITLE = "EWS Academy";
+const BOARD_DOCUMENT_SUBTITLE = "Board Summary Document";
+const BOARD_DOCUMENT_VERSION = "Version 1.0";
+
 function makeSafeFileName(name) {
   return String(name || "virtus-document")
     .replace(/\.docx$/i, "")
@@ -183,12 +187,20 @@ function textToParagraphs(text, title = "", subtitle = "") {
     .replace(/\*\*/g, "")
     .toLowerCase();
 
+  const fixedHeaderLines = new Set(
+    [BOARD_DOCUMENT_TITLE, BOARD_DOCUMENT_SUBTITLE, BOARD_DOCUMENT_VERSION].map(
+      (value) => cleanInlineText(value).toLowerCase()
+    )
+  );
+
   return lines
     .filter((line, index) => {
       const cleanLine = cleanInlineText(line)
         .replace(/^#{1,6}\s*/, "")
         .replace(/\*\*/g, "")
         .toLowerCase();
+
+      const isFixedHeaderLine = index < 12 && fixedHeaderLines.has(cleanLine);
 
       const isDuplicateTitle =
         cleanLine === titleClean || (subtitleClean && cleanLine === subtitleClean);
@@ -215,6 +227,7 @@ function textToParagraphs(text, title = "", subtitle = "") {
           cleanLine.includes("module"));
 
       return (
+        !isFixedHeaderLine &&
         !isDuplicateTitle &&
         !isGenericDocumentHeading &&
         !isConversationalOpening
@@ -265,7 +278,10 @@ function textToParagraphs(text, title = "", subtitle = "") {
 
       if (/^[-*]\s+/.test(trimmed)) {
         return new Paragraph({
-          children: markdownTextRuns(`- ${trimmed.replace(/^[-*]\s+/, "")}`, 23),
+          children: markdownTextRuns(trimmed.replace(/^[-*]\s+/, ""), 23),
+          bullet: {
+            level: 0,
+          },
           spacing: {
             after: 90,
           },
@@ -282,8 +298,9 @@ function textToParagraphs(text, title = "", subtitle = "") {
 }
 
 function createDocumentChildren(title, content) {
-  const cleanTitle = cleanInlineText(title || "Virtus Document");
-  const subtitle = getDocumentSubtitle(content, title);
+  const cleanTitle = cleanInlineText(BOARD_DOCUMENT_TITLE);
+  const subtitle = cleanInlineText(BOARD_DOCUMENT_SUBTITLE);
+  const version = cleanInlineText(BOARD_DOCUMENT_VERSION);
 
   return [
     new Paragraph({
@@ -291,48 +308,58 @@ function createDocumentChildren(title, content) {
         new TextRun({
           text: cleanTitle,
           bold: true,
-          size: 44,
+          size: 46,
           color: "0F172A",
         }),
       ],
       heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
       spacing: {
-        before: 220,
-        after: 120,
+        before: 260,
+        after: 80,
       },
     }),
-    ...(subtitle
-      ? [
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: subtitle,
-                size: 24,
-                color: "475569",
-              }),
-            ],
-            alignment: AlignmentType.CENTER,
-            spacing: {
-              after: 120,
-            },
-          }),
-        ]
-      : []),
     new Paragraph({
       children: [
         new TextRun({
-          text: "________________________________________",
-          size: 14,
+          text: subtitle,
+          bold: true,
+          size: 28,
+          color: "075985",
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        after: 70,
+      },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: version,
+          size: 22,
+          color: "64748B",
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        after: 150,
+      },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: "____________________________________________",
+          size: 12,
           color: "0EA5E9",
         }),
       ],
       alignment: AlignmentType.CENTER,
       spacing: {
-        after: 300,
+        after: 340,
       },
     }),
-    ...textToParagraphs(content, title, subtitle),
+    ...textToParagraphs(content, cleanTitle, subtitle),
   ];
 }
 
@@ -402,7 +429,16 @@ export async function POST(req) {
     const doc = new Document({
       sections: [
         {
-          properties: {},
+          properties: {
+            page: {
+              margin: {
+                top: 720,
+                right: 900,
+                bottom: 720,
+                left: 900,
+              },
+            },
+          },
           children: createDocumentChildren(title, content),
         },
       ],
@@ -422,7 +458,7 @@ export async function POST(req) {
     if (uploadError) {
       return Response.json({ error: uploadError.message }, { status: 500 });
     }
-const { data: savedFile, error: dbError } = await admin
+    const { data: savedFile, error: dbError } = await admin
       .from("user_files")
       .insert({
         user_id: user.id,
@@ -446,5 +482,4 @@ const { data: savedFile, error: dbError } = await admin
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
-
 

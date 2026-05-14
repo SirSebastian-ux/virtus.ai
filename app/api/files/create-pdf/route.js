@@ -10,6 +10,10 @@ export const runtime = "nodejs";
 
 const MAX_GENERATED_CONTENT_CHARS = 60000;
 
+const BOARD_DOCUMENT_TITLE = "EWS Academy";
+const BOARD_DOCUMENT_SUBTITLE = "Board Summary Document";
+const BOARD_DOCUMENT_VERSION = "Version 1.0";
+
 function makeSafeFileName(name) {
   return String(name || "virtus-document")
     .replace(/\.pdf$/i, "")
@@ -180,7 +184,8 @@ async function createPdfBuffer({ title, content }) {
 
   const pageWidth = 595.28;
   const pageHeight = 841.89;
-  const margin = 54;
+  const margin = 60;
+  const footerSafeY = 86;
   const maxWidth = pageWidth - margin * 2;
 
   const brandBlue = rgb(0.03, 0.41, 0.62);
@@ -212,8 +217,16 @@ async function createPdfBuffer({ title, content }) {
     );
   }
 
-  const subtitle = getDocumentSubtitle();
+  const detectedSubtitle = getDocumentSubtitle();
+  const subtitle = cleanMarkdownLine(BOARD_DOCUMENT_SUBTITLE);
+  const version = cleanMarkdownLine(BOARD_DOCUMENT_VERSION);
+  const fixedHeaderLines = new Set(
+    [BOARD_DOCUMENT_TITLE, BOARD_DOCUMENT_SUBTITLE, BOARD_DOCUMENT_VERSION].map(
+      (value) => cleanMarkdownLine(value).toLowerCase()
+    )
+  );
   const subtitleClean = subtitle.toLowerCase();
+  const detectedSubtitleClean = detectedSubtitle.toLowerCase();
 
   function createPage() {
     const nextPage = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -233,7 +246,7 @@ async function createPdfBuffer({ title, content }) {
   let y = pageHeight - margin;
 
   function addPageIfNeeded(requiredSpace = 24) {
-    if (y < margin + requiredSpace) {
+    if (y < footerSafeY + requiredSpace) {
       page = createPage();
       y = pageHeight - margin;
     }
@@ -246,14 +259,21 @@ async function createPdfBuffer({ title, content }) {
     const after = options.after || 8;
     const indent = options.indent || 0;
     const color = options.color || darkText;
+    const align = options.align || "left";
     const availableWidth = maxWidth - indent;
     const lines = wrapText(text, font, fontSize, availableWidth);
 
     for (const line of lines) {
       addPageIfNeeded(lineGap + after);
 
+      const textWidth = font.widthOfTextAtSize(line, fontSize);
+      const x =
+        align === "center"
+          ? margin + indent + Math.max(0, (availableWidth - textWidth) / 2)
+          : margin + indent;
+
       page.drawText(line, {
-        x: margin + indent,
+        x,
         y,
         size: fontSize,
         font,
@@ -283,32 +303,41 @@ async function createPdfBuffer({ title, content }) {
     return wordCount <= 7 && /^[A-Z]/.test(clean);
   }
 
-  drawWrappedText(title || "Virtus Document", {
+  drawWrappedText(BOARD_DOCUMENT_TITLE, {
     bold: true,
-    size: 25,
-    lineGap: 30,
-    after: 6,
+    size: 26,
+    lineGap: 31,
+    after: 5,
     color: darkText,
+    align: "center",
   });
 
-  if (subtitle) {
-    drawWrappedText(subtitle, {
-      size: 13,
-      lineGap: 18,
-      after: 14,
-      color: mutedText,
-    });
-  }
+  drawWrappedText(subtitle, {
+    bold: true,
+    size: 14,
+    lineGap: 19,
+    after: 4,
+    color: brandBlue,
+    align: "center",
+  });
+
+  drawWrappedText(version, {
+    size: 10.5,
+    lineGap: 15,
+    after: 16,
+    color: mutedText,
+    align: "center",
+  });
 
   page.drawRectangle({
     x: margin,
-    y: y + 4,
+    y: y + 6,
     width: maxWidth,
-    height: 1,
+    height: 1.2,
     color: lightBlue,
   });
 
-  y -= 24;
+  y -= 30;
 
   const paragraphs = String(content || "").split("\n");
 
@@ -323,7 +352,11 @@ async function createPdfBuffer({ title, content }) {
     const cleanLine = cleanMarkdownLine(originalLine);
     const lowerCleanLine = cleanLine.toLowerCase();
 
-    if (subtitleClean && lowerCleanLine === subtitleClean) {
+    if (
+      fixedHeaderLines.has(lowerCleanLine) ||
+      (subtitleClean && lowerCleanLine === subtitleClean) ||
+      (detectedSubtitleClean && lowerCleanLine === detectedSubtitleClean)
+    ) {
       return;
     }
 
@@ -339,9 +372,9 @@ async function createPdfBuffer({ title, content }) {
     if (isHeading1) {
       drawWrappedText(originalLine, {
         bold: true,
-        size: 16,
-        lineGap: 20,
-        after: 10,
+        size: 17,
+        lineGap: 22,
+        after: 12,
         color: brandBlue,
       });
       return;
@@ -350,9 +383,9 @@ async function createPdfBuffer({ title, content }) {
     if (isHeading2 || isHeading3 || isBoardSectionHeading(originalLine)) {
       drawWrappedText(originalLine, {
         bold: true,
-        size: 13,
-        lineGap: 17,
-        after: 7,
+        size: 14,
+        lineGap: 18,
+        after: 9,
         color: brandBlue,
       });
       return;
@@ -360,9 +393,9 @@ async function createPdfBuffer({ title, content }) {
 
     if (isBullet) {
       drawWrappedText(`- ${originalLine.replace(/^[-*]\s+/, "")}`, {
-        size: 10.5,
-        lineGap: 15,
-        after: 3,
+        size: 10.8,
+        lineGap: 16,
+        after: 4,
         indent: 14,
         color: darkText,
       });
@@ -373,27 +406,28 @@ async function createPdfBuffer({ title, content }) {
 
     drawWrappedText(originalLine, {
       bold: hasBoldMarkdown,
-      size: 10.8,
-      lineGap: 15.5,
-      after: 7,
+      size: 11,
+      lineGap: 16.2,
+      after: 8,
       color: darkText,
     });
   });
 
+  const footerLabel = `${BOARD_DOCUMENT_TITLE} | ${BOARD_DOCUMENT_SUBTITLE}`;
   const pages = pdfDoc.getPages();
 
   pages.forEach((pdfPage, index) => {
     pdfPage.drawRectangle({
       x: margin,
-      y: 42,
+      y: 64,
       width: maxWidth,
       height: 0.75,
       color: lightBlue,
     });
 
-    pdfPage.drawText(cleanPdfText(title || "Virtus Document").slice(0, 58), {
+    pdfPage.drawText(cleanPdfText(footerLabel).slice(0, 58), {
       x: margin,
-      y: 28,
+      y: 46,
       size: 8,
       font: regularFont,
       color: mutedText,
@@ -401,7 +435,7 @@ async function createPdfBuffer({ title, content }) {
 
     pdfPage.drawText(`Page ${index + 1} of ${pages.length}`, {
       x: pageWidth - margin - 70,
-      y: 28,
+      y: 46,
       size: 8,
       font: regularFont,
       color: mutedText,
@@ -491,7 +525,7 @@ export async function POST(req) {
     if (uploadError) {
       return Response.json({ error: uploadError.message }, { status: 500 });
     }
-const { data: savedFile, error: dbError } = await admin
+    const { data: savedFile, error: dbError } = await admin
       .from("user_files")
       .insert({
         user_id: user.id,
