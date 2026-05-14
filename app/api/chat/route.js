@@ -425,7 +425,13 @@ const noWebSearchNeededSignals =
 const emotionalOrCoachingSignals =
   /\b(i feel|i am angry|i am sad|anxiety|stress|relationship|marriage|discipline|mindset|spiritual|reflection|coach me|help me think)\b/i.test(message || "");
 
+const simpleConversationSignals =
+  /^\s*(hi|hello|hey|good morning|good afternoon|good evening)\b/i.test(message || "") ||
+  /\b(how are you|how are you today|how are you virtus|how are you virtus today|how is it going|how is going virtus|how are things|how do you feel|are you ok|are you okay)\b/i.test(message || "") ||
+  /^\s*(ok|okay|so)?\s*(how are you|how are you today|how are you virtus|how are you virtus today|how is going virtus)\s*[?.!]*\s*$/i.test(message || "");
+
 const shouldUseWebSearch =
+  !simpleConversationSignals &&
   !noWebSearchNeededSignals &&
   !emotionalOrCoachingSignals &&
   (
