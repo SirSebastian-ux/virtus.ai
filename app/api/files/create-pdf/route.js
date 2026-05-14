@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import {
   PDFDocument,
   StandardFonts,
+  rgb,
 } from "pdf-lib";
 
 export const runtime = "nodejs";
@@ -179,15 +180,61 @@ async function createPdfBuffer({ title, content }) {
 
   const pageWidth = 595.28;
   const pageHeight = 841.89;
-  const margin = 56;
+  const margin = 54;
   const maxWidth = pageWidth - margin * 2;
 
-  let page = pdfDoc.addPage([pageWidth, pageHeight]);
+  const brandBlue = rgb(0.03, 0.41, 0.62);
+  const lightBlue = rgb(0.73, 0.91, 0.98);
+  const darkText = rgb(0.08, 0.1, 0.14);
+  const mutedText = rgb(0.38, 0.43, 0.5);
+
+  function getDocumentSubtitle() {
+    const titleClean = cleanMarkdownLine(title).toLowerCase();
+
+    return (
+      String(content || "")
+        .split("\n")
+        .map((line) => cleanMarkdownLine(line))
+        .find((line) => {
+          const lower = line.toLowerCase();
+          const wordCount = line.split(/\s+/).filter(Boolean).length;
+
+          return (
+            line &&
+            lower !== titleClean &&
+            wordCount <= 10 &&
+            !/^[-*]\s+/.test(line) &&
+            !/^\d+[.)]\s+/.test(line) &&
+            !lower.startsWith("version ") &&
+            !lower.startsWith("prepared for")
+          );
+        }) || ""
+    );
+  }
+
+  const subtitle = getDocumentSubtitle();
+  const subtitleClean = subtitle.toLowerCase();
+
+  function createPage() {
+    const nextPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+    nextPage.drawRectangle({
+      x: margin,
+      y: pageHeight - margin + 12,
+      width: maxWidth,
+      height: 2,
+      color: brandBlue,
+    });
+
+    return nextPage;
+  }
+
+  let page = createPage();
   let y = pageHeight - margin;
 
   function addPageIfNeeded(requiredSpace = 24) {
     if (y < margin + requiredSpace) {
-      page = pdfDoc.addPage([pageWidth, pageHeight]);
+      page = createPage();
       y = pageHeight - margin;
     }
   }
@@ -197,17 +244,20 @@ async function createPdfBuffer({ title, content }) {
     const fontSize = options.size || 11;
     const lineGap = options.lineGap || 16;
     const after = options.after || 8;
-    const lines = wrapText(text, font, fontSize, maxWidth);
+    const indent = options.indent || 0;
+    const color = options.color || darkText;
+    const availableWidth = maxWidth - indent;
+    const lines = wrapText(text, font, fontSize, availableWidth);
 
     for (const line of lines) {
       addPageIfNeeded(lineGap + after);
 
       page.drawText(line, {
-        x: margin,
+        x: margin + indent,
         y,
         size: fontSize,
         font,
-        maxWidth,
+        color,
       });
 
       y -= lineGap;
@@ -216,12 +266,49 @@ async function createPdfBuffer({ title, content }) {
     y -= after;
   }
 
+  function isBoardSectionHeading(line) {
+    if (!line || /^[-*]\s+/.test(line)) return false;
+
+    const clean = cleanMarkdownLine(line).replace(/^\d+[.)]\s+/, "").trim();
+
+    if (!clean) return false;
+
+    const lower = clean.toLowerCase();
+    const wordCount = clean.split(/\s+/).filter(Boolean).length;
+
+    if (lower.startsWith("version ")) return false;
+    if (lower.startsWith("prepared for")) return false;
+    if (/[.!?]$/.test(clean)) return false;
+
+    return wordCount <= 7 && /^[A-Z]/.test(clean);
+  }
+
   drawWrappedText(title || "Virtus Document", {
     bold: true,
-    size: 20,
-    lineGap: 24,
-    after: 22,
+    size: 25,
+    lineGap: 30,
+    after: 6,
+    color: darkText,
   });
+
+  if (subtitle) {
+    drawWrappedText(subtitle, {
+      size: 13,
+      lineGap: 18,
+      after: 14,
+      color: mutedText,
+    });
+  }
+
+  page.drawRectangle({
+    x: margin,
+    y: y + 4,
+    width: maxWidth,
+    height: 1,
+    color: lightBlue,
+  });
+
+  y -= 24;
 
   const paragraphs = String(content || "").split("\n");
 
@@ -229,7 +316,14 @@ async function createPdfBuffer({ title, content }) {
     const originalLine = paragraph.trim();
 
     if (!originalLine) {
-      y -= 8;
+      y -= 7;
+      return;
+    }
+
+    const cleanLine = cleanMarkdownLine(originalLine);
+    const lowerCleanLine = cleanLine.toLowerCase();
+
+    if (subtitleClean && lowerCleanLine === subtitleClean) {
       return;
     }
 
@@ -245,28 +339,32 @@ async function createPdfBuffer({ title, content }) {
     if (isHeading1) {
       drawWrappedText(originalLine, {
         bold: true,
-        size: 15,
-        lineGap: 19,
+        size: 16,
+        lineGap: 20,
         after: 10,
+        color: brandBlue,
       });
       return;
     }
 
-    if (isHeading2 || isHeading3) {
+    if (isHeading2 || isHeading3 || isBoardSectionHeading(originalLine)) {
       drawWrappedText(originalLine, {
         bold: true,
         size: 13,
         lineGap: 17,
-        after: 8,
+        after: 7,
+        color: brandBlue,
       });
       return;
     }
 
     if (isBullet) {
       drawWrappedText(`- ${originalLine.replace(/^[-*]\s+/, "")}`, {
-        size: 11,
-        lineGap: 16,
-        after: 4,
+        size: 10.5,
+        lineGap: 15,
+        after: 3,
+        indent: 14,
+        color: darkText,
       });
       return;
     }
@@ -275,9 +373,38 @@ async function createPdfBuffer({ title, content }) {
 
     drawWrappedText(originalLine, {
       bold: hasBoldMarkdown,
-      size: 11,
-      lineGap: 16,
-      after: 8,
+      size: 10.8,
+      lineGap: 15.5,
+      after: 7,
+      color: darkText,
+    });
+  });
+
+  const pages = pdfDoc.getPages();
+
+  pages.forEach((pdfPage, index) => {
+    pdfPage.drawRectangle({
+      x: margin,
+      y: 42,
+      width: maxWidth,
+      height: 0.75,
+      color: lightBlue,
+    });
+
+    pdfPage.drawText(cleanPdfText(title || "Virtus Document").slice(0, 58), {
+      x: margin,
+      y: 28,
+      size: 8,
+      font: regularFont,
+      color: mutedText,
+    });
+
+    pdfPage.drawText(`Page ${index + 1} of ${pages.length}`, {
+      x: pageWidth - margin - 70,
+      y: 28,
+      size: 8,
+      font: regularFont,
+      color: mutedText,
     });
   });
 
