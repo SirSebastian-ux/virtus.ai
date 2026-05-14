@@ -2722,7 +2722,11 @@ return (
               <button
                 type="button"
                 aria-label="Practices"
-                onClick={() => setPracticeOpen(!practiceOpen)}
+                onClick={() => {
+                  setPracticeOpen(!practiceOpen);
+                  setSearchOpen(false);
+                  setProjectsOpen(false);
+                }}
                 className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M2 12h3" /><path d="M19 12h3" /></svg>
@@ -3404,6 +3408,7 @@ if (data.conversation) {
               onClick={() => {
                 setProjectsOpen(!projectsOpen);
                 setPracticeOpen(false);
+                setSearchOpen(false);
               }}
               className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
             >
@@ -3491,7 +3496,11 @@ if (data.conversation) {
 
             <button
               type="button"
-              onClick={() => setPracticeOpen(!practiceOpen)}
+              onClick={() => {
+                setPracticeOpen(!practiceOpen);
+                setProjectsOpen(false);
+                setSearchOpen(false);
+              }}
               className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
             >
               Practice
