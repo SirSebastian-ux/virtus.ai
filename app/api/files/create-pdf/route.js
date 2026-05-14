@@ -242,13 +242,15 @@ async function createPdfBuffer({ title, content }) {
     return nextPage;
   }
 
+  const topContentY = pageHeight - margin - 34;
+
   let page = createPage();
-  let y = pageHeight - margin;
+  let y = topContentY;
 
   function addPageIfNeeded(requiredSpace = 24) {
     if (y < footerSafeY + requiredSpace) {
       page = createPage();
-      y = pageHeight - margin;
+      y = topContentY;
     }
   }
 
