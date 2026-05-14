@@ -3410,6 +3410,85 @@ if (data.conversation) {
               Projects
             </button>
 
+            {projectsOpen && (
+              <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => setShowProjectInput(true)}
+                  className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
+                >
+                  + Project
+                </button>
+
+                {showProjectInput && (
+                  <input
+                    value={newProjectTitle}
+                    onChange={(event) => setNewProjectTitle(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+
+                      const cleanTitle = newProjectTitle.trim();
+                      if (!cleanTitle) return;
+
+                      const projectId = `project-${cleanTitle
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")
+                        .replace(/[^a-z0-9-]/g, "")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "")}-${crypto.randomUUID().slice(0, 8)}`;
+
+                      const nextProject = {
+                        id: projectId,
+                        title: cleanTitle,
+                        chatId: crypto.randomUUID(),
+                      };
+
+                      setProjectSpaces((prev) => [
+                        nextProject,
+                        ...prev.filter((project) => project.id !== projectId),
+                      ]);
+                      setActiveProject(nextProject);
+                      setProjectHomeOpen(true);
+                      setNewProjectTitle("");
+                      setShowProjectInput(false);
+                      setShowMobileMenu(false);
+                    }}
+                    placeholder="Project name..."
+                    className="mt-2 w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-700/50"
+                    autoFocus
+                  />
+                )}
+
+                {projectSpaces.map((project) => (
+                  <button
+                    key={project.id}
+                    type="button"
+                    onClick={() => {
+                      const projectChatId = project.chatId || crypto.randomUUID();
+                      const nextProject = { ...project, chatId: projectChatId };
+
+                      setActiveProject(nextProject);
+                      localStorage.setItem("virtus_chat_id", projectChatId);
+                      setActiveChatId(projectChatId);
+                      setConversation([]);
+                      setMessage("");
+                      setReply("");
+                      setStreamingReply("");
+                      setEditingIndex(null);
+                      setEditingText("");
+                      setIsPracticeMode(null);
+                      setShouldAutoScroll(true);
+                      setProjectHomeOpen(true);
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full rounded-xl border border-sky-900/15 bg-zinc-950/35 px-3 py-2 text-left text-sm text-zinc-300 transition hover:border-sky-800/35 hover:bg-zinc-950/55"
+                  >
+                    {project.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => setPracticeOpen(!practiceOpen)}
