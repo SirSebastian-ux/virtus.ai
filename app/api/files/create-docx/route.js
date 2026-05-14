@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import {
+  AlignmentType,
   Document,
   HeadingLevel,
   Packer,
@@ -122,12 +123,62 @@ function markdownTextRuns(text, size = 24) {
   });
 }
 
-function textToParagraphs(text, title = "") {
+function getDocumentSubtitle(text, title = "") {
+  const titleClean = cleanInlineText(title).toLowerCase();
+
+  return (
+    String(text || "")
+      .split("\n")
+      .map((line) => cleanInlineText(line).replace(/^#{1,6}\s*/, "").trim())
+      .find((line) => {
+        const lower = line.toLowerCase();
+        const wordCount = line.split(/\s+/).filter(Boolean).length;
+
+        return (
+          line &&
+          lower !== titleClean &&
+          wordCount <= 10 &&
+          !/^[-*]\s+/.test(line) &&
+          !/^\d+[.)]\s+/.test(line) &&
+          !lower.startsWith("version ") &&
+          !lower.startsWith("prepared for")
+        );
+      }) || ""
+  );
+}
+
+function isBoardSectionHeading(trimmed) {
+  if (!trimmed || /^[-*]\s+/.test(trimmed)) return false;
+
+  const clean = cleanInlineText(trimmed)
+    .replace(/^#{1,6}\s*/, "")
+    .replace(/^\d+[.)]\s+/, "")
+    .replace(/\*\*/g, "")
+    .trim();
+
+  if (!clean) return false;
+
+  const lower = clean.toLowerCase();
+  const wordCount = clean.split(/\s+/).filter(Boolean).length;
+
+  if (lower.startsWith("version ")) return false;
+  if (lower.startsWith("prepared for")) return false;
+  if (/[.!?]$/.test(clean)) return false;
+
+  return wordCount <= 7 && /^[A-Z]/.test(clean);
+}
+
+function textToParagraphs(text, title = "", subtitle = "") {
   const lines = String(text || "")
     .split("\n")
     .map((line) => line.trimEnd());
 
   const titleClean = cleanInlineText(title)
+    .replace(/^#{1,6}\s*/, "")
+    .replace(/\*\*/g, "")
+    .toLowerCase();
+
+  const subtitleClean = cleanInlineText(subtitle)
     .replace(/^#{1,6}\s*/, "")
     .replace(/\*\*/g, "")
     .toLowerCase();
@@ -139,7 +190,8 @@ function textToParagraphs(text, title = "") {
         .replace(/\*\*/g, "")
         .toLowerCase();
 
-        const isDuplicateTitle = cleanLine === titleClean;
+      const isDuplicateTitle =
+        cleanLine === titleClean || (subtitleClean && cleanLine === subtitleClean);
 
       const isGenericDocumentHeading =
         index < 8 &&
@@ -171,42 +223,41 @@ function textToParagraphs(text, title = "") {
     .map((line) => {
       const trimmed = line.trim();
 
-      if (!trimmed) {
-        return new Paragraph({ text: "" });
-      }
-
-      if (/^---+$/.test(trimmed)) {
+      if (!trimmed || /^---+$/.test(trimmed)) {
         return new Paragraph({ text: "" });
       }
 
       if (trimmed.startsWith("# ")) {
         return new Paragraph({
-          text: cleanInlineText(trimmed.replace(/^#\s+/, "")),
+          children: [
+            new TextRun({
+              text: cleanInlineText(trimmed.replace(/^#\s+/, "")),
+              bold: true,
+              size: 32,
+              color: "0F172A",
+            }),
+          ],
           heading: HeadingLevel.HEADING_1,
           spacing: {
-            before: 260,
+            before: 320,
             after: 160,
           },
         });
       }
 
-      if (trimmed.startsWith("## ")) {
+      if (trimmed.startsWith("## ") || trimmed.startsWith("### ") || isBoardSectionHeading(trimmed)) {
         return new Paragraph({
-          text: cleanInlineText(trimmed.replace(/^##\s+/, "")),
+          children: [
+            new TextRun({
+              text: cleanInlineText(trimmed.replace(/^#{2,3}\s+/, "")),
+              bold: true,
+              size: 28,
+              color: "075985",
+            }),
+          ],
           heading: HeadingLevel.HEADING_2,
           spacing: {
-            before: 220,
-            after: 140,
-          },
-        });
-      }
-
-      if (trimmed.startsWith("### ")) {
-        return new Paragraph({
-          text: cleanInlineText(trimmed.replace(/^###\s+/, "")),
-          heading: HeadingLevel.HEADING_3,
-          spacing: {
-            before: 180,
+            before: 260,
             after: 120,
           },
         });
@@ -214,20 +265,75 @@ function textToParagraphs(text, title = "") {
 
       if (/^[-*]\s+/.test(trimmed)) {
         return new Paragraph({
-          children: markdownTextRuns(`- ${trimmed.replace(/^[-*]\s+/, "")}`, 24),
+          children: markdownTextRuns(`- ${trimmed.replace(/^[-*]\s+/, "")}`, 23),
           spacing: {
-            after: 120,
+            after: 90,
           },
         });
       }
 
       return new Paragraph({
-        children: markdownTextRuns(trimmed, 24),
+        children: markdownTextRuns(trimmed, 23),
         spacing: {
-          after: 160,
+          after: 150,
         },
       });
     });
+}
+
+function createDocumentChildren(title, content) {
+  const cleanTitle = cleanInlineText(title || "Virtus Document");
+  const subtitle = getDocumentSubtitle(content, title);
+
+  return [
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: cleanTitle,
+          bold: true,
+          size: 44,
+          color: "0F172A",
+        }),
+      ],
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        before: 220,
+        after: 120,
+      },
+    }),
+    ...(subtitle
+      ? [
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: subtitle,
+                size: 24,
+                color: "475569",
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: {
+              after: 120,
+            },
+          }),
+        ]
+      : []),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: "________________________________________",
+          size: 14,
+          color: "0EA5E9",
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: {
+        after: 300,
+      },
+    }),
+    ...textToParagraphs(content, title, subtitle),
+  ];
 }
 
 export async function POST(req) {
@@ -297,16 +403,7 @@ export async function POST(req) {
       sections: [
         {
           properties: {},
-          children: [
-            new Paragraph({
-              text: title,
-              heading: HeadingLevel.TITLE,
-              spacing: {
-                after: 300,
-              },
-            }),
-               ...textToParagraphs(content, title),
-          ],
+          children: createDocumentChildren(title, content),
         },
       ],
     });
