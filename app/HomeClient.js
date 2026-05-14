@@ -1317,6 +1317,8 @@ async function handleDeleteChat(chatId, options = {}) {
 
       localStorage.setItem("virtus_chat_id", newChatId);
       setActiveChatId(newChatId);
+      setActiveProject(null);
+      setProjectHomeOpen(false);
       setConversation([]);
       setMessage("");
       setReply("");
@@ -2698,6 +2700,8 @@ return (
                   const newChatId = getGuestSidebarChatId(guestAccess?.plan, crypto.randomUUID());
                   localStorage.setItem("virtus_chat_id", newChatId);
                   setActiveChatId(newChatId);
+                  setActiveProject(null);
+                  setProjectHomeOpen(false);
                   setConversation([]);
                   setMessage("");
                   setReply("");
@@ -3385,6 +3389,8 @@ if (data.conversation) {
 
                 localStorage.setItem("virtus_chat_id", newChatId);
                 setActiveChatId(newChatId);
+                setActiveProject(null);
+                setProjectHomeOpen(false);
                 setConversation([]);
                 setShowMobileMenu(false);
               }}
@@ -4359,48 +4365,6 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
