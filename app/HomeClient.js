@@ -3401,6 +3401,17 @@ if (data.conversation) {
 
             <button
               type="button"
+              onClick={() => {
+                setProjectsOpen(!projectsOpen);
+                setPracticeOpen(false);
+              }}
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
+            >
+              Projects
+            </button>
+
+            <button
+              type="button"
               onClick={() => setPracticeOpen(!practiceOpen)}
               className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
             >
@@ -4365,6 +4376,4 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
-
-
 
