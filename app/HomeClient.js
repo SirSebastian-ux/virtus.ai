@@ -4061,6 +4061,19 @@ setRegenerating(true);
   {activeProject?.title ? (
     <div className="w-full max-w-4xl">
       <div className="mb-8">
+        <button
+          type="button"
+          onClick={() => {
+            setProjectHomeOpen(false);
+            setActiveProject(null);
+            setProjectsOpen(true);
+            setShowMobileMenu(true);
+          }}
+          className="mb-5 inline-flex items-center rounded-full border border-sky-900/30 bg-sky-950/20 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-700/50 hover:bg-sky-950/35"
+        >
+          Back to projects
+        </button>
+
         <p className="text-3xl font-semibold text-sky-100">
           {activeProject.title}
         </p>
@@ -4599,4 +4612,5 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
