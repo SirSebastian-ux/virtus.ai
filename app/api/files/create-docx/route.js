@@ -130,6 +130,19 @@ function markdownTextRuns(text, size = 24) {
 function getDocumentSubtitle(text, title = "") {
   const titleClean = cleanInlineText(title).toLowerCase();
 
+  const blockedSubtitles = new Set([
+    "scientific explanation",
+    "psychological explanation",
+    "spiritual explanation",
+    "practical exercise",
+    "reflection",
+    "journal prompt",
+    "homework",
+    "summary",
+    "conclusion",
+    "introduction",
+  ]);
+
   return (
     String(text || "")
       .split("\n")
@@ -142,6 +155,8 @@ function getDocumentSubtitle(text, title = "") {
           line &&
           lower !== titleClean &&
           wordCount <= 10 &&
+          !blockedSubtitles.has(lower) &&
+          !/^day\s+\d+\s*[-:]/i.test(line) &&
           !/^[-*]\s+/.test(line) &&
           !/^\d+[.)]\s+/.test(line) &&
           !lower.startsWith("version ") &&
@@ -331,19 +346,6 @@ function createDocumentChildren(title, content) {
       alignment: AlignmentType.CENTER,
       spacing: {
         after: 70,
-      },
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: version,
-          size: 22,
-          color: "64748B",
-        }),
-      ],
-      alignment: AlignmentType.CENTER,
-      spacing: {
-        after: 150,
       },
     }),
     new Paragraph({
