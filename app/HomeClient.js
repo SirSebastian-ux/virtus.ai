@@ -2691,6 +2691,75 @@ const renderAssistantActions = (item, index) => {
               </button>
             </>
           )}
+          {canCreateFiles && (
+            <div className="md:hidden">
+              <div className="my-2 h-px bg-sky-900/20" />
+
+              {[
+                ["DOCX", "Create Word document"],
+                ["PDF", "Create PDF"],
+                ["PPTX", "Create PowerPoint"],
+                ["IMAGE", "Create image"],
+              ].map(([fileType, label]) => (
+                <button
+                  key={fileType}
+                  type="button"
+                  disabled={!!creatingFileType}
+                  onClick={async () => {
+                    setOpenMessageMenuIndex(null);
+                    if (!beginFileCreation(fileType)) return;
+
+                    try {
+                      const documentTitle = getGeneratedDocumentTitle(item.text);
+
+                      if (fileType === "DOCX") {
+                        await handleCreateDocxFile({
+                          title: documentTitle,
+                          content: item.text || "",
+                          fileName: documentTitle,
+                        });
+                      }
+
+                      if (fileType === "PDF") {
+                        await handleCreatePdfFile({
+                          title: documentTitle,
+                          content: item.text || "",
+                          fileName: documentTitle,
+                        });
+                      }
+
+                      if (fileType === "PPTX") {
+                        await handleCreatePptxFile({
+                          title: documentTitle,
+                          content: item.text || "",
+                          fileName: documentTitle,
+                        });
+                      }
+
+                      if (fileType === "IMAGE") {
+                        const userImageRequest =
+                          conversation[index - 1]?.role === "user"
+                            ? conversation[index - 1]?.text || ""
+                            : item.text || "";
+
+                        await handleCreateImageFile({
+                          title: documentTitle,
+                          content: userImageRequest,
+                          fileName: documentTitle,
+                        });
+                      }
+                    } finally {
+                      endFileCreation();
+                    }
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-sky-950/35 disabled:opacity-60"
+                >
+                  <span className="text-sky-300">{fileType === "IMAGE" ? "IMG" : fileType}</span>
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
