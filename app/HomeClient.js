@@ -3465,6 +3465,23 @@ if (data.conversation) {
     />
   </button>
 </div>
+{activeProject?.id && !projectHomeOpen && (
+  <button
+    type="button"
+    onClick={() => {
+      setProjectHomeOpen(true);
+      setConversation([]);
+      setMessage("");
+      setReply("");
+      setStreamingReply("");
+      setLoading(false);
+    }}
+    className="md:hidden rounded-2xl border border-sky-900/30 bg-sky-950/20 px-3 py-2 text-xs font-medium text-sky-100"
+  >
+    Back
+  </button>
+)}
+
 
 <div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
   <img
