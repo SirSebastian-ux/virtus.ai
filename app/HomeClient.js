@@ -4115,8 +4115,8 @@ setRegenerating(true);
       </div>
 
       <div className="space-y-2">
-        {(projectChats[activeProject.id] || []).length > 0 &&
-          (projectChats[activeProject.id] || []).map((projectChat) => (
+        {(activeProject.chats || []).length > 0 &&
+          (activeProject.chats || []).map((projectChat) => (
             <div
               key={projectChat.chatId}
               className="group flex items-center gap-2 rounded-2xl border border-sky-900/15 bg-zinc-950/25 text-left shadow-sm shadow-black/10 transition hover:border-sky-800/35 hover:bg-sky-950/15 hover:shadow-sky-950/10"
