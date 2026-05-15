@@ -2422,7 +2422,7 @@ const renderAssistantActions = (item, index) => {
         onClick={() => {
           alert("Add to project will be connected soon.");
         }}
-        className={iconClass}
+        className={`${iconClass} hidden md:flex`}
         aria-label="Add Virtus answer to project"
       >
         <svg
