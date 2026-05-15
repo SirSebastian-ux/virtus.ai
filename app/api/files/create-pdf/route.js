@@ -218,7 +218,7 @@ async function createPdfBuffer({ title, content }) {
   }
 
   const detectedSubtitle = getDocumentSubtitle();
-  const subtitle = cleanMarkdownLine(BOARD_DOCUMENT_SUBTITLE);
+  const subtitle = cleanMarkdownLine(detectedSubtitle || "Professional Document");
   const version = cleanMarkdownLine(BOARD_DOCUMENT_VERSION);
   const fixedHeaderLines = new Set(
     [BOARD_DOCUMENT_TITLE, BOARD_DOCUMENT_SUBTITLE, BOARD_DOCUMENT_VERSION].map(
@@ -305,7 +305,7 @@ async function createPdfBuffer({ title, content }) {
     return wordCount <= 7 && /^[A-Z]/.test(clean);
   }
 
-  drawWrappedText(BOARD_DOCUMENT_TITLE, {
+  drawWrappedText(title || "Virtus Document", {
     bold: true,
     size: 26,
     lineGap: 31,
@@ -415,7 +415,7 @@ async function createPdfBuffer({ title, content }) {
     });
   });
 
-  const footerLabel = `${BOARD_DOCUMENT_TITLE} | ${BOARD_DOCUMENT_SUBTITLE}`;
+  const footerLabel = `${title || "Virtus Document"} | ${subtitle}`;
   const pages = pdfDoc.getPages();
 
   pages.forEach((pdfPage, index) => {
