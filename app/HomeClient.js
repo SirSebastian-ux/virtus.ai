@@ -1318,6 +1318,8 @@ async function handleDeleteProject(project) {
   const confirmed = await askVirtusConfirm("Delete this project?");
   if (!confirmed) return;
 
+  await deleteProjectSpaceFromApi(project.id);
+
   const guestId =
     localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
 
@@ -2911,10 +2913,8 @@ return (
                         chatId: crypto.randomUUID(),
                       };
 
-                      setProjectSpaces((prev) => [
-                        nextProject,
-                        ...prev.filter((project) => project.id !== projectId),
-                      ]);
+                      upsertProjectSpaceState(nextProject);
+                      void saveProjectSpaceToApi(nextProject);
                       setActiveProject(nextProject);
                       setProjectHomeOpen(true);
                       setNewProjectTitle("");
@@ -2951,6 +2951,7 @@ return (
                               savedProject.id === project.id ? nextProject : savedProject
                             )
                           );
+                          void saveProjectSpaceToApi(nextProject);
 
                           localStorage.setItem("virtus_chat_id", projectChatId);
                           setActiveChatId(projectChatId);
@@ -3578,10 +3579,8 @@ if (data.conversation) {
                         chatId: crypto.randomUUID(),
                       };
 
-                      setProjectSpaces((prev) => [
-                        nextProject,
-                        ...prev.filter((project) => project.id !== projectId),
-                      ]);
+                      upsertProjectSpaceState(nextProject);
+                      void saveProjectSpaceToApi(nextProject);
                       setActiveProject(nextProject);
                       setProjectHomeOpen(true);
                       setNewProjectTitle("");
@@ -3603,6 +3602,12 @@ if (data.conversation) {
                       const nextProject = { ...project, chatId: projectChatId };
 
                       setActiveProject(nextProject);
+                      setProjectSpaces((prev) =>
+                        prev.map((savedProject) =>
+                          savedProject.id === project.id ? nextProject : savedProject
+                        )
+                      );
+                      void saveProjectSpaceToApi(nextProject);
                       localStorage.setItem("virtus_chat_id", projectChatId);
                       setActiveChatId(projectChatId);
                       setConversation([]);
