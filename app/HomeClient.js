@@ -2912,6 +2912,7 @@ return (
                         title: cleanTitle,
                         chatId: crypto.randomUUID(),
                       };
+                        chats: [],
 
                       upsertProjectSpaceState(nextProject);
                       void saveProjectSpaceToApi(nextProject);
@@ -3595,6 +3596,7 @@ if (data.conversation) {
                         title: cleanTitle,
                         chatId: crypto.randomUUID(),
                       };
+                        chats: [],
 
                       upsertProjectSpaceState(nextProject);
                       void saveProjectSpaceToApi(nextProject);
