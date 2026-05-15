@@ -18,7 +18,7 @@ export async function GET() {
 
     const { data, error } = await admin
       .from("project_spaces")
-      .select("id, title, chat_id, created_at, updated_at")
+      .select("id, title, chat_id, chats_json, created_at, updated_at")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false });
 
@@ -31,6 +31,7 @@ export async function GET() {
         id: project.id,
         title: project.title,
         chatId: project.chat_id,
+        chats: Array.isArray(project.chats_json) ? project.chats_json : [],
         createdAt: project.created_at,
         updatedAt: project.updated_at,
       })),
@@ -67,6 +68,7 @@ export async function POST(req) {
         user_id: user.id,
         title: String(project.title).trim(),
         chat_id: project.chatId ? String(project.chatId) : null,
+        chats_json: Array.isArray(project.chats) ? project.chats : [],
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
