@@ -2441,6 +2441,7 @@ const renderAssistantActions = (item, index) => {
 
        {canCreateFiles ? (
         <>
+          <div className="hidden md:flex md:items-center md:gap-3">
        <button
         type="button"
         title="Create Word file"
@@ -2568,6 +2569,7 @@ const renderAssistantActions = (item, index) => {
           )}
         </span>
       </button>
+          </div>
         </>
       ) : (
         <button
