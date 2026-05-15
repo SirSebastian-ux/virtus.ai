@@ -196,6 +196,19 @@ async function createPdfBuffer({ title, content }) {
   function getDocumentSubtitle() {
     const titleClean = cleanMarkdownLine(title).toLowerCase();
 
+    const blockedSubtitles = new Set([
+      "scientific explanation",
+      "psychological explanation",
+      "spiritual explanation",
+      "practical exercise",
+      "reflection",
+      "journal prompt",
+      "homework",
+      "summary",
+      "conclusion",
+      "introduction",
+    ]);
+
     return (
       String(content || "")
         .split("\n")
@@ -208,6 +221,8 @@ async function createPdfBuffer({ title, content }) {
             line &&
             lower !== titleClean &&
             wordCount <= 10 &&
+            !blockedSubtitles.has(lower) &&
+            !/^day\s+\d+\s*[-:]/i.test(line) &&
             !/^[-*]\s+/.test(line) &&
             !/^\d+[.)]\s+/.test(line) &&
             !lower.startsWith("version ") &&
@@ -323,13 +338,6 @@ async function createPdfBuffer({ title, content }) {
     align: "center",
   });
 
-  drawWrappedText(version, {
-    size: 10.5,
-    lineGap: 15,
-    after: 16,
-    color: mutedText,
-    align: "center",
-  });
 
   page.drawRectangle({
     x: margin,
