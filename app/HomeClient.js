@@ -141,49 +141,114 @@ function getProjectStoragePrefix() {
 useEffect(() => {
   if (typeof window === "undefined") return;
 
-  const storagePrefix = getProjectStoragePrefix();
+  let cancelled = false;
 
-  if (!storagePrefix) return;
+  function loadLocalProjectState() {
+    const storagePrefix = getProjectStoragePrefix();
 
-  setProjectStorageReady(false);
+    if (!storagePrefix) return;
 
-  try {
-    const savedProjects = JSON.parse(
-      localStorage.getItem(`${storagePrefix}_spaces`) || "[]"
-    );
+    try {
+      const savedProjects = JSON.parse(
+        localStorage.getItem(`${storagePrefix}_spaces`) || "[]"
+      );
 
-    const savedProjectChats = JSON.parse(
-      localStorage.getItem(`${storagePrefix}_chats`) || "{}"
-    );
+      const savedProjectChats = JSON.parse(
+        localStorage.getItem(`${storagePrefix}_chats`) || "{}"
+      );
 
-    const savedActiveProject = JSON.parse(
-      localStorage.getItem(`${storagePrefix}_active`) || "null"
-    );
+      setProjectSpaces(Array.isArray(savedProjects) ? savedProjects : []);
 
-    setProjectSpaces(Array.isArray(savedProjects) ? savedProjects : []);
+      if (
+        savedProjectChats &&
+        typeof savedProjectChats === "object" &&
+        !Array.isArray(savedProjectChats)
+      ) {
+        setProjectChats(savedProjectChats);
+      } else {
+        setProjectChats({});
+      }
 
-    if (
-      savedProjectChats &&
-      typeof savedProjectChats === "object" &&
-      !Array.isArray(savedProjectChats)
-    ) {
-      setProjectChats(savedProjectChats);
-    } else {
+      // Do not auto-open the last project on refresh.
+      // A project page should appear only after the user clicks that project.
+      setActiveProject(null);
+      setProjectHomeOpen(false);
+    } catch {
+      setProjectSpaces([]);
       setProjectChats({});
+      setActiveProject(null);
+      setProjectHomeOpen(false);
+    }
+  }
+
+  async function loadProjectSpaces() {
+    setProjectStorageReady(false);
+
+    if (isAuthenticated) {
+      try {
+        const response = await fetch("/api/project-spaces", {
+          cache: "no-store",
+        });
+
+        const data = await response.json();
+
+        if (cancelled) return;
+
+        if (!response.ok) {
+          loadLocalProjectState();
+          return;
+        }
+
+        setProjectSpaces(Array.isArray(data.projects) ? data.projects : []);
+
+        const storagePrefix = getProjectStoragePrefix();
+
+        if (storagePrefix) {
+          try {
+            const savedProjectChats = JSON.parse(
+              localStorage.getItem(`${storagePrefix}_chats`) || "{}"
+            );
+
+            if (
+              savedProjectChats &&
+              typeof savedProjectChats === "object" &&
+              !Array.isArray(savedProjectChats)
+            ) {
+              setProjectChats(savedProjectChats);
+            } else {
+              setProjectChats({});
+            }
+          } catch {
+            setProjectChats({});
+          }
+        }
+
+        setActiveProject(null);
+        setProjectHomeOpen(false);
+        return;
+      } catch {
+        if (cancelled) return;
+        loadLocalProjectState();
+        return;
+      } finally {
+        if (!cancelled) {
+          setProjectStorageReady(true);
+        }
+      }
     }
 
-    // Do not auto-open the last project on refresh.
-    // A project page should appear only after the user clicks that project.
-    setActiveProject(null);
-    setProjectHomeOpen(false);
-  } catch {
-    setProjectSpaces([]);
-    setProjectChats({});
-    setActiveProject(null);
-    setProjectHomeOpen(false);
-  } finally {
-    setProjectStorageReady(true);
+    loadLocalProjectState();
+
+    if (!cancelled) {
+      setProjectStorageReady(true);
+    }
   }
+
+  loadProjectSpaces();
+
+  return () => {
+    cancelled = true;
+  };
 }, [isAuthenticated, currentUser?.email]);
 
 useEffect(() => {
@@ -1207,6 +1272,46 @@ function askVirtusConfirm(message) {
   });
 }
 
+async function saveProjectSpaceToApi(project) {
+  if (!isAuthenticated || !project?.id || !project?.title) return;
+
+  try {
+    await fetch("/api/project-spaces", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ project }),
+    });
+  } catch {
+    // Keep local UI stable even if project sync fails temporarily.
+  }
+}
+
+async function deleteProjectSpaceFromApi(projectId) {
+  if (!isAuthenticated || !projectId) return;
+
+  try {
+    await fetch("/api/project-spaces", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ projectId }),
+    });
+  } catch {
+    // Keep local UI cleanup stable even if remote delete fails temporarily.
+  }
+}
+
+function upsertProjectSpaceState(project) {
+  if (!project?.id) return;
+
+  setProjectSpaces((prev) => [
+    project,
+    ...prev.filter((savedProject) => savedProject.id !== project.id),
+  ]);
+}
 async function handleDeleteProject(project) {
   if (!project?.id) return;
 
