@@ -2046,26 +2046,33 @@ if (assistantReply) {
 
             
             if (activeProject?.id) {
-              setProjectChats((prevProjectChats) => {
-                const currentProjectChats =
-                  prevProjectChats[activeProject.id] || [];
+              const nextProjectChat = {
+                chatId: resolvedSidebarChatId,
+                title: newItemTitle,
+                createdAt: new Date().toISOString(),
+              };
 
-                const nextProjectChat = {
-                  chatId: resolvedSidebarChatId,
-                  title: newItemTitle,
-                  createdAt: new Date().toISOString(),
-                };
+              const currentProjectChats = Array.isArray(activeProject.chats)
+                ? activeProject.chats
+                : [];
 
-                return {
-                  ...prevProjectChats,
-                  [activeProject.id]: [
-                    nextProjectChat,
-                    ...currentProjectChats.filter(
-                      (chat) => chat.chatId !== resolvedSidebarChatId
-                    ),
-                  ],
-                };
-              });
+              const nextProject = {
+                ...activeProject,
+                chats: [
+                  nextProjectChat,
+                  ...currentProjectChats.filter(
+                    (chat) => chat.chatId !== resolvedSidebarChatId
+                  ),
+                ],
+              };
+
+              setActiveProject(nextProject);
+              setProjectSpaces((prevProjects) =>
+                prevProjects.map((project) =>
+                  project.id === nextProject.id ? nextProject : project
+                )
+              );
+              void saveProjectSpaceToApi(nextProject);
             }
 
             if (activeProject?.id) {
