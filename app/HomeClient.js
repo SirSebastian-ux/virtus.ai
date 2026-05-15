@@ -120,7 +120,7 @@ useEffect(() => {
   return () => {
     window.removeEventListener("popstate", closePanelsOnBack);
   };
-}, [showMobileMenu, projectsOpen, practiceOpen, searchOpen]);
+}, [showMobileMenu, projectsOpen, practiceOpen, searchOpen, projectHomeOpen]);
 function getProjectStoragePrefix() {
   if (typeof window === "undefined") return null;
 
