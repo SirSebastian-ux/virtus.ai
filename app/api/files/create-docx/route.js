@@ -298,8 +298,8 @@ function textToParagraphs(text, title = "", subtitle = "") {
 }
 
 function createDocumentChildren(title, content) {
-  const cleanTitle = cleanInlineText(BOARD_DOCUMENT_TITLE);
-  const subtitle = cleanInlineText(BOARD_DOCUMENT_SUBTITLE);
+  const cleanTitle = cleanInlineText(title || "Virtus Document");
+  const subtitle = cleanInlineText(getDocumentSubtitle(content, cleanTitle) || "Professional Document");
   const version = cleanInlineText(BOARD_DOCUMENT_VERSION);
 
   return [
