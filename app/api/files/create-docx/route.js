@@ -311,11 +311,53 @@ function textToParagraphs(text, title = "", subtitle = "") {
       });
     });
 }
+function detectDocumentStructure(rawTitle, content) {
+  const fallbackTitle = cleanInlineText(rawTitle || "Virtus Document");
+
+  const candidates = String(content || "")
+    .split("\n")
+    .map((line) => cleanInlineText(line).replace(/^#{1,6}\s*/, "").trim())
+    .filter(Boolean)
+    .map((line) => ({
+      clean: line,
+      lower: line.toLowerCase(),
+      wordCount: line.split(/\s+/).filter(Boolean).length,
+    }));
+
+  const explicitTitle = candidates.find(
+    (line) =>
+      /^(title|document title|workbook title|session title):/i.test(line.clean) &&
+      line.wordCount <= 18
+  );
+
+  const dayTitle = candidates.find(
+    (line) =>
+      /^day\s+\d+\s*[-:]/i.test(line.clean) &&
+      line.wordCount <= 18
+  );
+
+  const cleanTitle = cleanInlineText(
+    explicitTitle?.clean
+      ?.replace(/^(title|document title|workbook title|session title):\s*/i, "")
+      .trim() ||
+      dayTitle?.clean ||
+      fallbackTitle
+  );
+
+  return {
+    title: cleanTitle,
+    subtitle: "",
+    documentMode: /^day\s+\d+\s*[-:]/i.test(cleanTitle)
+      ? "workbook"
+      : "document",
+  };
+}
+
 
 function createDocumentChildren(title, content) {
-  const cleanTitle = cleanInlineText(title || "Virtus Document");
-  const subtitle = cleanInlineText(getDocumentSubtitle(content, cleanTitle) || "Professional Document");
-  const version = cleanInlineText(BOARD_DOCUMENT_VERSION);
+  const documentStructure = detectDocumentStructure(title, content);
+  const cleanTitle = cleanInlineText(documentStructure.title || title || "Virtus Document");
+  const subtitle = cleanInlineText(documentStructure.subtitle || "");
 
   return [
     new Paragraph({
