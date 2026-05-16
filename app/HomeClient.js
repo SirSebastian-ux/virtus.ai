@@ -1412,12 +1412,43 @@ async function handleDeleteChat(chatId, options = {}) {
     }
 
     if (options.projectId) {
+      const removeDeletedChat = (chats) =>
+        (Array.isArray(chats) ? chats : []).filter(
+          (item) => item.chatId !== chatId
+        );
+
+      const sourceProject =
+        activeProject?.id === options.projectId
+          ? activeProject
+          : projectSpaces.find((project) => project.id === options.projectId);
+
+      const updatedProject = sourceProject
+        ? {
+            ...sourceProject,
+            chats: removeDeletedChat(sourceProject.chats),
+          }
+        : null;
+
       setProjectChats((currentProjectChats) => ({
         ...currentProjectChats,
-        [options.projectId]: (currentProjectChats[options.projectId] || []).filter(
-          (item) => item.chatId !== chatId
-        ),
+        [options.projectId]: removeDeletedChat(currentProjectChats[options.projectId]),
       }));
+
+      if (updatedProject) {
+        setActiveProject((currentActiveProject) =>
+          currentActiveProject?.id === options.projectId
+            ? updatedProject
+            : currentActiveProject
+        );
+
+        setProjectSpaces((currentProjects) =>
+          currentProjects.map((project) =>
+            project.id === options.projectId ? updatedProject : project
+          )
+        );
+
+        void saveProjectSpaceToApi(updatedProject);
+      }
     } else {
       setRecentConversations((currentChats) =>
         currentChats.filter((item) => item.id !== chatId)
