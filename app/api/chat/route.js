@@ -369,21 +369,6 @@ if (
     ...guestRow,
     ...expiredTrialGuestRow,
   };
-} else if (
-  isTrialGuestPlan(guestRow?.plan) &&
-  guestRow?.plan_status !== getDefaultPlanStatusForPlan("trial_guest")
-) {
-  const normalizedTrialStatus = getDefaultPlanStatusForPlan("trial_guest");
-
-  await adminSupabase
-    .from("guest_access")
-    .update({ plan_status: normalizedTrialStatus })
-    .eq("guest_id", normalizedGuestId);
-
-  guestRow = {
-    ...guestRow,
-    plan_status: normalizedTrialStatus,
-  };
 }
 
    return {
