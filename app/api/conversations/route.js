@@ -9,8 +9,28 @@ import {
   DEFAULT_VIRTUS_PLAN,
   DEFAULT_VIRTUS_PLAN_STATUS,
 } from "@/data/virtus-plan-policy";
+function getTrialGuestCookieValue(cookieHeader) {
+  const targetName = "virtus_trial_device_id=";
 
-async function resolveVirtusUserId(guestId) {
+  return (
+    String(cookieHeader || "")
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(targetName))
+      ?.slice(targetName.length) || ""
+  );
+}
+
+function buildTrialGuestCookie(guestId) {
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+
+  return `virtus_trial_device_id=${encodeURIComponent(
+    guestId
+  )}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly${secureFlag}`;
+}
+
+
+async function resolveVirtusUserId(guestId, cookieHeader = "") {
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
@@ -45,10 +65,20 @@ async function resolveVirtusUserId(guestId) {
     planStatus: currentPlanStatus,
     trialStartedAt: profile?.trial_started_at ?? null,
     trialEndsAt: profile?.trial_ends_at ?? null,
+    trialGuestCookie: null,
   };
 }
 
-  const normalizedGuestId = guestId || crypto.randomUUID();
+  const cookieGuestId = (() => {
+    try {
+      return decodeURIComponent(getTrialGuestCookieValue(cookieHeader));
+    } catch {
+      return getTrialGuestCookieValue(cookieHeader);
+    }
+  })();
+
+  const normalizedGuestId = cookieGuestId || guestId || crypto.randomUUID();
+  const trialGuestCookie = buildTrialGuestCookie(normalizedGuestId);
 
   let { data: guestRow } = await adminSupabase
     .from("guest_access")
@@ -109,6 +139,7 @@ return {
       : DEFAULT_VIRTUS_PLAN_STATUS),
   trialStartedAt: guestRow?.trial_started_at ?? null,
   trialEndsAt: guestRow?.trial_ends_at ?? null,
+  trialGuestCookie,
 };
 }
 
@@ -121,8 +152,15 @@ export async function POST(req) {
       return Response.json({ error: "Missing chatId" }, { status: 400 });
     }
 
-    const { userId, isGuest, plan, planStatus, trialStartedAt, trialEndsAt } =
-  await resolveVirtusUserId(guestId);
+    const {
+      userId,
+      isGuest,
+      plan,
+      planStatus,
+      trialStartedAt,
+      trialEndsAt,
+      trialGuestCookie,
+    } = await resolveVirtusUserId(guestId, req.headers.get("cookie") || "");
     const supabase = createAdminClient();
     const effectiveChatId = chatId;
 
@@ -167,17 +205,22 @@ const conversation = conversationRows.map((item) => ({
   text: item.content,
   createdAt: item.created_at,
 }));
-    return Response.json({
-  conversation,
-  access: {
-    plan,
-    planStatus,
-    trialStartedAt,
-    trialEndsAt,
-    dailyMessageLimit,
-    dailyMessagesUsed,
+    return Response.json(
+  {
+    conversation,
+    access: {
+      plan,
+      planStatus,
+      trialStartedAt,
+      trialEndsAt,
+      dailyMessageLimit,
+      dailyMessagesUsed,
+    },
   },
-});
+  {
+    headers: trialGuestCookie ? { "Set-Cookie": trialGuestCookie } : {},
+  }
+);
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

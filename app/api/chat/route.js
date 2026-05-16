@@ -28,6 +28,26 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 const encoder = new TextEncoder();
+function getTrialGuestCookieValue(cookieHeader) {
+  const targetName = "virtus_trial_device_id=";
+
+  return (
+    String(cookieHeader || "")
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(targetName))
+      ?.slice(targetName.length) || ""
+  );
+}
+
+function buildTrialGuestCookie(guestId) {
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+
+  return `virtus_trial_device_id=${encodeURIComponent(
+    guestId
+  )}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly${secureFlag}`;
+}
+
 function cleanChatSessionTitle(title) {
   return String(title || "")
     .replace(/["'`]/g, "")
@@ -288,7 +308,7 @@ ${usefulPatterns.join("\n")}
     return "";
   }
 }
-async function resolveVirtusUserId(guestId) {
+async function resolveVirtusUserId(guestId, cookieHeader = "") {
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
@@ -323,10 +343,20 @@ async function resolveVirtusUserId(guestId) {
     planStatus: currentPlanStatus,
     trialStartedAt: profile?.trial_started_at ?? null,
     trialEndsAt: profile?.trial_ends_at ?? null,
+    trialGuestCookie: null,
   };
 }
 
-  const normalizedGuestId = guestId || crypto.randomUUID();
+  const cookieGuestId = (() => {
+    try {
+      return decodeURIComponent(getTrialGuestCookieValue(cookieHeader));
+    } catch {
+      return getTrialGuestCookieValue(cookieHeader);
+    }
+  })();
+
+  const normalizedGuestId = cookieGuestId || guestId || crypto.randomUUID();
+  const trialGuestCookie = buildTrialGuestCookie(normalizedGuestId);
   const guestUserId = `guest-${normalizedGuestId}`;
 
   let { data: guestRow } = await adminSupabase
@@ -390,6 +420,7 @@ if (
         : DEFAULT_VIRTUS_PLAN_STATUS),
     trialStartedAt: guestRow?.trial_started_at ?? null,
     trialEndsAt: guestRow?.trial_ends_at ?? null,
+    trialGuestCookie,
   };
 }
 
@@ -399,8 +430,15 @@ export async function POST(req) {
     const body = await req.json();
     const { message, guestId, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle } = body;
 
-    const { userId, isGuest, plan, planStatus, trialStartedAt, trialEndsAt } =
-      await resolveVirtusUserId(guestId);
+    const {
+      userId,
+      isGuest,
+      plan,
+      planStatus,
+      trialStartedAt,
+      trialEndsAt,
+      trialGuestCookie,
+    } = await resolveVirtusUserId(guestId, req.headers.get("cookie") || "");
 
     const supabase = createAdminClient();
 
@@ -5090,6 +5128,7 @@ return new Response(readableStream, {
     "Content-Type": "text/event-stream; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     Connection: "keep-alive",
+    ...(trialGuestCookie ? { "Set-Cookie": trialGuestCookie } : {}),
   },
 });
 
