@@ -217,6 +217,51 @@ async function insertGlobalLearningEvent(supabase, payload) {
   }
 }
 
+async function buildGlobalLearningContext(supabase) {
+  try {
+    const { data, error } = await supabase
+      .from("global_learning_patterns")
+      .select("pattern_key, pattern_label, total_count, success_count, failure_count, last_event_at")
+      .order("success_count", { ascending: false })
+      .order("total_count", { ascending: false })
+      .limit(12);
+
+    if (error) {
+      throw error;
+    }
+
+    const usefulPatterns = (data || [])
+      .filter((item) => Number(item.total_count ?? 0) > 0)
+      .map((item) => {
+        const total = Number(item.total_count ?? 0);
+        const success = Number(item.success_count ?? 0);
+        const failure = Number(item.failure_count ?? 0);
+
+        return `- ${item.pattern_label || item.pattern_key}: total=${total}, success=${success}, failure=${failure}`;
+      });
+
+    if (usefulPatterns.length === 0) {
+      return "";
+    }
+
+    return `
+# GLOBAL LEARNING CONTEXT
+
+These are anonymized system-level learning patterns from Virtus usage.
+Use them only as product intelligence and reasoning guidance.
+Never treat them as personal memory.
+Never expose another user's private data.
+Never claim these patterns belong to the current user.
+Use successful patterns to improve answer quality.
+Use failure patterns to avoid repeated weak behavior.
+
+${usefulPatterns.join("\n")}
+`;
+  } catch (error) {
+    console.error("GLOBAL LEARNING READ ERROR:", error);
+    return "";
+  }
+}
 async function resolveVirtusUserId(guestId) {
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
@@ -494,6 +539,7 @@ const shouldAttemptMemoryExtraction =
 const hasPremiumAccess = isPremiumLikePlan(plan);
 const hasPlusAccess = plan === "plus";
 const hasTrialGuestAccess = isTrialGuestPlan(plan);
+const globalLearningContext = await buildGlobalLearningContext(supabase);
 
 const practicePlanRank = {
   guest: 0,
@@ -3562,6 +3608,7 @@ Recent Conversations:
 ${JSON.stringify(conversations, null, 2)}
 
 
+${globalLearningContext}
 # ACTIVE PROJECT INTELLIGENCE LAYER
 
 Active Project ID:
