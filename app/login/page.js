@@ -188,6 +188,15 @@ export default function LoginPage() {
           </p>
         ) : null}
 
+        {mode === "login" ? (
+          <a
+            href="/forgot-password"
+            className="mt-4 inline-block text-sm text-sky-300/70 transition hover:text-sky-200"
+          >
+            Forgot password?
+          </a>
+        ) : null}
+
         <button
           type="button"
           onClick={() => {
@@ -204,3 +213,4 @@ export default function LoginPage() {
     </main>
   );
 }
+
