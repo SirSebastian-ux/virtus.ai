@@ -2000,7 +2000,13 @@ const isForgetCommand =
   normalizedMessageControl.startsWith("delete memory ");
 
 const isThisProjectRecallCommand =
-  normalizedMessageControl.includes("this project");
+  /\bwhat do you know about this project\b/i.test(normalizedMessageControl) ||
+  /\bwhat do you remember about this project\b/i.test(normalizedMessageControl) ||
+  /\bwhat do you hold about this project\b/i.test(normalizedMessageControl) ||
+  /\bwhat context do you have about this project\b/i.test(normalizedMessageControl) ||
+  /\bshow this project memory\b/i.test(normalizedMessageControl) ||
+  /\bshow memory for this project\b/i.test(normalizedMessageControl) ||
+  /\bshow memories for this project\b/i.test(normalizedMessageControl);
 
 const isMemoryRecallCommand =
   normalizedMessageControl.includes("what do you remember about me") ||
@@ -2008,7 +2014,6 @@ const isMemoryRecallCommand =
   normalizedMessageControl.includes("show my memory") ||
   normalizedMessageControl.includes("show memories") ||
   isThisProjectRecallCommand;
-
 const isMemoryUpdateCommand =
   normalizedMessageControl.startsWith("update memory ") ||
   normalizedMessageControl.startsWith("revise memory ");
