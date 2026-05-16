@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 
 async function getGlobalLearningReport() {
   const supabase = await createClient();
@@ -13,7 +14,13 @@ async function getGlobalLearningReport() {
     redirect("/login");
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+
+
+
+  const { data, error } = await admin
+
+
     .from("global_learning_patterns_report")
     .select("*")
     .order("total_count", { ascending: false })
