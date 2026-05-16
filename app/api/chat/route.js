@@ -144,23 +144,49 @@ async function upsertGlobalLearningPattern(supabase, payload) {
   }
 }
 
+function sanitizeGlobalLearningMeta(meta) {
+  const rawMeta = meta && typeof meta === "object" ? meta : {};
+
+  const safeMeta = {};
+
+  const allowedKeys = [
+    "isGuest",
+    "personalCount",
+    "projectCount",
+    "deletedMemoryCount",
+    "updatedCount",
+    "commandType",
+  ];
+
+  for (const key of allowedKeys) {
+    if (Object.prototype.hasOwnProperty.call(rawMeta, key)) {
+      safeMeta[key] = rawMeta[key];
+    }
+  }
+
+  return safeMeta;
+}
+
 async function insertGlobalLearningEvent(supabase, payload) {
   try {
-       const now = new Date();
+    const now = new Date();
     const dedupeWindowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
+    const anonymousPlan = payload.sourcePlan ?? "unknown_plan";
+
     const dedupeKey = [
-      payload.sourceUserId ?? "anon",
-      payload.chatId ?? "no-chat",
+      anonymousPlan,
       payload.eventType,
       payload.patternKey,
     ].join("::");
+
     const dedupeBucket = `${now.getUTCFullYear()}-${String(
       now.getUTCMonth() + 1
     ).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}T${String(
       now.getUTCHours()
     ).padStart(2, "0")}:${String(now.getUTCMinutes()).padStart(2, "0")}`;
 
-       const { data: recentEvents, error: recentEventsError } = await supabase
+    const { data: recentEvents, error: recentEventsError } = await supabase
       .from("global_learning_events")
       .select("id, occurrence_count, created_at")
       .eq("dedupe_key", dedupeKey)
@@ -168,6 +194,7 @@ async function insertGlobalLearningEvent(supabase, payload) {
       .gte("created_at", dedupeWindowStart)
       .order("created_at", { ascending: false })
       .limit(1);
+
     if (recentEventsError) {
       throw recentEventsError;
     }
@@ -192,20 +219,20 @@ async function insertGlobalLearningEvent(supabase, payload) {
       return;
     }
 
-         const { error: rpcError } = await supabase.rpc(
+    const { error: rpcError } = await supabase.rpc(
       "log_global_learning_event",
       {
-        p_source_user_id: payload.sourceUserId ?? null,
-        p_source_plan: payload.sourcePlan ?? null,
-        p_chat_id: payload.chatId ?? null,
+        p_source_user_id: null,
+        p_source_plan: anonymousPlan,
+        p_chat_id: null,
         p_dedupe_key: dedupeKey,
         p_dedupe_bucket: dedupeBucket,
         p_event_type: payload.eventType,
         p_pattern_key: payload.patternKey,
-        p_pattern_value: payload.patternValue,
+        p_pattern_value: String(payload.patternValue || "").slice(0, 500),
         p_confidence_score: payload.confidenceScore ?? 50,
         p_occurrence_count: payload.occurrenceCount ?? 1,
-        p_meta: payload.meta ?? {},
+        p_meta: sanitizeGlobalLearningMeta(payload.meta),
       }
     );
 
@@ -216,7 +243,6 @@ async function insertGlobalLearningEvent(supabase, payload) {
     console.error("GLOBAL LEARNING WRITE ERROR:", error);
   }
 }
-
 async function buildGlobalLearningContext(supabase) {
   try {
     const { data, error } = await supabase
