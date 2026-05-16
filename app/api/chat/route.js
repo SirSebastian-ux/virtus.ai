@@ -2575,6 +2575,106 @@ const buildInferredProjectContextReply = () => {
   ].join("\n");
 };
 
+const buildStrategicProjectRecallReply = () => {
+  const projectName =
+    String(selectedProjectTitle || "")
+      .replace(/^project\s+/i, "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() ||
+    String(activeProjectId || "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() ||
+    "this project";
+
+  const projectContextText = projectLines.join("\n");
+  const clueText = `${projectName} ${projectContextText} ${message || ""}`.toLowerCase();
+
+  const isEducationProject =
+    /\b(academy|curriculum|teen|teenager|teenagers|youth|student|students|lesson|lessons|school|course|training|module|modules)\b/i.test(
+      clueText
+    );
+
+  const isProductProject =
+    /\b(virtus|ai|app|saas|software|memory|chat|platform|product)\b/i.test(
+      clueText
+    );
+
+  const isLeadershipProject =
+    /\b(leadership|executive|manager|corporate|team|coaching|workshop|training)\b/i.test(
+      clueText
+    );
+
+  if (plan !== "premium") {
+    return [
+      "Here is the current context I can work from for this project.",
+      "",
+      projectContextText,
+    ].join("\n");
+  }
+
+  if (isEducationProject) {
+    return [
+      `Here is the current strategic context for ${projectName}.`,
+      "",
+      projectContextText,
+      "",
+      "Strategic reading:",
+      "This is a structured academy/curriculum project, not a casual lesson collection. Because the rhythm is intensive, the curriculum needs a clear developmental pathway.",
+      "",
+      "What this means:",
+      "- The program needs a defined age band.",
+      "- The program needs a clear transformation outcome.",
+      "- The curriculum should be organized into pillars and modules.",
+      "- Each 3-hour lesson needs a repeatable teaching structure.",
+      "- The academy needs assessment, reflection, safety boundaries, and facilitator guidance.",
+      "",
+      "Next highest-leverage decision:",
+      "Define the exact age range and the final transformation outcome. Once those two are clear, the module map becomes much easier to build."
+    ].join("\n");
+  }
+
+  if (isProductProject) {
+    return [
+      `Here is the current strategic context for ${projectName}.`,
+      "",
+      projectContextText,
+      "",
+      "Strategic reading:",
+      "This is a product/system project. The priority is not only features; it is behavior quality, memory, continuity, reliability, and user trust.",
+      "",
+      "Next highest-leverage decision:",
+      "Identify the weakest current user experience and improve that path without redesigning unrelated parts."
+    ].join("\n");
+  }
+
+  if (isLeadershipProject) {
+    return [
+      `Here is the current strategic context for ${projectName}.`,
+      "",
+      projectContextText,
+      "",
+      "Strategic reading:",
+      "This is a leadership or development project. It should be designed around measurable behavior change, not only information delivery.",
+      "",
+      "Next highest-leverage decision:",
+      "Define the target audience and the leadership transformation the program must create."
+    ].join("\n");
+  }
+
+  return [
+    `Here is the current strategic context for ${projectName}.`,
+    "",
+    projectContextText,
+    "",
+    "Strategic reading:",
+    "The project now has enough context to move from idea into structure.",
+    "",
+    "Next highest-leverage decision:",
+    "Define the project outcome, the people it serves, and the first concrete deliverable."
+  ].join("\n");
+};
 const reply = (() => {
   if (isAllProjectsRecall && !isEmotionalProjectMessage) {
     if (projectLines.length > 0) {
@@ -2596,16 +2696,11 @@ const reply = (() => {
 
   if ((isThisProjectRecallCommand || requestedProjectLabel) && !isEmotionalProjectMessage) {
     if (projectLines.length > 0) {
-      return [
-        "Here is the current context I can work from for this project.",
-        "",
-        projectLines.join("\n"),
-      ].join("\n");
+      return buildStrategicProjectRecallReply();
     }
 
     return buildInferredProjectContextReply();
   }
-
   if (storedMemories && storedMemories.length > 0) {
     return [
       "Here is what I hold in your profile.",
