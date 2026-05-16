@@ -1942,24 +1942,70 @@ await supabase.from("conversations").insert({
   content: message,
 });
 
-const immediateProjectDefinitionMatch = String(message || "").match(
-  /\bproject\s+([a-z0-9]+(?:[ -][a-z0-9]+){0,5})\s*(?:is|=|helps)\s+(.+?)[.!?]*\s*$/i
+const cleanImmediateProjectName = (value) =>
+  String(value || "")
+    .replace(/^project\s+/i, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const cleanImmediateProjectDefinition = (value) =>
+  String(value || "")
+    .trim()
+    .replace(
+      /\s+(what do we need first|what is needed first|where do we start|what should we do first|what do we need|how do we start)\b.*$/i,
+      ""
+    )
+    .replace(/[.!?]+$/, "")
+    .trim();
+
+const activeProjectNameForImmediateMemory =
+  cleanImmediateProjectName(selectedProjectTitle) ||
+  cleanImmediateProjectName(activeProjectId) ||
+  "";
+
+const immediateNamedProjectDefinitionMatch = String(message || "").match(
+  /\bproject\s+([a-z0-9]+(?:[ -][a-z0-9]+){0,8})\s+(is\s+to|aims\s+to|is\s+designed\s+to|helps|will|is|=)\s+([\s\S]+)$/i
 );
 
-if (canWriteProjectMemory && activeProjectId && immediateProjectDefinitionMatch) {
-  const immediateProjectVerb = String(message || "").toLowerCase().includes(" helps ")
-    ? "helps"
-    : "is";
+const immediateThisProjectDefinitionMatch = String(message || "").match(
+  /\bthis project\s+(is\s+to|aims\s+to|is\s+designed\s+to|helps|will|is|=)\s+([\s\S]+)$/i
+);
 
-  const normalizedImmediateProjectName = immediateProjectDefinitionMatch[1]
-  .trim()
-  .replace(/\s+/g, " ")
-  .replace(/^project\s+/i, "");
+const buildImmediateProjectFact = (projectName, operator, definitionText) => {
+  const cleanName = cleanImmediateProjectName(projectName);
+  const cleanDefinition = cleanImmediateProjectDefinition(definitionText);
+  const normalizedOperator = String(operator || "").toLowerCase().trim();
 
-const immediateProjectFact = `Project ${normalizedImmediateProjectName} ${immediateProjectVerb} ${immediateProjectDefinitionMatch[2]
-  .trim()
-  .replace(/[.]+$/, "")}.`;
+  if (!cleanName || !cleanDefinition) {
+    return null;
+  }
 
+  const projectVerb =
+    normalizedOperator === "helps"
+      ? "helps"
+      : normalizedOperator === "is" || normalizedOperator === "="
+      ? "is"
+      : "is designed to";
+
+  return `Project ${cleanName} ${projectVerb} ${cleanDefinition}.`;
+};
+
+const immediateProjectFact = immediateNamedProjectDefinitionMatch
+  ? buildImmediateProjectFact(
+      immediateNamedProjectDefinitionMatch[1],
+      immediateNamedProjectDefinitionMatch[2],
+      immediateNamedProjectDefinitionMatch[3]
+    )
+  : immediateThisProjectDefinitionMatch
+  ? buildImmediateProjectFact(
+      activeProjectNameForImmediateMemory,
+      immediateThisProjectDefinitionMatch[1],
+      immediateThisProjectDefinitionMatch[2]
+    )
+  : null;
+
+if (canWriteProjectMemory && activeProjectId && immediateProjectFact) {
   const projectMemorySource =
     plan === "premium"
       ? "premium_project_memory"
@@ -1984,11 +2030,10 @@ const immediateProjectFact = `Project ${normalizedImmediateProjectName} ${immedi
       project_id: activeProjectId,
       fact_text: immediateProjectFact,
       source: projectMemorySource,
-      confidence_score: 80,
+      confidence_score: 85,
     });
   }
 }
-
 // MEMORY CONTROL COMMANDS
 
 const normalizedMessageControl = String(message || "").toLowerCase();
