@@ -4972,6 +4972,76 @@ const rowsToInsert = [
   fullReply = cleanTrialGuestVisibleLabels(fullReply);
 }
 
+      try {
+        const anonymousAnswerPatterns = [];
+
+        if (!isMemoryCommand && String(fullReply || "").trim().length > 0) {
+          anonymousAnswerPatterns.push({
+            patternKey: "answer_generated",
+            patternLabel: "Answer generated",
+            patternValue: "Virtus generated a non-command answer.",
+            commandType: "answer_generated",
+          });
+
+          if (activeProjectId) {
+            anonymousAnswerPatterns.push({
+              patternKey: "project_context_answer_generated",
+              patternLabel: "Project context answer generated",
+              patternValue: "Virtus generated an answer inside an active project context.",
+              commandType: "project_context_answer",
+            });
+          }
+
+          if (hasPremiumAccess && activeProjectId) {
+            anonymousAnswerPatterns.push({
+              patternKey: "premium_project_context_answer_generated",
+              patternLabel: "Premium project context answer generated",
+              patternValue: "Virtus generated a Premium project-context answer.",
+              commandType: "premium_project_context_answer",
+            });
+          }
+
+          if (
+            /\b(strategic reading|next highest-leverage decision|curriculum|module|architecture|framework|blueprint|project structure|program structure)\b/i.test(
+              fullReply
+            )
+          ) {
+            anonymousAnswerPatterns.push({
+              patternKey: "strategic_structure_answer_generated",
+              patternLabel: "Strategic structure answer generated",
+              patternValue: "Virtus generated a structured strategic answer.",
+              commandType: "strategic_structure_answer",
+            });
+          }
+        }
+
+        for (const pattern of anonymousAnswerPatterns) {
+          await insertGlobalLearningEvent(supabase, {
+            sourcePlan: plan,
+            eventType: "answer_quality_pattern",
+            patternKey: pattern.patternKey,
+            patternValue: pattern.patternValue,
+            confidenceScore: 75,
+            meta: {
+              isGuest,
+              personalCount: 0,
+              projectCount: activeProjectId ? 1 : 0,
+              commandType: pattern.commandType,
+            },
+          });
+
+          await upsertGlobalLearningPattern(supabase, {
+            patternKey: pattern.patternKey,
+            patternLabel: pattern.patternLabel,
+            resultType: "success",
+            meta: {
+              commandType: pattern.commandType,
+            },
+          });
+        }
+      } catch (globalLearningAnswerError) {
+        console.error("GLOBAL LEARNING ANSWER PATTERN ERROR:", globalLearningAnswerError);
+      }
       controller.enqueue(
         encoder.encode(
           `data: ${JSON.stringify({
