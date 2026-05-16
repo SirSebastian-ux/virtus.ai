@@ -4526,6 +4526,28 @@ Rules:
   - durable communication rules
   - client training standards
 
+Active project memory extraction rules:
+- If ACTIVE PROJECT TITLE is provided, projectFacts should use that project title when the user's message says "this project", "the project", "our project", or gives project-defining details.
+- Save durable project brief facts when the user gives:
+  - target age range
+  - target audience
+  - project purpose
+  - transformation outcome
+  - curriculum pillars
+  - lesson rhythm
+  - program duration
+  - assessment method
+  - facilitator method
+  - delivery structure
+- Prefer strong project brief facts such as:
+  - "EWS Academy serves teenagers ages 13-18."
+  - "EWS Academy focuses on emotional intelligence, discipline, communication, and purpose."
+  - "EWS Academy uses three 3-hour lessons per week."
+- Do not save vague facts like:
+  - "The user is building a curriculum."
+  - "The project is about teenagers."
+  - "The assistant suggested a structure."
+- If a fact belongs to the active project, put it in projectFacts, not personalFacts.
 - projectFacts must be short atomic facts, not explanations.
 - do not save multi-part bullet logic.
 - do not save advisory wording.
