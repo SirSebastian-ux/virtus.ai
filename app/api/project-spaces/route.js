@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { getPlanPolicy } from "@/data/virtus-plan-policy";
 
 export async function GET() {
   try {
@@ -62,11 +63,78 @@ export async function POST(req) {
       return NextResponse.json({ error: "Missing project" }, { status: 400 });
     }
 
+    const projectId = String(project.id);
+    const cleanTitle = String(project.title).trim();
+
+    const { data: profile, error: profileError } = await admin
+      .from("profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      return NextResponse.json({ error: profileError.message }, { status: 500 });
+    }
+
+    const planPolicy = getPlanPolicy(profile?.plan || "free");
+    const projectScope = planPolicy.projectScope || {
+      canUseProjects: false,
+      maxProjects: 0,
+    };
+
+    if (projectScope.canUseProjects === false) {
+      return NextResponse.json(
+        { error: "Projects are not available on your current plan." },
+        { status: 403 }
+      );
+    }
+
+    const { data: existingProject, error: existingProjectError } = await admin
+      .from("project_spaces")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("id", projectId)
+      .maybeSingle();
+
+    if (existingProjectError) {
+      return NextResponse.json(
+        { error: existingProjectError.message },
+        { status: 500 }
+      );
+    }
+
+    const maxProjects = projectScope.maxProjects;
+
+    if (!existingProject && typeof maxProjects === "number") {
+      const { count: existingProjectCount, error: countError } = await admin
+        .from("project_spaces")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (countError) {
+        return NextResponse.json({ error: countError.message }, { status: 500 });
+      }
+
+      if ((existingProjectCount || 0) >= maxProjects) {
+        return NextResponse.json(
+          {
+            error:
+              planPolicy.plan === "free"
+                ? "Free includes up to 3 projects. Upgrade to Plus for 5 projects or Premium / Virtus Prime for unlimited projects."
+                : planPolicy.plan === "plus"
+                ? "Plus includes up to 5 projects. Upgrade to Premium / Virtus Prime for unlimited projects."
+                : "Your current plan has reached its project limit.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const { error } = await admin.from("project_spaces").upsert(
       {
-        id: String(project.id),
+        id: projectId,
         user_id: user.id,
-        title: String(project.title).trim(),
+        title: cleanTitle,
         chat_id: project.chatId ? String(project.chatId) : null,
         chats_json: Array.isArray(project.chats) ? project.chats : [],
         updated_at: new Date().toISOString(),

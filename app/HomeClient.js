@@ -651,6 +651,52 @@ const handleMicrophoneClick = () => {
     currentAccess?.planStatus === "expired";
 
     const currentPlanKey = currentAccess?.plan ?? "trial_guest";
+  const currentProjectScope =
+    currentAccess?.projectScope || getPlanPolicy(currentPlanKey).projectScope || {
+      canUseProjects: false,
+      maxProjects: 0,
+    };
+
+  const currentProjectLimit = currentProjectScope?.maxProjects;
+  const isProjectLimitReached =
+    currentProjectScope?.canUseProjects === false ||
+    (typeof currentProjectLimit === "number" &&
+      projectSpaces.length >= currentProjectLimit);
+
+  function getProjectLimitMessage() {
+    if (currentProjectLimit === null) {
+      return "";
+    }
+
+    if (currentPlanKey === "trial_guest") {
+      return "Trial Guest includes 1 project sample. Create a free account or upgrade to continue with more projects.";
+    }
+
+    if (currentPlanKey === "free") {
+      return "Free includes up to 3 projects. Upgrade to Plus for 5 projects or Premium / Virtus Prime for unlimited projects.";
+    }
+
+    if (currentPlanKey === "plus") {
+      return "Plus includes up to 5 projects. Upgrade to Premium / Virtus Prime for unlimited projects.";
+    }
+
+    return "Your current plan has reached its project limit.";
+  }
+
+  function canStartNewProject() {
+    if (!isProjectLimitReached) {
+      return true;
+    }
+
+    const limitMessage = getProjectLimitMessage();
+
+    if (limitMessage) {
+      setMessage(limitMessage);
+    }
+
+    setShowProjectInput(false);
+    return false;
+  }
   const canCreateFiles =
     !isTrialGuestExpired &&
     ["trial_guest", "plus", "premium"].includes(currentPlanKey);
@@ -2992,7 +3038,10 @@ return (
               <div className="mt-3 rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 shadow-sm shadow-sky-950/10">
                 <button
                   type="button"
-                  onClick={() => setShowProjectInput(true)}
+                  onClick={() => {
+                    if (!canStartNewProject()) return;
+                    setShowProjectInput(true);
+                  }}
                   className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
                 >
                   + Project
@@ -3677,7 +3726,10 @@ if (data.conversation) {
               <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 no-scrollbar">
                 <button
                   type="button"
-                  onClick={() => setShowProjectInput(true)}
+                  onClick={() => {
+                    if (!canStartNewProject()) return;
+                    setShowProjectInput(true);
+                  }}
                   className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
                 >
                   + Project
