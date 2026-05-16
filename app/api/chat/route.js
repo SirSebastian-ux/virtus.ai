@@ -2412,29 +2412,148 @@ return true;
   const isEmotionalProjectMessage =
   /\b(project|virtus|build|app)\b/i.test(message || "") &&
   /\b(feel|feeling|down|tired|drained|exhausted|heavy|sad|stressed|stress|pressure|energy|overwhelmed|discouraged|frustrated)\b/i.test(message || "");
+const buildInferredProjectContextReply = () => {
+  const cleanProjectLabel = (value) =>
+    String(value || "")
+      .replace(/^project\s+/i, "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const titleCase = (value) =>
+    String(value || "")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase())
+      .trim();
+
+  const explicitProjectName = cleanProjectLabel(selectedProjectTitle);
+  const fallbackProjectName =
+    cleanProjectLabel(requestedProjectLabel) ||
+    cleanProjectLabel(activeProjectId) ||
+    "this project";
+
+  const projectName = explicitProjectName || titleCase(fallbackProjectName);
+  const clueText = `${projectName} ${message || ""}`.toLowerCase();
+
+  const isEducationProject =
+    /\b(academy|school|curriculum|course|lesson|lessons|student|students|teen|teens|teenager|teenagers|youth|training|workshop|module|modules|class|classes)\b/i.test(
+      clueText
+    );
+
+  const isVirtusProject =
+    /\b(virtus|ai|app|saas|chatbot|memory|premium|prime|project chat|project-chat)\b/i.test(
+      clueText
+    );
+
+  const isLeadershipProject =
+    /\b(leadership|executive|manager|managers|team|teams|corporate|company|organization|organisation)\b/i.test(
+      clueText
+    );
+
+  if (isEducationProject) {
+    return [
+      `For ${projectName}, I will treat this as a structured educational academy project, not a loose collection of lessons.`,
+      "",
+      "Based on the project name and your direction, the first foundation should be:",
+      "",
+      "- Age range and maturity level",
+      "- Core transformation outcome",
+      "- Curriculum pillars",
+      "- Weekly rhythm and lesson structure",
+      "- Module map",
+      "- Teaching method",
+      "- Safety, ethics, and boundaries",
+      "- Assessment method",
+      "- Facilitator guide",
+      "",
+      "Because this is an academy-style project, the wise move is to build the foundation first, then design the lessons around it. We begin by defining who the learners are, what they must become, and what measurable change the curriculum must create."
+    ].join("\n");
+  }
+
+  if (isVirtusProject) {
+    return [
+      `For ${projectName}, I will treat this as a strategic product-building project.`,
+      "",
+      "The first foundation should be:",
+      "",
+      "- Product purpose",
+      "- User type",
+      "- Plan behavior",
+      "- Memory behavior",
+      "- Reasoning quality",
+      "- UI stability",
+      "- Database flow",
+      "- Safety boundaries",
+      "- Testing path",
+      "",
+      "The priority is not to add more features randomly. The priority is to make the product think clearly, remember correctly, and respond with the level of intelligence promised by the plan."
+    ].join("\n");
+  }
+
+  if (isLeadershipProject) {
+    return [
+      `For ${projectName}, I will treat this as a leadership and development project.`,
+      "",
+      "The first foundation should be:",
+      "",
+      "- Target audience",
+      "- Main leadership transformation",
+      "- Module structure",
+      "- Practice method",
+      "- Accountability system",
+      "- Assessment method",
+      "- Facilitator method",
+      "- Delivery format",
+      "",
+      "The project should be built around measurable behavioral change, not just information delivery."
+    ].join("\n");
+  }
+
+  return [
+    `For ${projectName}, I will work from the project title, the current conversation, and any saved context available.`,
+    "",
+    "The first foundation should be:",
+    "",
+    "- What this project is",
+    "- Who it serves",
+    "- What result it must create",
+    "- What structure it needs",
+    "- What decisions are already clear",
+    "- What decisions are still open",
+    "- What the next concrete step should be",
+    "",
+    "The intelligent next move is to define the project foundation before creating details. Once the foundation is clear, every next decision becomes easier and more coherent."
+  ].join("\n");
+};
+
 const reply = (() => {
   if (isAllProjectsRecall && !isEmotionalProjectMessage) {
     if (projectLines.length > 0) {
       return [
-        "Here is what I remember about your projects.",
+        "Here is the current project landscape I can work from.",
         "",
         projectLines.join("\n"),
       ].join("\n");
     }
 
-    return "I do not yet hold clear project memory for your projects.";
+    return [
+      "Your projects should be treated as a strategic portfolio, not isolated chats.",
+      "",
+      "To make them useful, each project needs a clear purpose, target outcome, current status, next step, and decision history.",
+      "",
+      "The next move is to open one project and define its foundation clearly so Virtus can support it with stronger continuity."
+    ].join("\n");
   }
 
   if ((isThisProjectRecallCommand || requestedProjectLabel) && !isEmotionalProjectMessage) {
     if (projectLines.length > 0) {
       return [
-        "Here is what I remember about this project.",
+        "Here is the current context I can work from for this project.",
         "",
         projectLines.join("\n"),
       ].join("\n");
     }
 
-    return "I do not yet hold clear project memory for this project.";
+    return buildInferredProjectContextReply();
   }
 
   if (storedMemories && storedMemories.length > 0) {
@@ -2450,23 +2569,22 @@ const reply = (() => {
   }
 
   if (isEmotionalProjectMessage) {
-  return [
-    "I hear you. This project is taking a lot of energy because you are not just building an app; you are carrying vision, pressure, time, money, expectation, and responsibility inside it.",
-    "",
-    "do not turn today's heaviness into a conclusion about the whole project.",
-    "",
-    "Fact: you feel down and tired today.",
-    "Discipline: we slow down and make one clean move, not ten.",
-    "",
-    "Today does not need a big push. It needs one clean step.",
-    "",
-    "What is the smallest part of Virtus AI we can finish now without forcing your mind?"
-  ].join("\n");
-}
+    return [
+      "I hear you. This project is taking a lot of energy because you are not just building an app; you are carrying vision, pressure, time, money, expectation, and responsibility inside it.",
+      "",
+      "Do not turn today's heaviness into a conclusion about the whole project.",
+      "",
+      "Fact: you feel down and tired today.",
+      "Discipline: we slow down and make one clean move, not ten.",
+      "",
+      "Today does not need a big push. It needs one clean step.",
+      "",
+      "What is the smallest part of Virtus AI we can finish now without forcing your mind?"
+    ].join("\n");
+  }
 
-return "Your profile is still empty for now. When you ask me to remember something important, I will save it here so Virtus can support you with more continuity.";
+  return "Your profile is ready to grow from what you define, build, and ask Virtus to remember. Give me the project, goal, preference, or direction, and I will help structure it into useful continuity.";
 })();
-
   await supabase.from("conversations").insert({
     user_id: userId,
     chat_id: effectiveChatId,
