@@ -30,7 +30,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
     description: "Registered entry plan with saved chats, standard usage, and basic continuity.",
     projectScope: {
       canUseProjects: true,
-      maxProjects: 1,
+      maxProjects: 3,
     },
   },
 
@@ -45,7 +45,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
     description: "Life-coach layer with stronger continuity, better memory, and more personal support.",
     projectScope: {
       canUseProjects: true,
-      maxProjects: 3,
+      maxProjects: 5,
     },
   },
 
@@ -60,7 +60,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
     description: "Highest strategic layer with deeper continuity, stronger personalization, and advanced project support.",
     projectScope: {
       canUseProjects: true,
-      maxProjects: 50,
+      maxProjects: null,
     },
   },
 };
