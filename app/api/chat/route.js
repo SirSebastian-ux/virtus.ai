@@ -2591,6 +2591,25 @@ const buildStrategicProjectRecallReply = () => {
   const projectContextText = projectLines.join("\n");
   const clueText = `${projectName} ${projectContextText} ${message || ""}`.toLowerCase();
 
+  const hasDefinedAgeRange =
+    /\bages?\s*(13|14|15|16|17|18)\b/i.test(projectContextText) ||
+    /\b13\s*(to|-)\s*18\b/i.test(projectContextText) ||
+    /\bteenagers ages\b/i.test(projectContextText);
+
+  const hasDefinedTransformationOutcome =
+    /\b(emotional intelligence|discipline|communication|purpose|transformation|focuses on)\b/i.test(
+      projectContextText
+    );
+
+  const educationNextDecision =
+    hasDefinedAgeRange && hasDefinedTransformationOutcome
+      ? "Choose the program structure: 1-year curriculum, 3-term curriculum, or multi-year progression from ages 13 to 18. This decision controls the module map and lesson sequence."
+      : hasDefinedAgeRange
+      ? "Define the final transformation outcome. The age range is clear, but the curriculum still needs a precise developmental destination."
+      : hasDefinedTransformationOutcome
+      ? "Define the exact age range. The transformation is clear, but the curriculum must be adjusted to the maturity level of the learners."
+      : "Define the exact age range and the final transformation outcome. Once those two are clear, the module map becomes much easier to build.";
+
   const isEducationProject =
     /\b(academy|curriculum|teen|teenager|teenagers|youth|student|students|lesson|lessons|school|course|training|module|modules)\b/i.test(
       clueText
@@ -2631,7 +2650,7 @@ const buildStrategicProjectRecallReply = () => {
       "- The academy needs assessment, reflection, safety boundaries, and facilitator guidance.",
       "",
       "Next highest-leverage decision:",
-      "Define the exact age range and the final transformation outcome. Once those two are clear, the module map becomes much easier to build."
+      educationNextDecision
     ].join("\n");
   }
 
