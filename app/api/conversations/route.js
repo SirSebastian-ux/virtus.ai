@@ -14,6 +14,14 @@ async function resolveVirtusUserId(guestId) {
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
+  // AUTO-EXPIRE OLD TRIAL GUEST ROWS
+  await adminSupabase
+    .from("guest_access")
+    .update({ plan_status: "expired" })
+    .eq("plan", "trial_guest")
+    .neq("plan_status", "expired")
+    .lte("trial_ends_at", new Date().toISOString());
+
   const {
     data: { user },
     error,
