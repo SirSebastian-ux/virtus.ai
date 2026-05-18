@@ -3928,7 +3928,7 @@ if (data.conversation) {
 
       {isTrialGuestExpired && (
         <p className="mt-2 text-xs text-sky-300/70">
-          Trial complete. Create a free account or choose Plus or Premium to keep your continuity.
+          Sign in to continue.
         </p>
       )}
 
