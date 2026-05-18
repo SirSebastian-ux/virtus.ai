@@ -3946,7 +3946,7 @@ if (data.conversation) {
           {isTrialGuestExpired
             ? "Continue with account or plan"
             : !isAuthenticated && currentAccess?.plan === "trial_guest"
-            ? "Keep your progress with a free account"
+            ? "Continue"
             : displayUpgradeLabel}
         </Link>
       )}
