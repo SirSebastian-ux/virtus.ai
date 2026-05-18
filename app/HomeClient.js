@@ -1031,16 +1031,16 @@ function getPlanCapabilityCard(plan) {
       return;
     }
 
-    const guestId =
-      localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
+    const existingGuestId = localStorage.getItem("virtus_guest_id");
 
-    localStorage.setItem("virtus_guest_id", guestId);
-setShowPlanOverlay(localStorage.getItem(planOverlayStorageKey) !== "true");
-    setGuestAccess(normalizedGuestAccess);
+    setShowPlanOverlay(
+      !!existingGuestId && localStorage.getItem(planOverlayStorageKey) !== "true"
+    );
+    setGuestAccess(existingGuestId ? normalizedGuestAccess : null);
 
     const savedChatId = getGuestSidebarChatId(
-      normalizedGuestAccess?.plan,
-      localStorage.getItem("virtus_chat_id") || crypto.randomUUID()
+      existingGuestId ? normalizedGuestAccess?.plan : null,
+      existingGuestId ? localStorage.getItem("virtus_chat_id") || crypto.randomUUID() : crypto.randomUUID()
     );
 
     localStorage.setItem("virtus_chat_id", savedChatId);
