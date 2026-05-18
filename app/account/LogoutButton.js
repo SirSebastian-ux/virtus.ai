@@ -19,6 +19,14 @@ export default function LogoutButton() {
         throw new Error("Could not log out.");
       }
 
+      localStorage.removeItem("virtus_guest_access");
+      localStorage.removeItem("virtus_guest_recent_chats");
+      localStorage.removeItem("virtus_guest_id");
+      localStorage.removeItem("virtus_trial_used");
+      localStorage.removeItem("virtus_chat_id");
+      localStorage.removeItem("virtus_active_project_id");
+      localStorage.removeItem("virtus_active_project_chat_id");
+
       window.location.href = "/login";
     } catch (err) {
       setError(err.message || "Could not log out.");
