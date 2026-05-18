@@ -355,7 +355,20 @@ async function resolveVirtusUserId(guestId, cookieHeader = "") {
     }
   })();
 
-  const normalizedGuestId = cookieGuestId || guestId || crypto.randomUUID();
+  const normalizedGuestId = cookieGuestId || guestId;
+
+  if (!normalizedGuestId) {
+    return {
+      userId: null,
+      isGuest: true,
+      plan: "guest",
+      planStatus: "inactive",
+      trialStartedAt: null,
+      trialEndsAt: null,
+      trialGuestCookie: null,
+    };
+  }
+
   const trialGuestCookie = buildTrialGuestCookie(normalizedGuestId);
   const guestUserId = `guest-${normalizedGuestId}`;
 
@@ -439,6 +452,20 @@ export async function POST(req) {
       trialEndsAt,
       trialGuestCookie,
     } = await resolveVirtusUserId(guestId, req.headers.get("cookie") || "");
+
+    if (!userId) {
+      return Response.json({
+        reply: "Please sign in to continue.",
+        access: {
+          plan,
+          planStatus,
+          trialStartedAt,
+          trialEndsAt,
+          dailyMessageLimit: 0,
+          dailyMessagesUsed: 0,
+        },
+      });
+    }
 
     const supabase = createAdminClient();
 
