@@ -1015,22 +1015,6 @@ function getPlanCapabilityCard(plan) {
     const parsedGuestAccess = getStoredGuestAccess();
     const normalizedGuestAccess = normalizeGuestAccess(parsedGuestAccess);
 
-    if (storedTrialUsed && !normalizedGuestAccess) {
-      setGuestAccess({
-        plan: "trial_guest",
-        planStatus: "expired",
-        trialStartedAt: null,
-        trialEndsAt: null,
-      });
-
-      const lockedChatId =
-        localStorage.getItem("virtus_chat_id") || crypto.randomUUID();
-
-      localStorage.setItem("virtus_chat_id", lockedChatId);
-      setActiveChatId(lockedChatId);
-      return;
-    }
-
     const existingGuestId = localStorage.getItem("virtus_guest_id");
 
     setShowPlanOverlay(
