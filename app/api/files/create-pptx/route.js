@@ -136,6 +136,7 @@ function cleanGeneratedPresentationContent(content) {
   let skippingVisualDirection = false;
   let skippingImageIdea = false;
   let skippingDesignNotes = false;
+  let skippingSpeakerNotes = false;
 
   const lines = String(content || "").split("\n");
 
@@ -150,6 +151,7 @@ function cleanGeneratedPresentationContent(content) {
     if (/^slide\s+\d+\s*[-:\u2013\u2014]\s*/i.test(line)) {
       skippingVisualDirection = false;
       skippingImageIdea = false;
+      skippingSpeakerNotes = false;
     }
 
     if (/^design notes\b/i.test(line)) {
@@ -157,7 +159,22 @@ function cleanGeneratedPresentationContent(content) {
       continue;
     }
 
-    if (skippingDesignNotes) {
+    if (/^speaker notes\s*:/i.test(line)) {
+      skippingSpeakerNotes = true;
+      continue;
+    }
+
+    if (
+      /^presentation opening line\b/i.test(line) ||
+      /^presentation closing line\b/i.test(line) ||
+      /^recommended visual layouts\b/i.test(line) ||
+      /^design guide\b/i.test(line)
+    ) {
+      skippingDesignNotes = true;
+      continue;
+    }
+
+    if (skippingDesignNotes || skippingSpeakerNotes) {
       continue;
     }
 
