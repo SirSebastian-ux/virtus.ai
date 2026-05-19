@@ -650,7 +650,7 @@ const handleMicrophoneClick = () => {
     currentAccess?.plan === "trial_guest" &&
     currentAccess?.planStatus === "expired";
 
-    const currentPlanKey = currentAccess?.plan ?? "trial_guest";
+    const currentPlanKey = currentAccess?.plan ?? "guest";
   const currentProjectScope =
     currentAccess?.projectScope || getPlanPolicy(currentPlanKey).projectScope || {
       canUseProjects: false,
