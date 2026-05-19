@@ -9,7 +9,7 @@ export default async function UpgradePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let currentPlan = "trial_guest";
+  let currentPlan = user?.id ? "free" : "guest";
 
   if (user?.id) {
     const { data: profile } = await supabase
