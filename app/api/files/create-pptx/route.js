@@ -96,6 +96,34 @@ function splitLongTextIntoPoints(text) {
     .slice(0, 4);
 }
 
+function mergeWeakSlideSections(sections) {
+  const merged = [];
+
+  for (const section of sections || []) {
+    const cleanBullets = (section.bullets || [])
+      .map((bullet) => cleanSlideText(bullet))
+      .filter(Boolean);
+
+    const isWeakSection =
+      cleanBullets.length > 0 &&
+      cleanBullets.length < 3 &&
+      merged.length > 0;
+
+    if (isWeakSection) {
+      const previous = merged[merged.length - 1];
+      previous.bullets = [...(previous.bullets || []), ...cleanBullets].slice(0, 6);
+      continue;
+    }
+
+    merged.push({
+      ...section,
+      bullets: cleanBullets.slice(0, 6),
+    });
+  }
+
+  return merged;
+}
+
 function makeSmartFallbackTitle(section, index) {
   const joined = cleanSlideText(
     [section?.title, ...(section?.bullets || [])].join(" ")
@@ -319,7 +347,7 @@ function splitIntoSlideSections(content) {
     sections.push(current);
   }
 
-  return sections
+  return mergeWeakSlideSections(sections)
     .filter((section) => section.title && section.bullets.length > 0)
     .map((section, index) => {
       const titleLower = cleanSlideText(section.title).toLowerCase();
