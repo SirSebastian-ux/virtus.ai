@@ -379,21 +379,15 @@ async function resolveVirtusUserId(guestId, cookieHeader = "") {
     .maybeSingle();
 
   if (!guestRow) {
-    const trialStartedAt = new Date();
-    const trialEndsAt = new Date(
-      trialStartedAt.getTime() + 3 * 24 * 60 * 60 * 1000
-    );
-
-    const insertPayload = {
-  guest_id: normalizedGuestId,
-  plan: "trial_guest",
-  plan_status: getDefaultPlanStatusForPlan("trial_guest"),
-  trial_started_at: trialStartedAt.toISOString(),
-  trial_ends_at: trialEndsAt.toISOString(),
-};
-
-    await adminSupabase.from("guest_access").insert(insertPayload);
-    guestRow = insertPayload;
+    return {
+      userId: null,
+      isGuest: true,
+      plan: "guest",
+      planStatus: "inactive",
+      trialStartedAt: null,
+      trialEndsAt: null,
+      trialGuestCookie: null,
+    };
   }
 
   const now = Date.now();
