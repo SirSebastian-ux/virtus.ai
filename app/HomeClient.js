@@ -3905,7 +3905,7 @@ if (data.conversation) {
     <div className="ml-auto shrink-0 text-right">
       <Link
         href="/upgrade"
-        className="inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
+        className="select-none inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
       >
         Plan: {displayPlanLabel}
       </Link>
@@ -3949,7 +3949,7 @@ if (data.conversation) {
                   {conversation.map((item, index) => (
                     <div
                       key={index}
-className={`relative max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
+className={`relative select-none max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
 item.role === "user" && !loading
   ? "mb-12"
   : ""
@@ -4079,6 +4079,7 @@ onClick={() => {
       </button>
     </div>
   ) : item.text?.trim() ? (
+    <div className="select-text">
     <ReactMarkdown
       components={{
         p: ({ children }) => (
@@ -4136,6 +4137,7 @@ onClick={() => {
     >
       {item.text}
     </ReactMarkdown>
+    </div>
    ) : (
     <div className="flex items-center gap-2 text-gray-400">
       <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-sky-300" />
@@ -4203,7 +4205,7 @@ setRegenerating(true);
       </div>
     )}
 
-    <p className="whitespace-pre-wrap leading-7">
+    <p className="select-text whitespace-pre-wrap leading-7">
       {String(item.text || "").replace(/\n?File ID:\s*[0-9a-fA-F-]{36}/g, "")}
     </p>
   </div>
@@ -4776,5 +4778,4 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
-
 
