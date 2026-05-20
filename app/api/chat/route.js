@@ -435,7 +435,14 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
-    const { message, guestId, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle } = body;
+    const { message, guestId, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle, hideFromSidebar, sessionTitle } = body;
+    const shouldHideFromSidebar = hideFromSidebar === true;
+    const cleanSessionTitle = String(sessionTitle || "").trim().slice(0, 80);
+    const resolvedSessionTitle =
+      cleanSessionTitle ||
+      (message.includes("File ID:")
+        ? "File workspace"
+        : message.trim().slice(0, 60) || "New chat");
 
     const {
       userId,
@@ -1610,10 +1617,8 @@ if (!existingChatSession && !userId.startsWith("guest-")) {
   await supabase.from("chat_sessions").insert({
     id: effectiveChatId,
     user_id: userId,
-    title: message.includes("File ID:")
-  ? "File workspace"
-  : message.trim().slice(0, 60) || "New chat",
-    hidden_from_sidebar: activeProjectId ? true : false,
+    title: resolvedSessionTitle,
+    hidden_from_sidebar: activeProjectId ? true : shouldHideFromSidebar,
   });
 } else if (
   existingChatSession &&
@@ -1624,9 +1629,7 @@ if (!existingChatSession && !userId.startsWith("guest-")) {
   await supabase
     .from("chat_sessions")
     .update({
-      title: message.includes("File ID:")
-  ? "File workspace"
-  : message.trim().slice(0, 60) || "New chat",
+      title: resolvedSessionTitle,
     })
     .eq("user_id", userId)
     .eq("id", effectiveChatId);
