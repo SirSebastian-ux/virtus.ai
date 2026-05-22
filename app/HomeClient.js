@@ -6424,7 +6424,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   disabled={loading || isDailyLimitReached || isTrialGuestExpired}
   onChange={(e) => setMessage(e.target.value)}
   onKeyDown={(e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
     sendMessage();
     setEditingIndex(null);
