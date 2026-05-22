@@ -2008,7 +2008,6 @@ const handleCaptureMicrophoneClick = async () => {
   function renderCapturePanel() {
     return (
       <div className="mt-3 max-h-[calc(100dvh-220px)] space-y-3 overflow-y-auto overscroll-contain rounded-2xl border border-sky-900/20 bg-zinc-950/55 p-3 pb-24 shadow-[0_18px_60px_rgba(2,132,199,0.12)] [scrollbar-color:rgba(56,189,248,0.45)_rgba(9,9,11,0.75)] [scrollbar-width:thin] md:max-h-[520px]">
-        {renderCaptureMobilePicker()}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300/60">
             Virtus Capture
