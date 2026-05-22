@@ -83,6 +83,7 @@ const [captureType, setCaptureType] = useState("General Note");
 const [captureContent, setCaptureContent] = useState("");
 const [activeCaptureNote, setActiveCaptureNote] = useState(null);
 const [captureNotice, setCaptureNotice] = useState("");
+const [captureMobilePicker, setCaptureMobilePicker] = useState(null);
 const [projectsOpen, setProjectsOpen] = useState(false);
 const [projectSpaces, setProjectSpaces] = useState([]);
 const [projectChats, setProjectChats] = useState({});
@@ -1892,9 +1893,122 @@ const handleCaptureMicrophoneClick = async () => {
     }, 50);
   }
 
+  const captureVoiceLanguageOptions = [
+    { value: "en-US", label: "English" },
+    { value: "pt-PT", label: "Portuguese" },
+    { value: "pt-BR", label: "Portuguese Brazil" },
+    { value: "ro-RO", label: "Romanian" },
+    { value: "el-GR", label: "Greek" },
+  ];
+
+  function getCaptureVoiceLanguageLabel(value) {
+    return (
+      captureVoiceLanguageOptions.find((option) => option.value === value)?.label ||
+      "English"
+    );
+  }
+
+  function getCaptureMobilePickerTitle() {
+    if (captureMobilePicker === "noteType") return "Select note type";
+    if (captureMobilePicker === "language") return "Select voice language";
+    return "";
+  }
+
+  function getCaptureMobilePickerOptions() {
+    if (captureMobilePicker === "noteType") {
+      return captureNoteTypes.map((type) => ({ value: type, label: type }));
+    }
+
+    if (captureMobilePicker === "language") {
+      return captureVoiceLanguageOptions;
+    }
+
+    return [];
+  }
+
+  function getCaptureMobilePickerValue() {
+    if (captureMobilePicker === "noteType") return captureType;
+    if (captureMobilePicker === "language") return captureVoiceLanguage;
+    return "";
+  }
+
+  function handleCaptureMobilePickerSelect(value) {
+    if (captureMobilePicker === "noteType") {
+      setCaptureType(value);
+    }
+
+    if (captureMobilePicker === "language") {
+      setCaptureVoiceLanguage(value);
+    }
+
+    setCaptureMobilePicker(null);
+  }
+
+  function renderCaptureMobilePicker() {
+    if (!captureMobilePicker) return null;
+
+    const options = getCaptureMobilePickerOptions();
+    const currentValue = getCaptureMobilePickerValue();
+
+    return (
+      <div className="fixed inset-0 z-[90] flex items-end bg-black/70 px-3 pb-4 pt-20 backdrop-blur-sm md:hidden">
+        <div className="max-h-[72dvh] w-full overflow-hidden rounded-3xl border border-sky-800/35 bg-zinc-950 shadow-[0_24px_80px_rgba(2,132,199,0.25)]">
+          <div className="flex items-center justify-between border-b border-sky-900/25 px-4 py-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300/65">
+                Virtus Capture
+              </p>
+              <p className="mt-1 text-base font-semibold text-zinc-100">
+                {getCaptureMobilePickerTitle()}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCaptureMobilePicker(null)}
+              className="rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-300"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="max-h-[58dvh] overflow-y-auto p-2 [scrollbar-color:rgba(56,189,248,0.45)_rgba(9,9,11,0.75)] [scrollbar-width:thin]">
+            {options.map((option) => {
+              const selected = option.value === currentValue;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleCaptureMobilePickerSelect(option.value)}
+                  className={`mb-1 flex w-full items-center justify-between rounded-2xl border px-4 py-4 text-left text-base transition ${
+                    selected
+                      ? "border-sky-500/45 bg-sky-950/45 text-sky-100 shadow-[0_0_24px_rgba(14,165,233,0.18)]"
+                      : "border-zinc-800/70 bg-zinc-950/60 text-zinc-200 hover:border-sky-800/40"
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  <span
+                    className={`ml-3 flex h-6 w-6 items-center justify-center rounded-full border ${
+                      selected
+                        ? "border-sky-300 bg-sky-400/20 text-sky-100"
+                        : "border-zinc-600 text-zinc-500"
+                    }`}
+                  >
+                    {selected ? "?" : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
   function renderCapturePanel() {
     return (
       <div className="mt-3 max-h-[calc(100dvh-220px)] space-y-3 overflow-y-auto overscroll-contain rounded-2xl border border-sky-900/20 bg-zinc-950/55 p-3 pb-24 shadow-[0_18px_60px_rgba(2,132,199,0.12)] [scrollbar-color:rgba(56,189,248,0.45)_rgba(9,9,11,0.75)] [scrollbar-width:thin] md:max-h-[520px]">
+        {renderCaptureMobilePicker()}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300/60">
             Virtus Capture
