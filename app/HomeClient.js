@@ -1951,8 +1951,8 @@ const handleCaptureMicrophoneClick = async () => {
     const currentValue = getCaptureMobilePickerValue();
 
     return (
-      <div className="fixed inset-0 z-[90] flex items-end bg-black/70 px-3 pb-4 pt-20 backdrop-blur-sm md:hidden">
-        <div className="max-h-[72dvh] w-full overflow-hidden rounded-3xl border border-sky-800/35 bg-zinc-950 shadow-[0_24px_80px_rgba(2,132,199,0.25)]">
+      <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm">
+        <div className="max-h-[78dvh] w-full max-w-md overflow-hidden rounded-3xl border border-sky-700/40 bg-zinc-950 shadow-[0_24px_90px_rgba(2,132,199,0.35)]">
           <div className="flex items-center justify-between border-b border-sky-900/25 px-4 py-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300/65">
