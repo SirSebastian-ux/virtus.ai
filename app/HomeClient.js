@@ -1894,7 +1894,7 @@ const handleCaptureMicrophoneClick = async () => {
 
   function renderCapturePanel() {
     return (
-      <div className="mt-3 max-h-[520px] space-y-3 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/55 p-3 shadow-[0_18px_60px_rgba(2,132,199,0.12)] no-scrollbar">
+      <div className="mt-3 max-h-[calc(100dvh-220px)] space-y-3 overflow-y-auto overscroll-contain rounded-2xl border border-sky-900/20 bg-zinc-950/55 p-3 pb-24 shadow-[0_18px_60px_rgba(2,132,199,0.12)] [scrollbar-color:rgba(56,189,248,0.45)_rgba(9,9,11,0.75)] [scrollbar-width:thin] md:max-h-[520px]">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-300/60">
             Virtus Capture
@@ -1921,10 +1921,10 @@ const handleCaptureMicrophoneClick = async () => {
               <select
                 value={captureType}
                 onChange={(event) => setCaptureType(event.target.value)}
-                className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-600/50"
+                className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-600/50 [&>option]:bg-zinc-950 [&>option]:text-zinc-100"
               >
                 {captureNoteTypes.map((type) => (
-                  <option key={type} value={type}>
+                  <option key={type} value={type} className="bg-zinc-950 text-zinc-100">
                     {type}
                   </option>
                 ))}
@@ -1944,13 +1944,13 @@ const handleCaptureMicrophoneClick = async () => {
                     value={captureVoiceLanguage}
                     onChange={(event) => setCaptureVoiceLanguage(event.target.value)}
                     disabled={captureListening || captureTranscribing}
-                    className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-xs text-zinc-100 outline-none focus:border-sky-600/50 disabled:opacity-60"
+                    className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-xs text-zinc-100 outline-none focus:border-sky-600/50 disabled:opacity-60 [&>option]:bg-zinc-950 [&>option]:text-zinc-100"
                   >
-                    <option value="en-US">English</option>
-                    <option value="pt-PT">Portuguese</option>
-                    <option value="pt-BR">Portuguese Brazil</option>
-                    <option value="ro-RO">Romanian</option>
-                    <option value="el-GR">Greek</option>
+                    <option value="en-US" className="bg-zinc-950 text-zinc-100">English</option>
+                    <option value="pt-PT" className="bg-zinc-950 text-zinc-100">Portuguese</option>
+                    <option value="pt-BR" className="bg-zinc-950 text-zinc-100">Portuguese Brazil</option>
+                    <option value="ro-RO" className="bg-zinc-950 text-zinc-100">Romanian</option>
+                    <option value="el-GR" className="bg-zinc-950 text-zinc-100">Greek</option>
                   </select>
                 </div>
 
