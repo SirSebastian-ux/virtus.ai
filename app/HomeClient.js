@@ -2168,7 +2168,7 @@ const handleCaptureMicrophoneClick = async () => {
                         title="Delete"
                         className="rounded-lg border border-transparent px-2 py-1 text-xs text-zinc-500 opacity-80 transition hover:border-red-500/30 hover:bg-red-950/20 hover:text-red-200 group-hover:opacity-100"
                       >
-                        ?
+                        ...
                       </button>
                     </div>
                   ))}
