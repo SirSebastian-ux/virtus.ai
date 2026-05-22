@@ -6458,6 +6458,10 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
                     </svg>
                   </button>
 
+                  <div className="group/send relative">
+                    <span className="pointer-events-none absolute bottom-full right-0 z-[99999] mb-2 whitespace-nowrap rounded-xl border border-sky-900/40 bg-zinc-950 px-3 py-1.5 text-[11px] font-medium text-sky-100 opacity-0 shadow-[0_12px_35px_rgba(2,132,199,0.25)] transition group-hover/send:opacity-100">
+                      Ctrl + Enter
+                    </span>
                   <button
   disabled={isDailyLimitReached}
   onClick={() => {
@@ -6490,6 +6494,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
     </svg>
   )}
 </button>
+                  </div>
                 </div>
               </div>
             </div>
