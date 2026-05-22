@@ -2032,17 +2032,6 @@ const handleCaptureMicrophoneClick = async () => {
                 className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-600/50"
               />
 
-              <select
-                value={captureType}
-                onChange={(event) => setCaptureType(event.target.value)}
-                className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-600/50 [&>option]:bg-zinc-950 [&>option]:text-zinc-100"
-              >
-                {captureNoteTypes.map((type) => (
-                  <option key={type} value={type} className="bg-zinc-950 text-zinc-100">
-                    {type}
-                  </option>
-                ))}
-              </select>
 
               <textarea
                 value={captureContent}
@@ -2054,18 +2043,6 @@ const handleCaptureMicrophoneClick = async () => {
 
               <div className="rounded-xl border border-sky-900/20 bg-zinc-950/45 p-2">
                 <div className="mb-2">
-                  <select
-                    value={captureVoiceLanguage}
-                    onChange={(event) => setCaptureVoiceLanguage(event.target.value)}
-                    disabled={captureListening || captureTranscribing}
-                    className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-xs text-zinc-100 outline-none focus:border-sky-600/50 disabled:opacity-60 [&>option]:bg-zinc-950 [&>option]:text-zinc-100"
-                  >
-                    <option value="en-US" className="bg-zinc-950 text-zinc-100">English</option>
-                    <option value="pt-PT" className="bg-zinc-950 text-zinc-100">Portuguese</option>
-                    <option value="pt-BR" className="bg-zinc-950 text-zinc-100">Portuguese Brazil</option>
-                    <option value="ro-RO" className="bg-zinc-950 text-zinc-100">Romanian</option>
-                    <option value="el-GR" className="bg-zinc-950 text-zinc-100">Greek</option>
-                  </select>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
