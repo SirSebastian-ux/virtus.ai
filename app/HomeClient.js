@@ -2013,7 +2013,7 @@ const handleCaptureMicrophoneClick = async () => {
             Virtus Capture
           </p>
           <p className="mt-1 text-sm leading-6 text-zinc-300">
-            Capture voice notes, ideas, meetings, and reflections.
+            
           </p>
         </div>
 
