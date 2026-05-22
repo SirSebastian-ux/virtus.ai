@@ -1506,14 +1506,13 @@ const handleCaptureMicrophoneClick = async () => {
     localStorage.setItem("virtus_guest_id", guestId);
 
     try {
-      const response = await fetch("/api/conversations", {
+      const response = await fetch("/api/guided-practices", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          chatId: item.id,
-          ...(isAuthenticated ? {} : { guestId }),
+          practiceId: item.id,
         }),
       });
 
