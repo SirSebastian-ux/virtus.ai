@@ -6469,7 +6469,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 
     sendMessage();
   }}
-  className={`flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
+  className={`group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
     loading ? "rounded-xl" : "rounded-full"
   }`}
   aria-label={loading ? "Stop" : "Send"}
