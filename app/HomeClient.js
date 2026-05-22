@@ -2084,7 +2084,7 @@ const handleCaptureMicrophoneClick = async () => {
                       ? "Transcribing now. The text will appear inside the note."
                       : captureListening
                         ? `Recording ${formatCaptureRecordingTime(captureRecordingSeconds)} - transcript appears after Stop.`
-                        : "Records audio first, then transcribes cleanly after Stop."}
+                        : ""}
                   </span>
                 </div>
               </div>
@@ -2159,14 +2159,6 @@ const handleCaptureMicrophoneClick = async () => {
                         <span className="mt-1 block text-xs text-zinc-500">
                           {note.noteType || "General Note"} - {formatCaptureDate(note.createdAt)} - Open in chat
                         </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => openCaptureNote(note)}
-                        className="rounded-lg border border-sky-900/20 px-2 py-1 text-xs text-sky-200/70 transition hover:border-sky-700/40 hover:bg-sky-950/25 hover:text-sky-100"
-                      >
-                        Edit
                       </button>
 
                       <button
