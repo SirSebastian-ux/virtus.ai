@@ -2032,6 +2032,15 @@ const handleCaptureMicrophoneClick = async () => {
                 className="w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-600/50"
               />
 
+              <button
+                type="button"
+                onClick={() => setCaptureMobilePicker("noteType")}
+                className="flex w-full items-center justify-between rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-3 text-left text-sm text-zinc-100 transition hover:border-sky-600/50"
+              >
+                <span>{captureType}</span>
+                <span className="text-sky-300/70">v</span>
+              </button>
+
 
               <textarea
                 value={captureContent}
@@ -2043,6 +2052,15 @@ const handleCaptureMicrophoneClick = async () => {
 
               <div className="rounded-xl border border-sky-900/20 bg-zinc-950/45 p-2">
                 <div className="mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setCaptureMobilePicker("language")}
+                    disabled={captureListening || captureTranscribing}
+                    className="flex w-full items-center justify-between rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-3 text-left text-xs text-zinc-100 transition hover:border-sky-600/50 disabled:opacity-60"
+                  >
+                    <span>{getCaptureVoiceLanguageLabel(captureVoiceLanguage)}</span>
+                    <span className="text-sky-300/70">v</span>
+                  </button>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
