@@ -1,5 +1,6 @@
 "use client";
 
+import { Capacitor } from "@capacitor/core";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -10,8 +11,11 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   const [billingCycle, setBillingCycle] = useState("yearly");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isNativeIosApp, setIsNativeIosApp] = useState(false);
 
   useEffect(() => {
+    setIsNativeIosApp(Capacitor.getPlatform() === "ios");
+
     function syncUpgradeAppearance() {
       const savedAppearance = localStorage.getItem("virtus_appearance");
       const nextAppearance = savedAppearance === "light" ? "light" : "dark";
@@ -96,6 +100,11 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
       setError("");
 
       if (plan === "plus" || plan === "premium") {
+        if (isNativeIosApp) {
+          setError("For App Store safety, paid plan changes are managed on the Virtus AI website. Please sign in at virtusaiworld.com in your browser to upgrade or manage billing.");
+          setLoadingPlan(null);
+          return;
+        }
         const checkoutWindow =
           typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
 
@@ -464,3 +473,4 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     </div>
   );
 }
+
