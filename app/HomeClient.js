@@ -66,6 +66,10 @@ const captureAudioBlobRef = useRef(null);
 const captureRecordingTimerRef = useRef(null);
 const captureWakeLockRef = useRef(null);
 const captureStopReasonRef = useRef("");
+const captureTextareaRef = useRef(null);
+const captureLiveTranscribingRef = useRef(false);
+const captureLiveTranscriptionPromiseRef = useRef(Promise.resolve());
+const captureLastTranscribedChunkIndexRef = useRef(0);
 const speechBaseMessageRef = useRef("");
 const speechFinalTranscriptRef = useRef("");
 const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
@@ -976,6 +980,88 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
     setCaptureTranscribing(false);
   }
 };
+
+const appendCaptureTranscriptText = (text) => {
+  const transcript = String(text || "").trim();
+  if (!transcript) return;
+
+  setCaptureContent((current) => {
+    const existing = String(current || "").trim();
+
+    if (!existing) return transcript;
+
+    return `${existing}\n\n${transcript}`.trim();
+  });
+};
+
+const transcribeNewCaptureChunksLive = async (mimeType) => {
+  if (captureLiveTranscribingRef.current) return;
+
+  const allChunks = captureAudioChunksRef.current || [];
+  const startIndex = Math.max(0, captureLastTranscribedChunkIndexRef.current || 0);
+  const entries = allChunks
+    .slice(startIndex)
+    .map((chunk, index) => ({
+      chunk,
+      absoluteIndex: startIndex + index,
+    }))
+    .filter(({ chunk }) => chunk && chunk.size > 0);
+
+  if (!entries.length) return;
+
+  captureLiveTranscribingRef.current = true;
+  setCaptureNotice("Live transcript updating...");
+
+  const livePromise = (async () => {
+    for (const { chunk, absoluteIndex } of entries) {
+      const extension = mimeType?.includes("mp4") ? "mp4" : "webm";
+      const audioFile = new File(
+        [chunk],
+        `virtus-capture-live-${absoluteIndex + 1}.${extension}`,
+        {
+          type: mimeType || chunk.type || "audio/webm",
+        }
+      );
+
+      const formData = new FormData();
+      formData.append("audio", audioFile);
+      formData.append("language", getCaptureTranscriptionLanguageCode());
+
+      const response = await fetch("/api/capture/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Could not transcribe audio.");
+      }
+
+      const text = String(data?.text || "").trim();
+
+      if (text) {
+        appendCaptureTranscriptText(text);
+      }
+
+      captureLastTranscribedChunkIndexRef.current = absoluteIndex + 1;
+    }
+
+    setCaptureNotice("Live transcript saved while recording. Keep speaking.");
+  })();
+
+  captureLiveTranscriptionPromiseRef.current = livePromise;
+
+  try {
+    await livePromise;
+  } catch (error) {
+    console.error("Capture live transcription failed:", error);
+    setCaptureNotice("Live transcript paused. Recording continues.");
+  } finally {
+    captureLiveTranscribingRef.current = false;
+  }
+};
+
 const getSupportedCaptureMimeType = () => {
   if (typeof window === "undefined" || typeof MediaRecorder === "undefined") {
     return "";
@@ -1167,6 +1253,12 @@ const handleCaptureMicrophoneClick = async () => {
   }
 
   try {
+    try {
+      captureTextareaRef.current?.focus?.({ preventScroll: true });
+    } catch {
+      captureTextareaRef.current?.focus?.();
+    }
+
     setCaptureNotice("Requesting microphone permission...");
 
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -1188,6 +1280,9 @@ const handleCaptureMicrophoneClick = async () => {
     captureAudioChunksRef.current = [];
     captureAudioBlobRef.current = null;
     captureVoiceShouldContinueRef.current = true;
+    captureLiveTranscribingRef.current = false;
+    captureLiveTranscriptionPromiseRef.current = Promise.resolve();
+    captureLastTranscribedChunkIndexRef.current = 0;
     setCaptureRecordingSeconds(0);
     await requestCaptureWakeLock();
 
@@ -1202,6 +1297,7 @@ const handleCaptureMicrophoneClick = async () => {
     recorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
         captureAudioChunksRef.current.push(event.data);
+        void transcribeNewCaptureChunksLive(mimeType || "audio/webm");
       }
     };
 
@@ -1212,7 +1308,7 @@ const handleCaptureMicrophoneClick = async () => {
       setCaptureNotice("Recording had a problem. Preparing any captured audio...");
     };
 
-    recorder.onstop = () => {
+    recorder.onstop = async () => {
       const audioChunks = captureAudioChunksRef.current || [];
       const audioBlob = new Blob(audioChunks, {
         type: mimeType || "audio/webm",
@@ -1240,11 +1336,34 @@ const handleCaptureMicrophoneClick = async () => {
       if (audioBlob.size > 0) {
         const stopMessage =
           captureStopReasonRef.current || "Recording stopped. Preparing transcription...";
+
+        if (captureLiveTranscribingRef.current) {
+          setCaptureNotice("Finishing live transcript...");
+        }
+
+        await captureLiveTranscriptionPromiseRef.current.catch(() => {});
+
+        const remainingChunks = audioChunks.slice(
+          Math.max(0, captureLastTranscribedChunkIndexRef.current || 0)
+        );
+
         captureStopReasonRef.current = "";
-        setCaptureNotice(stopMessage);
-        transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
+
+        if (remainingChunks.length > 0) {
+          setCaptureNotice(stopMessage);
+          await transcribeCaptureAudioChunks(remainingChunks, mimeType || "audio/webm");
+        } else {
+          setCaptureNotice("Recording complete. Live transcript saved in the note.");
+        }
+
+        captureLastTranscribedChunkIndexRef.current = 0;
+        captureLiveTranscribingRef.current = false;
+        captureLiveTranscriptionPromiseRef.current = Promise.resolve();
       } else {
         captureStopReasonRef.current = "";
+        captureLastTranscribedChunkIndexRef.current = 0;
+        captureLiveTranscribingRef.current = false;
+        captureLiveTranscriptionPromiseRef.current = Promise.resolve();
         setCaptureNotice(
           "Recording stopped before audio could be saved. Please try again and keep the screen awake."
         );
@@ -1262,12 +1381,19 @@ const handleCaptureMicrophoneClick = async () => {
       }, 1000);
 
       setCaptureListening(true);
+
+      try {
+        captureTextareaRef.current?.focus?.({ preventScroll: true });
+      } catch {
+        captureTextareaRef.current?.focus?.();
+      }
+
       setCaptureNotice(
-        "Recording now. Speak naturally. Keep the screen awake for best results."
+        "Recording now. Live transcript is being saved while you speak."
       );
     };
 
-    recorder.start(10000);
+    recorder.start(5000);
   } catch (error) {
     stopCaptureVoiceEngine();
 
@@ -2145,6 +2271,7 @@ const handleCaptureMicrophoneClick = async () => {
 
 
               <textarea
+                ref={captureTextareaRef}
                 value={captureContent}
                 onChange={(event) => setCaptureContent(event.target.value)}
                 placeholder="Write the raw thought, meeting note, idea, reflection, or task here..."
