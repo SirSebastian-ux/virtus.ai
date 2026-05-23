@@ -908,6 +908,11 @@ const startCaptureLiveDictation = () => {
   if (!SpeechRecognition) return false;
 
   try {
+    if (captureVoiceRestartTimerRef.current) {
+      clearTimeout(captureVoiceRestartTimerRef.current);
+      captureVoiceRestartTimerRef.current = null;
+    }
+
     if (captureRecognitionRef.current) {
       try {
         captureRecognitionRef.current.stop();
@@ -920,8 +925,55 @@ const startCaptureLiveDictation = () => {
     recognition.interimResults = true;
     recognition.continuous = true;
 
-    const baseText = String(captureContent || "").trim();
-    let finalText = "";
+    captureVoiceBaseRef.current = String(captureContent || "").trim();
+    captureVoiceCommittedRef.current = "";
+
+    const isCaptureRecorderActive = () =>
+      captureVoiceShouldContinueRef.current &&
+      captureMediaRecorderRef.current &&
+      captureMediaRecorderRef.current.state !== "inactive";
+
+    const writeLiveCaptureText = (interimText = "") => {
+      const committedText = String(captureVoiceCommittedRef.current || "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      const cleanInterimText = String(interimText || "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      const liveText = `${committedText} ${cleanInterimText}`
+        .replace(/\s+/g, " ")
+        .trim();
+
+      setCaptureContent(() => {
+        const baseText = String(captureVoiceBaseRef.current || "").trim();
+
+        if (!baseText) return liveText;
+        if (!liveText) return baseText;
+
+        return `${baseText}\n\n${liveText}`.trim();
+      });
+    };
+
+    const scheduleLiveDictationRestart = () => {
+      if (!isCaptureRecorderActive()) {
+        captureRecognitionRef.current = null;
+        return;
+      }
+
+      if (captureVoiceRestartTimerRef.current) {
+        clearTimeout(captureVoiceRestartTimerRef.current);
+      }
+
+      captureVoiceRestartTimerRef.current = setTimeout(() => {
+        if (!isCaptureRecorderActive()) return;
+
+        try {
+          recognition.start();
+        } catch {}
+      }, 500);
+    };
 
     recognition.onresult = (event) => {
       let interimText = "";
@@ -932,47 +984,37 @@ const startCaptureLiveDictation = () => {
         if (!spoken) continue;
 
         if (event.results[i].isFinal) {
-          finalText = `${finalText} ${spoken}`.replace(/\s+/g, " ").trim();
+          captureVoiceCommittedRef.current = `${
+            captureVoiceCommittedRef.current || ""
+          } ${spoken}`
+            .replace(/\s+/g, " ")
+            .trim();
         } else {
-          interimText = spoken;
+          interimText = `${interimText} ${spoken}`
+            .replace(/\s+/g, " ")
+            .trim();
         }
       }
 
-      const liveText = `${finalText} ${interimText}`
-        .replace(/\s+/g, " ")
-        .trim();
-
-      setCaptureContent(() => {
-        if (!baseText) return liveText;
-        if (!liveText) return baseText;
-        return `${baseText}\n\n${liveText}`.trim();
-      });
+      writeLiveCaptureText(interimText);
     };
 
-    recognition.onerror = () => {
-      // Live dictation is optional. Keep the real recorder running.
-    };
-
-    recognition.onend = () => {
+    recognition.onerror = (event) => {
       if (
-        captureVoiceShouldContinueRef.current &&
-        captureMediaRecorderRef.current &&
-        captureMediaRecorderRef.current.state !== "inactive"
+        event?.error === "not-allowed" ||
+        event?.error === "service-not-allowed"
       ) {
-        if (captureVoiceRestartTimerRef.current) {
-          clearTimeout(captureVoiceRestartTimerRef.current);
-        }
-
-        captureVoiceRestartTimerRef.current = setTimeout(() => {
-          try {
-            recognition.start();
-          } catch {}
-        }, 500);
-
+        setCaptureNotice(
+          "Live text was blocked by the browser. Audio recording is still protected."
+        );
         return;
       }
 
-      captureRecognitionRef.current = null;
+      scheduleLiveDictationRestart();
+    };
+
+    recognition.onend = () => {
+      scheduleLiveDictationRestart();
     };
 
     captureRecognitionRef.current = recognition;
@@ -6711,6 +6753,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
