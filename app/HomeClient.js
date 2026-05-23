@@ -66,6 +66,7 @@ const captureAudioBlobRef = useRef(null);
 const captureRecordingTimerRef = useRef(null);
 const captureWakeLockRef = useRef(null);
 const captureStopReasonRef = useRef("");
+const captureTextareaRef = useRef(null);
 const speechBaseMessageRef = useRef("");
 const speechFinalTranscriptRef = useRef("");
 const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
@@ -898,6 +899,92 @@ const getCaptureTranscriptionLanguageCode = () => {
   return "en";
 };
 
+const startCaptureLiveDictation = () => {
+  if (typeof window === "undefined") return false;
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) return false;
+
+  try {
+    if (captureRecognitionRef.current) {
+      try {
+        captureRecognitionRef.current.stop();
+      } catch {}
+      captureRecognitionRef.current = null;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = captureVoiceLanguage || "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    const baseText = String(captureContent || "").trim();
+    let finalText = "";
+
+    recognition.onresult = (event) => {
+      let interimText = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const spoken = getBestSpeechTranscript(event.results[i]);
+
+        if (!spoken) continue;
+
+        if (event.results[i].isFinal) {
+          finalText = `${finalText} ${spoken}`.replace(/\s+/g, " ").trim();
+        } else {
+          interimText = spoken;
+        }
+      }
+
+      const liveText = `${finalText} ${interimText}`
+        .replace(/\s+/g, " ")
+        .trim();
+
+      setCaptureContent(() => {
+        if (!baseText) return liveText;
+        if (!liveText) return baseText;
+        return `${baseText}\n\n${liveText}`.trim();
+      });
+    };
+
+    recognition.onerror = () => {
+      // Live dictation is optional. Keep the real recorder running.
+    };
+
+    recognition.onend = () => {
+      if (
+        captureVoiceShouldContinueRef.current &&
+        captureMediaRecorderRef.current &&
+        captureMediaRecorderRef.current.state !== "inactive"
+      ) {
+        if (captureVoiceRestartTimerRef.current) {
+          clearTimeout(captureVoiceRestartTimerRef.current);
+        }
+
+        captureVoiceRestartTimerRef.current = setTimeout(() => {
+          try {
+            recognition.start();
+          } catch {}
+        }, 500);
+
+        return;
+      }
+
+      captureRecognitionRef.current = null;
+    };
+
+    captureRecognitionRef.current = recognition;
+    recognition.start();
+
+    return true;
+  } catch {
+    captureRecognitionRef.current = null;
+    return false;
+  }
+};
+
 const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
   const usableChunks = (audioChunks || []).filter(
     (chunk) => chunk && chunk.size > 0
@@ -1162,6 +1249,12 @@ const handleCaptureMicrophoneClick = async () => {
   }
 
   try {
+    try {
+      captureTextareaRef.current?.focus?.({ preventScroll: true });
+    } catch {
+      captureTextareaRef.current?.focus?.();
+    }
+
     setCaptureNotice("Requesting microphone permission...");
 
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -1257,8 +1350,19 @@ const handleCaptureMicrophoneClick = async () => {
       }, 1000);
 
       setCaptureListening(true);
+
+      try {
+        captureTextareaRef.current?.focus?.({ preventScroll: true });
+      } catch {
+        captureTextareaRef.current?.focus?.();
+      }
+
+      const liveDictationStarted = startCaptureLiveDictation();
+
       setCaptureNotice(
-        "Recording now. Speak naturally. Keep the screen awake for best results."
+        liveDictationStarted
+          ? "Recording now. Live text is appearing while the full audio is protected."
+          : "Recording now. Full audio is protected. Live text is not supported on this browser."
       );
     };
 
@@ -2140,6 +2244,7 @@ const handleCaptureMicrophoneClick = async () => {
 
 
               <textarea
+                ref={captureTextareaRef}
                 value={captureContent}
                 onChange={(event) => setCaptureContent(event.target.value)}
                 placeholder="Write the raw thought, meeting note, idea, reflection, or task here..."
