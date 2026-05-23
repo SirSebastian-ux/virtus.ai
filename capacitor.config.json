@@ -1,9 +1,10 @@
 {
   "appId": "com.virtusai.app",
   "appName": "Virtus AI",
-  "webDir": "out",
+  "webDir": "public",
   "server": {
     "url": "https://virtusaiworld.com",
     "cleartext": false
   }
 }
+
