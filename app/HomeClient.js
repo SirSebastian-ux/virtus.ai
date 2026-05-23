@@ -898,8 +898,6 @@ const getCaptureTranscriptionLanguageCode = () => {
   return "en";
 };
 
-const CAPTURE_TRANSCRIPTION_BATCH_SIZE = 30;
-
 const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
   const usableChunks = (audioChunks || []).filter(
     (chunk) => chunk && chunk.size > 0
@@ -912,71 +910,43 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
 
   const safeMimeType = mimeType || usableChunks[0]?.type || "audio/webm";
   const extension = safeMimeType.includes("mp4") ? "mp4" : "webm";
+  const combinedAudioBlob = new Blob(usableChunks, {
+    type: safeMimeType,
+  });
+
+  if (!combinedAudioBlob.size) {
+    setCaptureNotice("No audio was captured. Please try again.");
+    return;
+  }
 
   setCaptureTranscribing(true);
+  setCaptureNotice("Transcribing captured audio...");
 
   try {
-    const transcriptParts = [];
-    const totalBatches = Math.ceil(
-      usableChunks.length / CAPTURE_TRANSCRIPTION_BATCH_SIZE
+    const audioFile = new File(
+      [combinedAudioBlob],
+      `virtus-capture-complete.${extension}`,
+      {
+        type: safeMimeType,
+      }
     );
 
-    for (
-      let batchStart = 0;
-      batchStart < usableChunks.length;
-      batchStart += CAPTURE_TRANSCRIPTION_BATCH_SIZE
-    ) {
-      const batchIndex =
-        Math.floor(batchStart / CAPTURE_TRANSCRIPTION_BATCH_SIZE) + 1;
+    const formData = new FormData();
+    formData.append("audio", audioFile);
+    formData.append("language", getCaptureTranscriptionLanguageCode());
 
-      setCaptureNotice(
-        `Transcribing section ${batchIndex} of ${totalBatches}...`
-      );
+    const response = await fetch("/api/capture/transcribe", {
+      method: "POST",
+      body: formData,
+    });
 
-      const batchChunks = usableChunks.slice(
-        batchStart,
-        batchStart + CAPTURE_TRANSCRIPTION_BATCH_SIZE
-      );
+    const data = await response.json().catch(() => ({}));
 
-      const batchBlob = new Blob(batchChunks, {
-        type: safeMimeType,
-      });
-
-      if (!batchBlob.size) {
-        continue;
-      }
-
-      const audioFile = new File(
-        [batchBlob],
-        `virtus-capture-batch-${batchIndex}.${extension}`,
-        {
-          type: safeMimeType,
-        }
-      );
-
-      const formData = new FormData();
-      formData.append("audio", audioFile);
-      formData.append("language", getCaptureTranscriptionLanguageCode());
-
-      const response = await fetch("/api/capture/transcribe", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data?.error || "Could not transcribe audio.");
-      }
-
-      const text = String(data?.text || "").trim();
-
-      if (text) {
-        transcriptParts.push(text);
-      }
+    if (!response.ok) {
+      throw new Error(data?.error || "Could not transcribe audio.");
     }
 
-    const transcript = transcriptParts.join("\n\n").trim();
+    const transcript = String(data?.text || "").trim();
 
     if (!transcript) {
       setCaptureNotice("Audio was captured, but no clear speech was detected.");
