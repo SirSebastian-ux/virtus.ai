@@ -9,6 +9,51 @@ const openai = new OpenAI({
 
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
+const CAPTURE_TRANSCRIPTION_PROMPT = [
+  "You are transcribing a private Virtus AI Capture recording.",
+  "Transcribe only the words actually spoken in the audio.",
+  "Do not add assistant names, brand names, summaries, explanations, titles, greetings, or closing phrases.",
+  "Do not write ChatGPT, OpenAI, thank you for watching, subscribe, or similar filler unless those exact words are clearly spoken.",
+  "Keep the original language and natural punctuation.",
+].join(" ");
+
+function cleanCaptureTranscriptText(value) {
+  let text = String(value || "").trim();
+
+  if (!text) return "";
+
+  const blockedStandaloneLines = new Set([
+    "chatgpt",
+    "openai",
+    "thank you for watching",
+    "thanks for watching",
+    "subscribe",
+    "please subscribe",
+  ]);
+
+  text = text
+    .split(/\r?\n+/)
+    .map((line) => line.trim())
+    .filter((line) => {
+      const normalized = line
+        .toLowerCase()
+        .replace(/[.!?,;:'"“”‘’()\[\]-]+/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return !blockedStandaloneLines.has(normalized);
+    })
+    .join("\n")
+    .trim();
+
+  text = text
+    .replace(/^(chatgpt|openai)[.!?,;:\s-]+/i, "")
+    .replace(/[\s-]+(chatgpt|openai)[.!?,;:\s]*$/i, "")
+    .trim();
+
+  return text;
+}
+
 export async function POST(request) {
   try {
     if (!process.env.OPENAI_API_KEY) {
@@ -40,11 +85,12 @@ export async function POST(request) {
       file: audioFile,
       model: "gpt-4o-mini-transcribe",
       response_format: "json",
+      prompt: CAPTURE_TRANSCRIPTION_PROMPT,
       ...(language ? { language } : {}),
     });
 
     return NextResponse.json({
-      text: transcription?.text || "",
+      text: cleanCaptureTranscriptText(transcription?.text || ""),
     });
   } catch (error) {
     console.error("Capture transcription error:", error);
