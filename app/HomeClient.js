@@ -65,6 +65,7 @@ const captureAudioChunksRef = useRef([]);
 const captureAudioBlobRef = useRef(null);
 const captureRecordingTimerRef = useRef(null);
 const captureWakeLockRef = useRef(null);
+const captureStopReasonRef = useRef("");
 const speechBaseMessageRef = useRef("");
 const speechFinalTranscriptRef = useRef("");
 const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
@@ -1025,6 +1026,26 @@ const releaseCaptureWakeLock = async () => {
   } catch {}
 };
 
+const stopCaptureRecordingAfterInterruption = () => {
+  const recorder = captureMediaRecorderRef.current;
+
+  if (!recorder || recorder.state === "inactive") return false;
+
+  captureStopReasonRef.current =
+    "Recording was interrupted because the screen locked or browser went to background. Virtus is preparing the audio captured so far.";
+
+  try {
+    recorder.requestData?.();
+  } catch {}
+
+  try {
+    recorder.stop();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 useEffect(() => {
   if (typeof document === "undefined") return undefined;
 
@@ -1033,22 +1054,32 @@ useEffect(() => {
 
     if (document.visibilityState === "visible") {
       void requestCaptureWakeLock();
-      setCaptureNotice("Recording is active again. Keep the screen awake for best results.");
+      setCaptureNotice("Capture is ready again. Start a new recording if you need to continue.");
       return;
     }
 
-    setCaptureNotice(
-      "Recording may pause if the device locks or browser is backgrounded. Keep screen awake for best results."
-    );
+    const stopped = stopCaptureRecordingAfterInterruption();
+
+    if (!stopped) {
+      setCaptureNotice(
+        "Recording may pause if the device locks or browser is backgrounded. Keep screen awake for best results."
+      );
+    }
   };
 
   document.addEventListener("visibilitychange", handleCaptureVisibilityChange);
 
   return () => {
     document.removeEventListener("visibilitychange", handleCaptureVisibilityChange);
-    void releaseCaptureWakeLock();
   };
 }, [captureListening]);
+
+// Dedicated Capture Wake Lock unmount cleanup.
+useEffect(() => {
+  return () => {
+    void releaseCaptureWakeLock();
+  };
+}, []);
 
 const stopCaptureVoiceEngine = () => {
   captureVoiceShouldContinueRef.current = false;
@@ -1099,7 +1130,10 @@ const handleCaptureMicrophoneClick = async () => {
     (captureMediaRecorderRef.current &&
       captureMediaRecorderRef.current.state !== "inactive")
   ) {
+    captureStopReasonRef.current = "Recording stopped. Preparing transcription...";
+
     stopCaptureVoiceEngine();
+
     setCaptureNotice("Voice recording stopped. Audio is being prepared.");
     return;
   }
@@ -1172,8 +1206,10 @@ const handleCaptureMicrophoneClick = async () => {
     };
 
     recorder.onerror = () => {
+      captureStopReasonRef.current =
+        "Recording had a problem. Virtus will try to prepare any audio captured so far.";
       stopCaptureVoiceEngine();
-      setCaptureNotice("Voice recording had a problem. Please try again.");
+      setCaptureNotice("Recording had a problem. Preparing any captured audio...");
     };
 
     recorder.onstop = () => {
@@ -1202,10 +1238,16 @@ const handleCaptureMicrophoneClick = async () => {
       setCaptureListening(false);
 
       if (audioBlob.size > 0) {
-        setCaptureNotice("Recording stopped. Preparing transcription...");
+        const stopMessage =
+          captureStopReasonRef.current || "Recording stopped. Preparing transcription...";
+        captureStopReasonRef.current = "";
+        setCaptureNotice(stopMessage);
         transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
       } else {
-        setCaptureNotice("No audio was captured. Please try again.");
+        captureStopReasonRef.current = "";
+        setCaptureNotice(
+          "Recording stopped before audio could be saved. Please try again and keep the screen awake."
+        );
       }
     };
 
@@ -1225,7 +1267,7 @@ const handleCaptureMicrophoneClick = async () => {
       );
     };
 
-    recorder.start(30000);
+    recorder.start(10000);
   } catch (error) {
     stopCaptureVoiceEngine();
 
