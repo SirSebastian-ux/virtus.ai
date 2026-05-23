@@ -908,50 +908,45 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
     return;
   }
 
-  setCaptureTranscribing(true);
-  setCaptureNotice(`Transcribing 1 of ${usableChunks.length} audio parts...`);
+  const safeMimeType = mimeType || usableChunks[0]?.type || "audio/webm";
+  const extension = safeMimeType.includes("mp4") ? "mp4" : "webm";
+  const combinedAudioBlob = new Blob(usableChunks, {
+    type: safeMimeType,
+  });
 
-  const transcriptParts = [];
+  if (!combinedAudioBlob.size) {
+    setCaptureNotice("No audio was captured. Please try again.");
+    return;
+  }
+
+  setCaptureTranscribing(true);
+  setCaptureNotice("Transcribing captured audio...");
 
   try {
-    for (let index = 0; index < usableChunks.length; index += 1) {
-      const chunk = usableChunks[index];
-      const extension = mimeType?.includes("mp4") ? "mp4" : "webm";
-      const audioFile = new File(
-        [chunk],
-        `virtus-capture-${index + 1}.${extension}`,
-        {
-          type: mimeType || chunk.type || "audio/webm",
-        }
-      );
-
-      const formData = new FormData();
-      formData.append("audio", audioFile);
-      formData.append("language", getCaptureTranscriptionLanguageCode());
-
-      setCaptureNotice(
-        `Transcribing ${index + 1} of ${usableChunks.length} audio parts...`
-      );
-
-      const response = await fetch("/api/capture/transcribe", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data?.error || "Could not transcribe audio.");
+    const audioFile = new File(
+      [combinedAudioBlob],
+      `virtus-capture-complete.${extension}`,
+      {
+        type: safeMimeType,
       }
+    );
 
-      const text = String(data?.text || "").trim();
+    const formData = new FormData();
+    formData.append("audio", audioFile);
+    formData.append("language", getCaptureTranscriptionLanguageCode());
 
-      if (text) {
-        transcriptParts.push(text);
-      }
+    const response = await fetch("/api/capture/transcribe", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data?.error || "Could not transcribe audio.");
     }
 
-    const transcript = transcriptParts.join("\n\n").trim();
+    const transcript = String(data?.text || "").trim();
 
     if (!transcript) {
       setCaptureNotice("Audio was captured, but no clear speech was detected.");
