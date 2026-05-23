@@ -64,6 +64,7 @@ const captureMediaStreamRef = useRef(null);
 const captureAudioChunksRef = useRef([]);
 const captureAudioBlobRef = useRef(null);
 const captureRecordingTimerRef = useRef(null);
+const captureWakeLockRef = useRef(null);
 const speechBaseMessageRef = useRef("");
 const speechFinalTranscriptRef = useRef("");
 const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
@@ -990,8 +991,68 @@ const getSupportedCaptureMimeType = () => {
   );
 };
 
+const requestCaptureWakeLock = async () => {
+  if (typeof navigator === "undefined") return false;
+
+  const wakeLock = navigator.wakeLock;
+  if (!wakeLock?.request) return false;
+
+  try {
+    const lock = await wakeLock.request("screen");
+    captureWakeLockRef.current = lock;
+
+    lock.addEventListener?.("release", () => {
+      if (captureWakeLockRef.current === lock) {
+        captureWakeLockRef.current = null;
+      }
+    });
+
+    return true;
+  } catch {
+    captureWakeLockRef.current = null;
+    return false;
+  }
+};
+
+const releaseCaptureWakeLock = async () => {
+  const lock = captureWakeLockRef.current;
+  captureWakeLockRef.current = null;
+
+  if (!lock?.release) return;
+
+  try {
+    await lock.release();
+  } catch {}
+};
+
+useEffect(() => {
+  if (typeof document === "undefined") return undefined;
+
+  const handleCaptureVisibilityChange = () => {
+    if (!captureListening) return;
+
+    if (document.visibilityState === "visible") {
+      void requestCaptureWakeLock();
+      setCaptureNotice("Recording is active again. Keep the screen awake for best results.");
+      return;
+    }
+
+    setCaptureNotice(
+      "Recording may pause if the device locks or browser is backgrounded. Keep screen awake for best results."
+    );
+  };
+
+  document.addEventListener("visibilitychange", handleCaptureVisibilityChange);
+
+  return () => {
+    document.removeEventListener("visibilitychange", handleCaptureVisibilityChange);
+    void releaseCaptureWakeLock();
+  };
+}, [captureListening]);
+
 const stopCaptureVoiceEngine = () => {
   captureVoiceShouldContinueRef.current = false;
+  void releaseCaptureWakeLock();
 
   if (captureVoiceRestartTimerRef.current) {
     clearTimeout(captureVoiceRestartTimerRef.current);
@@ -1056,7 +1117,9 @@ const handleCaptureMicrophoneClick = async () => {
   }
 
   if (typeof MediaRecorder === "undefined") {
-    setCaptureNotice("MediaRecorder is not available in this browser.");
+    setCaptureNotice(
+      "Voice recording is limited in this browser. Please try Safari or Chrome with microphone permission enabled."
+    );
     return;
   }
 
@@ -1080,7 +1143,7 @@ const handleCaptureMicrophoneClick = async () => {
       },
     });
 
-    setCaptureNotice("Microphone permission accepted. Preparing recorder...");
+    setCaptureNotice("Microphone connected. Preparing Capture...");
 
     const mimeType = getSupportedCaptureMimeType();
     const recorderOptions = mimeType ? { mimeType } : {};
@@ -1088,11 +1151,11 @@ const handleCaptureMicrophoneClick = async () => {
 
     captureMediaStreamRef.current = stream;
     captureMediaRecorderRef.current = recorder;
-    setCaptureNotice(`Recorder ready: ${mimeType || "browser default audio format"}`);
     captureAudioChunksRef.current = [];
     captureAudioBlobRef.current = null;
     captureVoiceShouldContinueRef.current = true;
     setCaptureRecordingSeconds(0);
+    await requestCaptureWakeLock();
 
     if (!captureTitle.trim()) {
       setCaptureTitle(`Voice Capture ${new Date().toLocaleString()}`);
@@ -1105,9 +1168,6 @@ const handleCaptureMicrophoneClick = async () => {
     recorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
         captureAudioChunksRef.current.push(event.data);
-        setCaptureNotice(
-          `Audio chunk captured: ${captureAudioChunksRef.current.length}`
-        );
       }
     };
 
@@ -1138,10 +1198,11 @@ const handleCaptureMicrophoneClick = async () => {
       });
 
       captureMediaStreamRef.current = null;
+      void releaseCaptureWakeLock();
       setCaptureListening(false);
 
       if (audioBlob.size > 0) {
-        setCaptureNotice(`Recording stopped. Audio size: ${audioBlob.size} bytes.`);
+        setCaptureNotice("Recording stopped. Preparing transcription...");
         transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
       } else {
         setCaptureNotice("No audio was captured. Please try again.");
@@ -1160,7 +1221,7 @@ const handleCaptureMicrophoneClick = async () => {
 
       setCaptureListening(true);
       setCaptureNotice(
-        "Recording now. Speak naturally. The transcript will appear after you press Stop Recording."
+        "Recording now. Speak naturally. Keep the screen awake for best results."
       );
     };
 
@@ -2078,13 +2139,16 @@ const handleCaptureMicrophoneClick = async () => {
                     {captureTranscribing ? "Transcribing..." : captureListening ? "Stop Recording" : "Start Recording"}
                   </button>
 
-                  <span className="text-xs leading-5 text-zinc-500">
-                    {captureTranscribing
-                      ? "Transcribing now. The text will appear inside the note."
-                      : captureListening
-                        ? `Recording ${formatCaptureRecordingTime(captureRecordingSeconds)} - transcript appears after Stop.`
-                        : ""}
-                  </span>
+                  {captureListening ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-sky-700/30 bg-sky-950/25 px-3 py-1.5 text-xs font-medium text-sky-100">
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+                      Recording {formatCaptureRecordingTime(captureRecordingSeconds)} · Keep screen awake
+                    </span>
+                  ) : captureTranscribing ? (
+                    <span className="text-xs leading-5 text-zinc-500">
+                      Transcribing now. The text will appear inside the note.
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </div>

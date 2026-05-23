@@ -15,6 +15,14 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0ea5e9",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full antialiased">
