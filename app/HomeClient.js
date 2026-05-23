@@ -66,6 +66,8 @@ const captureAudioBlobRef = useRef(null);
 const captureRecordingTimerRef = useRef(null);
 const captureWakeLockRef = useRef(null);
 const captureStopReasonRef = useRef("");
+const captureTextareaRef = useRef(null);
+const captureLiveSpeechPreviewRef = useRef("");
 const speechBaseMessageRef = useRef("");
 const speechFinalTranscriptRef = useRef("");
 const [voiceOutputEnabled, setVoiceOutputEnabled] = useState(false);
@@ -898,6 +900,153 @@ const getCaptureTranscriptionLanguageCode = () => {
   return "en";
 };
 
+const cleanCaptureSpeechText = (text) =>
+  String(text || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const removeRepeatedCaptureSpeechBuildUp = (text) => {
+  const clean = cleanCaptureSpeechText(text);
+  const words = clean.split(" ").filter(Boolean);
+
+  for (let size = Math.floor(words.length / 2); size >= 3; size -= 1) {
+    const first = words.slice(0, size).join(" ");
+    const last = words.slice(size, size * 2).join(" ");
+
+    if (first && first === last) {
+      return words.slice(size).join(" ");
+    }
+  }
+
+  return clean;
+};
+
+const applyCaptureLiveSpeechPreview = (liveText) => {
+  const cleanLiveText = cleanCaptureSpeechText(liveText);
+  captureLiveSpeechPreviewRef.current = cleanLiveText;
+
+  const baseContent = String(captureVoiceBaseRef.current || "").trim();
+
+  setCaptureContent(() => {
+    if (!baseContent) return cleanLiveText;
+    if (!cleanLiveText) return baseContent;
+
+    return `${baseContent}\n\n${cleanLiveText}`.trim();
+  });
+};
+
+const removeCaptureLiveSpeechPreviewFromText = (text) => {
+  const existing = String(text || "").trim();
+  const preview = String(captureLiveSpeechPreviewRef.current || "").trim();
+
+  if (!existing || !preview) return existing;
+
+  if (existing === preview) return "";
+
+  if (existing.endsWith(preview)) {
+    return existing.slice(0, existing.length - preview.length).trim();
+  }
+
+  return existing;
+};
+
+const startCaptureLiveSpeechPreview = () => {
+  if (typeof window === "undefined") return false;
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) return false;
+
+  try {
+    if (captureRecognitionRef.current) {
+      try {
+        captureRecognitionRef.current.stop();
+      } catch {}
+
+      captureRecognitionRef.current = null;
+    }
+
+    captureVoiceBaseRef.current = String(captureContent || "").trim();
+    captureVoiceCommittedRef.current = "";
+    captureLiveSpeechPreviewRef.current = "";
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = captureVoiceLanguage || "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    let lastFinalTranscript = "";
+
+    recognition.onresult = (event) => {
+      let interimTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const transcript = getBestSpeechTranscript(event.results[i]);
+
+        if (!transcript) continue;
+
+        if (event.results[i].isFinal) {
+          const cleanedFinal = removeRepeatedCaptureSpeechBuildUp(transcript);
+
+          if (
+            cleanedFinal &&
+            cleanedFinal !== lastFinalTranscript &&
+            !captureVoiceCommittedRef.current.endsWith(cleanedFinal)
+          ) {
+            captureVoiceCommittedRef.current = cleanCaptureSpeechText(
+              `${captureVoiceCommittedRef.current} ${cleanedFinal}`
+            );
+            lastFinalTranscript = cleanedFinal;
+          }
+        } else {
+          interimTranscript = removeRepeatedCaptureSpeechBuildUp(transcript);
+        }
+      }
+
+      const displayText = cleanCaptureSpeechText(
+        `${captureVoiceCommittedRef.current} ${interimTranscript}`
+      );
+
+      applyCaptureLiveSpeechPreview(displayText);
+    };
+
+    recognition.onerror = () => {
+      // Keep the real recorder running. Live preview is optional.
+    };
+
+    recognition.onend = () => {
+      if (
+        captureVoiceShouldContinueRef.current &&
+        captureMediaRecorderRef.current &&
+        captureMediaRecorderRef.current.state !== "inactive"
+      ) {
+        if (captureVoiceRestartTimerRef.current) {
+          clearTimeout(captureVoiceRestartTimerRef.current);
+        }
+
+        captureVoiceRestartTimerRef.current = setTimeout(() => {
+          try {
+            recognition.start();
+          } catch {}
+        }, 500);
+
+        return;
+      }
+
+      captureRecognitionRef.current = null;
+    };
+
+    captureRecognitionRef.current = recognition;
+    recognition.start();
+
+    return true;
+  } catch {
+    captureRecognitionRef.current = null;
+    return false;
+  }
+};
+
 const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
   const usableChunks = (audioChunks || []).filter(
     (chunk) => chunk && chunk.size > 0
@@ -959,12 +1108,16 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
     }
 
     setCaptureContent((current) => {
-      const existing = String(current || "").trim();
+      const existing = removeCaptureLiveSpeechPreviewFromText(current);
 
       if (!existing) return transcript;
 
       return `${existing}\n\n${transcript}`.trim();
     });
+
+    captureLiveSpeechPreviewRef.current = "";
+    captureVoiceBaseRef.current = "";
+    captureVoiceCommittedRef.current = "";
 
     setCaptureNotice("Transcription complete. Review and save the note.");
   } catch (error) {
@@ -1167,6 +1320,12 @@ const handleCaptureMicrophoneClick = async () => {
   }
 
   try {
+    try {
+      captureTextareaRef.current?.focus?.({ preventScroll: true });
+    } catch {
+      captureTextareaRef.current?.focus?.();
+    }
+
     setCaptureNotice("Requesting microphone permission...");
 
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -1262,8 +1421,19 @@ const handleCaptureMicrophoneClick = async () => {
       }, 1000);
 
       setCaptureListening(true);
+
+      try {
+        captureTextareaRef.current?.focus?.({ preventScroll: true });
+      } catch {
+        captureTextareaRef.current?.focus?.();
+      }
+
+      const livePreviewStarted = startCaptureLiveSpeechPreview();
+
       setCaptureNotice(
-        "Recording now. Speak naturally. Keep the screen awake for best results."
+        livePreviewStarted
+          ? "Recording now. Live text is appearing while the full audio is protected."
+          : "Recording now. Full audio is protected. Live text preview is not supported on this browser."
       );
     };
 
@@ -2145,6 +2315,7 @@ const handleCaptureMicrophoneClick = async () => {
 
 
               <textarea
+                ref={captureTextareaRef}
                 value={captureContent}
                 onChange={(event) => setCaptureContent(event.target.value)}
                 placeholder="Write the raw thought, meeting note, idea, reflection, or task here..."
