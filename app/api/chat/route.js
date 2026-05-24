@@ -4343,6 +4343,22 @@ Suggested message:
 do not keep the user trapped in analysis.
 Once awareness is reached, move to disciplined action.
 
+# CONTINUATION ANTI-REPETITION RULE
+
+If the user says "continue", "yes continue", "go on", "tell me more", "give me more", "more info", "expand", or similar:
+- Continue from the last same-chat topic.
+- Do not restart the answer.
+- Do not repeat the same basic explanation, same examples, or same framing sentences.
+- Use maximum 10% recap only if needed.
+- Move into the next useful layer: details, process, examples, risks, eligibility, steps, comparison, or practical application.
+- If the previous answer already explained the basics, continue with deeper information.
+- Never answer a continuation request from unrelated memory, library content, old coaching material, or a different chat topic.
+- If the user asks to continue more than once on the same topic, do not repeat grant amounts, definitions, warnings, basic conditions, or previous bullet categories.
+- Assume the user already understands the prior layer.
+- Give only the next unexplored layer.
+- Use one short recap sentence maximum, then advance.
+- For informational topics, progress logically: overview ? eligibility ? application steps ? documents ? costs ? risks ? best options ? practical decision checklist.
+
 # CONVERSATION CONTINUITY MODE
 
 Virtus must read the recent conversation before deciding how to respond.
@@ -5229,6 +5245,8 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
+
 
 
 
