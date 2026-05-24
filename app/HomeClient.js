@@ -82,6 +82,7 @@ const [speaking, setSpeaking] = useState(false);
 const [availableVoices, setAvailableVoices] = useState([]);
 const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
+const messageMenuRef = useRef(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
 const [practiceOpen, setPracticeOpen] = useState(false);
 const [searchOpen, setSearchOpen] = useState(false);
@@ -757,27 +758,36 @@ async function handlePastedImage(file) {
     setUploadingFile(false);
   }
 }
+function handleGlobalChatPaste(event) {
+  if (activeProject?.id) return;
+
+  const imageItem = Array.from(event.clipboardData?.items || []).find(
+    (item) => item.type && item.type.startsWith("image/")
+  );
+
+  if (!imageItem) return;
+
+  const file = imageItem.getAsFile();
+  if (!file) return;
+
+  event.preventDefault();
+  handlePastedImage(file);
+}
 useEffect(() => {
-  const handlePaste = (event) => {
-    const imageItem = Array.from(event.clipboardData?.items || []).find(
-      (item) => item.type && item.type.startsWith("image/")
-    );
+  if (openMessageMenuIndex === null) return undefined;
 
-    if (!imageItem) return;
-
-    const file = imageItem.getAsFile();
-    if (!file) return;
-
-    event.preventDefault();
-    handlePastedImage(file);
+  const handleOutsideMessageMenu = (event) => {
+    if (messageMenuRef.current?.contains(event.target)) return;
+    setOpenMessageMenuIndex(null);
   };
 
-  window.addEventListener("paste", handlePaste);
+  document.addEventListener("pointerdown", handleOutsideMessageMenu);
 
   return () => {
-    window.removeEventListener("paste", handlePaste);
+    document.removeEventListener("pointerdown", handleOutsideMessageMenu);
   };
-}, []);
+}, [openMessageMenuIndex]);
+
 const cancelEdit = () => {
   setEditingIndex(null);
   setMessage("");
@@ -4827,7 +4837,10 @@ const renderAssistantActions = (item, index) => {
       </button>
 
       {openMessageMenuIndex === index && (
-        <div className="absolute right-0 top-8 z-30 w-52 rounded-2xl border border-sky-900/25 bg-zinc-950/95 p-2 text-sm text-sky-100 shadow-xl shadow-black/40 backdrop-blur-sm">
+        <div
+          ref={messageMenuRef}
+          className="absolute right-0 top-8 z-30 w-52 rounded-2xl border border-sky-900/25 bg-zinc-950/95 p-2 text-sm text-sky-100 shadow-xl shadow-black/40 backdrop-blur-sm"
+        >
           <button
             type="button"
             onClick={() => {
@@ -6878,6 +6891,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   value={message}
   disabled={loading || isDailyLimitReached || isTrialGuestExpired}
   onChange={(e) => setMessage(e.target.value)}
+  onPaste={handleGlobalChatPaste}
   onKeyDown={(e) => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
@@ -6960,6 +6974,8 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
 
 
 

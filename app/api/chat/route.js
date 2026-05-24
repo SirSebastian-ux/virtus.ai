@@ -1857,7 +1857,7 @@ if (!userId.startsWith("guest-") && fileContextRequested) {
   if (uploadedFileIds.length > 0) {
     const { data: attachedFiles } = await supabase
       .from("user_files")
-      .select("id, file_name, extracted_text")
+      .select("id, file_name, file_type, storage_path, extracted_text")
       .eq("user_id", userId)
       .in("id", uploadedFileIds);
 
@@ -1873,7 +1873,7 @@ if (!userId.startsWith("guest-") && fileContextRequested) {
     if (activeChatSession?.active_file_id) {
       const { data: activeFile } = await supabase
         .from("user_files")
-        .select("id, file_name, extracted_text")
+        .select("id, file_name, file_type, storage_path, extracted_text")
         .eq("user_id", userId)
         .eq("id", activeChatSession.active_file_id)
         .maybeSingle();
@@ -1901,6 +1901,43 @@ ${String(file.extracted_text || "").slice(0, 5000)}
   .join("\n\n")}
 `;
 }
+
+const imageFilesForVision = latestFiles.filter(
+  (file) =>
+    file?.storage_path &&
+    String(file.file_type || "").startsWith("image/")
+);
+
+const latestImageInputs = [];
+
+if (imageFilesForVision.length > 0) {
+  for (const file of imageFilesForVision.slice(0, 4)) {
+    try {
+      const { data: imageBlob, error: imageDownloadError } =
+        await adminSupabase.storage
+          .from("user-files")
+          .download(file.storage_path);
+
+      if (imageDownloadError || !imageBlob) continue;
+
+      const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
+      const mimeType = String(file.file_type || "image/png");
+
+      latestImageInputs.push({
+        type: "input_image",
+        image_url: `data:${mimeType};base64,${imageBuffer.toString("base64")}`,
+        detail: "auto",
+      });
+    } catch (error) {
+      console.warn("Could not prepare attached image for vision:", error);
+    }
+  }
+}
+
+const latestImageText =
+  latestImageInputs.length > 0
+    ? `User attached or pasted ${latestImageInputs.length} image(s). Analyze the attached image(s) directly when answering.`
+    : "";
 
 
 const virtusLibraryContext = await getVirtusLibraryContext({
@@ -4664,14 +4701,7 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
     virtus_plan_status: planStatus,
     virtus_support_layer: supportLayer,
   },
-  input: `${webSearchContext ? `${webSearchContext}
-
-` : ""}${latestFileText ? `${latestFileText}
-
-` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
-
-` : ""}User request:
-${message}`,
+  input: responseInput,
 });
 
 let memoryWriteReply = null;
@@ -5220,4 +5250,5 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 

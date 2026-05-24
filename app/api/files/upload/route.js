@@ -41,9 +41,13 @@ export async function POST(req) {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       fileName.toLowerCase().endsWith(".docx");
 
-    if (!isPdf && !isDocx) {
+    const isImage =
+      fileType.startsWith("image/") ||
+      /\.(png|jpe?g|webp)$/i.test(fileName);
+
+    if (!isPdf && !isDocx && !isImage) {
       return Response.json(
-        { error: "Only PDF and DOCX files are allowed." },
+        { error: "Only PDF, DOCX, PNG, JPG, JPEG, and WEBP files are allowed." },
         { status: 400 }
       );
     }
@@ -119,6 +123,7 @@ const { data: savedFile, error: dbError } = await admin
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 
