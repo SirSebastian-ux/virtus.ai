@@ -709,6 +709,50 @@ useEffect(() => {
   sendMessage();
   setRegenerating(false);
 }, [regenerating, message, loading]);
+
+useEffect(() => {
+  if (typeof window === "undefined") return undefined;
+
+  const handleGlobalTypingFocus = (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (loading) return;
+    if (showMobileMenu || showPlanOverlay || captureOpen || practiceOpen || searchOpen) return;
+
+    const target = event.target;
+    const tagName = String(target?.tagName || "").toLowerCase();
+
+    if (
+      tagName === "input" ||
+      tagName === "textarea" ||
+      tagName === "select" ||
+      target?.isContentEditable
+    ) {
+      return;
+    }
+
+    if (event.key?.length !== 1) return;
+
+    event.preventDefault();
+
+    textareaRef.current?.focus();
+
+    setMessage((current) => `${current || ""}${event.key}`);
+  };
+
+  window.addEventListener("keydown", handleGlobalTypingFocus);
+
+  return () => {
+    window.removeEventListener("keydown", handleGlobalTypingFocus);
+  };
+}, [
+  loading,
+
+  showMobileMenu,
+  showPlanOverlay,
+  captureOpen,
+  practiceOpen,
+  searchOpen,
+]);
 async function handlePastedImage(file) {
   if (!file || !String(file.type || "").startsWith("image/")) return;
 
@@ -6974,6 +7018,10 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
+
+
 
 
 
