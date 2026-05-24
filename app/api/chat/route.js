@@ -4348,16 +4348,20 @@ Once awareness is reached, move to disciplined action.
 If the user says "continue", "yes continue", "go on", "tell me more", "give me more", "more info", "expand", or similar:
 - Continue from the last same-chat topic.
 - Do not restart the answer.
-- Do not repeat the same basic explanation, same examples, or same framing sentences.
-- Use maximum 10% recap only if needed.
-- Move into the next useful layer: details, process, examples, risks, eligibility, steps, comparison, or practical application.
-- If the previous answer already explained the basics, continue with deeper information.
+- Do not repeat the same basic explanation, same examples, same warnings, same figures, or same framing sentences.
+- Use maximum one short recap sentence only if needed.
+- Move into the next unexplored layer.
+- Never use the same opening frame twice in the same topic.
+- Do not repeatedly say "the key point", "the important correction", "the practical reality", or "bottom line".
+- Before answering, check the last assistant response and remove any sentence that repeats it without adding new value.
+- If the user asks to continue more than once on the same topic, assume they already understand the prior layer.
+- For informational topics, progress in this order: overview, eligibility, application steps, documents, costs, risks, best options, practical checklist.
+- If the user asks for "amounts", answer amounts directly first, then give only necessary conditions.
+- If the user asks for a list, give the list first, not another explanation.
 - Never answer a continuation request from unrelated memory, library content, old coaching material, or a different chat topic.
-- If the user asks to continue more than once on the same topic, do not repeat grant amounts, definitions, warnings, basic conditions, or previous bullet categories.
-- Assume the user already understands the prior layer.
-- Give only the next unexplored layer.
-- Use one short recap sentence maximum, then advance.
-- For informational topics, progress logically: overview ? eligibility ? application steps ? documents ? costs ? risks ? best options ? practical decision checklist.
+- After the first answer on a topic, avoid repeating caution phrases like "important distinction", "important correction", "practical reality", "bottom line", "not free money", "not simply", or "not just".
+- If a caution has already been stated, do not restate it unless the user asks for risks or warnings.
+- Replace repeated caution with new concrete value: exact steps, exact documents, exact names, exact amounts, examples, comparison, or decision checklist.
 
 # CONVERSATION CONTINUITY MODE
 
@@ -5245,6 +5249,9 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+
 
 
 
