@@ -63,6 +63,14 @@ const captureMediaRecorderRef = useRef(null);
 const captureMediaStreamRef = useRef(null);
 const captureAudioChunksRef = useRef([]);
 const captureAudioBlobRef = useRef(null);
+const captureLiveTranscriptRef = useRef("");
+const captureLiveTextWrittenRef = useRef(false);
+const captureLiveTranscriptionFallbackRef = useRef(false);
+const captureLiveTranscriptionBusyRef = useRef(false);
+const captureLivePendingAudioChunksRef = useRef([]);
+const captureLivePendingMimeTypeRef = useRef("");
+const captureLiveFallbackTimerRef = useRef(null);
+const captureSpeechResultSeenRef = useRef(false);
 const captureRecordingTimerRef = useRef(null);
 const captureWakeLockRef = useRef(null);
 const captureStopReasonRef = useRef("");
@@ -899,6 +907,40 @@ const getCaptureTranscriptionLanguageCode = () => {
   return "en";
 };
 
+const getBestSpeechTranscript = (speechResult) => {
+  if (!speechResult) return "";
+
+  try {
+    let bestTranscript = "";
+    let bestConfidence = -1;
+
+    for (let i = 0; i < (speechResult.length || 0); i += 1) {
+      const alternative = speechResult?.[i];
+      const transcript = String(alternative?.transcript || "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (!transcript) continue;
+
+      const confidence =
+        typeof alternative?.confidence === "number"
+          ? alternative.confidence
+          : i === 0
+            ? 0.5
+            : 0;
+
+      if (confidence > bestConfidence) {
+        bestConfidence = confidence;
+        bestTranscript = transcript;
+      }
+    }
+
+    return bestTranscript;
+  } catch {
+    return "";
+  }
+};
+
 const startCaptureLiveDictation = () => {
   if (typeof window === "undefined") return false;
 
@@ -924,9 +966,11 @@ const startCaptureLiveDictation = () => {
     recognition.lang = captureVoiceLanguage || "en-US";
     recognition.interimResults = true;
     recognition.continuous = true;
+    recognition.maxAlternatives = 3;
 
     captureVoiceBaseRef.current = String(captureContent || "").trim();
     captureVoiceCommittedRef.current = "";
+    captureSpeechResultSeenRef.current = false;
 
     const isCaptureRecorderActive = () =>
       captureVoiceShouldContinueRef.current &&
@@ -945,6 +989,10 @@ const startCaptureLiveDictation = () => {
       const liveText = `${committedText} ${cleanInterimText}`
         .replace(/\s+/g, " ")
         .trim();
+
+      if (liveText) {
+        captureLiveTextWrittenRef.current = true;
+      }
 
       setCaptureContent(() => {
         const baseText = String(captureVoiceBaseRef.current || "").trim();
@@ -976,6 +1024,10 @@ const startCaptureLiveDictation = () => {
     };
 
     recognition.onresult = (event) => {
+      if (captureLiveTranscriptionFallbackRef.current) return;
+
+      captureSpeechResultSeenRef.current = true;
+
       let interimText = "";
 
       for (let i = event.resultIndex; i < event.results.length; i += 1) {
@@ -1004,8 +1056,9 @@ const startCaptureLiveDictation = () => {
         event?.error === "not-allowed" ||
         event?.error === "service-not-allowed"
       ) {
+        captureLiveTranscriptionFallbackRef.current = true;
         setCaptureNotice(
-          "Live text was blocked by the browser. Audio recording is still protected."
+          "Live text was blocked by the browser. Writing will continue in protected sections."
         );
         return;
       }
@@ -1024,6 +1077,125 @@ const startCaptureLiveDictation = () => {
   } catch {
     captureRecognitionRef.current = null;
     return false;
+  }
+};
+
+const writeCaptureLiveTranscriptFromAudio = (transcript) => {
+  const cleanTranscript = String(transcript || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleanTranscript) return;
+
+  const existingLiveText = String(captureLiveTranscriptRef.current || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (
+    existingLiveText &&
+    existingLiveText.toLowerCase().endsWith(cleanTranscript.toLowerCase())
+  ) {
+    return;
+  }
+
+  captureLiveTranscriptRef.current = `${existingLiveText} ${cleanTranscript}`
+    .replace(/\s+/g, " ")
+    .trim();
+
+  captureLiveTextWrittenRef.current = true;
+
+  setCaptureContent(() => {
+    const baseText = String(captureVoiceBaseRef.current || "").trim();
+    const liveText = String(captureLiveTranscriptRef.current || "").trim();
+
+    if (!baseText) return liveText;
+    if (!liveText) return baseText;
+
+    return `${baseText}\n\n${liveText}`.trim();
+  });
+};
+
+const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
+  if (!captureVoiceShouldContinueRef.current) return;
+  if (!captureLiveTranscriptionFallbackRef.current) return;
+
+  const allChunks = (captureAudioChunksRef.current || []).filter(
+    (chunk) => chunk && chunk.size > 0
+  );
+
+  if (!allChunks.length) return;
+
+  const safeMimeType =
+    mimeType || allChunks[0]?.type || audioChunk?.type || "audio/webm";
+
+  captureLivePendingAudioChunksRef.current = allChunks.slice();
+  captureLivePendingMimeTypeRef.current = safeMimeType;
+
+  if (captureLiveTranscriptionBusyRef.current) return;
+
+  captureLiveTranscriptionBusyRef.current = true;
+
+  try {
+    while (
+      captureVoiceShouldContinueRef.current &&
+      captureLiveTranscriptionFallbackRef.current &&
+      captureLivePendingAudioChunksRef.current.length > 0
+    ) {
+      const snapshotChunks = captureLivePendingAudioChunksRef.current.slice();
+      captureLivePendingAudioChunksRef.current = [];
+
+      const snapshotMimeType =
+        captureLivePendingMimeTypeRef.current ||
+        snapshotChunks[0]?.type ||
+        "audio/webm";
+
+      const extension = snapshotMimeType.includes("mp4") ? "mp4" : "webm";
+      const snapshotBlob = new Blob(snapshotChunks, {
+        type: snapshotMimeType,
+      });
+
+      if (!snapshotBlob.size) continue;
+
+      const audioFile = new File(
+        [snapshotBlob],
+        `virtus-capture-live-snapshot.${extension}`,
+        { type: snapshotMimeType }
+      );
+
+      const formData = new FormData();
+      formData.append("audio", audioFile);
+      formData.append("language", getCaptureTranscriptionLanguageCode());
+
+      const response = await fetch("/api/capture/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Could not transcribe live audio.");
+      }
+
+      const transcript = String(data?.text || "").trim();
+
+      if (transcript && captureVoiceShouldContinueRef.current) {
+        captureLiveTranscriptRef.current = transcript;
+        captureLiveTextWrittenRef.current = true;
+
+        setCaptureContent(() => {
+          const baseText = String(captureVoiceBaseRef.current || "").trim();
+
+          if (!baseText) return transcript;
+
+          return `${baseText}\n\n${transcript}`.trim();
+        });
+      }
+    }
+  } catch (error) {
+    console.warn("Live capture snapshot transcription failed:", error);
+  } finally {
+    captureLiveTranscriptionBusyRef.current = false;
   }
 };
 
@@ -1082,12 +1254,12 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
       return;
     }
 
-    setCaptureContent((current) => {
-      const existing = String(current || "").trim();
+    setCaptureContent(() => {
+      const baseText = String(captureVoiceBaseRef.current || "").trim();
 
-      if (!existing) return transcript;
+      if (!baseText) return transcript;
 
-      return `${existing}\n\n${transcript}`.trim();
+      return `${baseText}\n\n${transcript}`.trim();
     });
 
     setCaptureNotice("Transcription complete. Review and save the note.");
@@ -1214,6 +1386,16 @@ const stopCaptureVoiceEngine = () => {
     captureVoiceRestartTimerRef.current = null;
   }
 
+  if (captureLiveFallbackTimerRef.current) {
+    clearTimeout(captureLiveFallbackTimerRef.current);
+    captureLiveFallbackTimerRef.current = null;
+  }
+
+  captureLiveTranscriptionFallbackRef.current = false;
+  captureLiveTranscriptionBusyRef.current = false;
+  captureLivePendingAudioChunksRef.current = [];
+  captureLivePendingMimeTypeRef.current = "";
+
   if (captureRecordingTimerRef.current) {
     clearInterval(captureRecordingTimerRef.current);
     captureRecordingTimerRef.current = null;
@@ -1332,6 +1514,13 @@ const handleCaptureMicrophoneClick = async () => {
     recorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
         captureAudioChunksRef.current.push(event.data);
+
+        if (captureLiveTranscriptionFallbackRef.current) {
+          void transcribeCaptureAudioChunkLive(
+            event.data,
+            event.data.type || mimeType || "audio/webm"
+          );
+        }
       }
     };
 
@@ -1370,8 +1559,15 @@ const handleCaptureMicrophoneClick = async () => {
       if (audioBlob.size > 0) {
         const stopMessage =
           captureStopReasonRef.current || "Recording stopped. Preparing transcription...";
+        const liveTextWasWritten = captureLiveTextWrittenRef.current;
         captureStopReasonRef.current = "";
-        setCaptureNotice(stopMessage);
+
+        if (liveTextWasWritten) {
+          setCaptureNotice("Recording stopped. Finalizing full transcript...");
+        } else {
+          setCaptureNotice(stopMessage);
+        }
+
         transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
       } else {
         captureStopReasonRef.current = "";
@@ -1393,18 +1589,29 @@ const handleCaptureMicrophoneClick = async () => {
 
       setCaptureListening(true);
 
+      captureVoiceBaseRef.current = String(captureContent || "").trim();
+      captureVoiceCommittedRef.current = "";
+      captureLiveTranscriptRef.current = "";
+      captureLiveTextWrittenRef.current = false;
+      captureLiveTranscriptionFallbackRef.current = false;
+      captureLiveTranscriptionBusyRef.current = false;
+      captureLivePendingAudioChunksRef.current = [];
+      captureLivePendingMimeTypeRef.current = "";
+      captureSpeechResultSeenRef.current = false;
+
       try {
         captureTextareaRef.current?.focus?.({ preventScroll: true });
       } catch {
         captureTextareaRef.current?.focus?.();
       }
 
-      const liveDictationStarted = startCaptureLiveDictation();
+      // High-accuracy Capture mode:
+      // Browser live speech is fast, but less reliable.
+      // We use protected audio sections as the main live-writing source.
+      captureLiveTranscriptionFallbackRef.current = true;
 
       setCaptureNotice(
-        liveDictationStarted
-          ? "Recording now. Live text is appearing while the full audio is protected."
-          : "Recording now. Full audio is protected. Live text is not supported on this browser."
+        "Recording now. High-accuracy text will appear in short protected sections."
       );
     };
 
@@ -6753,6 +6960,13 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
+
+
+
+
+
 
 
 
