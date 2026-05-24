@@ -1903,11 +1903,18 @@ ${String(file.extracted_text || "").slice(0, 5000)}
 }
 
 
-const virtusLibraryContext = await getVirtusLibraryContext({
-  supabase,
-  message,
-  limit: 6,
-});
+const isContinuationOnlyMessage =
+  /^(yes\s*)?(please\s*)?(continue|continiue|go on|tell me more|give me more|more info|more information|carry on)\.?\s*$/i.test(
+    String(message || "").trim()
+  );
+
+const virtusLibraryContext = isContinuationOnlyMessage
+  ? ""
+  : await getVirtusLibraryContext({
+      supabase,
+      message,
+      limit: 6,
+    });
 const runtimeFacts =
   runtimeFactsLimit === null
     ? prioritizedRuntimeFacts
@@ -4668,6 +4675,8 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
 
 ` : ""}${latestFileText ? `${latestFileText}
 
+` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
+
 ` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
 ` : ""}User request:
@@ -5220,4 +5229,9 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+
+
+
 
