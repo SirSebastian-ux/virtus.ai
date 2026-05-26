@@ -2587,7 +2587,7 @@ const handleCaptureMicrophoneClick = async () => {
                   {captureListening ? (
                     <span className="inline-flex items-center gap-2 rounded-full border border-sky-700/30 bg-sky-950/25 px-3 py-1.5 text-xs font-medium text-sky-100">
                       <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-                      Recording {formatCaptureRecordingTime(captureRecordingSeconds)} · Keep screen awake
+                      Recording {formatCaptureRecordingTime(captureRecordingSeconds)} Ã‚Â· Keep screen awake
                     </span>
                   ) : captureTranscribing ? (
                     <span className="text-xs leading-5 text-zinc-500">
@@ -5124,7 +5124,7 @@ return (
 </div>
 
                     <div className="virtus-scrollbar flex-1 overflow-y-auto overflow-x-hidden p-3">
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               <button
                 type="button"
                 aria-label="Search"
@@ -5179,6 +5179,16 @@ return (
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">New Chat</span>
+              </button>
+
+              <button
+                type="button"
+                aria-label="Meetings"
+                onClick={() => router.push("/meetings")}
+                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="3" y="5" width="14" height="14" rx="2" /><path d="m17 9 4-2v10l-4-2" /></svg>
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Meetings</span>
               </button>
 
               <button
@@ -7018,30 +7028,5 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
