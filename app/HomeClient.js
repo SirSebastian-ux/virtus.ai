@@ -122,7 +122,7 @@ const captureNoteTypes = [
   "Spiritual Reflection",
   "Task / Action",
   "Coaching Insight",
-  "Voice Transcript",
+  "Voice Capture",
 ];
 
 const guidedPracticeAreaQuestion = {
@@ -379,6 +379,13 @@ useEffect(() => {
 
   return () => clearTimeout(timeoutId);
 }, [captureTitle, captureType, captureContent, captureVoiceLanguage]);
+
+useEffect(() => {
+  if (!captureOpen || !captureTextareaRef.current) return;
+
+  const textarea = captureTextareaRef.current;
+  textarea.scrollTop = textarea.scrollHeight;
+}, [captureContent, captureOpen]);
 function getProjectStoragePrefix() {
   if (typeof window === "undefined") return null;
 
@@ -1247,7 +1254,7 @@ const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
       }
     }
   } catch (error) {
-    console.warn("Live capture snapshot transcription failed:", error);
+    console.warn("Live capture section processing failed:", error);
   } finally {
     captureLiveTranscriptionBusyRef.current = false;
   }
@@ -1275,7 +1282,7 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
   }
 
   setCaptureTranscribing(true);
-  setCaptureNotice("Transcribing captured audio...");
+  setCaptureNotice("Preparing captured audio...");
 
   try {
     const audioFile = new File(
@@ -1316,11 +1323,11 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
       return `${baseText}\n\n${transcript}`.trim();
     });
 
-    setCaptureNotice("Transcription complete. Review and save the note.");
+    setCaptureNotice("Capture finished. Review and save the note.");
   } catch (error) {
-    console.error("Capture transcription failed:", error);
+    console.error("Capture audio processing failed:", error);
     setCaptureNotice(
-      error?.message || "Transcription failed. Please try again."
+      error?.message || "Capture processing failed. Please try again."
     );
   } finally {
     setCaptureTranscribing(false);
@@ -1490,11 +1497,11 @@ const handleCaptureMicrophoneClick = async () => {
     (captureMediaRecorderRef.current &&
       captureMediaRecorderRef.current.state !== "inactive")
   ) {
-    captureStopReasonRef.current = "Recording stopped. Preparing transcription...";
+    captureStopReasonRef.current = "Recording stopped. Finalizing live note.";
 
     stopCaptureVoiceEngine();
 
-    setCaptureNotice("Voice recording stopped. Audio is being prepared.");
+    setCaptureNotice("Voice recording stopped. Finalizing live note.");
     return;
   }
 
@@ -1562,7 +1569,7 @@ const handleCaptureMicrophoneClick = async () => {
     }
 
     if (captureType === "General Note") {
-      setCaptureType("Voice Transcript");
+      setCaptureType("Voice Capture");
     }
 
     recorder.ondataavailable = (event) => {
@@ -1612,17 +1619,18 @@ const handleCaptureMicrophoneClick = async () => {
 
       if (audioBlob.size > 0) {
         const stopMessage =
-          captureStopReasonRef.current || "Recording stopped. Preparing transcription...";
+          captureStopReasonRef.current || "Recording stopped. Finalizing live note.";
         const liveTextWasWritten = captureLiveTextWrittenRef.current;
         captureStopReasonRef.current = "";
 
         if (liveTextWasWritten) {
-          setCaptureNotice("Recording stopped. Finalizing full transcript...");
+          setCaptureNotice("Capture finished. Review or save the note.");
         } else {
           setCaptureNotice(stopMessage);
         }
 
-        transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
+        captureAudioChunksRef.current = [];
+        setCaptureTranscribing(false);
       } else {
         captureStopReasonRef.current = "";
         setCaptureNotice(
@@ -1669,7 +1677,7 @@ const handleCaptureMicrophoneClick = async () => {
       );
     };
 
-    recorder.start(10000);
+    recorder.start(3000);
   } catch (error) {
     stopCaptureVoiceEngine();
 
@@ -2581,17 +2589,17 @@ const handleCaptureMicrophoneClick = async () => {
                         : "border-sky-700/30 bg-sky-950/30 text-sky-100 hover:border-sky-500/50 hover:bg-sky-900/25"
                     }`}
                   >
-                    {captureTranscribing ? "Transcribing..." : captureListening ? "Stop Recording" : "Start Recording"}
+                    {captureTranscribing ? "Processing..." : captureListening ? "Stop Recording" : "Start Recording"}
                   </button>
 
                   {captureListening ? (
                     <span className="inline-flex items-center gap-2 rounded-full border border-sky-700/30 bg-sky-950/25 px-3 py-1.5 text-xs font-medium text-sky-100">
                       <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-                      Recording {formatCaptureRecordingTime(captureRecordingSeconds)} Ã‚Â· Keep screen awake
+                      Recording {formatCaptureRecordingTime(captureRecordingSeconds)} <span className="text-sky-400/60">{"\u2022"}</span> Keep screen awake
                     </span>
                   ) : captureTranscribing ? (
                     <span className="text-xs leading-5 text-zinc-500">
-                      Transcribing now. The text will appear inside the note.
+                      Processing now. The text will appear inside the note.
                     </span>
                   ) : null}
                 </div>
