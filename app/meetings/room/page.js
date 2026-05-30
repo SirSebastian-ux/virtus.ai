@@ -19,8 +19,21 @@ export default function MeetingsRoomPage() {
   const screenStreamRef = useRef(null);
 
   const [mediaStatus, setMediaStatus] = useState("Ready.");
-  const [roomId, setRoomId] = useState("");
-  const [roomStatus, setRoomStatus] = useState("Checking room...");
+  const [roomId] = useState(() => {
+    if (typeof window === "undefined") return "";
+
+    return new URLSearchParams(window.location.search).get("room") || "";
+  });
+  const [roomStatus, setRoomStatus] = useState(() => {
+    if (typeof window === "undefined") return "Checking room...";
+
+    const currentRoomId =
+      new URLSearchParams(window.location.search).get("room") || "";
+
+    return currentRoomId
+      ? "Checking room..."
+      : "Local preview room. No shared room link detected.";
+  });
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
@@ -35,18 +48,13 @@ export default function MeetingsRoomPage() {
   ]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const currentRoomId = params.get("room") || "";
-    setRoomId(currentRoomId);
-
-    if (!currentRoomId) {
-      setRoomStatus("Local preview room. No shared room link detected.");
-      return;
-    }
+    if (!roomId) return;
 
     async function loadRoom() {
       try {
-        const response = await fetch(`/api/meetings?roomId=${currentRoomId}`, { cache: "no-store" });
+        const response = await fetch(`/api/meetings?roomId=${roomId}`, {
+          cache: "no-store",
+        });
         const data = await response.json();
 
         if (!response.ok || !data.room) {
@@ -61,7 +69,7 @@ export default function MeetingsRoomPage() {
     }
 
     loadRoom();
-  }, []);
+  }, [roomId]);
 
   async function startCameraAndMic() {
     try {

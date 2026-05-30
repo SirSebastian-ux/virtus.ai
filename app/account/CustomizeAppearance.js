@@ -1,36 +1,63 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 const APPEARANCE_KEY = "virtus_appearance";
 
+function normalizeAppearance(value) {
+  return value === "light" || value === "dark" ? value : "dark";
+}
+
+function getAppearanceSnapshot() {
+  if (typeof window === "undefined") return "dark";
+
+  return normalizeAppearance(localStorage.getItem(APPEARANCE_KEY));
+}
+
+function subscribeToAppearanceChanges(callback) {
+  if (typeof window === "undefined") return () => {};
+
+  function handleStorage(event) {
+    if (event.key === APPEARANCE_KEY) callback();
+  }
+
+  function handleCustomChange() {
+    callback();
+  }
+
+  window.addEventListener("storage", handleStorage);
+  window.addEventListener("virtus-appearance-change", handleCustomChange);
+
+  return () => {
+    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener("virtus-appearance-change", handleCustomChange);
+  };
+}
+
 function applyAppearance(value) {
-  localStorage.setItem(APPEARANCE_KEY, value);
-  document.documentElement.setAttribute("data-virtus-appearance", value);
+  if (typeof window === "undefined") return;
+
+  const nextAppearance = normalizeAppearance(value);
+
+  localStorage.setItem(APPEARANCE_KEY, nextAppearance);
+  document.documentElement.setAttribute("data-virtus-appearance", nextAppearance);
   window.dispatchEvent(
-    new CustomEvent("virtus-appearance-change", { detail: value })
+    new CustomEvent("virtus-appearance-change", { detail: nextAppearance })
   );
 }
 
 export default function CustomizeAppearance() {
-  const [appearance, setAppearance] = useState("dark");
+  const appearance = useSyncExternalStore(
+    subscribeToAppearanceChanges,
+    getAppearanceSnapshot,
+    () => "dark"
+  );
 
   useEffect(() => {
-    const savedAppearance = localStorage.getItem(APPEARANCE_KEY);
-
-    if (savedAppearance === "light" || savedAppearance === "dark") {
-      setAppearance(savedAppearance);
-      document.documentElement.setAttribute(
-        "data-virtus-appearance",
-        savedAppearance
-      );
-    } else {
-      document.documentElement.setAttribute("data-virtus-appearance", "dark");
-    }
-  }, []);
+    document.documentElement.setAttribute("data-virtus-appearance", appearance);
+  }, [appearance]);
 
   function chooseAppearance(value) {
-    setAppearance(value);
     applyAppearance(value);
   }
 

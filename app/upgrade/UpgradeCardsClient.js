@@ -4,18 +4,47 @@ import { Capacitor } from "@capacitor/core";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
+function getCheckoutSuccessMessage(searchParams) {
+  const success = searchParams.get("success");
+
+  if (success !== "true") return "";
+
+  const selectedPlan = searchParams.get("plan");
+  const selectedBilling = searchParams.get("billing");
+
+  const planLabel =
+    selectedPlan === "plus"
+      ? "Plus"
+      : selectedPlan === "premium"
+      ? "Premium / Virtus Prime"
+      : "Plan";
+
+  const billingLabel =
+    selectedBilling === "yearly"
+      ? "yearly"
+      : selectedBilling === "monthly"
+      ? "monthly"
+      : "";
+
+  return billingLabel
+    ? `${planLabel} ${billingLabel} plan activated successfully.`
+    : `${planLabel} activated successfully.`;
+}
+
 export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState("yearly");
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isNativeIosApp, setIsNativeIosApp] = useState(false);
+  const [isNativeIosApp] = useState(() => {
+    if (typeof window === "undefined") return false;
+
+    return Capacitor.getPlatform() === "ios";
+  });
+  const successMessage = getCheckoutSuccessMessage(searchParams);
 
   useEffect(() => {
-    setIsNativeIosApp(Capacitor.getPlatform() === "ios");
-
     function syncUpgradeAppearance() {
       const savedAppearance = localStorage.getItem("virtus_appearance");
       const nextAppearance = savedAppearance === "light" ? "light" : "dark";
@@ -38,44 +67,21 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   }, []);
 
   useEffect(() => {
-    const success = searchParams.get("success");
-    const selectedPlan = searchParams.get("plan");
-    const selectedBilling = searchParams.get("billing");
+    if (!successMessage) return;
 
-    if (success === "true") {
-      const planLabel =
-        selectedPlan === "plus"
-          ? "Plus"
-          : selectedPlan === "premium"
-          ? "Premium / Virtus Prime"
-          : "Plan";
+    router.refresh();
 
-      const billingLabel =
-        selectedBilling === "yearly"
-          ? "yearly"
-          : selectedBilling === "monthly"
-          ? "monthly"
-          : "";
+    const redirectTimer = setTimeout(() => {
+      router.push("/");
+    }, 1200);
 
-      setSuccessMessage(
-        billingLabel
-          ? `${planLabel} ${billingLabel} plan activated successfully.`
-          : `${planLabel} activated successfully.`
-      );
-      router.refresh();
-
-      setTimeout(() => {
-        router.push("/");
-      }, 1200);
-    }
-  }, [searchParams, router]);
+    return () => clearTimeout(redirectTimer);
+  }, [successMessage, router]);
 
   useEffect(() => {
     function resetCheckoutLoading() {
       setLoadingPlan(null);
     }
-
-    resetCheckoutLoading();
 
     window.addEventListener("focus", resetCheckoutLoading);
     window.addEventListener("pageshow", resetCheckoutLoading);
@@ -486,4 +492,3 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     </div>
   );
 }
-

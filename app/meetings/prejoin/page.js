@@ -11,30 +11,30 @@ export default function MeetingsPrejoinPage() {
   const [micOn, setMicOn] = useState(false);
 
   useEffect(() => {
+    async function startPreview() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+
+        setCameraOn(true);
+        setMicOn(true);
+      } catch {
+        setCameraOn(false);
+        setMicOn(false);
+      }
+    }
+
     startPreview();
 
     return () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
-
-  async function startPreview() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-
-      setCameraOn(true);
-      setMicOn(true);
-    } catch {
-      setCameraOn(false);
-      setMicOn(false);
-    }
-  }
 
   function toggleCamera() {
     const track = streamRef.current?.getVideoTracks?.()[0];
