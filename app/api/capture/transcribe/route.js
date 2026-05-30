@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { createClient } from "@/lib/supabase-server";
+import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -55,6 +57,28 @@ function cleanCaptureTranscriptText(value) {
 }
 
 export async function POST(request) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user?.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const transcriptionRateLimit = checkRateLimit({
+    key: `capture-transcribe:${getRateLimitIdentity(request, user.id)}`,
+    limit: 20,
+    windowMs: 60_000,
+  });
+
+  if (!transcriptionRateLimit.allowed) {
+    return rateLimitResponse(transcriptionRateLimit);
+  }
+
+
   try {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import OpenAI from "openai";
+import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -51,6 +52,17 @@ Style rules:
 }
 
 export async function POST(req) {
+  const imageRateLimit = checkRateLimit({
+    key: `file-create-image:${getRateLimitIdentity(req)}`,
+    limit: 5,
+    windowMs: 60_000,
+  });
+
+  if (!imageRateLimit.allowed) {
+    return rateLimitResponse(imageRateLimit);
+  }
+
+
   try {
     const supabase = await createClient();
     const admin = createAdminClient();

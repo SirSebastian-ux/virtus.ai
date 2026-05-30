@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { createRequire } from "module";
 import mammoth from "mammoth";
+import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -96,6 +97,17 @@ async function extractTextFromFile({ bytes, fileName, fileType }) {
 }
 
 export async function POST(req) {
+  const uploadRateLimit = checkRateLimit({
+    key: `file-upload:${getRateLimitIdentity(req)}`,
+    limit: 10,
+    windowMs: 60_000,
+  });
+
+  if (!uploadRateLimit.allowed) {
+    return rateLimitResponse(uploadRateLimit);
+  }
+
+
   try {
     const supabase = await createClient();
     const admin = createAdminClient();

@@ -1,4 +1,16 @@
+import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 export async function POST(req) {
+  const searchRateLimit = checkRateLimit({
+    key: `web-search:${getRateLimitIdentity(req)}`,
+    limit: 30,
+    windowMs: 60_000,
+  });
+
+  if (!searchRateLimit.allowed) {
+    return rateLimitResponse(searchRateLimit);
+  }
+
+
   try {
     const apiKey = process.env.TAVILY_API_KEY;
 

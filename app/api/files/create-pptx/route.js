@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import pptxgen from "pptxgenjs";
 import OpenAI from "openai";
+import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -751,6 +752,17 @@ async function createPptxBuffer({ title, content }) {
 }
 
 export async function POST(req) {
+  const pptxRateLimit = checkRateLimit({
+    key: `file-create-pptx:${getRateLimitIdentity(req)}`,
+    limit: 5,
+    windowMs: 60_000,
+  });
+
+  if (!pptxRateLimit.allowed) {
+    return rateLimitResponse(pptxRateLimit);
+  }
+
+
   try {
     const supabase = await createClient();
     const admin = createAdminClient();

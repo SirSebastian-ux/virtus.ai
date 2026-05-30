@@ -23,6 +23,7 @@ import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
+import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -432,6 +433,17 @@ if (
 }
 
 export async function POST(req) {
+  const chatRateLimit = checkRateLimit({
+    key: `chat:${getRateLimitIdentity(req)}`,
+    limit: 30,
+    windowMs: 60_000,
+  });
+
+  if (!chatRateLimit.allowed) {
+    return rateLimitResponse(chatRateLimit);
+  }
+
+
   
   try {
     const body = await req.json();
