@@ -1,7 +1,6 @@
-﻿import { createAdminClient } from "@/lib/supabase-admin";
-import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
+import { requireAdminApi } from "@/lib/admin-auth";
 
-const ADMIN_EMAIL = "sebastian@ewellnessolutions.com";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -35,24 +34,13 @@ async function fetchAllRows(queryFactory, pageSize = 1000) {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const { response: adminAuthResponse } = await requireAdminApi();
+
+    if (adminAuthResponse) {
+      return adminAuthResponse;
+    }
+
     const admin = createAdminClient();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return Response.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const isAdmin =
-      String(user.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
-
-    if (!isAdmin) {
-      return Response.json({ error: "Admin access required" }, { status: 403 });
-    }
 
     const { data: files, error: filesError } = await admin
       .from("user_files")

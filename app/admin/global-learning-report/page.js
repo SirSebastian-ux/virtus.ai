@@ -1,18 +1,8 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase-server";
+import { requireAdminPage } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 
 async function getGlobalLearningReport() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/login");
-  }
+  await requireAdminPage();
 
   const admin = createAdminClient();
 

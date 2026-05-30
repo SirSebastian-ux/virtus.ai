@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase-admin";
-import { createClient } from "@/lib/supabase-server";
+import { requireAdminApi } from "@/lib/admin-auth";
 
 const MODULE_TITLES = {
   1: "Leadership Response ChainÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢",
@@ -299,24 +299,13 @@ function chunkText(text = "", maxLength = 1800) {
 
 export async function POST(req) {
   try {
-    const supabase = await createClient();
+    const { response: adminAuthResponse } = await requireAdminApi();
+
+    if (adminAuthResponse) {
+      return adminAuthResponse;
+    }
+
     const admin = createAdminClient();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return Response.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    const isSystemLibraryManager =
-      String(user.email || "").toLowerCase() === "sebastian@ewellnessolutions.com";
-
-    if (!isSystemLibraryManager) {
-      return Response.json({ error: "Admin access required" }, { status: 403 });
-    }
 
     const body = await req.json().catch(() => ({}));
     const fileIds = Array.isArray(body.fileIds) ? body.fileIds : [];

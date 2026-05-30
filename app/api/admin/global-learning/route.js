@@ -1,28 +1,13 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase-server";
+import { requireAdminApi } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const { response: adminAuthResponse } = await requireAdminApi();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError) {
-      return NextResponse.json(
-        { error: "Failed to verify user", details: authError.message },
-        { status: 500 }
-      );
-    }
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    if (adminAuthResponse) {
+      return adminAuthResponse;
     }
 
     const admin = createAdminClient();
