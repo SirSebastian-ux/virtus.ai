@@ -1,10 +1,5 @@
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
-import {
-  getPlanKey,
-  isFreePlan,
-  isPlusPlan,
-  isPremiumPlan,
-} from "@/data/virtus-plan-policy";
 
 export async function POST(request) {
   try {
@@ -15,114 +10,33 @@ export async function POST(request) {
       error: userError,
     } = await supabase.auth.getUser();
 
-    if (userError || !user) {
-      return Response.json(
+    if (userError || !user?.id) {
+      return NextResponse.json(
         {
           success: false,
-          error: "You must be signed in to change plan.",
+          error: "You must be signed in to manage your plan.",
         },
         { status: 401 }
       );
     }
 
-        const { data: existingProfiles, error: existingProfileError } = await supabase
-      .from("profiles")
-      .select("id, plan, plan_status")
-      .eq("id", user.id);
+    const body = await request.json().catch(() => ({}));
+    const requestedPlan = String(body?.plan || "").trim().toLowerCase();
 
-    if (existingProfileError) {
-      return Response.json(
-        {
-          success: false,
-          error: existingProfileError.message,
-        },
-        { status: 500 }
-      );
-    }
-
-    if (!Array.isArray(existingProfiles) || existingProfiles.length === 0) {
-      return Response.json(
-        {
-          success: false,
-          error: `No profile row exists for signed-in user ${user.id}.`,
-        },
-        { status: 500 }
-      );
-    }
-
-    if (existingProfiles.length > 1) {
-      return Response.json(
-        {
-          success: false,
-          error: `More than one profile row exists for signed-in user ${user.id}.`,
-        },
-        { status: 500 }
-      );
-    }
-
-        const currentProfile = existingProfiles[0];
-    const currentPlan = getPlanKey(currentProfile?.plan ?? "free");
-
-    const body = await request.json();
-    const requestedPlan = getPlanKey(body?.plan);
-
-    if (
-      !isFreePlan(requestedPlan) &&
-      !isPlusPlan(requestedPlan) &&
-      !isPremiumPlan(requestedPlan)
-    ) {
-      return Response.json(
-        {
-          success: false,
-          error: "Invalid plan selection.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const isAllowedUpgrade =
-      (currentPlan === "free" && requestedPlan === "plus") ||
-      (currentPlan === "plus" && requestedPlan === "premium") ||
-      currentPlan === requestedPlan;
-
-    if (!isAllowedUpgrade) {
-      return Response.json(
-        {
-          success: false,
-          error: `Plan change not allowed from ${currentPlan} to ${requestedPlan}.`,
-        },
-        { status: 400 }
-      );
-    }
-
-               const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        plan: requestedPlan,
-        plan_status: "active",
-      })
-      .eq("id", user.id);
-
-    if (updateError) {
-      return Response.json(
-        {
-          success: false,
-          error: updateError.message || "Failed to update plan.",
-        },
-        { status: 500 }
-      );
-    }
-
-    return Response.json({
-      success: true,
-      plan: requestedPlan,
-      planStatus: "active",
-    });
-  } catch (error) {
-    return Response.json(
+    return NextResponse.json(
       {
         success: false,
-        error: "Unexpected plan update error.",
+        error:
+          "Direct plan changes are disabled. Paid plans activate only through Stripe checkout and verified Stripe webhook events. To upgrade, use the upgrade page. To cancel or manage billing, use the billing portal.",
+        requestedPlan: requestedPlan || null,
+      },
+      { status: 403 }
+    );
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Unexpected billing access error.",
       },
       { status: 500 }
     );
