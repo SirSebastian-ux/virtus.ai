@@ -96,15 +96,44 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
   async function handlePlanChange(plan) {
     try {
-      setLoadingPlan(null);
+      setLoadingPlan(plan);
       setError("");
 
-      if (plan === "plus" || plan === "premium") {
-        if (isNativeIosApp) {
-          setError("For App Store safety, paid plan changes are managed on the Virtus AI website. Please sign in at virtusaiworld.com in your browser to upgrade or manage billing.");
+      if (!isAuthenticated) {
+        router.push("/login");
+        return;
+      }
+
+      if (plan === currentPlan) {
+        setError("This is already your current plan.");
+        setLoadingPlan(null);
+        return;
+      }
+
+      if (isNativeIosApp) {
+        setError("For App Store safety, paid plan changes are managed on the Virtus AI website. Please sign in at virtusaiworld.com in your browser to upgrade or manage billing.");
+        setLoadingPlan(null);
+        return;
+      }
+
+      if (plan === "free") {
+        const res = await fetch("/api/stripe/portal", {
+          method: "POST",
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data.url) {
+          setError(data.error || "Could not open the billing portal.");
           setLoadingPlan(null);
           return;
         }
+
+        window.location.href = data.url;
+        return;
+      }
+
+      if (plan === "plus" || plan === "premium") {
         const checkoutWindow =
           typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
 
@@ -116,7 +145,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
           body: JSON.stringify({ plan, billingCycle }),
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok || !data.url) {
           if (checkoutWindow) {
@@ -139,26 +168,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
         return;
       }
 
-      const res = await fetch("/api/account/plan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ plan }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        setError(data.error || "Failed to change plan.");
-        setLoadingPlan(null);
-        return;
-      }
-
-      router.refresh();
-      router.push("/");
+      setError("Invalid plan selected.");
+      setLoadingPlan(null);
     } catch (err) {
-      setError("Something went wrong while changing plan.");
+      setError("Something went wrong while managing your plan.");
       setLoadingPlan(null);
     }
   }
