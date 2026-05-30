@@ -31,27 +31,14 @@ export async function POST() {
       );
     }
 
-    let stripeCustomerId = profile?.stripe_customer_id || null;
-
-    if (!stripeCustomerId) {
-      const customers = await stripe.customers.list({
-        email: user.email,
-        limit: 1,
-      });
-
-      stripeCustomerId = customers.data?.[0]?.id || null;
-
-      if (stripeCustomerId) {
-        await supabase
-          .from("profiles")
-          .update({ stripe_customer_id: stripeCustomerId })
-          .eq("id", user.id);
-      }
-    }
+    const stripeCustomerId = profile?.stripe_customer_id || null;
 
     if (!stripeCustomerId) {
       return NextResponse.json(
-        { error: "No Stripe customer found for this account." },
+        {
+          error:
+            "No Stripe customer is connected to this account yet. Please upgrade first or contact support.",
+        },
         { status: 404 }
       );
     }
@@ -68,7 +55,6 @@ export async function POST() {
     console.error("STRIPE PORTAL ERROR:", {
       message: error.message,
       raw: error.raw,
-      stack: error.stack,
     });
 
     return NextResponse.json(
