@@ -1,0 +1,54 @@
+﻿name: Virtus AI CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Install, lint, and build
+    runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy_supabase_anon_key
+      SUPABASE_SERVICE_ROLE_KEY: dummy_supabase_service_role_key
+
+      OPENAI_API_KEY: sk-dummy_openai_key
+      TAVILY_API_KEY: dummy_tavily_key
+
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_dummy
+      STRIPE_SECRET_KEY: sk_test_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_dummy
+
+      STRIPE_PLUS_MONTHLY_PRICE_ID: price_plus_monthly_dummy
+      STRIPE_PLUS_YEARLY_PRICE_ID: price_plus_yearly_dummy
+      STRIPE_PREMIUM_MONTHLY_PRICE_ID: price_premium_monthly_dummy
+      STRIPE_PREMIUM_YEARLY_PRICE_ID: price_premium_yearly_dummy
+
+      VIRTUS_ADMIN_EMAILS: sebastian@ewellnessolutions.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Build app
+        run: npm run build
