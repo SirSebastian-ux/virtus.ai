@@ -13,6 +13,20 @@ function getSafeDownloadName(fileName) {
   return name || "virtus-file";
 }
 
+function isValidUserStoragePath(userId, storagePath) {
+  const userPrefix = `${userId}/`;
+  const value = String(storagePath || "");
+
+  return (
+    Boolean(userId) &&
+    value.startsWith(userPrefix) &&
+    !value.includes("..") &&
+    !value.includes("\\") &&
+    !value.startsWith("/") &&
+    !value.includes("//")
+  );
+}
+
 export async function GET(req) {
   try {
     const supabase = await createClient();
@@ -23,7 +37,7 @@ export async function GET(req) {
       error: userError,
     } = await supabase.auth.getUser();
 
-    if (userError || !user) {
+    if (userError || !user?.id) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
 
@@ -46,6 +60,13 @@ export async function GET(req) {
       return Response.json({ error: "File not found" }, { status: 404 });
     }
 
+    if (!isValidUserStoragePath(user.id, file.storage_path)) {
+      return Response.json(
+        { error: "File storage path is not allowed." },
+        { status: 403 }
+      );
+    }
+
     const { data: fileData, error: downloadError } = await admin.storage
       .from("user-files")
       .download(file.storage_path);
@@ -59,14 +80,15 @@ export async function GET(req) {
 
     const arrayBuffer = await fileData.arrayBuffer();
     const safeFileName = getSafeDownloadName(file.file_name);
+    const disposition = preview ? "inline" : "attachment";
 
     return new Response(arrayBuffer, {
       status: 200,
       headers: {
         "Content-Type": file.file_type || "application/octet-stream",
-        "Content-Disposition": `${
-          preview ? "inline" : "attachment"
-        }; filename="${safeFileName}"`,
+        "Content-Disposition": `${disposition}; filename="${safeFileName}"`,
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {

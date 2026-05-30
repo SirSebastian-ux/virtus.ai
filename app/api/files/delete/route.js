@@ -1,6 +1,20 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 
+function isValidUserStoragePath(userId, storagePath) {
+  const userPrefix = `${userId}/`;
+  const value = String(storagePath || "");
+
+  return (
+    Boolean(userId) &&
+    value.startsWith(userPrefix) &&
+    !value.includes("..") &&
+    !value.includes("\\") &&
+    !value.startsWith("/") &&
+    !value.includes("//")
+  );
+}
+
 export async function POST(req) {
   try {
     const supabase = await createClient();
@@ -11,11 +25,11 @@ export async function POST(req) {
       error: userError,
     } = await supabase.auth.getUser();
 
-    if (userError || !user) {
+    if (userError || !user?.id) {
       return Response.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const fileId = body?.fileId;
 
     if (!fileId) {
@@ -31,6 +45,13 @@ export async function POST(req) {
 
     if (fileError || !file) {
       return Response.json({ error: "File not found" }, { status: 404 });
+    }
+
+    if (!isValidUserStoragePath(user.id, file.storage_path)) {
+      return Response.json(
+        { error: "File storage path is not allowed." },
+        { status: 403 }
+      );
     }
 
     const { error: storageError } = await admin.storage
