@@ -5,7 +5,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function UpdatePasswordPage() {
-  const supabase = createClient();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -33,6 +32,7 @@ export default function UpdatePasswordPage() {
       const code = params.get("code");
 
       if (code) {
+        const supabase = createClient();
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (error) {
@@ -76,6 +76,8 @@ export default function UpdatePasswordPage() {
     }
 
     setLoading(true);
+
+    const supabase = createClient();
 
     const { error } = await supabase.auth.updateUser({
       password,
