@@ -5074,9 +5074,12 @@ return (
       </div>
 
       <div className="flex h-[70vh] items-center justify-center overflow-hidden rounded-xl border border-sky-900/25 bg-black">
-        <img
+        <Image
           src={`/api/files/download?fileId=${encodeURIComponent(imagePreviewFile.id)}&preview=1`}
           alt={imagePreviewFile.file_name}
+          width={1200}
+          height={800}
+          unoptimized
           className="h-full w-full object-contain"
         />
       </div>
@@ -5124,10 +5127,12 @@ return (
  <div className="flex h-full">
         <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-zinc-950 via-sky-950/10 to-black border-r border-sky-900/25 h-full flex-col shadow-[inset_-1px_0_0_rgba(14,165,233,0.12)]">
           <div className="px-4 pt-4 pb-3 border-b border-sky-900/20 bg-black/20 flex justify-center">
-  <img
+  <Image
     src="/virtus-logo.png"
     alt="Virtus AI logo"
-    className="block w-[190px] h-auto object-contain"
+    width={190}
+    height={80}
+    className="block h-auto w-[190px] object-contain"
   />
 </div>
 
@@ -5834,9 +5839,11 @@ if (data.conversation) {
     className="virtus-theme-card flex items-center gap-2 rounded-2xl border border-sky-900/20 px-2 py-1.5 text-sky-700 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-sky-950/10"
     aria-label="Open Virtus menu"
   >
-    <img
+    <Image
       src="/virtus-logo.png"
       alt="Virtus AI"
+      width={112}
+      height={48}
       className="h-7 w-auto object-contain"
     />
   </button>
@@ -5860,9 +5867,11 @@ if (data.conversation) {
 
 
 <div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
-  <img
+  <Image
     src="/virtus-logo.png"
     alt="Virtus AI"
+    width={128}
+    height={54}
     className="h-8 w-auto object-contain"
   />
 </div>
@@ -5890,9 +5899,11 @@ if (data.conversation) {
           }}
         >
           <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
-            <img
+            <Image
               src="/virtus-logo.png"
               alt="Virtus AI"
+              width={160}
+              height={68}
               className="h-10 w-auto object-contain"
             />
 
@@ -6323,9 +6334,12 @@ onClick={() => {
         className="block w-full bg-black/30 p-2 transition hover:bg-sky-950/10"
         aria-label="Open generated image preview"
       >
-        <img
+        <Image
           src={`/api/files/download?fileId=${encodeURIComponent(item.generatedImage.id)}&preview=1`}
           alt={item.generatedImage.file_name || "Virtus generated image"}
+          width={1200}
+          height={800}
+          unoptimized
           className="mx-auto max-h-[440px] w-full rounded-xl object-contain"
         />
       </button>
@@ -6763,9 +6777,12 @@ setRegenerating(true);
                   onClick={() => setImagePreviewFile(file)}
                   className="block w-full"
                 >
-                  <img
+                  <Image
                     src={previewUrl}
                     alt={file.file_name}
+                    width={320}
+                    height={180}
+                    unoptimized
                     className="h-28 w-full object-cover"
                   />
                 </button>
@@ -6884,9 +6901,12 @@ setRegenerating(true);
               className="h-9 w-12 shrink-0 overflow-hidden rounded-xl border border-sky-900/35 bg-black/50"
               title="Preview image"
             >
-              <img
+              <Image
                 src={previewUrl}
                 alt={file.file_name || "Attached image"}
+                width={96}
+                height={72}
+                unoptimized
                 className="h-full w-full object-cover"
               />
             </button>
