@@ -80,7 +80,7 @@ export default function AdminLibraryManagerPage() {
     loadData();
   }, []);
 
-  const files = data?.files || [];
+  const files = useMemo(() => data?.files || [], [data?.files]);
 
   const filteredFiles = useMemo(() => {
     const cleanSearch = search.trim().toLowerCase();
