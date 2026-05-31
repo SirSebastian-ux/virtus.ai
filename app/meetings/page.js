@@ -8,6 +8,7 @@ const platforms = ["Zoom", "Google Meet", "Microsoft Teams"];
 export default function MeetingsLobbyPage() {
   const [meetingLink, setMeetingLink] = useState("");
   const [virtusLink, setVirtusLink] = useState("");
+  const [linkNotice, setLinkNotice] = useState("");
 
   async function createVirtusMeetingLink() {
     const response = await fetch("/api/meetings", {
@@ -22,12 +23,37 @@ export default function MeetingsLobbyPage() {
     }
 
     const link = `${window.location.origin}${data.meetingLink}`;
+
     setVirtusLink(link);
+    setLinkNotice("Meeting link created. Copy or share it now.");
   }
 
   async function copyVirtusMeetingLink() {
     if (!virtusLink) return;
+
     await navigator.clipboard.writeText(virtusLink);
+    setLinkNotice("Copied.");
+
+    window.setTimeout(() => setLinkNotice(""), 1800);
+  }
+
+  async function shareVirtusMeetingLink() {
+    if (!virtusLink) return;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Virtus AI Meeting",
+          text: "Join my Virtus AI meeting room.",
+          url: virtusLink,
+        });
+
+        setLinkNotice("Shared.");
+        return;
+      } catch {}
+    }
+
+    await copyVirtusMeetingLink();
   }
 
   function enterVirtusRoom() {
@@ -69,7 +95,7 @@ export default function MeetingsLobbyPage() {
           </h1>
 
           <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-300">
-            Paste a Zoom, Google Meet, or Microsoft Teams link, or enter the Virtus room foundation.
+            Paste a Zoom, Google Meet, or Microsoft Teams link, or create a protected Virtus meeting room link.
           </p>
 
           <div className="mt-6 grid gap-3 md:grid-cols-[1fr_auto]">
@@ -100,11 +126,20 @@ export default function MeetingsLobbyPage() {
 
             <button
               type="button"
+              onClick={shareVirtusMeetingLink}
+              disabled={!virtusLink}
+              className="rounded-2xl border border-sky-700/40 bg-sky-950/35 px-5 py-3 text-sm font-medium text-sky-100 disabled:opacity-50"
+            >
+              Share Link
+            </button>
+
+            <button
+              type="button"
               onClick={copyVirtusMeetingLink}
               disabled={!virtusLink}
               className="rounded-2xl border border-zinc-800 bg-zinc-900/70 px-5 py-3 text-sm font-medium text-zinc-300 disabled:opacity-50"
             >
-              Copy Link
+              {linkNotice === "Copied." ? "Copied" : "Copy Link"}
             </button>
 
             <button
@@ -117,9 +152,14 @@ export default function MeetingsLobbyPage() {
           </div>
 
           {virtusLink && (
-            <p className="mt-4 break-all rounded-2xl border border-sky-900/25 bg-zinc-950/70 px-4 py-3 text-sm text-sky-100/80">
-              {virtusLink}
-            </p>
+            <div className="mt-4 rounded-2xl border border-sky-900/25 bg-zinc-950/70 px-4 py-3">
+              <p className="break-all text-sm text-sky-100/80">{virtusLink}</p>
+              {linkNotice && (
+                <p className="mt-2 text-xs font-medium text-sky-300/80">
+                  {linkNotice}
+                </p>
+              )}
+            </div>
           )}
         </section>
 
@@ -127,7 +167,7 @@ export default function MeetingsLobbyPage() {
           {platforms.map((platform) => (
             <div
               key={platform}
-              className="rounded-3xl border border-sky-900/25 bg-black/30 p-4"
+              className="rounded-3xl border border-zinc-800 bg-black/30 p-5"
             >
               <h2 className="text-xl font-semibold text-sky-100">{platform}</h2>
               <p className="mt-3 text-sm leading-6 text-zinc-400">

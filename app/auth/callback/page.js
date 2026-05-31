@@ -14,7 +14,14 @@ export default function AuthCallback() {
     );
 
     supabase.auth.getSession().then(() => {
-      router.replace("/");
+      const params = new URLSearchParams(window.location.search);
+      const nextFromUrl = params.get("next") || "";
+      const nextFromStorage = localStorage.getItem("virtus_login_next") || "";
+      const next = nextFromUrl || nextFromStorage || "/";
+      const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+
+      localStorage.removeItem("virtus_login_next");
+      router.replace(safeNext);
     });
   }, [router]);
 

@@ -6,6 +6,27 @@ import { createClient } from "@/lib/supabase-browser";
 export default function LoginPage() {
   const supabase = createClient();
 
+  function getSafeNextPath() {
+    if (typeof window === "undefined") return "/";
+
+    const params = new URLSearchParams(window.location.search);
+    const nextFromUrl = params.get("next") || "";
+    const nextFromStorage = localStorage.getItem("virtus_login_next") || "";
+    const next = nextFromUrl || nextFromStorage || "/";
+
+    if (!next.startsWith("/") || next.startsWith("//")) return "/";
+
+    return next;
+  }
+
+  function rememberNextPath() {
+    const next = getSafeNextPath();
+
+    localStorage.setItem("virtus_login_next", next);
+
+    return next;
+  }
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +67,7 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(getSafeNextPath())}`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(rememberNextPath())}`,
           },
         });
 
@@ -90,8 +111,11 @@ export default function LoginPage() {
             }
           }
 
-          setMessage("Signed in successfully. Your guest session has been moved into your account.");
-          window.location.href = "/";
+          const nextPath = rememberNextPath();
+
+          setMessage("Signed in successfully.");
+          localStorage.removeItem("virtus_login_next");
+          window.location.href = nextPath;
         }
       }
     } catch (error) {
