@@ -1181,23 +1181,29 @@ const writeCaptureLiveTranscriptFromAudio = (transcript) => {
   });
 };
 
+const LIVE_CAPTURE_CHUNKS_PER_SECTION = 10;
+
 const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
   if (!captureVoiceShouldContinueRef.current) return;
   if (!captureLiveTranscriptionFallbackRef.current) return;
+  if (!audioChunk || audioChunk.size <= 0) return;
 
-  const allChunks = (captureAudioChunksRef.current || []).filter(
-    (chunk) => chunk && chunk.size > 0
-  );
+  const safeMimeType = mimeType || audioChunk.type || "audio/webm";
 
-  if (!allChunks.length) return;
-
-  const safeMimeType =
-    mimeType || allChunks[0]?.type || audioChunk?.type || "audio/webm";
-
-  captureLivePendingAudioChunksRef.current = allChunks.slice();
+  captureLivePendingAudioChunksRef.current = [
+    ...(captureLivePendingAudioChunksRef.current || []),
+    audioChunk,
+  ];
   captureLivePendingMimeTypeRef.current = safeMimeType;
 
   if (captureLiveTranscriptionBusyRef.current) return;
+
+  if (
+    captureLivePendingAudioChunksRef.current.length <
+    LIVE_CAPTURE_CHUNKS_PER_SECTION
+  ) {
+    return;
+  }
 
   captureLiveTranscriptionBusyRef.current = true;
 
@@ -1205,10 +1211,15 @@ const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
     while (
       captureVoiceShouldContinueRef.current &&
       captureLiveTranscriptionFallbackRef.current &&
-      captureLivePendingAudioChunksRef.current.length > 0
+      captureLivePendingAudioChunksRef.current.length >=
+        LIVE_CAPTURE_CHUNKS_PER_SECTION
     ) {
-      const snapshotChunks = captureLivePendingAudioChunksRef.current.slice();
-      captureLivePendingAudioChunksRef.current = [];
+      const pendingChunks = captureLivePendingAudioChunksRef.current || [];
+      const snapshotChunks = pendingChunks.slice(0, LIVE_CAPTURE_CHUNKS_PER_SECTION);
+
+      captureLivePendingAudioChunksRef.current = pendingChunks.slice(
+        LIVE_CAPTURE_CHUNKS_PER_SECTION
+      );
 
       const snapshotMimeType =
         captureLivePendingMimeTypeRef.current ||
@@ -1222,40 +1233,65 @@ const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
 
       if (!snapshotBlob.size) continue;
 
-      const audioFile = new File(
-        [snapshotBlob],
-        `virtus-capture-live-snapshot.${extension}`,
-        { type: snapshotMimeType }
-      );
+      try {
+        const audioFile = new File(
+          [snapshotBlob],
+          `virtus-capture-live-section.${extension}`,
+          { type: snapshotMimeType }
+        );
 
-      const formData = new FormData();
-      formData.append("audio", audioFile);
-      formData.append("language", getCaptureTranscriptionLanguageCode());
+        const formData = new FormData();
+        formData.append("audio", audioFile);
+        formData.append("language", getCaptureTranscriptionLanguageCode());
 
-      const response = await fetch("/api/capture/transcribe", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data?.error || "Could not transcribe live audio.");
-      }
-
-      const transcript = String(data?.text || "").trim();
-
-      if (transcript && captureVoiceShouldContinueRef.current) {
-        captureLiveTranscriptRef.current = transcript;
-        captureLiveTextWrittenRef.current = true;
-
-        setCaptureContent(() => {
-          const baseText = String(captureVoiceBaseRef.current || "").trim();
-
-          if (!baseText) return transcript;
-
-          return `${baseText}\n\n${transcript}`.trim();
+        const response = await fetch("/api/capture/transcribe", {
+          method: "POST",
+          body: formData,
         });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data?.error || "Could not transcribe live audio.");
+        }
+
+        const transcript = String(data?.text || "").trim();
+
+        if (transcript && captureVoiceShouldContinueRef.current) {
+          const previousTranscript = String(
+            captureLiveTranscriptRef.current || ""
+          ).trim();
+
+          const combinedTranscript = `${previousTranscript} ${transcript}`
+            .replace(/\s+/g, " ")
+            .trim();
+
+          captureLiveTranscriptRef.current = combinedTranscript;
+          captureLiveTextWrittenRef.current = true;
+
+          captureAudioChunksRef.current = (
+            captureAudioChunksRef.current || []
+          ).slice(-LIVE_CAPTURE_CHUNKS_PER_SECTION * 2);
+
+          setCaptureContent(() => {
+            const baseText = String(captureVoiceBaseRef.current || "").trim();
+
+            if (!baseText) return combinedTranscript;
+
+            return `${baseText}\n\n${combinedTranscript}`.trim();
+          });
+
+          setCaptureNotice(
+            "Recording now. Protected section saved. Keep screen awake."
+          );
+        }
+      } catch (error) {
+        captureLivePendingAudioChunksRef.current = [
+          ...snapshotChunks,
+          ...(captureLivePendingAudioChunksRef.current || []),
+        ];
+
+        throw error;
       }
     }
   } catch (error) {
@@ -7062,5 +7098,3 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
-
-
