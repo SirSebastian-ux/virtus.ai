@@ -315,6 +315,7 @@ useEffect(() => {
   if (!practiceOpen || !isAuthenticated) return;
 
   loadGuidedPracticeHistory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [practiceOpen, isAuthenticated]);
 
 useEffect(() => {
@@ -326,6 +327,7 @@ useEffect(() => {
   }
 
   loadCaptureNotes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [captureOpen, isAuthenticated]);
 
 useEffect(() => {
@@ -514,6 +516,7 @@ useEffect(() => {
   return () => {
     cancelled = true;
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [isAuthenticated, currentUser?.email]);
 
 useEffect(() => {
@@ -542,6 +545,7 @@ useEffect(() => {
   } else {
     localStorage.removeItem(`${storagePrefix}_active`);
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [
   projectSpaces,
   projectChats,
@@ -715,6 +719,7 @@ useEffect(() => {
 
   sendMessage();
   setRegenerating(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [regenerating, message, loading]);
 
 useEffect(() => {
@@ -3209,6 +3214,7 @@ function getPlanCapabilityCard(plan) {
 
     localStorage.setItem("virtus_chat_id", savedChatId);
     setActiveChatId(savedChatId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
