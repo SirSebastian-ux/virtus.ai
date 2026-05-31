@@ -46,14 +46,14 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: "https://virtusaiworld.com/auth/callback",
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(getSafeNextPath())}`,
           },
         });
 
         if (error) {
           setMessage("Error: " + error.message);
         } else {
-          setMessage("Account created. Check your email and confirm your account before signing in.");
+          setMessage("Account created. Check your email and confirm your account. After confirmation, Virtus will return you to the page you opened.");
           setEmail("");
           setPassword("");
         }
@@ -213,4 +213,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

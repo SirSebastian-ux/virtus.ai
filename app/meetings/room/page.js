@@ -87,6 +87,24 @@ export default function MeetingsRoomPage() {
   ]);
 
   useEffect(() => {
+    async function protectMeetingRoom() {
+      try {
+        const response = await fetch("/api/auth/me", { cache: "no-store" });
+        const data = await response.json().catch(() => ({}));
+
+        if (!data?.isAuthenticated) {
+          const nextPath = `${window.location.pathname}${window.location.search}`;
+          window.location.href = `/login?next=${encodeURIComponent(nextPath)}`;
+        }
+      } catch {
+        const nextPath = `${window.location.pathname}${window.location.search}`;
+        window.location.href = `/login?next=${encodeURIComponent(nextPath)}`;
+      }
+    }
+
+    protectMeetingRoom();
+  }, []);
+  useEffect(() => {
     if (!roomId) return;
 
     async function loadRoom() {
