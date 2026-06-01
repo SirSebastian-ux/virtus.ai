@@ -167,11 +167,51 @@ export default function MeetingsRoomPage() {
     const videoTrack = streamRef.current?.getVideoTracks?.()[0];
 
     if (!videoTrack) {
-      startCameraAndMic().then(() => {
-        if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
-        setActiveView("none");
-        setMediaStatus("Camera preview is active in the small You window.");
+      startCameraAndMic().then((stream) => {
+        const currentStream = streamRef.current || stream;
+
+        if (selfVideoRef.current && currentStream) {
+          selfVideoRef.current.srcObject = currentStream;
+        }
+
+        if (micOn && mainVideoRef.current && currentStream) {
+          mainVideoRef.current.srcObject = currentStream;
+          setActiveView("camera");
+        } else {
+          if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
+          setActiveView("none");
+        }
+
+        setCameraOn(true);
+        setMediaStatus(
+          micOn
+            ? "Camera is on. Active speaker is shown on the big screen."
+            : "Camera preview is active in the small You window."
+        );
       });
+
+      return;
+    }
+
+    if (videoTrack.enabled) {
+      videoTrack.enabled = false;
+
+      if (selfVideoRef.current) {
+        selfVideoRef.current.srcObject = null;
+      }
+
+      if (activeView === "camera" && mainVideoRef.current) {
+        mainVideoRef.current.srcObject = null;
+        setActiveView("none");
+      }
+
+      setCameraOn(false);
+      setMediaStatus(
+        micOn
+          ? "Camera is off. Microphone remains on."
+          : "Camera is off. You remain in the meeting background."
+      );
+
       return;
     }
 
@@ -181,11 +221,20 @@ export default function MeetingsRoomPage() {
       selfVideoRef.current.srcObject = streamRef.current;
     }
 
-    if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
+    if (micOn && mainVideoRef.current && streamRef.current) {
+      mainVideoRef.current.srcObject = streamRef.current;
+      setActiveView("camera");
+    } else {
+      if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
+      setActiveView("none");
+    }
 
-    setActiveView("none");
     setCameraOn(true);
-    setMediaStatus("Camera preview is active in the small You window.");
+    setMediaStatus(
+      micOn
+        ? "Camera is on. Active speaker is shown on the big screen."
+        : "Camera preview is active in the small You window."
+    );
   }
 
   async function toggleMic() {
@@ -227,8 +276,7 @@ export default function MeetingsRoomPage() {
 
     audioTrack.enabled = true;
 
-    if (videoTrack) {
-      videoTrack.enabled = true;
+    if (videoTrack?.enabled) {
       setCameraOn(true);
 
       if (mainVideoRef.current && currentStream) {
@@ -238,8 +286,11 @@ export default function MeetingsRoomPage() {
       setActiveView("camera");
       setMediaStatus("Microphone is on. Active speaker is shown on the big screen.");
     } else {
+      if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
+
       setActiveView("none");
-      setMediaStatus("Microphone is on. Camera preview is not available.");
+      setCameraOn(false);
+      setMediaStatus("Microphone is on. Camera is off, so you stay in the background.");
     }
 
     setMicOn(true);
