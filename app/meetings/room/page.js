@@ -53,21 +53,8 @@ export default function MeetingsRoomPage() {
   const transcriptResolveRef = useRef(null);
 
   const [mediaStatus, setMediaStatus] = useState("Ready.");
-  const [roomId] = useState(() => {
-    if (typeof window === "undefined") return "";
-
-    return new URLSearchParams(window.location.search).get("room") || "";
-  });
-  const [roomStatus, setRoomStatus] = useState(() => {
-    if (typeof window === "undefined") return "Checking room...";
-
-    const currentRoomId =
-      new URLSearchParams(window.location.search).get("room") || "";
-
-    return currentRoomId
-      ? "Checking room..."
-      : "Local preview room. No shared room link detected.";
-  });
+  const [roomId, setRoomId] = useState("");
+  const [roomStatus, setRoomStatus] = useState("Checking room...");
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
@@ -87,6 +74,18 @@ export default function MeetingsRoomPage() {
   ]);
 
   useEffect(() => {
+    const currentRoomId =
+      new URLSearchParams(window.location.search).get("room") || "";
+
+    setRoomId(currentRoomId);
+    setRoomStatus(
+      currentRoomId
+        ? "Checking room..."
+        : "Local preview room. No shared room link detected."
+    );
+  }, []);
+
+  useEffect(() => {
     async function protectMeetingRoom() {
       try {
         const response = await fetch("/api/auth/me", { cache: "no-store" });
@@ -104,6 +103,12 @@ export default function MeetingsRoomPage() {
 
     protectMeetingRoom();
   }, []);
+  useEffect(() => {
+    if (activeView === "none" && mainVideoRef.current) {
+      mainVideoRef.current.srcObject = null;
+    }
+  }, [activeView]);
+
   useEffect(() => {
     if (!roomId) return;
 
@@ -138,14 +143,18 @@ export default function MeetingsRoomPage() {
       streamRef.current = stream;
 
       if (selfVideoRef.current) selfVideoRef.current.srcObject = stream;
+
       if (mainVideoRef.current && activeView !== "screen") {
-        mainVideoRef.current.srcObject = stream;
+        mainVideoRef.current.srcObject = null;
+      }
+
+      if (activeView !== "screen") {
+        setActiveView("none");
       }
 
       setCameraOn(true);
       setMicOn(true);
-      setActiveView("camera");
-      setMediaStatus("Camera and microphone are active.");
+      setMediaStatus("Camera and microphone are active. Your preview is visible.");
 
       return stream;
     } catch {
@@ -158,31 +167,82 @@ export default function MeetingsRoomPage() {
     const videoTrack = streamRef.current?.getVideoTracks?.()[0];
 
     if (!videoTrack) {
-      startCameraAndMic();
+      startCameraAndMic().then(() => {
+        if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
+        setActiveView("none");
+        setMediaStatus("Camera preview is active in the small You window.");
+      });
       return;
     }
 
-    videoTrack.enabled = !videoTrack.enabled;
-    setCameraOn(videoTrack.enabled);
+    videoTrack.enabled = true;
+
+    if (selfVideoRef.current && streamRef.current) {
+      selfVideoRef.current.srcObject = streamRef.current;
+    }
+
+    if (mainVideoRef.current) mainVideoRef.current.srcObject = null;
+
+    setActiveView("none");
+    setCameraOn(true);
+    setMediaStatus("Camera preview is active in the small You window.");
   }
 
-  function toggleMic() {
-    const audioTrack = streamRef.current?.getAudioTracks?.()[0];
+  async function toggleMic() {
+    let startedMedia = false;
+    let currentStream = streamRef.current;
+    let audioTrack = currentStream?.getAudioTracks?.()[0];
+    let videoTrack = currentStream?.getVideoTracks?.()[0];
 
-    if (!audioTrack) {
-      startCameraAndMic();
+    if (!audioTrack || !videoTrack) {
+      const stream = await startCameraAndMic();
+
+      startedMedia = true;
+      currentStream = streamRef.current || stream;
+      audioTrack = currentStream?.getAudioTracks?.()[0];
+      videoTrack = currentStream?.getVideoTracks?.()[0];
+
+      if (!audioTrack) {
+        setMediaStatus("Microphone permission was blocked.");
+        return;
+      }
+    }
+
+    if (selfVideoRef.current && currentStream) {
+      selfVideoRef.current.srcObject = currentStream;
+    }
+
+    if (audioTrack.enabled && !startedMedia) {
+      audioTrack.enabled = false;
+
+      if (activeView === "camera" && mainVideoRef.current) {
+        mainVideoRef.current.srcObject = null;
+        setActiveView("none");
+      }
+
+      setMicOn(false);
+      setMediaStatus("Microphone is off. You remain visible only in the small You window.");
       return;
     }
 
-    audioTrack.enabled = !audioTrack.enabled;
-    setMicOn(audioTrack.enabled);
+    audioTrack.enabled = true;
 
-    if (!audioTrack.enabled) {
-      setMediaStatus("Microphone is muted.");
-      return;
+    if (videoTrack) {
+      videoTrack.enabled = true;
+      setCameraOn(true);
+
+      if (mainVideoRef.current && currentStream) {
+        mainVideoRef.current.srcObject = currentStream;
+      }
+
+      setActiveView("camera");
+      setMediaStatus("Microphone is on. Active speaker is shown on the big screen.");
+    } else {
+      setActiveView("none");
+      setMediaStatus("Microphone is on. Camera preview is not available.");
     }
 
-    setMediaStatus("Microphone is on.");
+    setMicOn(true);
   }
 
   async function startScreenShare() {
@@ -201,11 +261,11 @@ export default function MeetingsRoomPage() {
       if (screenTrack) {
         screenTrack.onended = () => {
           setScreenOn(false);
-          setActiveView(streamRef.current ? "camera" : "none");
+          setActiveView("none");
           if (mainVideoRef.current) {
-            mainVideoRef.current.srcObject = streamRef.current || null;
+            mainVideoRef.current.srcObject = null;
           }
-          setMediaStatus("Screen sharing stopped.");
+          setMediaStatus("Screen sharing stopped. Camera preview remains in the small You window.");
         };
       }
 
@@ -596,7 +656,14 @@ export default function MeetingsRoomPage() {
 
         stopCompositeRecordingResources();
 
-        window.location.href = `/meetings/recording?recordingId=${recordingId}`;
+        const recordingUrl = `/meetings/recording?recordingId=${recordingId}`;
+        const reviewWindow = window.open(recordingUrl, "_blank", "noopener,noreferrer");
+
+        setRecordingStatus(
+          reviewWindow
+            ? "Recording saved. Review opened in a new tab."
+            : "Recording saved. Your browser blocked the review tab."
+        );
       };
 
       recorder.onerror = () => {
@@ -679,36 +746,50 @@ export default function MeetingsRoomPage() {
         </Link>
       </div>
 
-      <div className="absolute left-4 top-28 z-30 flex flex-col gap-4">
-        <div className="h-24 w-32 rounded-2xl border border-sky-900/30 bg-black/70"></div>
-        <div className="h-24 w-32 rounded-2xl border border-sky-900/30 bg-black/70"></div>
-        <div className="h-24 w-32 rounded-2xl border border-sky-900/30 bg-black/70"></div>
-        <div className="relative h-24 w-32 overflow-hidden rounded-2xl border border-sky-900/30 bg-black/70">
-          {handRaised && (
-            <div className="absolute left-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/50 bg-amber-950/70 text-lg shadow-lg shadow-amber-950/40 backdrop-blur">
-              {"\u270B"}
-            </div>
-          )}
-          <video ref={selfVideoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
-        </div>
+      <div className="absolute left-5 top-20 z-30 hidden flex-col gap-3 xl:flex">
+        {["Participant", "Participant", "Participant", "Participant"].map((label, index) => (
+          <div
+            key={`left-${label}-${index}`}
+            className="flex h-32 w-56 items-center justify-center rounded-3xl border border-sky-900/30 bg-zinc-950/75 text-xs font-medium uppercase tracking-[0.22em] text-sky-200/35 shadow-2xl shadow-black/40 backdrop-blur"
+          >
+            {label}
+          </div>
+        ))}
       </div>
 
-      <div className="absolute right-4 top-28 z-30 flex flex-col gap-4">
-        <div className="h-24 w-32 rounded-2xl border border-sky-900/30 bg-black/70"></div>
-        <div className="h-24 w-32 rounded-2xl border border-sky-900/30 bg-black/70"></div>
-        <div className="h-24 w-32 rounded-2xl border border-sky-900/30 bg-black/70"></div>
-        <div className="relative h-24 w-32 overflow-hidden rounded-2xl border border-sky-900/30 bg-black/70">
+      <div className="absolute right-5 top-20 z-30 hidden flex-col gap-3 xl:flex">
+        {["Participant", "Participant", "Participant"].map((label, index) => (
+          <div
+            key={`${label}-${index}`}
+            className="flex h-32 w-56 items-center justify-center rounded-3xl border border-sky-900/30 bg-zinc-950/75 text-xs font-medium uppercase tracking-[0.22em] text-sky-200/35 shadow-2xl shadow-black/40 backdrop-blur"
+          >
+            {label}
+          </div>
+        ))}
+
+        <div className="relative h-32 w-56 overflow-hidden rounded-3xl border border-sky-700/40 bg-black/80 shadow-2xl shadow-sky-950/40">
           {handRaised && (
-            <div className="absolute left-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-amber-500/50 bg-amber-950/70 text-lg shadow-lg shadow-amber-950/40 backdrop-blur">
+            <div className="absolute left-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-amber-500/50 bg-amber-950/70 text-lg shadow-lg shadow-amber-950/40 backdrop-blur">
               {"\u270B"}
             </div>
           )}
+
+          <div className="absolute bottom-2 left-2 z-20 rounded-full border border-sky-700/40 bg-black/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-100 backdrop-blur">
+            You
+          </div>
+
           <video ref={selfVideoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
         </div>
       </div>
 
       <section className="relative mx-auto h-full w-[78vw] max-w-[1280px]">
-        <video ref={mainVideoRef} autoPlay muted playsInline className="h-full w-full object-contain" />
+                <video
+          ref={mainVideoRef}
+          autoPlay
+          muted
+          playsInline
+          className={activeView === "none" ? "hidden" : "h-full w-full object-contain"}
+        />
 
         {handRaised && activeView !== "none" && (
           <div className="absolute left-28 top-10 z-30 flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/50 bg-amber-950/70 text-2xl shadow-2xl shadow-amber-950/40 backdrop-blur">

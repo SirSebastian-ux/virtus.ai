@@ -137,7 +137,7 @@ export default function MeetingsLobbyPage() {
               type="button"
               onClick={copyVirtusMeetingLink}
               disabled={!virtusLink}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/70 px-5 py-3 text-sm font-medium text-zinc-300 disabled:opacity-50"
+              className="rounded-2xl border border-sky-700/40 bg-sky-950/35 px-5 py-3 text-sm font-medium text-sky-100 disabled:opacity-50"
             >
               {linkNotice === "Copied." ? "Copied" : "Copy Link"}
             </button>
