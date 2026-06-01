@@ -833,7 +833,7 @@ export default function MeetingsRoomPage() {
         </div>
       </div>
 
-      <section className="relative mx-auto h-full w-[78vw] max-w-[1280px]">
+      <section className="absolute bottom-24 left-1/2 top-20 w-[calc(100vw-720px)] max-w-[1180px] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-sky-900/20 bg-black/40 shadow-2xl shadow-sky-950/20">
                 <video
           ref={mainVideoRef}
           autoPlay
