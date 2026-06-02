@@ -6314,6 +6314,30 @@ if (data.conversation) {
               Profile
             </Link>
 
+            {recentConversations.length > 0 && (
+              <div className="rounded-2xl border border-sky-900/20 p-3">
+                <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
+                  Recent Chats
+                </p>
+
+                <div className="max-h-48 space-y-1 overflow-y-auto no-scrollbar">
+                  {recentConversations.slice(0, 8).map((chat) => (
+                    <button
+                      key={chat.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveChatId(chat.id);
+                        setShowMobileMenu(false);
+                      }}
+                      className="block w-full truncate rounded-xl px-3 py-2 text-left text-sm text-zinc-200 transition hover:bg-white/5"
+                    >
+                      {chat.title || "New chat"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="my-3 h-px bg-sky-900/20" />
 
             {isAuthenticated ? (
@@ -7228,6 +7252,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
