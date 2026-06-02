@@ -6310,25 +6310,9 @@ if (data.conversation) {
               Meetings
             </Link>
 
-            <div className="rounded-2xl border border-sky-900/20 p-2">
-              <Link href="/account" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-xl px-3 py-3 transition">
-                Profile
-              </Link>
-
-              <div className="ml-4 border-l border-sky-900/20 pl-3">
-                <Link href="/account/personalization" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-xl px-3 py-2 text-sm transition">
-                  Personalization
-                </Link>
-
-                <Link href="/account/personalization/memory" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-xl px-3 py-2 text-sm transition">
-                  Memory
-                </Link>
-
-                <Link href="/upgrade" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-xl px-3 py-2 text-sm transition">
-                  Plan
-                </Link>
-              </div>
-            </div>
+            <Link href="/account" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
+              Profile
+            </Link>
 
             <div className="my-3 h-px bg-sky-900/20" />
 
@@ -7244,6 +7228,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
