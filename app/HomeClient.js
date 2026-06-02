@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -74,6 +74,7 @@ const captureSpeechResultSeenRef = useRef(false);
 const captureRecordingTimerRef = useRef(null);
 const captureWakeLockRef = useRef(null);
 const captureStopReasonRef = useRef("");
+const captureFinalizingRef = useRef(false);
 const captureTextareaRef = useRef(null);
 const speechBaseMessageRef = useRef("");
 const speechFinalTranscriptRef = useRef("");
@@ -1181,26 +1182,141 @@ const writeCaptureLiveTranscriptFromAudio = (transcript) => {
   });
 };
 
-const LIVE_CAPTURE_CHUNKS_PER_SECTION = 10;
+const startCaptureBrowserLiveText = () => {
+  if (typeof window === "undefined") return false;
 
-const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
-  if (!captureVoiceShouldContinueRef.current) return;
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    setCaptureNotice(
+      "Live browser text is not available in this browser. Capture will transcribe when you stop."
+    );
+    return false;
+  }
+
+  try {
+    if (captureRecognitionRef.current) {
+      try {
+        captureRecognitionRef.current.stop();
+      } catch {}
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = captureVoiceLanguage || "en-US";
+
+    recognition.onresult = (event) => {
+      let finalText = "";
+      let interimText = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const spoken = String(result?.[0]?.transcript || "").trim();
+
+        if (!spoken) continue;
+
+        if (result.isFinal) {
+          finalText = `${finalText} ${spoken}`.trim();
+        } else {
+          interimText = `${interimText} ${spoken}`.trim();
+        }
+      }
+
+      if (finalText) {
+        captureVoiceCommittedRef.current = `${
+          captureVoiceCommittedRef.current || ""
+        } ${finalText}`
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      const liveText = `${captureVoiceCommittedRef.current || ""} ${interimText || ""}`
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (liveText) {
+        captureLiveTextWrittenRef.current = true;
+      }
+
+      setCaptureContent(() => {
+        const baseText = String(captureVoiceBaseRef.current || "").trim();
+
+        if (!baseText) return liveText;
+        if (!liveText) return baseText;
+
+        return `${baseText}\n\n${liveText}`.trim();
+      });
+    };
+
+    recognition.onerror = (event) => {
+      console.warn("Capture browser speech recognition error:", event?.error || event);
+    };
+
+    recognition.onend = () => {
+      if (!captureVoiceShouldContinueRef.current) return;
+
+      window.setTimeout(() => {
+        if (!captureVoiceShouldContinueRef.current) return;
+
+        try {
+          recognition.start();
+        } catch {}
+      }, 500);
+    };
+
+    captureRecognitionRef.current = recognition;
+    recognition.start();
+
+    return true;
+  } catch (error) {
+    console.warn("Could not start Capture browser live text:", error);
+    return false;
+  }
+};
+const LIVE_CAPTURE_CHUNKS_PER_SECTION = 5;
+
+const waitForCaptureLiveTranscriptionIdle = async () => {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (!captureLiveTranscriptionBusyRef.current) return;
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, 500);
+    });
+  }
+};
+
+const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType, force = false) => {
+  const canProcess =
+    force || captureFinalizingRef.current || captureVoiceShouldContinueRef.current;
+
+  if (!canProcess) return;
   if (!captureLiveTranscriptionFallbackRef.current) return;
-  if (!audioChunk || audioChunk.size <= 0) return;
 
-  const safeMimeType = mimeType || audioChunk.type || "audio/webm";
+  if ((!audioChunk || audioChunk.size <= 0) && !force) return;
 
-  captureLivePendingAudioChunksRef.current = [
-    ...(captureLivePendingAudioChunksRef.current || []),
-    audioChunk,
-  ];
+  const safeMimeType =
+    mimeType ||
+    audioChunk?.type ||
+    captureLivePendingMimeTypeRef.current ||
+    "audio/webm";
+
+  if (audioChunk && audioChunk.size > 0) {
+    captureLivePendingAudioChunksRef.current = [
+      ...(captureLivePendingAudioChunksRef.current || []),
+      audioChunk,
+    ];
+  }
+
   captureLivePendingMimeTypeRef.current = safeMimeType;
 
   if (captureLiveTranscriptionBusyRef.current) return;
 
   if (
+    !force &&
     captureLivePendingAudioChunksRef.current.length <
-    LIVE_CAPTURE_CHUNKS_PER_SECTION
+      LIVE_CAPTURE_CHUNKS_PER_SECTION
   ) {
     return;
   }
@@ -1209,17 +1325,21 @@ const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
 
   try {
     while (
-      captureVoiceShouldContinueRef.current &&
+      (force || captureFinalizingRef.current || captureVoiceShouldContinueRef.current) &&
       captureLiveTranscriptionFallbackRef.current &&
       captureLivePendingAudioChunksRef.current.length >=
-        LIVE_CAPTURE_CHUNKS_PER_SECTION
+        (force ? 1 : LIVE_CAPTURE_CHUNKS_PER_SECTION)
     ) {
       const pendingChunks = captureLivePendingAudioChunksRef.current || [];
-      const snapshotChunks = pendingChunks.slice(0, LIVE_CAPTURE_CHUNKS_PER_SECTION);
-
-      captureLivePendingAudioChunksRef.current = pendingChunks.slice(
-        LIVE_CAPTURE_CHUNKS_PER_SECTION
+      const allRecordedChunks = (captureAudioChunksRef.current || []).filter(
+        (chunk) => chunk && chunk.size > 0
       );
+
+      const snapshotChunks = force
+        ? pendingChunks
+        : allRecordedChunks;
+
+      captureLivePendingAudioChunksRef.current = [];
 
       const snapshotMimeType =
         captureLivePendingMimeTypeRef.current ||
@@ -1257,14 +1377,14 @@ const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
 
         const transcript = String(data?.text || "").trim();
 
-        if (transcript && captureVoiceShouldContinueRef.current) {
+        if (transcript && (force || captureFinalizingRef.current || captureVoiceShouldContinueRef.current)) {
           const previousTranscript = String(
             captureLiveTranscriptRef.current || ""
           ).trim();
 
-          const combinedTranscript = `${previousTranscript} ${transcript}`
-            .replace(/\s+/g, " ")
-            .trim();
+          const combinedTranscript = force
+            ? `${previousTranscript} ${transcript}`.replace(/\s+/g, " ").trim()
+            : transcript.replace(/\s+/g, " ").trim();
 
           captureLiveTranscriptRef.current = combinedTranscript;
           captureLiveTextWrittenRef.current = true;
@@ -1286,12 +1406,15 @@ const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType) => {
           );
         }
       } catch (error) {
-        captureLivePendingAudioChunksRef.current = [
-          ...snapshotChunks,
-          ...(captureLivePendingAudioChunksRef.current || []),
-        ];
+        console.warn("Skipping failed live capture section so later audio can continue.", error);
 
-        throw error;
+        if (captureVoiceShouldContinueRef.current || captureFinalizingRef.current) {
+          setCaptureNotice(
+            "One protected audio section failed. Capture is continuing with the next section."
+          );
+        }
+
+        continue;
       }
     }
   } catch (error) {
@@ -1602,6 +1725,7 @@ const handleCaptureMicrophoneClick = async () => {
     captureAudioChunksRef.current = [];
     captureAudioBlobRef.current = null;
     captureVoiceShouldContinueRef.current = true;
+    captureFinalizingRef.current = false;
     setCaptureRecordingSeconds(0);
     await requestCaptureWakeLock();
 
@@ -1616,13 +1740,7 @@ const handleCaptureMicrophoneClick = async () => {
     recorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
         captureAudioChunksRef.current.push(event.data);
-
-        if (captureLiveTranscriptionFallbackRef.current) {
-          void transcribeCaptureAudioChunkLive(
-            event.data,
-            event.data.type || mimeType || "audio/webm"
-          );
-        }
+        // Stable mode: only collect audio while recording. OpenAI transcribes once on stop.
       }
     };
 
@@ -1633,7 +1751,7 @@ const handleCaptureMicrophoneClick = async () => {
       setCaptureNotice("Recording had a problem. Preparing any captured audio...");
     };
 
-    recorder.onstop = () => {
+    recorder.onstop = async () => {
       const audioChunks = captureAudioChunksRef.current || [];
       const audioBlob = new Blob(audioChunks, {
         type: mimeType || "audio/webm",
@@ -1660,19 +1778,37 @@ const handleCaptureMicrophoneClick = async () => {
 
       if (audioBlob.size > 0) {
         const stopMessage =
-          captureStopReasonRef.current || "Recording stopped. Finalizing live note.";
-        const liveTextWasWritten = captureLiveTextWrittenRef.current;
-        captureStopReasonRef.current = "";
+          captureStopReasonRef.current ||
+          "Capture finished. Review or save the note.";
 
-        if (liveTextWasWritten) {
-          setCaptureNotice("Capture finished. Review or save the note.");
-        } else {
-          setCaptureNotice(stopMessage);
+        captureFinalizingRef.current = true;
+        setCaptureTranscribing(true);
+        setCaptureNotice("Finalizing Capture audio...");
+
+        try {
+          await waitForCaptureLiveTranscriptionIdle();
+
+          if (
+            captureLiveTranscriptionFallbackRef.current &&
+            captureLivePendingAudioChunksRef.current.length > 0
+          ) {
+            await transcribeCaptureAudioChunkLive(null, mimeType || "audio/webm", true);
+          }
+
+          await transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
+        } catch (error) {
+          console.warn("Capture finalizing failed. Trying full audio transcription.", error);
+          await transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
+        } finally {
+          captureFinalizingRef.current = false;
+          captureStopReasonRef.current = "";
+          captureAudioChunksRef.current = [];
+          captureLivePendingAudioChunksRef.current = [];
+          captureLivePendingMimeTypeRef.current = "";
+          setCaptureTranscribing(false);
         }
-
-        captureAudioChunksRef.current = [];
-        setCaptureTranscribing(false);
       } else {
+        captureFinalizingRef.current = false;
         captureStopReasonRef.current = "";
         setCaptureNotice(
           "Recording stopped before audio could be saved. Please try again and keep the screen awake."
@@ -1707,18 +1843,16 @@ const handleCaptureMicrophoneClick = async () => {
       } catch {
         captureTextareaRef.current?.focus?.();
       }
-
-      // High-accuracy Capture mode:
-      // Browser live speech is fast, but less reliable.
-      // We use protected audio sections as the main live-writing source.
-      captureLiveTranscriptionFallbackRef.current = true;
+      // Stable Capture mode:
+      // Browser speech recognition writes live text while MediaRecorder records one full file.
+      captureLiveTranscriptionFallbackRef.current = false;
+      startCaptureBrowserLiveText();
 
       setCaptureNotice(
-        "Recording now. High-accuracy text will appear in short protected sections."
-      );
-    };
+        "Recording now. Speak naturally. Live text appears while recording; final audio is prepared when you stop."
+      );};
 
-    recorder.start(3000);
+    recorder.start();
   } catch (error) {
     stopCaptureVoiceEngine();
 
@@ -7098,3 +7232,4 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
