@@ -1,5 +1,5 @@
-{
-  "appId": "com.virtusai.app",
+﻿{
+  "appId": "com.virtusaiworld.app",
   "appName": "Virtus AI",
   "webDir": "public",
   "server": {
@@ -7,4 +7,3 @@
     "cleartext": false
   }
 }
-

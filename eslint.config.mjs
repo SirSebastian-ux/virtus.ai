@@ -1,25 +1,20 @@
-﻿import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
+﻿import nextVitals from "eslint-config-next/core-web-vitals";
 
-const eslintConfig = defineConfig([
+const config = [
+  {
+    ignores: [
+      "**/android/**",
+      "**/ios/**",
+      "**/dist-android/**",
+      "**/.next/**",
+      "**/node_modules/**",
+      "**/.virtus-backups/**",
+      "**/.local-untracked-hold/**",
+      "**/*.backup.js",
+      "**/*.before-*.js"
+    ],
+  },
   ...nextVitals,
-  // Project-level ignores.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
+];
 
-    // Local backup / holding folders:
-    ".virtus-backups/**",
-    ".local-untracked-hold/**",
-
-    // Local backup files:
-    "**/*.backup.js",
-    "**/*.before-*.js",
-    "**/*.bak*.js",
-  ]),
-]);
-
-export default eslintConfig;
+export default config;
