@@ -6306,6 +6306,9 @@ if (data.conversation) {
               </div>
             )}
 
+            <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
+              Meetings
+            </Link>
             <Link href="/account" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
               Profile
             </Link>
@@ -7236,6 +7239,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
