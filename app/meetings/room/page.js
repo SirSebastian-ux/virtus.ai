@@ -200,6 +200,16 @@ export default function MeetingsRoomPage() {
           },
         ]);
       }
+
+      if (data.type === "raise-hand") {
+        setChatMessages((current) => [
+          ...current,
+          {
+            name: "Virtus",
+            text: `${participant?.name || participant?.identity || "Participant"} raised a hand ✋`,
+          },
+        ]);
+      }
     } catch {}
   }
 
@@ -255,6 +265,25 @@ export default function MeetingsRoomPage() {
 
     await room.localParticipant.setScreenShareEnabled(!screenOn);
     setScreenOn((current) => !current);
+  }
+
+  async function sendRaiseHand() {
+    if (!roomRef.current) return;
+
+    const payload = new TextEncoder().encode(
+      JSON.stringify({
+        type: "raise-hand",
+      })
+    );
+
+    await roomRef.current.localParticipant.publishData(payload, {
+      reliable: true,
+    });
+
+    setChatMessages((current) => [
+      ...current,
+      { name: "You", text: "You raised your hand ✋" },
+    ]);
   }
 
   async function sendChatMessage() {
@@ -365,7 +394,7 @@ export default function MeetingsRoomPage() {
         <button type="button" onClick={toggleScreenShare} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           {screenOn ? "sharing" : "share"}
         </button>
-        <button type="button" className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
+        <button type="button" onClick={sendRaiseHand} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           raise hand
         </button>
         <button type="button" className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
@@ -381,3 +410,4 @@ export default function MeetingsRoomPage() {
     </main>
   );
 }
+
