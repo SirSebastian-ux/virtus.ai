@@ -10,15 +10,52 @@ import {
   createLocalVideoTrack,
 } from "livekit-client";
 
+function ParticipantVideoTile({ label, track, isLocal = false }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (!track || !videoRef.current) return;
+
+    const videoElement = videoRef.current;
+    track.attach(videoElement);
+
+    return () => {
+      track.detach(videoElement);
+    };
+  }, [track]);
+
+  return (
+    <div className="relative min-h-32 overflow-hidden rounded-3xl border border-sky-900/30 bg-zinc-950 shadow-xl shadow-black/40">
+      {track ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          muted={isLocal}
+          playsInline
+          className="h-full min-h-32 w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full min-h-32 items-center justify-center bg-zinc-950 text-3xl text-sky-100/50">
+          {String(label || "?").slice(0, 1).toUpperCase()}
+        </div>
+      )}
+
+      <div className="absolute bottom-2 left-2 rounded-full border border-sky-900/40 bg-black/70 px-3 py-1 text-[11px] font-medium text-sky-100 backdrop-blur">
+        {label}
+      </div>
+    </div>
+  );
+}
+
 export default function MeetingsRoomPage() {
   const mainVideoRef = useRef(null);
-  const selfVideoRef = useRef(null);
   const roomRef = useRef(null);
   const participantIdentityRef = useRef(
     typeof crypto !== "undefined" && crypto.randomUUID
       ? crypto.randomUUID()
       : String(Date.now())
   );
+
   const localVideoTrackRef = useRef(null);
   const localAudioTrackRef = useRef(null);
 
@@ -27,6 +64,7 @@ export default function MeetingsRoomPage() {
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
+  const [localVideoTrack, setLocalVideoTrack] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
@@ -89,6 +127,7 @@ export default function MeetingsRoomPage() {
         room.on(RoomEvent.ParticipantDisconnected, refreshParticipants);
         room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
         room.on(RoomEvent.TrackUnsubscribed, refreshParticipants);
+        room.on(RoomEvent.ActiveSpeakersChanged, refreshParticipants);
         room.on(RoomEvent.DataReceived, handleDataReceived);
 
         await room.connect(tokenData.url, tokenData.token);
@@ -120,27 +159,30 @@ export default function MeetingsRoomPage() {
     if (!room) return;
 
     const remoteParticipants = Array.from(room.remoteParticipants.values()).map(
-      (participant) => ({
-        sid: participant.sid,
-        identity: participant.identity,
-        name: participant.name || participant.identity || "Participant",
-      })
+      (participant) => {
+        const videoPublication = Array.from(participant.trackPublications.values()).find(
+          (publication) => publication.kind === Track.Kind.Video && publication.track
+        );
+
+        return {
+          sid: participant.sid,
+          identity: participant.identity,
+          name: participant.name || participant.identity || "Participant",
+          videoTrack: videoPublication?.track || null,
+          isSpeaking: participant.isSpeaking || false,
+        };
+      }
     );
 
     setParticipants(remoteParticipants);
   }
 
   function handleTrackSubscribed(track, publication, participant) {
-    if (track.kind !== Track.Kind.Video) {
-      refreshParticipants();
-      return;
-    }
-
-    if (mainVideoRef.current) {
+    if (track.kind === Track.Kind.Video && mainVideoRef.current) {
       track.attach(mainVideoRef.current);
+      setStatus(`${participant.name || participant.identity || "Participant"} is on screen.`);
     }
 
-    setStatus(`${participant.name || participant.identity || "Participant"} is on screen.`);
     refreshParticipants();
   }
 
@@ -172,17 +214,14 @@ export default function MeetingsRoomPage() {
         localVideoTrackRef.current = null;
       }
 
-      if (selfVideoRef.current) selfVideoRef.current.srcObject = null;
+      setLocalVideoTrack(null);
       setCameraOn(false);
       return;
     }
 
     const videoTrack = await createLocalVideoTrack();
     localVideoTrackRef.current = videoTrack;
-
-    if (selfVideoRef.current) {
-      videoTrack.attach(selfVideoRef.current);
-    }
+    setLocalVideoTrack(videoTrack);
 
     await room.localParticipant.publishTrack(videoTrack);
     setCameraOn(true);
@@ -238,53 +277,51 @@ export default function MeetingsRoomPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-black text-zinc-100">
+    <main className="relative h-screen overflow-hidden bg-black text-zinc-100">
       <div className="absolute left-4 top-4 z-40">
         <Link href="/meetings" className="rounded-full border border-sky-900/40 bg-black/70 px-4 py-2 text-sm text-sky-100 backdrop-blur">
-          Back to Meetings
+          Back
         </Link>
       </div>
 
-      <section className="mx-auto flex min-h-screen max-w-7xl flex-col gap-5 px-5 pb-28 pt-20">
-        <div className="rounded-3xl border border-sky-900/30 bg-zinc-950/70 p-5 shadow-2xl shadow-sky-950/20">
+      <section className="flex h-screen flex-col px-4 pb-24 pt-16">
+        <div className="mb-4 rounded-3xl border border-sky-900/30 bg-zinc-950/70 px-5 py-4 shadow-2xl shadow-sky-950/20">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/70">
             Virtus AI Executive Meeting
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-sky-100">
-            Live Meeting Room
-          </h1>
-          <p className="mt-2 break-all text-sm text-zinc-400">
+          <p className="mt-1 break-all text-sm text-zinc-400">
             {status} {roomId ? `Room: ${roomId}` : ""}
           </p>
         </div>
 
-        <div className="grid flex-1 gap-5 xl:grid-cols-[1fr_360px]">
-          <div className="overflow-hidden rounded-[2rem] border border-sky-900/30 bg-black shadow-2xl shadow-sky-950/30">
-            <video ref={mainVideoRef} autoPlay playsInline className="h-[58vh] w-full bg-black object-contain" />
+        <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[1fr_340px]">
+          <div className="relative min-h-0 overflow-hidden rounded-[2rem] border border-sky-900/30 bg-black shadow-2xl shadow-sky-950/30">
+            <video ref={mainVideoRef} autoPlay playsInline className="h-full w-full bg-black object-contain" />
+            <div className="absolute bottom-4 left-4 rounded-full border border-sky-900/40 bg-black/70 px-4 py-2 text-xs font-medium text-sky-100 backdrop-blur">
+              Main speaker
+            </div>
           </div>
 
-          <aside className="space-y-4">
-            <div className="overflow-hidden rounded-3xl border border-sky-700/40 bg-black/80 shadow-2xl shadow-sky-950/40">
-              <video ref={selfVideoRef} autoPlay muted playsInline className="h-48 w-full object-cover" />
-              <div className="border-t border-sky-900/30 px-4 py-3 text-sm text-sky-100">
-                You
-              </div>
+          <aside className="min-h-0 overflow-y-auto rounded-[2rem] border border-sky-900/30 bg-zinc-950/70 p-3 shadow-2xl shadow-sky-950/20">
+            <div className="mb-3 flex items-center justify-between px-2">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-300/70">
+                Participants
+              </h2>
+              <span className="rounded-full border border-sky-900/40 bg-black/60 px-3 py-1 text-xs text-sky-100">
+                {participants.length + 1}
+              </span>
             </div>
 
-            <div className="rounded-3xl border border-sky-900/30 bg-zinc-950/80 p-4">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-300/70">
-                Participants ({participants.length + 1})
-              </h2>
-              <div className="mt-3 space-y-2">
-                <p className="rounded-2xl bg-black/60 px-4 py-3 text-sm text-zinc-300">
-                  You
-                </p>
-                {participants.map((participant) => (
-                  <p key={participant.sid} className="rounded-2xl bg-black/60 px-4 py-3 text-sm text-zinc-300">
-                    {participant.name}
-                  </p>
-                ))}
-              </div>
+            <div className="grid gap-3">
+              <ParticipantVideoTile label="You" track={localVideoTrack} isLocal />
+
+              {participants.map((participant) => (
+                <ParticipantVideoTile
+                  key={participant.sid}
+                  label={participant.isSpeaking ? `${participant.name} speaking` : participant.name}
+                  track={participant.videoTrack}
+                />
+              ))}
             </div>
           </aside>
         </div>
@@ -328,6 +365,15 @@ export default function MeetingsRoomPage() {
         <button type="button" onClick={toggleScreenShare} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           {screenOn ? "sharing" : "share"}
         </button>
+        <button type="button" className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
+          raise hand
+        </button>
+        <button type="button" className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
+          emojis
+        </button>
+        <button type="button" className="rounded-full border border-rose-900/40 bg-rose-950/40 px-4 py-2 text-xs text-rose-100">
+          record
+        </button>
         <button type="button" onClick={() => setChatOpen((current) => !current)} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           chat
         </button>
@@ -335,4 +381,3 @@ export default function MeetingsRoomPage() {
     </main>
   );
 }
-
