@@ -210,6 +210,16 @@ export default function MeetingsRoomPage() {
           },
         ]);
       }
+
+      if (data.type === "emoji") {
+        setChatMessages((current) => [
+          ...current,
+          {
+            name: "Reaction",
+            text: `${participant?.name || participant?.identity || "Participant"} ${data.emoji}`,
+          },
+        ]);
+      }
     } catch {}
   }
 
@@ -283,6 +293,26 @@ export default function MeetingsRoomPage() {
     setChatMessages((current) => [
       ...current,
       { name: "You", text: "You raised your hand ✋" },
+    ]);
+  }
+
+  async function sendEmojiReaction() {
+    if (!roomRef.current) return;
+
+    const payload = new TextEncoder().encode(
+      JSON.stringify({
+        type: "emoji",
+        emoji: "👏",
+      })
+    );
+
+    await roomRef.current.localParticipant.publishData(payload, {
+      reliable: true,
+    });
+
+    setChatMessages((current) => [
+      ...current,
+      { name: "You", text: "👏" },
     ]);
   }
 
@@ -397,7 +427,7 @@ export default function MeetingsRoomPage() {
         <button type="button" onClick={sendRaiseHand} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           raise hand
         </button>
-        <button type="button" className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
+        <button type="button" onClick={sendEmojiReaction} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           emojis
         </button>
         <button type="button" className="rounded-full border border-rose-900/40 bg-rose-950/40 px-4 py-2 text-xs text-rose-100">
@@ -410,4 +440,5 @@ export default function MeetingsRoomPage() {
     </main>
   );
 }
+
 
