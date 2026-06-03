@@ -87,6 +87,7 @@ const messageMenuRef = useRef(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
 const [practiceOpen, setPracticeOpen] = useState(false);
 const [searchOpen, setSearchOpen] = useState(false);
+const [recentOpen, setRecentOpen] = useState(false);
 const [captureOpen, setCaptureOpen] = useState(false);
 const [captureNotes, setCaptureNotes] = useState([]);
 const [loadingCaptureNotes, setLoadingCaptureNotes] = useState(false);
@@ -6314,27 +6315,102 @@ if (data.conversation) {
               Profile
             </Link>
 
-            {recentConversations.length > 0 && (
-              <div className="rounded-2xl border border-sky-900/20 p-3">
-                <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
-                  Recent Chats
-                </p>
 
-                <div className="max-h-48 space-y-1 overflow-y-auto no-scrollbar">
-                  {recentConversations.slice(0, 8).map((chat) => (
+
+            <button
+              type="button"
+              onClick={() => {
+                setRecentOpen(!recentOpen);
+                setProjectsOpen(false);
+                setPracticeOpen(false);
+                setSearchOpen(false);
+                setCaptureOpen(false);
+              }}
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
+            >
+              Recent Chats
+            </button>
+
+            {recentOpen && (
+              <div className="max-h-[45vh] space-y-1 overflow-y-auto rounded-2xl border border-sky-900/20 p-3">
+                {recentConversations.length === 0 ? (
+                  <div className="rounded-xl px-3 py-2 text-sm text-zinc-400">
+                    Recent conversations will appear here
+                  </div>
+                ) : (
+                  recentConversations.map((chat) => (
                     <button
                       key={chat.id}
                       type="button"
-                      onClick={() => {
-                        setActiveChatId(chat.id);
-                        setShowMobileMenu(false);
+                      onClick={async () => {
+                        const guestId =
+                          localStorage.getItem("virtus_guest_id") ||
+                          crypto.randomUUID();
+
+                        localStorage.setItem("virtus_guest_id", guestId);
+
+                        abortControllerRef.current?.abort();
+                        stopVirtusVoice();
+                        abortControllerRef.current = null;
+
+                        setShouldAutoScroll(true);
+                        setMessage("");
+                        setReply("");
+                        setStreamingReply("");
+                        setEditingIndex(null);
+                        setEditingText("");
+                        setIsPracticeMode(null);
+                        setActiveProject(null);
+                        setProjectHomeOpen(false);
+                        setLoading(true);
+
+                        try {
+                          const res = await fetch("/api/conversations", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                              chatId: getGuestSidebarChatId(guestAccess?.plan, chat.id),
+                              ...(isAuthenticated ? {} : { guestId }),
+                            }),
+                          });
+
+                          const data = await res.json();
+
+                          if (data.access) {
+                            if (isAuthenticated) {
+                              setAccountAccess(data.access);
+                            } else {
+                              localStorage.setItem("virtus_guest_access", JSON.stringify(data.access));
+                              setGuestAccess(normalizeGuestAccess(data.access));
+                            }
+                          }
+
+                          const resolvedPlan = !isAuthenticated
+                            ? data.access?.plan ?? guestAccess?.plan
+                            : null;
+
+                          const resolvedChatId = !isAuthenticated
+                            ? getGuestSidebarChatId(resolvedPlan, chat.id)
+                            : chat.id;
+
+                          setConversation(data.conversation || []);
+                          setActiveChatId(resolvedChatId);
+                          localStorage.setItem("virtus_chat_id", resolvedChatId);
+                          setShowMobileMenu(false);
+                        } catch {
+                          setConversation([]);
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       className="block w-full truncate rounded-xl px-3 py-2 text-left text-sm text-zinc-200 transition hover:bg-white/5"
                     >
                       {chat.title || "New chat"}
                     </button>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
             )}
 
@@ -7252,6 +7328,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
