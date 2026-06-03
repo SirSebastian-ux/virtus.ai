@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase-browser";
 import { saveMeetingRecording } from "../recording/localRecordingStore";
 
 const reactions = [
@@ -32,6 +33,17 @@ export default function MeetingsRoomPage() {
   const selfVideoRef = useRef(null);
   const streamRef = useRef(null);
   const screenStreamRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const supabaseRef = useRef(null);
+  const signalChannelRef = useRef(null);
+  const peerConnectionRef = useRef(null);
+  const clientIdRef = useRef(
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : String(Date.now())
+  );
+  const pendingCandidatesRef = useRef([]);
+  const remoteClientIdRef = useRef("");
 
   const recordingMediaRecorderRef = useRef(null);
   const recordingChunksRef = useRef([]);
@@ -58,6 +70,7 @@ export default function MeetingsRoomPage() {
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
+  const [remoteConnected, setRemoteConnected] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recordingStatus, setRecordingStatus] = useState("Recording ready.");
@@ -112,6 +125,62 @@ export default function MeetingsRoomPage() {
   useEffect(() => {
     if (!roomId) return;
 
+    const supabase = createClient();
+    supabaseRef.current = supabase;
+
+    const channel = supabase.channel(`virtus-meeting-${roomId}`, {
+      config: {
+        broadcast: { self: false },
+        presence: { key: clientIdRef.current },
+      },
+    });
+
+    signalChannelRef.current = channel;
+
+    channel
+      .on("broadcast", { event: "webrtc-signal" }, ({ payload }) => {
+        handleSignal(payload);
+      })
+      .on("broadcast", { event: "meeting-chat" }, ({ payload }) => {
+        if (!payload || payload.roomId !== roomId) return;
+        if (payload.from === clientIdRef.current) return;
+
+        setChatMessages((current) => [
+          ...current,
+          { name: "Guest", text: String(payload.text || "") },
+        ]);
+      })
+      .on("broadcast", { event: "meeting-reaction" }, ({ payload }) => {
+        if (!payload || payload.roomId !== roomId) return;
+        if (payload.from === clientIdRef.current) return;
+
+        setLastReaction(payload.reaction);
+        setTimeout(() => setLastReaction(null), 1800);
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          setRoomStatus("Connected to shared meeting channel.");
+
+          await sendSignal({ kind: "hello" });
+        }
+      });
+
+    return () => {
+      channel.unsubscribe();
+
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+
+      signalChannelRef.current = null;
+      setRemoteConnected(false);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
+  useEffect(() => {
+    if (!roomId) return;
+
     async function loadRoom() {
       try {
         const response = await fetch(`/api/meetings?roomId=${roomId}`, {
@@ -131,8 +200,150 @@ export default function MeetingsRoomPage() {
     }
 
     loadRoom();
+   
   }, [roomId]);
 
+  async function sendSignal(payload) {
+    const channel = signalChannelRef.current;
+    if (!channel || !roomId) return;
+
+    await channel.send({
+      type: "broadcast",
+      event: "webrtc-signal",
+      payload: {
+        ...payload,
+        roomId,
+        from: clientIdRef.current,
+        to: payload.to || null,
+      },
+    });
+  }
+
+  async function createPeerConnection(targetClientId = "") {
+    if (peerConnectionRef.current) return peerConnectionRef.current;
+
+    const connection = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+
+    peerConnectionRef.current = connection;
+    remoteClientIdRef.current = targetClientId || remoteClientIdRef.current;
+
+    const localStream = streamRef.current || (await startCameraAndMic());
+
+    localStream?.getTracks?.().forEach((track) => {
+      connection.addTrack(track, localStream);
+    });
+
+    connection.onicecandidate = (event) => {
+      if (event.candidate) {
+        sendSignal({
+          kind: "candidate",
+          candidate: event.candidate,
+          to: remoteClientIdRef.current || targetClientId || null,
+        });
+      }
+    };
+
+    connection.ontrack = (event) => {
+      const [remoteStream] = event.streams;
+
+      if (remoteVideoRef.current && remoteStream) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+
+      if (mainVideoRef.current && remoteStream) {
+        mainVideoRef.current.srcObject = remoteStream;
+        setActiveView("remote");
+      }
+
+      setRemoteConnected(true);
+      setRoomStatus("Remote participant connected.");
+    };
+
+    for (const candidate of pendingCandidatesRef.current) {
+      try {
+        await connection.addIceCandidate(candidate);
+      } catch {}
+    }
+
+    pendingCandidatesRef.current = [];
+
+    return connection;
+  }
+
+  async function handleSignal(payload) {
+    if (!payload || payload.roomId !== roomId) return;
+    if (payload.from === clientIdRef.current) return;
+    if (payload.to && payload.to !== clientIdRef.current) return;
+
+    if (payload.from) {
+      remoteClientIdRef.current = payload.from;
+    }
+
+    if (payload.kind === "hello") {
+      const connection = await createPeerConnection(payload.from);
+      const offer = await connection.createOffer();
+
+      await connection.setLocalDescription(offer);
+
+      await sendSignal({
+        kind: "offer",
+        description: offer,
+        to: payload.from,
+      });
+
+      setRoomStatus("Calling remote participant...");
+      return;
+    }
+
+    if (payload.kind === "offer") {
+      const connection = await createPeerConnection(payload.from);
+
+      await connection.setRemoteDescription(
+        new RTCSessionDescription(payload.description)
+      );
+
+      const answer = await connection.createAnswer();
+
+      await connection.setLocalDescription(answer);
+
+      await sendSignal({
+        kind: "answer",
+        description: answer,
+        to: payload.from,
+      });
+
+      setRoomStatus("Answer sent. Connecting...");
+      return;
+    }
+
+    if (payload.kind === "answer") {
+      const connection = peerConnectionRef.current;
+
+      if (!connection) return;
+
+      await connection.setRemoteDescription(
+        new RTCSessionDescription(payload.description)
+      );
+
+      setRoomStatus("WebRTC connection established.");
+      return;
+    }
+
+    if (payload.kind === "candidate" && payload.candidate) {
+      const candidate = new RTCIceCandidate(payload.candidate);
+      const connection = peerConnectionRef.current;
+
+      if (connection?.remoteDescription) {
+        try {
+          await connection.addIceCandidate(candidate);
+        } catch {}
+      } else {
+        pendingCandidatesRef.current.push(candidate);
+      }
+    }
+  }
   async function startCameraAndMic() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -770,16 +981,33 @@ export default function MeetingsRoomPage() {
     setMediaStatus("All media stopped.");
   }
 
-  function sendChatMessage() {
-    if (!chatMessage.trim()) return;
+  async function sendChatMessage() {
+    const text = chatMessage.trim();
+    if (!text) return;
+
     setChatMessages((current) => [
       ...current,
-      { name: "You", text: chatMessage.trim() },
+      { name: "You", text },
     ]);
+
     setChatMessage("");
+
+    const channel = signalChannelRef.current;
+
+    if (channel && roomId) {
+      await channel.send({
+        type: "broadcast",
+        event: "meeting-chat",
+        payload: {
+          roomId,
+          from: clientIdRef.current,
+          text,
+        },
+      });
+    }
   }
 
-  function sendReaction(reaction) {
+  async function sendReaction(reaction) {
     setLastReaction(reaction);
     setTimeout(() => setLastReaction(null), 1800);
     setReactionOpen(false);
@@ -787,6 +1015,20 @@ export default function MeetingsRoomPage() {
       ...current,
       { name: "You", text: `Reacted: ${reaction.label}` },
     ]);
+
+    const channel = signalChannelRef.current;
+
+    if (channel && roomId) {
+      await channel.send({
+        type: "broadcast",
+        event: "meeting-reaction",
+        payload: {
+          roomId,
+          from: clientIdRef.current,
+          reaction,
+        },
+      });
+    }
   }
 
   return (
@@ -818,6 +1060,13 @@ export default function MeetingsRoomPage() {
           </div>
         ))}
 
+        <div className="relative h-32 w-56 overflow-hidden rounded-3xl border border-emerald-700/40 bg-black/80 shadow-2xl shadow-emerald-950/40">
+          <div className="absolute bottom-2 left-2 z-20 rounded-full border border-emerald-700/40 bg-black/70 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-100 backdrop-blur">
+            {remoteConnected ? "Remote" : "Waiting"}
+          </div>
+
+          <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
+        </div>
         <div className="relative h-32 w-56 overflow-hidden rounded-3xl border border-sky-700/40 bg-black/80 shadow-2xl shadow-sky-950/40">
           {handRaised && (
             <div className="absolute left-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-amber-500/50 bg-amber-950/70 text-lg shadow-lg shadow-amber-950/40 backdrop-blur">
@@ -983,3 +1232,10 @@ export default function MeetingsRoomPage() {
     </main>
   );
 }
+
+
+
+
+
+
+
