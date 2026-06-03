@@ -9,6 +9,20 @@ import {
   createLocalAudioTrack,
   createLocalVideoTrack,
 } from "livekit-client";
+import { saveMeetingRecording } from "../recording/localRecordingStore";
+
+function formatRecordingTime(totalSeconds) {
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getSupportedMediaRecorderType(types) {
+  if (typeof MediaRecorder === "undefined") return "";
+  return types.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+}
 
 function ParticipantVideoTile({ label, track, isLocal = false }) {
   const videoRef = useRef(null);
@@ -58,12 +72,19 @@ export default function MeetingsRoomPage() {
 
   const localVideoTrackRef = useRef(null);
   const localAudioTrackRef = useRef(null);
+  const recordingMediaRecorderRef = useRef(null);
+  const recordingChunksRef = useRef([]);
+  const recordingStartedAtRef = useRef(0);
+  const recordingTimerRef = useRef(null);
 
   const [roomId, setRoomId] = useState("");
   const [status, setStatus] = useState("Preparing meeting room...");
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordingStatus, setRecordingStatus] = useState("Recording ready.");
   const [localVideoTrack, setLocalVideoTrack] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [chatOpen, setChatOpen] = useState(false);
@@ -277,6 +298,127 @@ export default function MeetingsRoomPage() {
     setScreenOn((current) => !current);
   }
 
+  async function startMeetingRecording() {
+    if (recordingMediaRecorderRef.current?.state === "recording") return;
+
+    if (typeof MediaRecorder === "undefined") {
+      setRecordingStatus("Recording is not supported in this browser.");
+      return;
+    }
+
+    try {
+      const tracks = [];
+
+      const mainStream = mainVideoRef.current?.captureStream?.(30);
+      mainStream?.getVideoTracks?.().forEach((track) => tracks.push(track));
+
+      const audioTrack = localAudioTrackRef.current?.mediaStreamTrack;
+      if (audioTrack) tracks.push(audioTrack);
+
+      if (!tracks.length) {
+        setRecordingStatus("Start camera, microphone, or remote video before recording.");
+        return;
+      }
+
+      const stream = new MediaStream(tracks);
+      const mimeType = getSupportedMediaRecorderType([
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm",
+      ]);
+
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      recordingChunksRef.current = [];
+      recordingStartedAtRef.current = Date.now();
+      recordingMediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          recordingChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstart = () => {
+        setRecording(true);
+        setRecordingSeconds(0);
+        setRecordingStatus("Recording meeting locally.");
+
+        if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+
+        recordingTimerRef.current = setInterval(() => {
+          setRecordingSeconds((seconds) => seconds + 1);
+        }, 1000);
+      };
+
+      recorder.onstop = async () => {
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+
+        setRecording(false);
+        setRecordingStatus("Saving recording...");
+
+        const durationSeconds = Math.max(
+          1,
+          Math.round((Date.now() - recordingStartedAtRef.current) / 1000)
+        );
+
+        const videoBlob = new Blob(recordingChunksRef.current, {
+          type: mimeType || "video/webm",
+        });
+
+        const recordingId = crypto.randomUUID();
+
+        await saveMeetingRecording({
+          id: recordingId,
+          title: `Virtus Meeting ${new Date().toLocaleString()}`,
+          roomId: roomId || "livekit-room",
+          createdAt: new Date().toISOString(),
+          durationSeconds,
+          videoBlob,
+          transcript: "",
+          chatMessages,
+        });
+
+        recordingMediaRecorderRef.current = null;
+        recordingChunksRef.current = [];
+
+        const recordingUrl = `/meetings/recording?recordingId=${recordingId}`;
+        window.open(recordingUrl, "_blank", "noopener,noreferrer");
+
+        setRecordingStatus("Recording saved.");
+      };
+
+      recorder.onerror = () => {
+        setRecordingStatus("Recording had a problem.");
+      };
+
+      recorder.start(1000);
+    } catch (error) {
+      console.error("RECORDING ERROR", error);
+      setRecording(false);
+      setRecordingStatus(error.message || "Could not start recording.");
+    }
+  }
+
+  function stopMeetingRecording() {
+    const recorder = recordingMediaRecorderRef.current;
+
+    if (!recorder || recorder.state === "inactive") {
+      setRecording(false);
+      return;
+    }
+
+    try {
+      recorder.requestData?.();
+      recorder.stop();
+      setRecordingStatus("Recording stopped. Preparing review page...");
+    } catch {
+      setRecordingStatus("Could not stop recording cleanly.");
+    }
+  }
+
   async function sendRaiseHand() {
     if (!roomRef.current) return;
 
@@ -349,7 +491,7 @@ export default function MeetingsRoomPage() {
             Virtus AI Executive Meeting
           </p>
           <p className="mt-1 break-all text-sm text-zinc-400">
-            {status} {roomId ? `Room: ${roomId}` : ""}
+            {status} {roomId ? `Room: ${roomId}` : ""} · {recordingStatus}
           </p>
         </div>
 
@@ -430,8 +572,8 @@ export default function MeetingsRoomPage() {
         <button type="button" onClick={sendEmojiReaction} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           emojis
         </button>
-        <button type="button" className="rounded-full border border-rose-900/40 bg-rose-950/40 px-4 py-2 text-xs text-rose-100">
-          record
+        <button type="button" onClick={recording ? stopMeetingRecording : startMeetingRecording} className="rounded-full border border-rose-900/40 bg-rose-950/40 px-4 py-2 text-xs text-rose-100">
+          {recording ? `stop rec ${formatRecordingTime(recordingSeconds)}` : "record"}
         </button>
         <button type="button" onClick={() => setChatOpen((current) => !current)} className="rounded-full border border-sky-900/30 bg-zinc-950 px-4 py-2 text-xs text-sky-100">
           chat
@@ -440,5 +582,6 @@ export default function MeetingsRoomPage() {
     </main>
   );
 }
+
 
 
