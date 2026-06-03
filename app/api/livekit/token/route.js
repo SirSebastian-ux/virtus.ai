@@ -36,8 +36,12 @@ export async function POST(req) {
       );
     }
 
+    const participantIdentity = String(
+      body.participantIdentity || `${user.id}-${crypto.randomUUID()}`
+    ).trim();
+
     const token = new AccessToken(apiKey, apiSecret, {
-      identity: user.id,
+      identity: participantIdentity,
       name: participantName,
       ttl: "2h",
     });
@@ -59,3 +63,4 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

@@ -14,6 +14,11 @@ export default function MeetingsRoomPage() {
   const mainVideoRef = useRef(null);
   const selfVideoRef = useRef(null);
   const roomRef = useRef(null);
+  const participantIdentityRef = useRef(
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : String(Date.now())
+  );
   const localVideoTrackRef = useRef(null);
   const localAudioTrackRef = useRef(null);
 
@@ -63,6 +68,7 @@ export default function MeetingsRoomPage() {
           body: JSON.stringify({
             roomName: roomId,
             participantName: authData?.email || "Virtus Participant",
+            participantIdentity: participantIdentityRef.current,
           }),
         });
 
@@ -329,3 +335,4 @@ export default function MeetingsRoomPage() {
     </main>
   );
 }
+
