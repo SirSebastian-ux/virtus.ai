@@ -92,6 +92,7 @@ export default function MeetingsRoomPage() {
   const [chatMessages, setChatMessages] = useState([
     { name: "Virtus", text: "LiveKit meeting room ready." },
   ]);
+  const [floatingEmoji, setFloatingEmoji] = useState(null);
 
   useEffect(() => {
     const currentRoomId =
@@ -233,6 +234,9 @@ export default function MeetingsRoomPage() {
       }
 
       if (data.type === "emoji") {
+        setFloatingEmoji(data.emoji);
+        setTimeout(() => setFloatingEmoji(null), 1800);
+
         setChatMessages((current) => [
           ...current,
           {
@@ -311,6 +315,9 @@ export default function MeetingsRoomPage() {
 
       const mainStream = mainVideoRef.current?.captureStream?.(30);
       mainStream?.getVideoTracks?.().forEach((track) => tracks.push(track));
+
+      const localVideoTrack = localVideoTrackRef.current?.mediaStreamTrack;
+      if (!tracks.length && localVideoTrack) tracks.push(localVideoTrack);
 
       const audioTrack = localAudioTrackRef.current?.mediaStreamTrack;
       if (audioTrack) tracks.push(audioTrack);
@@ -452,6 +459,9 @@ export default function MeetingsRoomPage() {
       reliable: true,
     });
 
+    setFloatingEmoji("👏");
+    setTimeout(() => setFloatingEmoji(null), 1800);
+
     setChatMessages((current) => [
       ...current,
       { name: "You", text: "👏" },
@@ -484,6 +494,12 @@ export default function MeetingsRoomPage() {
           Back
         </Link>
       </div>
+
+      {floatingEmoji && (
+        <div className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center text-8xl animate-bounce">
+          {floatingEmoji}
+        </div>
+      )}
 
       <section className="flex h-screen flex-col px-4 pb-24 pt-16">
         <div className="mb-4 rounded-3xl border border-sky-900/30 bg-zinc-950/70 px-5 py-4 shadow-2xl shadow-sky-950/20">
@@ -582,6 +598,7 @@ export default function MeetingsRoomPage() {
     </main>
   );
 }
+
 
 
 
