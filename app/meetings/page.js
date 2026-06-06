@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -56,13 +56,24 @@ export default function MeetingsLobbyPage() {
     await copyVirtusMeetingLink();
   }
 
-  function enterVirtusRoom() {
+  async function enterVirtusRoom() {
     if (virtusLink) {
       window.location.href = virtusLink;
       return;
     }
 
-    window.location.href = "/meetings/room";
+    const response = await fetch("/api/meetings", {
+      method: "POST",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setLinkNotice(data.error || "Could not create meeting room.");
+      return;
+    }
+
+    window.location.href = `${window.location.origin}${data.meetingLink}`;
   }
 
   function joinExternalMeeting() {
@@ -181,3 +192,4 @@ export default function MeetingsLobbyPage() {
     </main>
   );
 }
+

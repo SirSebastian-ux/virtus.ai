@@ -481,6 +481,37 @@ export async function POST(req) {
     }
 
     const supabase = createAdminClient();
+  // LOCATION AUTO-SAVE (schema-safe)
+  if (message && typeof message === 'string' && userId) {
+    const locMatch = message.match(/\b(?:i live in|i am based in|my home is|i reside in|located in)\s+([A-Za-z\s,]+?)(?:\.|$)/i);
+    if (locMatch) {
+      const place = locMatch[1].trim();
+      const factText = `The user lives in ${place}.`;
+      try {
+        const { data: existing } = await supabase
+          .from('memories')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('fact_text', factText)
+          .maybeSingle();
+        if (!existing) {
+          const { error } = await supabase
+            .from('memories')
+            .insert({
+              user_id: userId,
+              fact_text: factText,
+              source: 'personal',
+              created_at: new Date().toISOString()
+            });
+          if (error) throw error;
+          console.log("✅ LOCATION MEMORY SAVED:", factText);
+        } else {
+          console.log("📍 Location memory already exists:", factText);
+        }
+      } catch(e) { console.error("❌ Location save error:", e.message); }
+    }
+  }
+
 
     const { data: personalizationProfile } = !isGuest
       ? await supabase
@@ -4858,6 +4889,22 @@ for await (const event of response) {
         }
       }
             if (shouldAttemptMemoryExtraction && !isMemoryCommand) {
+    // DIRECT LOCATION SAVE (bypass broken extraction)
+    const locMatch = message.match(/\b(?:i live in|i am based in|my home is|i reside in|from|located in)\s+([A-Za-z\s,]+?)(?:\.|$)/i);
+    if (locMatch && user?.id) {
+      const place = locMatch[1].trim();
+      const factText = `The user lives in ${place}.`;
+      try {
+        await supabase.from('memories').upsert({
+          user_id: user.id,
+          fact_text: factText,
+          source: 'personal',
+          confidence: 100,
+          created_at: new Date().toISOString()
+        }, { onConflict: 'user_id,fact_text' });
+        console.log("?? Saved location:", factText);
+      } catch(e) { console.error("Location save error:", e.message); }
+    }
         const memoryWriteResponse = await client.responses.create({
           model: "gpt-5.4",
           instructions: `You are a memory extraction engine.
