@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -1853,7 +1853,16 @@ const handleCaptureMicrophoneClick = async () => {
         "Recording now. Speak naturally. Live text appears while recording; final audio is prepared when you stop."
       );};
 
-    recorder.start();
+        recorder.start(1000);
+    
+    // Auto-restart every 3 minutes to bypass browser 5-minute limit
+    let restartTimer = setTimeout(function restartRecording() { console.log("? Auto-restarting recorder to bypass 5-minute limit");
+      if (recorder && recorder.state === "recording") {
+        recorder.stop();
+        // Will restart in onstop handler
+      }
+    }, 240000); // 4 minutes
+    recorder._restartTimer = restartTimer;
   } catch (error) {
     stopCaptureVoiceEngine();
 

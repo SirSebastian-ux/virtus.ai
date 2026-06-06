@@ -57,6 +57,7 @@ function cleanCaptureTranscriptText(value) {
 }
 
 export async function POST(request) {
+  console.log("?? CAPTURE API CALLED at", new Date().toISOString());
   const supabase = await createClient();
 
   const {
