@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase-server";
 import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
@@ -21,9 +21,7 @@ const CAPTURE_TRANSCRIPTION_PROMPT = [
 
 function cleanCaptureTranscriptText(value) {
   let text = String(value || "").trim();
-
   if (!text) return "";
-
   const blockedStandaloneLines = new Set([
     "chatgpt",
     "openai",
@@ -32,32 +30,29 @@ function cleanCaptureTranscriptText(value) {
     "subscribe",
     "please subscribe",
   ]);
-
   text = text
     .split(/\r?\n+/)
     .map((line) => line.trim())
     .filter((line) => {
       const normalized = line
         .toLowerCase()
-        .replace(/[.!?,;:'"“”‘’()\[\]-]+/g, "")
+        .replace(/[.!?,;:'"â€œâ€â€˜â€™()\[\]-]+/g, "")
         .replace(/\s+/g, " ")
         .trim();
-
       return !blockedStandaloneLines.has(normalized);
     })
     .join("\n")
     .trim();
-
   text = text
     .replace(/^(chatgpt|openai)[.!?,;:\s-]+/i, "")
     .replace(/[\s-]+(chatgpt|openai)[.!?,;:\s]*$/i, "")
     .trim();
-
   return text;
 }
 
 export async function POST(request) {
-  console.log("?? CAPTURE API CALLED at", new Date().toISOString());
+  console.log("🔴 CAPTURE API CALLED at", new Date().toISOString());
+
   const supabase = await createClient();
 
   const {
@@ -78,7 +73,6 @@ export async function POST(request) {
   if (!transcriptionRateLimit.allowed) {
     return rateLimitResponse(transcriptionRateLimit);
   }
-
 
   try {
     if (!process.env.OPENAI_API_KEY) {
@@ -114,12 +108,11 @@ export async function POST(request) {
       ...(language ? { language } : {}),
     });
 
-    return NextResponse.json({
-      text: cleanCaptureTranscriptText(transcription?.text || ""),
-    });
+    const transcriptText = cleanCaptureTranscriptText(transcription?.text || "");
+    console.log("📝 TRANSCRIPT RECEIVED length:", transcriptText.length, "preview:", transcriptText.slice(0, 100));
+    return NextResponse.json({ text: transcriptText });
   } catch (error) {
     console.error("Capture transcription error:", error);
-
     return NextResponse.json(
       { error: "Could not transcribe the audio." },
       { status: 500 }

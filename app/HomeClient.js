@@ -1773,6 +1773,7 @@ const handleCaptureMicrophoneClick = async () => {
     };
 
     recorder.onstop = async () => {
+    if (recorder._liveInterval) clearInterval(recorder._liveInterval);
       const audioChunks = captureAudioChunksRef.current || [];
       const audioBlob = new Blob(audioChunks, {
         type: mimeType || "audio/webm",
@@ -1874,6 +1875,26 @@ const handleCaptureMicrophoneClick = async () => {
       );};
 
         recorder.start(1000);
+        // Chunked live transcription using OpenAI (reliable)
+    let liveInterval = setInterval(async () => {
+      if (!captureVoiceShouldContinueRef.current) return;
+      const chunks = captureAudioChunksRef.current;
+      if (chunks.length === 0) return;
+      const mimeType = getSupportedCaptureMimeType() || "audio/webm";
+      const blob = new Blob(chunks, { type: mimeType });
+      if (blob.size < 5000) return; // Wait for enough audio
+      const formData = new FormData();
+      formData.append("audio", blob, "live.webm");
+      formData.append("language", getCaptureTranscriptionLanguageCode());
+      const res = await fetch("/api/capture/transcribe", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.text && data.text.trim()) {
+        const currentContent = captureContent || "";
+        const newText = (currentContent ? currentContent + " " + data.text : data.text).trim();
+        setCaptureContent(newText);
+      }
+    }, 3000);
+    recorder._liveInterval = liveInterval;
     
     // Auto-restart every 3 minutes to bypass browser 5-minute limit
     let restartTimer = setTimeout(function restartRecording() { console.log("? Auto-restarting recorder to bypass 5-minute limit");
