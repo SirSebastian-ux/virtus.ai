@@ -1816,10 +1816,10 @@ const handleCaptureMicrophoneClick = async () => {
             await transcribeCaptureAudioChunkLive(null, mimeType || "audio/webm", true);
           }
 
-          await transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
+          await await transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");; setCaptureNotice("Transcription complete.");
         } catch (error) {
           console.warn("Capture finalizing failed. Trying full audio transcription.", error);
-          await transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");
+          await await transcribeCaptureAudioChunks(audioChunks, mimeType || "audio/webm");; setCaptureNotice("Transcription complete.");
         } finally {
           captureFinalizingRef.current = false;
           captureStopReasonRef.current = "";
