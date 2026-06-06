@@ -1092,7 +1092,7 @@ const startCaptureLiveDictation = () => {
     };
 
     recognition.onresult = (event) => {
-      if (captureLiveTranscriptionFallbackRef.current) return;
+      if (false) // fallback disabled return;
 
       captureSpeechResultSeenRef.current = true;
 
@@ -1847,7 +1847,7 @@ const handleCaptureMicrophoneClick = async () => {
       // Stable Capture mode:
       // Browser speech recognition writes live text while MediaRecorder records one full file.
       captureLiveTranscriptionFallbackRef.current = false; // Fallback disabled; final transcription handles everything
-      // startCaptureBrowserLiveText(); // Disabled due to browser speech recognition errors; final transcription still works
+      // // Live dictation disabled for reliability; final transcription works great // Disabled due to browser speech recognition errors; final transcription still works
 
       setCaptureNotice(
         "Recording now. Speak naturally. Live text appears while recording; final audio is prepared when you stop."
