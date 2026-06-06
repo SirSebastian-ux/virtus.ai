@@ -1062,7 +1062,8 @@ const startCaptureLiveDictation = () => {
         captureLiveTextWrittenRef.current = true;
       }
 
-      setCaptureContent(() => {
+        try {
+    setCaptureContent(() => {
         const baseText = String(captureVoiceBaseRef.current || "").trim();
 
         if (!baseText) return liveText;
@@ -1070,6 +1071,9 @@ const startCaptureLiveDictation = () => {
 
         return `${baseText}\n\n${liveText}`.trim();
       });
+  } catch (err) {
+    setCaptureNotice("Transcription error: " + err.message);
+  }
     };
 
     const scheduleLiveDictationRestart = () => {
@@ -1172,7 +1176,8 @@ const writeCaptureLiveTranscriptFromAudio = (transcript) => {
 
   captureLiveTextWrittenRef.current = true;
 
-  setCaptureContent(() => {
+    try {
+    setCaptureContent(() => {
     const baseText = String(captureVoiceBaseRef.current || "").trim();
     const liveText = String(captureLiveTranscriptRef.current || "").trim();
 
@@ -1181,6 +1186,9 @@ const writeCaptureLiveTranscriptFromAudio = (transcript) => {
 
     return `${baseText}\n\n${liveText}`.trim();
   });
+  } catch (err) {
+    setCaptureNotice("Transcription error: " + err.message);
+  }
 };
 
 const startCaptureBrowserLiveText = () => {
@@ -1241,7 +1249,8 @@ const startCaptureBrowserLiveText = () => {
         captureLiveTextWrittenRef.current = true;
       }
 
-      setCaptureContent(() => {
+        try {
+    setCaptureContent(() => {
         const baseText = String(captureVoiceBaseRef.current || "").trim();
 
         if (!baseText) return liveText;
@@ -1249,6 +1258,9 @@ const startCaptureBrowserLiveText = () => {
 
         return `${baseText}\n\n${liveText}`.trim();
       });
+  } catch (err) {
+    setCaptureNotice("Transcription error: " + err.message);
+  }
     };
 
     recognition.onerror = (event) => {
@@ -1394,13 +1406,17 @@ const transcribeCaptureAudioChunkLive = async (audioChunk, mimeType, force = fal
             captureAudioChunksRef.current || []
           ).slice(-LIVE_CAPTURE_CHUNKS_PER_SECTION * 2);
 
-          setCaptureContent(() => {
+            try {
+    setCaptureContent(() => {
             const baseText = String(captureVoiceBaseRef.current || "").trim();
 
             if (!baseText) return combinedTranscript;
 
             return `${baseText}\n\n${combinedTranscript}`.trim();
           });
+  } catch (err) {
+    setCaptureNotice("Transcription error: " + err.message);
+  }
 
           setCaptureNotice(
             "Recording now. Protected section saved. Keep screen awake."
@@ -1480,6 +1496,7 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
       return;
     }
 
+      try {
     setCaptureContent(() => {
       const baseText = String(captureVoiceBaseRef.current || "").trim();
 
@@ -1487,6 +1504,9 @@ const transcribeCaptureAudioChunks = async (audioChunks, mimeType) => {
 
       return `${baseText}\n\n${transcript}`.trim();
     });
+  } catch (err) {
+    setCaptureNotice("Transcription error: " + err.message);
+  }
 
     setCaptureNotice("Capture finished. Review and save the note.");
   } catch (error) {
