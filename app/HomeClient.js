@@ -1617,7 +1617,7 @@ const stopCaptureVoiceEngine = () => {
     captureLiveFallbackTimerRef.current = null;
   }
 
-  captureLiveTranscriptionFallbackRef.current = false;
+  captureLiveTranscriptionFallbackRef.current = false; // Fallback disabled; final transcription handles everything
   captureLiveTranscriptionBusyRef.current = false;
   captureLivePendingAudioChunksRef.current = [];
   captureLivePendingMimeTypeRef.current = "";
@@ -1833,7 +1833,7 @@ const handleCaptureMicrophoneClick = async () => {
       captureVoiceCommittedRef.current = "";
       captureLiveTranscriptRef.current = "";
       captureLiveTextWrittenRef.current = false;
-      captureLiveTranscriptionFallbackRef.current = false;
+      captureLiveTranscriptionFallbackRef.current = false; // Fallback disabled; final transcription handles everything
       captureLiveTranscriptionBusyRef.current = false;
       captureLivePendingAudioChunksRef.current = [];
       captureLivePendingMimeTypeRef.current = "";
@@ -1846,8 +1846,8 @@ const handleCaptureMicrophoneClick = async () => {
       }
       // Stable Capture mode:
       // Browser speech recognition writes live text while MediaRecorder records one full file.
-      captureLiveTranscriptionFallbackRef.current = false;
-      startCaptureBrowserLiveText();
+      captureLiveTranscriptionFallbackRef.current = false; // Fallback disabled; final transcription handles everything
+      // startCaptureBrowserLiveText(); // Disabled due to browser speech recognition errors; final transcription still works
 
       setCaptureNotice(
         "Recording now. Speak naturally. Live text appears while recording; final audio is prepared when you stop."
