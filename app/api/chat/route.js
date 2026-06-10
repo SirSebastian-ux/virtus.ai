@@ -4891,12 +4891,12 @@ for await (const event of response) {
             if (shouldAttemptMemoryExtraction && !isMemoryCommand) {
     // DIRECT LOCATION SAVE (bypass broken extraction)
     const locMatch = message.match(/\b(?:i live in|i am based in|my home is|i reside in|from|located in)\s+([A-Za-z\s,]+?)(?:\.|$)/i);
-    if (locMatch && user?.id) {
+    if (locMatch && userId) {
       const place = locMatch[1].trim();
       const factText = `The user lives in ${place}.`;
       try {
         await supabase.from('memories').upsert({
-          user_id: user.id,
+          user_id: userId,
           fact_text: factText,
           source: 'personal',
           confidence: 100,
