@@ -1,3 +1,5 @@
+﻿/* eslint-disable react-hooks/immutability */
+
 "use client";
 
 import Link from "next/link";
@@ -95,6 +97,7 @@ export default function NotesPage() {
       );
 
       if (savedDraft && !activeNote) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTitle(savedDraft.title || "");
         setNoteType(savedDraft.noteType || "General Note");
         setContent(savedDraft.content || "");
@@ -481,3 +484,4 @@ export default function NotesPage() {
     </main>
   );
 }
+

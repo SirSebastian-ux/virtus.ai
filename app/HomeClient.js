@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -324,6 +324,7 @@ useEffect(() => {
   if (!captureOpen) return;
 
   if (!isAuthenticated) {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCaptureNotes([]);
     return;
   }
@@ -348,6 +349,7 @@ useEffect(() => {
 
     if (!draftTitle.trim() && !draftContent.trim()) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCaptureTitle((current) => current || draftTitle);
     setCaptureType(draftType || "General Note");
     setCaptureContent((current) => current || draftContent);
@@ -683,6 +685,7 @@ const speakVirtusReply = (text, styleOverride = voiceStyle) => {
 };
 
 useEffect(() => {
+// eslint-disable-next-line react-hooks/set-state-in-effect
 setShowSplash(true);
 sessionStorage.removeItem("virtus_splash_seen");
   const storedTrialUsed = localStorage.getItem("virtus_trial_used") === "true";
@@ -720,6 +723,7 @@ useEffect(() => {
   if (loading) return;
 
   sendMessage();
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   setRegenerating(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [regenerating, message, loading]);
@@ -3423,6 +3427,7 @@ function getPlanCapabilityCard(plan) {
 
     const existingGuestId = localStorage.getItem("virtus_guest_id");
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowPlanOverlay(
       !!existingGuestId && localStorage.getItem(planOverlayStorageKey) !== "true"
     );

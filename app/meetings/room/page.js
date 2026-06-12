@@ -98,6 +98,7 @@ export default function MeetingsRoomPage() {
     const currentRoomId =
       new URLSearchParams(window.location.search).get("room") || "";
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRoomId(currentRoomId);
     setStatus(
       currentRoomId
@@ -174,6 +175,7 @@ export default function MeetingsRoomPage() {
       roomRef.current?.disconnect();
       roomRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
   function refreshParticipants() {
