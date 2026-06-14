@@ -403,3 +403,13 @@ body {
 .assistant-message p { margin-bottom: 1em; }
 ol { list-style-type: decimal !important; margin-left: 1.5rem; }
 ol li, ul li { margin-bottom: 0.5rem; }
+/* Code blocks scroll inside bubble */
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+code {
+  font-family: monospace;
+}

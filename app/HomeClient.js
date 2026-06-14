@@ -6673,7 +6673,7 @@ onClick={() => {
     </div>
   ) : item.text?.trim() ? (
     <div className="select-text">
-    <ReactMarkdown
+<ReactMarkdown
   components={{
     h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-3 leading-tight">{children}</h1>,
     h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-2 leading-snug">{children}</h2>,
@@ -6684,6 +6684,22 @@ onClick={() => {
     li: ({ children }) => <li className="leading-relaxed">{children}</li>,
     strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
     em: ({ children }) => <em className="italic">{children}</em>,
+    pre: ({ children }) => (
+      <pre className="my-3 max-w-full overflow-x-auto rounded-xl border border-sky-900/30 bg-black/60 p-4 text-[13px] leading-6 text-sky-100">
+        {children}
+      </pre>
+    ),
+    code: ({ inline, children }) => (
+      inline ? (
+        <code className="rounded-md border border-sky-900/25 bg-sky-950/30 px-1.5 py-0.5 text-[0.9em] text-sky-100">
+          {children}
+        </code>
+      ) : (
+        <code className="block min-w-0 whitespace-pre font-mono text-[13px]">
+          {children}
+        </code>
+      )
+    )
   }}
 >
   {item.text}
