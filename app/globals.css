@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --background: #ffffff;
@@ -397,3 +397,9 @@ body {
     font-size: 16px;
   }
 }
+
+/* Fix numbering and spacing */
+.assistant-message h1, .assistant-message h2, .assistant-message h3 { margin-top: 1.25em; margin-bottom: 0.5em; }
+.assistant-message p { margin-bottom: 1em; }
+ol { list-style-type: decimal !important; margin-left: 1.5rem; }
+ol li, ul li { margin-bottom: 0.5rem; }

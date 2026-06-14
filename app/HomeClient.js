@@ -6495,7 +6495,7 @@ if (data.conversation) {
     <div className="ml-auto shrink-0 text-right">
       <Link
         href="/upgrade"
-        className="select-none inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
+        className="select-text inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
       >
         Plan: {displayPlanLabel}
       </Link>
@@ -6539,7 +6539,7 @@ if (data.conversation) {
                   {conversation.map((item, index) => (
                     <div
                       key={index}
-className={`relative select-none max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
+className={`relative select-text max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
 item.role === "user" && !loading
   ? "mb-12"
   : ""
@@ -6674,62 +6674,20 @@ onClick={() => {
   ) : item.text?.trim() ? (
     <div className="select-text">
     <ReactMarkdown
-      components={{
-        p: ({ children }) => (
-          <p className="mb-2 last:mb-0 leading-7">
-            {children}
-          </p>
-        ),
-        ul: ({ children }) => (
-          <ul className="list-disc pl-6 mb-3 space-y-1">
-            {children}
-          </ul>
-        ),
-        ol: ({ children }) => (
-          <ol className="list-decimal pl-6 mb-3 space-y-1">
-            {children}
-          </ol>
-        ),
-        li: ({ children }) => (
-          <li className="leading-7">{children}</li>
-        ),
-        strong: ({ children }) => (
-          <strong className="font-semibold">
-            {children}
-          </strong>
-        ),
-        em: ({ children }) => (
-          <em className="italic">{children}</em>
-        ),
-        code: ({ children }) => (
-          <code className="px-1 py-0.5 rounded bg-black/20 text-sm">
-            {children}
-          </code>
-        ),
-        h1: ({ children }) => (
-          <h1 className="text-xl font-bold mb-2">
-            {children}
-          </h1>
-        ),
-        h2: ({ children }) => (
-          <h2 className="text-lg font-bold mb-2">
-            {children}
-          </h2>
-        ),
-        h3: ({ children }) => (
-          <h3 className="text-base font-bold mb-2">
-            {children}
-          </h3>
-        ),
-        blockquote: ({ children }) => (
-          <blockquote className="border-l-4 pl-4 italic opacity-90 mb-2">
-            {children}
-          </blockquote>
-        ),
-      }}
-    >
-      {item.text}
-    </ReactMarkdown>
+  components={{
+    h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-3 leading-tight">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-xl font-semibold mt-5 mb-2 leading-snug">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-lg font-medium mt-4 mb-2">{children}</h3>,
+    p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+    ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+    ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+    li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+    em: ({ children }) => <em className="italic">{children}</em>,
+  }}
+>
+  {item.text}
+</ReactMarkdown>
     </div>
    ) : (
     <div className="flex items-center gap-2 text-gray-400">

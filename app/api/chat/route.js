@@ -1,3 +1,15 @@
+﻿function sanitizeAssistantOutput(text) {
+  if (!text) return '';
+  const patterns = [
+    /CONTEXTO\s*ÂNCORA\s*DA\s*MESMA\s*CONVERSA[\s\S]*?(?=\n\n[A-ZÁÉÍÓÚÂÊÔÃÕ]|$)/gi,
+    /ANCHOR\s*CONTEXT[\s\S]*?(?=\n\n[A-Z]|$)/gi,
+    /SAME\s*CONVERSATION\s*CONTEXT[\s\S]*?(?=\n\n[A-Z]|$)/gi,
+  ];
+  let cleaned = text;
+  for (const p of patterns) cleaned = cleaned.replace(p, '');
+  return cleaned.trim();
+}
+
 import OpenAI from "openai";
 import crypto from "crypto";
 import { VIRTUS_RUNTIME } from "@/data/virtus-runtime";
@@ -2075,7 +2087,7 @@ if (isGuest && isTrialGuestPlan(plan) && isExpiredPlanStatus(planStatus)) {
       user_id: userId,
       chat_id: effectiveChatId,
       role: "assistant",
-      content: expiredReply,
+      content: sanitizeAssistantOutput(expiredReply),
     },
   ]);
 
@@ -2116,7 +2128,7 @@ await supabase.from("conversations").insert({
   user_id: userId,
   chat_id: effectiveChatId,
   role: "user",
-  content: message,
+  content: sanitizeAssistantOutput(message),
 });
 
 const cleanImmediateProjectName = (value) =>
@@ -2338,7 +2350,7 @@ if (isForgetCommand) {
     user_id: userId,
     chat_id: effectiveChatId,
     role: "assistant",
-    content: reply,
+    content: sanitizeAssistantOutput(reply),
   });
 
   return Response.json({
@@ -2363,7 +2375,7 @@ if (isMemoryRecallCommand && !memoryEnabled) {
     user_id: userId,
     chat_id: effectiveChatId,
     role: "assistant",
-    content: reply,
+    content: sanitizeAssistantOutput(reply),
   });
 
   return Response.json({
@@ -2930,7 +2942,7 @@ const reply = (() => {
     user_id: userId,
     chat_id: effectiveChatId,
     role: "assistant",
-    content: reply,
+    content: sanitizeAssistantOutput(reply),
   });
   return Response.json({
     reply,
@@ -2984,7 +2996,7 @@ if (isMemoryUpdateCommand) {
       user_id: userId,
       chat_id: effectiveChatId,
       role: "assistant",
-      content: reply,
+      content: sanitizeAssistantOutput(reply),
     });
 
     return Response.json({
@@ -3011,7 +3023,7 @@ if (isMemoryUpdateCommand) {
       user_id: userId,
       chat_id: effectiveChatId,
       role: "assistant",
-      content: reply,
+      content: sanitizeAssistantOutput(reply),
     });
 
     return Response.json({
@@ -3077,7 +3089,7 @@ if (isMemoryUpdateCommand) {
       user_id: userId,
       chat_id: effectiveChatId,
       role: "assistant",
-      content: reply,
+      content: sanitizeAssistantOutput(reply),
     });
 
     return Response.json({
@@ -3135,7 +3147,7 @@ if (isMemoryUpdateCommand) {
     user_id: userId,
     chat_id: effectiveChatId,
     role: "assistant",
-    content: reply,
+    content: sanitizeAssistantOutput(reply),
   });
 
   return Response.json({
@@ -5038,7 +5050,7 @@ await supabase.from("conversations").insert([
     user_id: userId,
     chat_id: effectiveChatId,
     role: "assistant",
-    content: fullReply,
+    content: sanitizeAssistantOutput(fullReply),
   },
 ]);
 
