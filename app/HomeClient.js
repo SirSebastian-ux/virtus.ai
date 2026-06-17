@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -1900,6 +1900,14 @@ const handleCaptureMicrophoneClick = async () => {
       }
     }, 3000);
     recorder._liveInterval = liveInterval;
+    
+    // Auto-restart every 3 minutes to bypass browser 5-minute limit
+    let restartTimer = setTimeout(function restartRecording() { console.log("? Auto-restarting recorder to bypass 5-minute limit");
+      if (recorder && recorder.state === "recording") {
+        recorder.stop();
+        // Will restart in onstop handler
+      }
+    }, 240000); // 4 minutes
     recorder._restartTimer = restartTimer;
   } catch (error) {
     stopCaptureVoiceEngine();
@@ -7350,7 +7358,6 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
-
 
 
 
