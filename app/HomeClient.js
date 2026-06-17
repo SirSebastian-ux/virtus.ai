@@ -73,6 +73,7 @@ const captureLiveFallbackTimerRef = useRef(null);
 const captureSpeechResultSeenRef = useRef(false);
 const captureRecordingTimerRef = useRef(null);
 const captureWakeLockRef = useRef(null);
+const captureWakeLockRenewTimerRef = useRef(null);
 const captureStopReasonRef = useRef("");
 const captureFinalizingRef = useRef(false);
 const captureTextareaRef = useRef(null);
@@ -1752,7 +1753,7 @@ const handleCaptureMicrophoneClick = async () => {
     captureVoiceShouldContinueRef.current = true;
     captureFinalizingRef.current = false;
     setCaptureRecordingSeconds(0);
-    await requestCaptureWakeLock();
+    startCaptureWakeLockRenewal();
 
     if (!captureTitle.trim()) {
       setCaptureTitle(`Voice Capture ${new Date().toLocaleString()}`);
@@ -7357,6 +7358,9 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
+
 
 
 
