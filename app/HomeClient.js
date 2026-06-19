@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -1753,7 +1753,7 @@ const handleCaptureMicrophoneClick = async () => {
     captureVoiceShouldContinueRef.current = true;
     captureFinalizingRef.current = false;
     setCaptureRecordingSeconds(0);
-    startCaptureWakeLockRenewal();
+    await requestCaptureWakeLock();
 
     if (!captureTitle.trim()) {
       setCaptureTitle(`Voice Capture ${new Date().toLocaleString()}`);
@@ -1917,7 +1917,7 @@ const handleCaptureMicrophoneClick = async () => {
       return;
     }
 
-    setCaptureNotice("Could not start voice recording on this device.");
+    setCaptureNotice(`Could not start voice recording: ${error?.name || "Unknown"} - ${error?.message || "No details"}`);
   }
 };
   const messagesEndRef = useRef(null);
@@ -7358,6 +7358,9 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
+
 
 
 
