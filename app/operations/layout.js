@@ -7,6 +7,7 @@ const navigation = [
   { label: "Overview", href: "/operations", metricKey: null },
   { label: "Company", href: "/operations/company", metricKey: null },
   { label: "Employees", href: "/operations/employees", metricKey: "activeEmployees" },
+  { label: "Structure", href: "/operations/structure", metricKey: null },
   { label: "Operations Chat", href: "/operations/chat", metricKey: "todayReports" },
   { label: "Tasks", href: "/operations/tasks", metricKey: "openTasks" },
   { label: "Payments", href: "/operations/payments", metricKey: "pendingPayments" },
@@ -92,3 +93,4 @@ export default function OperationsLayout({ children }) {
     </div>
   );
 }
+
