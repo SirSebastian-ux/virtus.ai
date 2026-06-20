@@ -108,7 +108,7 @@ export async function POST(req) {
         name: companyName,
         slug,
         status: "manual_testing",
-        created_by: user.id,
+        owner_user_id: user.id,
       })
       .select("id, name, slug, status, created_at, updated_at")
       .single();
@@ -154,8 +154,10 @@ export async function POST(req) {
         workspace_id: workspace.id,
         billing_mode: "manual_testing",
         billing_status: "inactive",
+        plan_code: "operations_test",
         base_monthly_amount: 0,
         per_employee_amount: 0,
+        included_employee_seats: 1,
         billable_employee_count: 0,
       });
 
@@ -181,3 +183,4 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
