@@ -13,6 +13,7 @@ export default function OperationsChatPage() {
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [extractingReportId, setExtractingReportId] = useState("");
   const [error, setError] = useState("");
 
   async function loadReports(workspaceId) {
@@ -67,6 +68,29 @@ export default function OperationsChatPage() {
     const workspaceId = event.target.value;
     setSelectedWorkspaceId(workspaceId);
     await loadWorkspaceContext(workspaceId);
+  }
+
+  async function extractReport(reportId) {
+    setExtractingReportId(reportId);
+    setError("");
+
+    const response = await fetch("/api/operations/reports/extract", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ reportId }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data?.error || "Unable to extract report.");
+    } else {
+      await loadReports(selectedWorkspaceId);
+    }
+
+    setExtractingReportId("");
   }
 
   async function submitReport(event) {
@@ -263,6 +287,21 @@ export default function OperationsChatPage() {
                   <p className="mt-3 line-clamp-4 text-sm leading-6 text-zinc-300">
                     {report.rawReport}
                   </p>
+
+                  {report.aiSummary ? (
+                    <div className="mt-3 rounded-xl border border-sky-900/30 bg-sky-950/20 p-3 text-xs leading-5 text-sky-100">
+                      {report.aiSummary}
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    onClick={() => extractReport(report.id)}
+                    disabled={extractingReportId === report.id}
+                    className="mt-3 rounded-xl border border-sky-800/50 px-3 py-2 text-xs font-medium text-sky-100 transition hover:bg-sky-950/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {extractingReportId === report.id ? "Extracting..." : "Extract Items"}
+                  </button>
                 </div>
               ))
             )}
@@ -272,4 +311,5 @@ export default function OperationsChatPage() {
     </section>
   );
 }
+
 
