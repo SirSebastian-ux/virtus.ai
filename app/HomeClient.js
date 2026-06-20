@@ -5439,6 +5439,16 @@ return (
 
               <button
                 type="button"
+                aria-label="Operations"
+                onClick={() => router.push("/operations")}
+                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 20V8" /><path d="M10 20V4" /><path d="M16 20v-7" /><path d="M22 20H2" /></svg>
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Operations</span>
+              </button>
+
+              <button
+                type="button"
                 aria-label="Capture"
                 onClick={() => {
                   setCaptureOpen(!captureOpen);
@@ -6365,6 +6375,10 @@ if (data.conversation) {
 
             <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
               Meetings
+            </Link>
+
+            <Link href="/operations" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
+              Operations
             </Link>
 
             <Link href="/account" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
@@ -7358,6 +7372,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
 
 
 
