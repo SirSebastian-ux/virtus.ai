@@ -35,6 +35,21 @@
       description: "See AI summaries, urgent alerts, decision queue, and company performance.",
       href: "/operations/admin",
     },
+    {
+      title: "Decision Queue",
+      description: "Review approvals, escalations, payment confirmations, and blocked items.",
+      href: "/operations/decisions",
+    },
+    {
+      title: "Urgent Issues",
+      description: "Track operational risks, escalations, blocked work, and urgent employee reports.",
+      href: "/operations/urgent",
+    },
+    {
+      title: "Daily Report",
+      description: "Review daily company activity, completed work, follow-ups, and AI summaries.",
+      href: "/operations/daily-report",
+    },
   ];
 
   return (
@@ -69,3 +84,4 @@
     </main>
   );
 }
+
