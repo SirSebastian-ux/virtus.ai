@@ -103,6 +103,23 @@ export async function POST(req) {
       created_by: user.id,
     }));
 
+    const cleanupTargets = [
+      ["operations_tasks", "source_report_id"],
+      ["operations_urgent_issues", "source_report_id"],
+      ["operations_decision_queue", "source_report_id"],
+    ];
+
+    for (const [tableName, columnName] of cleanupTargets) {
+      const { error: cleanupError } = await admin
+        .from(tableName)
+        .delete()
+        .eq(columnName, report.id);
+
+      if (cleanupError) {
+        return NextResponse.json({ error: cleanupError.message }, { status: 500 });
+      }
+    }
+
     if (taskRows.length > 0) {
       const { error } = await admin.from("operations_tasks").insert(taskRows);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -139,3 +156,4 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
