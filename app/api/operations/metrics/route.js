@@ -129,6 +129,7 @@ export async function GET(req) {
           .select("id", { count: "exact", head: true })
           .eq("workspace_id", workspaceId)
           .eq("report_date", today)
+          .eq("review_status", "unreviewed")
       ),
       countRows(
         admin
@@ -154,3 +155,4 @@ export async function GET(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
