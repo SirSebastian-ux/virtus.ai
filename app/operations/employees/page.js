@@ -18,13 +18,7 @@
   ];
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
-      <section className="mx-auto max-w-5xl">
-        <a href="/operations" className="text-sm text-sky-300 hover:text-sky-200">
-          Back to Operations
-        </a>
-
-        <h1 className="mt-6 text-3xl font-semibold text-white">Employees</h1>
+    <section className="px-6 py-8">        <h1 className="mt-6 text-3xl font-semibold text-white">Employees</h1>
 
         <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
           Invite employees, assign roles, and open individual operational profiles.
@@ -48,7 +42,7 @@
             </div>
           ))}
         </div>
-      </section>
-    </main>
+    </section>
   );
 }
+
