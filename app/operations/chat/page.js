@@ -297,7 +297,13 @@ export default function OperationsChatPage() {
                 No reports saved yet.
               </div>
             ) : (
-              reports.map((report) => (
+              reports.map((report) => {
+                const hasExtraction =
+                  Boolean(report.aiSummary) ||
+                  Boolean(report.aiExtracted) ||
+                  Boolean(report.ai_extracted);
+
+                return (
                 <div
                   key={report.id}
                   className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"
@@ -329,10 +335,14 @@ export default function OperationsChatPage() {
                       disabled={extractingReportId === report.id}
                       className="rounded-xl border border-sky-800/50 px-3 py-2 text-xs font-medium text-sky-100 transition hover:bg-sky-950/40 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {extractingReportId === report.id ? "Extracting..." : "Extract Items"}
+                      {extractingReportId === report.id
+                        ? "Extracting..."
+                        : hasExtraction
+                          ? "Re-extract Intelligence"
+                          : "Extract Intelligence"}
                     </button>
 
-                    {report.reviewStatus !== "reviewed" ? (
+                    {report.reviewStatus !== "reviewed" && hasExtraction ? (
                       <button
                         type="button"
                         onClick={() => markReportReviewed(report.id)}
@@ -344,7 +354,8 @@ export default function OperationsChatPage() {
                     ) : null}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </aside>
@@ -352,6 +363,7 @@ export default function OperationsChatPage() {
     </section>
   );
 }
+
 
 
 
