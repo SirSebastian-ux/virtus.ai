@@ -14,6 +14,7 @@ export default function OperationsChatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [extractingReportId, setExtractingReportId] = useState("");
+  const [reviewingReportId, setReviewingReportId] = useState("");
   const [error, setError] = useState("");
 
   async function loadReports(workspaceId) {
@@ -68,6 +69,29 @@ export default function OperationsChatPage() {
     const workspaceId = event.target.value;
     setSelectedWorkspaceId(workspaceId);
     await loadWorkspaceContext(workspaceId);
+  }
+
+  async function markReportReviewed(reportId) {
+    setReviewingReportId(reportId);
+    setError("");
+
+    const response = await fetch("/api/operations/reports", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ reportId }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data?.error || "Unable to mark report reviewed.");
+    } else {
+      await loadReports(selectedWorkspaceId);
+    }
+
+    setReviewingReportId("");
   }
 
   async function extractReport(reportId) {
@@ -284,6 +308,10 @@ export default function OperationsChatPage() {
                   <p className="mt-1 text-xs text-zinc-500">
                     {report.departmentName || "No department"} · {report.reportDate}
                   </p>
+
+                  <p className="mt-2 inline-flex rounded-full border border-zinc-800 px-2 py-1 text-xs text-zinc-400">
+                    {report.reviewStatus === "reviewed" ? "Reviewed" : "Unreviewed"}
+                  </p>
                   <p className="mt-3 line-clamp-4 text-sm leading-6 text-zinc-300">
                     {report.rawReport}
                   </p>
@@ -294,14 +322,27 @@ export default function OperationsChatPage() {
                     </div>
                   ) : null}
 
-                  <button
-                    type="button"
-                    onClick={() => extractReport(report.id)}
-                    disabled={extractingReportId === report.id}
-                    className="mt-3 rounded-xl border border-sky-800/50 px-3 py-2 text-xs font-medium text-sky-100 transition hover:bg-sky-950/40 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {extractingReportId === report.id ? "Extracting..." : "Extract Items"}
-                  </button>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => extractReport(report.id)}
+                      disabled={extractingReportId === report.id}
+                      className="rounded-xl border border-sky-800/50 px-3 py-2 text-xs font-medium text-sky-100 transition hover:bg-sky-950/40 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {extractingReportId === report.id ? "Extracting..." : "Extract Items"}
+                    </button>
+
+                    {report.reviewStatus !== "reviewed" ? (
+                      <button
+                        type="button"
+                        onClick={() => markReportReviewed(report.id)}
+                        disabled={reviewingReportId === report.id}
+                        className="rounded-xl border border-emerald-800/50 px-3 py-2 text-xs font-medium text-emerald-100 transition hover:bg-emerald-950/30 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {reviewingReportId === report.id ? "Reviewing..." : "Mark Reviewed"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))
             )}
@@ -311,5 +352,6 @@ export default function OperationsChatPage() {
     </section>
   );
 }
+
 
 
