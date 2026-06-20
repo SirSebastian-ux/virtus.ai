@@ -207,3 +207,91 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function PATCH(req) {
+  try {
+    const supabase = await createClient();
+    const admin = createAdminClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user?.id) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const reportId = cleanText(body?.reportId);
+
+    if (!reportId) {
+      return NextResponse.json({ error: "reportId is required." }, { status: 400 });
+    }
+
+    const { data: report, error: reportError } = await admin
+      .from("operations_reports")
+      .select("id, workspace_id, review_status")
+      .eq("id", reportId)
+      .maybeSingle();
+
+    if (reportError) {
+      return NextResponse.json({ error: reportError.message }, { status: 500 });
+    }
+
+    if (!report) {
+      return NextResponse.json({ error: "Report not found." }, { status: 404 });
+    }
+
+    const membership = await requireWorkspaceMember(admin, user.id, report.workspace_id);
+
+    if (!membership) {
+      return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+    }
+
+    const { data: updatedReport, error: updateError } = await admin
+      .from("operations_reports")
+      .update({
+        review_status: "reviewed",
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", reportId)
+      .select("id, workspace_id, review_status, reviewed_at")
+      .single();
+
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    await admin.from("operations_activity_logs").insert({
+      workspace_id: report.workspace_id,
+      actor_user_id: user.id,
+      action: "operations_report.reviewed",
+      entity_table: "operations_reports",
+      entity_id: reportId,
+      previous_data: {
+        review_status: report.review_status,
+      },
+      new_data: {
+        review_status: "reviewed",
+      },
+      metadata: {
+        source: "operations_reports_api",
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      report: {
+        id: updatedReport.id,
+        workspaceId: updatedReport.workspace_id,
+        reviewStatus: updatedReport.review_status,
+        reviewedAt: updatedReport.reviewed_at,
+      },
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
