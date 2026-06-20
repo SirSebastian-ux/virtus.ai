@@ -521,3 +521,52 @@ for update
 to authenticated
 using (public.is_workspace_member(workspace_id))
 with check (public.is_workspace_member(workspace_id));
+
+create table if not exists public.workspace_billing_profiles (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid not null unique references public.workspaces(id) on delete cascade,
+  billing_status text not null default 'not_configured',
+  billing_mode text not null default 'manual_testing',
+  plan_code text not null default 'operations_test',
+  base_monthly_amount numeric(14,2),
+  per_employee_amount numeric(14,2),
+  included_employee_seats integer not null default 1,
+  billable_employee_count integer not null default 0,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  trial_started_at timestamptz,
+  trial_ends_at timestamptz,
+  billing_started_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_workspace_billing_profiles_workspace_id
+on public.workspace_billing_profiles(workspace_id);
+
+alter table public.workspace_billing_profiles enable row level security;
+
+create policy "Workspace members can read billing profile"
+on public.workspace_billing_profiles
+for select
+to authenticated
+using (public.is_workspace_member(workspace_id));
+
+create policy "Workspace owners can manage billing profile"
+on public.workspace_billing_profiles
+for all
+to authenticated
+using (
+  exists (
+    select 1 from public.workspaces w
+    where w.id = workspace_billing_profiles.workspace_id
+      and w.owner_user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.workspaces w
+    where w.id = workspace_billing_profiles.workspace_id
+      and w.owner_user_id = auth.uid()
+  )
+);
