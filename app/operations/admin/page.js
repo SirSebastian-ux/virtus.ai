@@ -39,13 +39,8 @@ const decisionItems = [
 
 export default function OperationsAdminPage() {
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
-      <section className="mx-auto max-w-7xl">
-        <a href="/operations" className="text-sm text-sky-300 hover:text-sky-200">
-          Back to Operations
-        </a>
-
-        <div className="mt-6 rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
+    <section className="px-6 py-8">
+      <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-sky-300/60">
             Operations Intelligence
           </p>
@@ -144,8 +139,8 @@ export default function OperationsAdminPage() {
               </div>
             </section>
           </div>
-        </div>
-      </section>
-    </main>
+      </div>
+    </section>
   );
 }
+

@@ -17,13 +17,8 @@ const reportSections = [
 
 export default function OperationsDailyReportPage() {
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
-      <section className="mx-auto max-w-7xl">
-        <a href="/operations/admin" className="text-sm text-sky-300 hover:text-sky-200">
-          Back to Admin Dashboard
-        </a>
-
-        <div className="mt-6 rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
+    <section className="px-6 py-8">
+      <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-sky-300/60">
             Daily Intelligence
           </p>
@@ -83,8 +78,8 @@ export default function OperationsDailyReportPage() {
               </div>
             </section>
           </div>
-        </div>
-      </section>
-    </main>
+      </div>
+    </section>
   );
 }
+

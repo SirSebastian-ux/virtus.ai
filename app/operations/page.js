@@ -53,8 +53,7 @@
   ];
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
-      <section className="mx-auto max-w-6xl">
+    <section className="px-6 py-8">
         <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
           Virtus AI
         </p>
@@ -80,8 +79,8 @@
             </a>
           ))}
         </div>
-      </section>
-    </main>
+    </section>
   );
 }
+
 
