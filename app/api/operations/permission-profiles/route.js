@@ -1,6 +1,11 @@
 ﻿import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import {
+  DEFAULT_PERMISSION_KEYS,
+  normalizePermissions,
+} from "@/lib/operations/permissions";
+import { canManagePermissions } from "@/lib/operations/access";
 
 const ALLOWED_ROLES = new Set([
   "owner",
@@ -10,26 +15,6 @@ const ALLOWED_ROLES = new Set([
   "supervisor",
   "employee",
 ]);
-
-const DEFAULT_PERMISSION_KEYS = [
-  "reports.view",
-  "reports.review",
-  "tasks.view",
-  "tasks.manage",
-  "urgent_issues.view",
-  "urgent_issues.manage",
-  "decisions.view",
-  "decisions.manage",
-  "employees.view",
-  "employees.manage",
-  "structure.view",
-  "roles.manage",
-  "invitations.request",
-  "approvals.decide",
-  "permissions.manage",
-  "billing.view",
-  "billing.manage",
-];
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -49,21 +34,6 @@ async function requireWorkspaceMember(admin, userId, workspaceId) {
   }
 
   return data;
-}
-
-function canManagePermissions(role) {
-  return ["owner", "admin", "manager"].includes(role);
-}
-
-function normalizePermissions(value) {
-  const permissions = value && typeof value === "object" ? value : {};
-  const normalized = {};
-
-  DEFAULT_PERMISSION_KEYS.forEach((key) => {
-    normalized[key] = Boolean(permissions[key]);
-  });
-
-  return normalized;
 }
 
 function mapPermissionProfile(item) {
@@ -225,3 +195,4 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
