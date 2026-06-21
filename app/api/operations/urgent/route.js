@@ -95,8 +95,130 @@ function applyUrgentAccessFilter(query, accessContext, teamEmployeeIds = []) {
 }
 
 export async function GET(req) {
-  return NextResponse.json({
-    ok: true,
-    message: "Urgent Issues API foundation created."
-  });
+  try {
+    const supabase = await createClient();
+    const admin = createAdminClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user?.id) {
+      return NextResponse.json({ urgentIssues: [] }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const workspaceId = cleanText(searchParams.get("workspaceId"));
+
+    if (!workspaceId) {
+      return NextResponse.json(
+        { error: "workspaceId is required." },
+        { status: 400 }
+      );
+    }
+
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      workspaceId
+    );
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: "Workspace access denied." },
+        { status: 403 }
+      );
+    }
+
+    const accessContext = await getAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    const teamEmployeeIds = await getTeamEmployeeIds(
+      admin,
+      workspaceId,
+      accessContext.employeeId
+    );
+
+    let query = admin
+      .from("operations_urgent_issues")
+      .select(
+        `
+        id,
+        workspace_id,
+        department_id,
+        employee_id,
+        title,
+        description,
+        severity,
+        status,
+        source_report_id,
+        assigned_to,
+        resolved_by,
+        resolved_at,
+        created_by,
+        created_at,
+        updated_at,
+        employees (
+          id,
+          full_name,
+          email
+        ),
+        departments (
+          id,
+          name
+        )
+      `
+      )
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false });
+
+    query = applyUrgentAccessFilter(
+      query,
+      accessContext,
+      teamEmployeeIds
+    );
+
+    const { data, error } = await query;
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      accessContext,
+      urgentIssues: (data || []).map((issue) => ({
+        id: issue.id,
+        workspaceId: issue.workspace_id,
+        departmentId: issue.department_id,
+        departmentName: issue.departments?.name || null,
+        employeeId: issue.employee_id,
+        employeeName: issue.employees?.full_name || null,
+        title: issue.title,
+        description: issue.description,
+        severity: issue.severity,
+        status: issue.status,
+        sourceReportId: issue.source_report_id,
+        assignedTo: issue.assigned_to,
+        resolvedBy: issue.resolved_by,
+        resolvedAt: issue.resolved_at,
+        createdBy: issue.created_by,
+        createdAt: issue.created_at,
+        updatedAt: issue.updated_at,
+      })),
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
 }
+
