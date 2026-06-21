@@ -15,6 +15,7 @@ const navigation = [
   { label: "Daily Report", href: "/operations/daily-report", metricKey: null },
   { label: "Urgent Issues", href: "/operations/urgent", metricKey: "openUrgentIssues" },
   { label: "Decision Queue", href: "/operations/decisions", metricKey: "pendingDecisions" },
+  { label: "Permissions", href: "/operations/permissions", metricKey: null },
   { label: "Admin Dashboard", href: "/operations/admin", metricKey: null },
 ];
 
@@ -93,4 +94,3 @@ export default function OperationsLayout({ children }) {
     </div>
   );
 }
-
