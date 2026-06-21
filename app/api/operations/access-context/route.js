@@ -10,6 +10,7 @@ import {
   canViewDepartmentData,
   canViewTeamData,
 } from "@/lib/operations/access";
+import { normalizePermissions } from "@/lib/operations/permissions";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -88,6 +89,34 @@ export async function GET(req) {
     const departmentId = roleAssignment?.department_id || null;
     const employeeId = roleAssignment?.employee_id || null;
 
+    const { data: defaultProfile, error: profileError } = await admin
+      .from("operations_permission_profiles")
+      .select("permissions")
+      .eq("workspace_id", workspaceId)
+      .eq("role", role)
+      .eq("is_default", true)
+      .maybeSingle();
+
+    if (profileError) {
+      return NextResponse.json({ error: profileError.message }, { status: 500 });
+    }
+
+    const { data: overrides, error: overridesError } = await admin
+      .from("operations_user_permissions")
+      .select("permission_key, permission_value")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", user.id);
+
+    if (overridesError) {
+      return NextResponse.json({ error: overridesError.message }, { status: 500 });
+    }
+
+    const permissions = normalizePermissions(defaultProfile?.permissions);
+
+    (overrides || []).forEach((item) => {
+      permissions[item.permission_key] = Boolean(item.permission_value);
+    });
+
     const accessContext = {
       workspaceId,
       userId: user.id,
@@ -112,3 +141,6 @@ export async function GET(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+
