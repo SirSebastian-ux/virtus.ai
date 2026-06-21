@@ -1,47 +1,89 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  canViewAdminModule,
+  canViewCompanyModule,
+  canViewDecisionQueueModule,
+  canViewEmployeesModule,
+  canViewPaymentsModule,
+  canViewPermissionsModule,
+  canViewReportsModule,
+  canViewStructureModule,
+  canViewTasksModule,
+  canViewUrgentIssuesModule,
+} from "@/lib/operations/access";
 
 const navigation = [
-  { label: "Overview", href: "/operations", metricKey: null },
-  { label: "Company", href: "/operations/company", metricKey: null },
-  { label: "Employees", href: "/operations/employees", metricKey: "activeEmployees" },
-  { label: "Structure", href: "/operations/structure", metricKey: null },
-  { label: "Operations Chat", href: "/operations/chat", metricKey: "todayReports" },
-  { label: "Tasks", href: "/operations/tasks", metricKey: "openTasks" },
-  { label: "Payments", href: "/operations/payments", metricKey: "pendingPayments" },
-  { label: "Reports", href: "/operations/reports", metricKey: "todayReports" },
-  { label: "Daily Report", href: "/operations/daily-report", metricKey: null },
-  { label: "Urgent Issues", href: "/operations/urgent", metricKey: "openUrgentIssues" },
-  { label: "Decision Queue", href: "/operations/decisions", metricKey: "pendingDecisions" },
-  { label: "Permissions", href: "/operations/permissions", metricKey: null },
-  { label: "Admin Dashboard", href: "/operations/admin", metricKey: null },
+  { label: "Overview", href: "/operations", metricKey: null, visible: () => true },
+  { label: "Company", href: "/operations/company", metricKey: null, visible: canViewCompanyModule },
+  { label: "Employees", href: "/operations/employees", metricKey: "activeEmployees", visible: canViewEmployeesModule },
+  { label: "Structure", href: "/operations/structure", metricKey: null, visible: canViewStructureModule },
+  { label: "Operations Chat", href: "/operations/chat", metricKey: "todayReports", visible: () => true },
+  { label: "Tasks", href: "/operations/tasks", metricKey: "openTasks", visible: canViewTasksModule },
+  { label: "Payments", href: "/operations/payments", metricKey: "pendingPayments", visible: canViewPaymentsModule },
+  { label: "Reports", href: "/operations/reports", metricKey: "todayReports", visible: canViewReportsModule },
+  { label: "Daily Report", href: "/operations/daily-report", metricKey: null, visible: () => true },
+  { label: "Urgent Issues", href: "/operations/urgent", metricKey: "openUrgentIssues", visible: canViewUrgentIssuesModule },
+  { label: "Decision Queue", href: "/operations/decisions", metricKey: "pendingDecisions", visible: canViewDecisionQueueModule },
+  { label: "Permissions", href: "/operations/permissions", metricKey: null, visible: canViewPermissionsModule },
+  { label: "Admin Dashboard", href: "/operations/admin", metricKey: null, visible: canViewAdminModule },
 ];
 
 export default function OperationsLayout({ children }) {
   const [metrics, setMetrics] = useState(null);
+  const [role, setRole] = useState("employee");
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadMetrics() {
+    async function loadData() {
       try {
-        const response = await fetch("/api/operations/metrics");
-        const data = await response.json();
+        const metricsResponse = await fetch("/api/operations/metrics", {
+          cache: "no-store",
+        });
 
-        if (!isMounted || !response.ok) return;
+        const metricsData = await metricsResponse.json();
 
-        setMetrics(data.metrics || null);
+        if (!isMounted || !metricsResponse.ok) return;
+
+        setMetrics(metricsData.metrics || null);
+
+        const workspaceId = metricsData?.metrics?.workspaceId;
+
+        if (!workspaceId) return;
+
+        const accessResponse = await fetch(
+          `/api/operations/access-context?workspaceId=${encodeURIComponent(
+            workspaceId
+          )}`,
+          { cache: "no-store" }
+        );
+
+        const accessData = await accessResponse.json();
+
+        if (
+          isMounted &&
+          accessResponse.ok &&
+          accessData?.accessContext?.role
+        ) {
+          setRole(accessData.accessContext.role);
+        }
       } catch {}
     }
 
-    loadMetrics();
+    loadData();
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  const visibleNavigation = useMemo(
+    () => navigation.filter((item) => item.visible(role)),
+    [role]
+  );
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -65,7 +107,7 @@ export default function OperationsLayout({ children }) {
         <aside className="hidden w-72 shrink-0 border-r border-zinc-800 xl:block">
           <nav className="p-4">
             <div className="space-y-1">
-              {navigation.map((item) => {
+              {visibleNavigation.map((item) => {
                 const metricValue =
                   item.metricKey && metrics ? metrics[item.metricKey] : null;
 
