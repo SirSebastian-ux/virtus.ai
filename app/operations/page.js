@@ -103,7 +103,8 @@ const cardsByRole = {
     ["Decision Queue", "Handle department approvals and decisions.", "/operations/decisions"],
   ],
   supervisor: [
-    ["Operations Chat", "Review team reports.", "/operations/chat"],
+    ["Supervisor Dashboard", "Team members, execution visibility, blockers, reports, and decisions.", "/operations/supervisor-dashboard"],
+["Operations Chat", "Review team reports.", "/operations/chat"],
     ["Tasks", "Track team tasks and follow-ups.", "/operations/tasks"],
     ["Urgent Issues", "Escalate team blockers and risks.", "/operations/urgent"],
     ["Daily Report", "Review team daily activity.", "/operations/daily-report"],
@@ -292,3 +293,4 @@ export default function OperationsPage() {
     </section>
   );
 }
+
