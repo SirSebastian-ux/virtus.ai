@@ -39,6 +39,10 @@ export default function DecisionCenterPage() {
   });
   const [metrics, setMetrics] = useState(emptyMetrics);
   const [priorities, setPriorities] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [decisions, setDecisions] = useState([]);
+  const [overdueTasks, setOverdueTasks] = useState([]);
+  const [urgentIssues, setUrgentIssues] = useState([]);
   const [accessContext, setAccessContext] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,11 +72,19 @@ export default function DecisionCenterPage() {
 
       setMetrics(payload.metrics || emptyMetrics);
       setPriorities(payload.executivePriorities || []);
+      setAlerts(payload.alerts || []);
+      setDecisions(payload.decisions || []);
+      setOverdueTasks(payload.overdueTasks || []);
+      setUrgentIssues(payload.urgentIssues || []);
       setAccessContext(payload.accessContext || null);
     } catch (error) {
       setStatusMessage(error.message);
       setMetrics(emptyMetrics);
       setPriorities([]);
+      setAlerts([]);
+      setDecisions([]);
+      setOverdueTasks([]);
+      setUrgentIssues([]);
       setAccessContext(null);
     } finally {
       setLoading(false);
@@ -208,7 +220,118 @@ export default function DecisionCenterPage() {
             )}
           </div>
         </section>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          <section className="rounded-3xl border border-white/10 bg-white/10 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Critical / High Alerts</h2>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">
+                {alerts.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {alerts.length ? (
+                alerts.map((alert) => (
+                  <article key={alert.id} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                    <p className="text-sm font-bold text-white">{alert.title}</p>
+                    <p className="mt-2 text-sm text-slate-400">{alert.message}</p>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {formatLabel(alert.severity)} · {formatLabel(alert.status)}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
+                  No critical or high management alerts in this scope.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/10 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Pending Decisions</h2>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">
+                {decisions.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {decisions.length ? (
+                decisions.map((decision) => (
+                  <article key={decision.id} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                    <p className="text-sm font-bold text-white">{decision.title}</p>
+                    <p className="mt-2 text-sm text-slate-400">{decision.description || "No description."}</p>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {formatLabel(decision.priority)} · {formatLabel(decision.status)}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
+                  No pending decisions in this scope.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/10 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Overdue Tasks</h2>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">
+                {overdueTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {overdueTasks.length ? (
+                overdueTasks.map((task) => (
+                  <article key={task.id} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                    <p className="text-sm font-bold text-white">{task.title}</p>
+                    <p className="mt-2 text-sm text-slate-400">{task.description || "No description."}</p>
+                    <p className="mt-3 text-xs text-slate-500">
+                      Due {task.due_date || "unknown"} · {formatLabel(task.status)}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
+                  No overdue tasks in this scope.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/10 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">Open Urgent Issues</h2>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">
+                {urgentIssues.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {urgentIssues.length ? (
+                urgentIssues.map((issue) => (
+                  <article key={issue.id} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                    <p className="text-sm font-bold text-white">{issue.title}</p>
+                    <p className="mt-2 text-sm text-slate-400">{issue.description || "No description."}</p>
+                    <p className="mt-3 text-xs text-slate-500">
+                      {formatLabel(issue.severity)} · {formatLabel(issue.status)}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-400">
+                  No open urgent issues in this scope.
+                </p>
+              )}
+            </div>
+          </section>
+        </section>
       </div>
     </main>
   );
 }
+
