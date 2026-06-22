@@ -110,7 +110,8 @@ const cardsByRole = {
     ["Daily Report", "Review team daily activity.", "/operations/daily-report"],
   ],
   employee: [
-    ["Operations Chat", "Submit your daily report.", "/operations/chat"],
+    ["My Work", "Personal dashboard for tasks, reports, activity, decisions, and performance.", "/operations/my-work"],
+["Operations Chat", "Submit your daily report.", "/operations/chat"],
     ["Tasks", "View and update your assigned tasks.", "/operations/tasks"],
     ["Urgent Issues", "Raise or review urgent work blockers.", "/operations/urgent"],
     ["Daily Report", "Review your daily activity.", "/operations/daily-report"],
@@ -293,4 +294,5 @@ export default function OperationsPage() {
     </section>
   );
 }
+
 
