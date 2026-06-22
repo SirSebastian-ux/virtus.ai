@@ -3,49 +3,54 @@
 import { useEffect, useState } from "react";
 
 const cards = [
-  { key: "employees", label: "Employees" },
-  { key: "tasks", label: "Tasks" },
-  { key: "urgentIssues", label: "Urgent Issues" },
-  { key: "decisions", label: "Decisions" },
-  { key: "reports", label: "Reports" },
+  { key: "activeEmployees", label: "Active Employees" },
+  { key: "openTasks", label: "Open Tasks" },
+  { key: "openUrgentIssues", label: "Urgent Issues" },
+  { key: "pendingDecisions", label: "Pending Decisions" },
+  { key: "todayReports", label: "Reports Today" },
+  { key: "pendingPayments", label: "Pending Payments" },
 ];
 
 export default function OperationsDashboardPage() {
-  const [workspaceId, setWorkspaceId] = useState("");
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  async function loadDashboard() {
-    if (!workspaceId.trim()) {
-      setError("Workspace ID is required.");
-      return;
-    }
+  useEffect(() => {
+    let alive = true;
 
-    setLoading(true);
-    setError("");
+    async function loadDashboard() {
+      try {
+        const response = await fetch("/api/operations/metrics", {
+          cache: "no-store",
+        });
 
-    try {
-      const response = await fetch(
-        `/api/operations/dashboard?workspaceId=${encodeURIComponent(
-          workspaceId.trim()
-        )}`
-      );
+        const result = await response.json();
 
-      const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to load dashboard.");
+        }
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to load dashboard.");
+        if (alive) {
+          setData(result.metrics);
+        }
+      } catch (loadError) {
+        if (alive) {
+          setError(loadError.message);
+        }
+      } finally {
+        if (alive) {
+          setLoading(false);
+        }
       }
-
-      setData(result);
-    } catch (loadError) {
-      setError(loadError.message);
-      setData(null);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    loadDashboard();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
@@ -58,57 +63,37 @@ export default function OperationsDashboardPage() {
             Executive Dashboard
           </h1>
           <p className="mt-3 max-w-3xl text-slate-300">
-            Role-aware operational overview for employees, tasks, urgent
-            issues, decisions, and reports.
+            Live operational command view for employees, reports, tasks,
+            urgent issues, decisions, and payments.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <label className="text-sm font-medium text-slate-200">
-            Workspace ID
-          </label>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <input
-              value={workspaceId}
-              onChange={(event) => setWorkspaceId(event.target.value)}
-              placeholder="Paste workspace ID"
-              className="flex-1 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-300"
-            />
-            <button
-              onClick={loadDashboard}
-              disabled={loading}
-              className="rounded-xl bg-cyan-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
-            >
-              {loading ? "Loading..." : "Load Dashboard"}
-            </button>
-          </div>
-          {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
-        </div>
-
-        {data ? (
-          <div className="space-y-5">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <p className="text-sm text-slate-400">Current Role</p>
-              <p className="mt-1 text-2xl font-semibold capitalize">
-                {data.role?.replaceAll("_", " ")}
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {cards.map((card) => (
-                <div
-                  key={card.key}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-5"
-                >
-                  <p className="text-sm text-slate-400">{card.label}</p>
-                  <p className="mt-3 text-4xl font-semibold">
-                    {data.metrics?.[card.key] ?? 0}
-                  </p>
-                </div>
-              ))}
-            </div>
+        {error ? (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-red-200">
+            {error}
           </div>
         ) : null}
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {cards.map((card) => (
+            <div
+              key={card.key}
+              className="rounded-2xl border border-white/10 bg-white/5 p-5"
+            >
+              <p className="text-sm text-slate-400">{card.label}</p>
+              <p className="mt-3 text-4xl font-semibold">
+                {loading ? "..." : data?.[card.key] ?? 0}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-slate-400">Workspace</p>
+          <p className="mt-2 text-sm text-slate-300">
+            {loading ? "Loading..." : data?.workspaceId || "No active workspace"}
+          </p>
+        </div>
       </section>
     </main>
   );
