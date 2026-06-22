@@ -66,10 +66,10 @@ const dashboardCopy = {
 const cardsByRole = {
   owner: [
     ["Executive Dashboard", "Real-time operational metrics and executive visibility.", "/operations/dashboard"],
-["Executive Briefing", "Leadership health score, executive summary, risks, and recommendations.", "/operations/executive-briefing"],
-["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
-["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
-["Department Intelligence", "Department health, workload, risk ranking, reporting compliance, and operational visibility.", "/operations/department-intelligence"],
+    ["Executive Briefing", "Leadership health score, executive summary, risks, and recommendations.", "/operations/executive-briefing"],
+    ["Management Alerts", "Critical alerts, overdue work, missing reports, unresolved risks, and escalations.", "/operations/management-alerts"],
+    ["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
+    ["Department Intelligence", "Department health, workload, risk ranking, reporting compliance, and operational visibility.", "/operations/department-intelligence"],
     ["Company Setup", "Workspace, departments, roles, and company structure.", "/operations/company"],
     ["Employees", "Manage employees, roles, departments, and active seats.", "/operations/employees"],
     ["Structure", "Review hierarchy and reporting lines.", "/operations/structure"],
@@ -299,3 +299,4 @@ export default function OperationsPage() {
     </section>
   );
 }
+
