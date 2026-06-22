@@ -17,9 +17,7 @@ async function countRows(query) {
 }
 
 function applyScope(query, accessContext, column = "department_id") {
-  if (accessContext.scopeType === "company") {
-    return query;
-  }
+  if (accessContext.scopeType === "company") return query;
 
   if (accessContext.scopeType === "department" && accessContext.departmentId) {
     return query.eq(column, accessContext.departmentId);
@@ -30,6 +28,55 @@ function applyScope(query, accessContext, column = "department_id") {
   }
 
   return query;
+}
+
+function scoreOperations(metrics) {
+  let score = 100;
+
+  score -= Math.min(metrics.openUrgentIssues * 12, 36);
+  score -= Math.min(metrics.pendingDecisions * 8, 24);
+  score -= Math.min(metrics.openTasks * 3, 18);
+  score -= Math.min(metrics.todayReports === 0 ? 8 : 0, 8);
+
+  return Math.max(score, 0);
+}
+
+function buildAlerts(metrics) {
+  const alerts = [];
+
+  if (metrics.openUrgentIssues > 0) {
+    alerts.push({
+      level: "critical",
+      title: "Urgent issues require attention",
+      message: `${metrics.openUrgentIssues} urgent issue(s) are still unresolved.`,
+    });
+  }
+
+  if (metrics.pendingDecisions > 0) {
+    alerts.push({
+      level: "warning",
+      title: "Pending decisions are waiting",
+      message: `${metrics.pendingDecisions} decision(s) require leadership action.`,
+    });
+  }
+
+  if (metrics.openTasks > 10) {
+    alerts.push({
+      level: "warning",
+      title: "Task load is increasing",
+      message: `${metrics.openTasks} open task(s) are active in this scope.`,
+    });
+  }
+
+  if (alerts.length === 0) {
+    alerts.push({
+      level: "stable",
+      title: "Operations are stable",
+      message: "No critical operating signals detected in this scope.",
+    });
+  }
+
+  return alerts;
 }
 
 export async function GET(req) {
@@ -108,8 +155,7 @@ export async function GET(req) {
         .select("id", { count: "exact", head: true })
         .eq("workspace_id", workspaceId)
         .neq("status", "completed"),
-      accessContext,
-      "department_id"
+      accessContext
     );
 
     const urgentIssuesQuery = applyScope(
@@ -117,9 +163,9 @@ export async function GET(req) {
         .from("operations_urgent_issues")
         .select("id", { count: "exact", head: true })
         .eq("workspace_id", workspaceId)
-        .neq("status", "resolved"),
-      accessContext,
-      "department_id"
+        .neq("status", "resolved")
+        .neq("status", "closed"),
+      accessContext
     );
 
     const decisionsQuery = applyScope(
@@ -138,8 +184,7 @@ export async function GET(req) {
         .select("id", { count: "exact", head: true })
         .eq("workspace_id", workspaceId)
         .eq("report_date", today),
-      accessContext,
-      "department_id"
+      accessContext
     );
 
     const [
@@ -156,15 +201,21 @@ export async function GET(req) {
       countRows(reportsQuery),
     ]);
 
+    const metrics = {
+      workspaceId,
+      activeEmployees,
+      openTasks,
+      openUrgentIssues,
+      pendingDecisions,
+      todayReports,
+    };
+
     return NextResponse.json({
       accessContext,
-      metrics: {
-        workspaceId,
-        activeEmployees,
-        openTasks,
-        openUrgentIssues,
-        pendingDecisions,
-        todayReports,
+      metrics,
+      intelligence: {
+        healthScore: scoreOperations(metrics),
+        alerts: buildAlerts(metrics),
       },
     });
   } catch (error) {
