@@ -66,6 +66,7 @@ const dashboardCopy = {
 const cardsByRole = {
   owner: [
     ["Executive Dashboard", "Real-time operational metrics and executive visibility.", "/operations/dashboard"],
+["Executive Briefing", "Leadership health score, executive summary, risks, and recommendations.", "/operations/executive-briefing"],
     ["Company Setup", "Workspace, departments, roles, and company structure.", "/operations/company"],
     ["Employees", "Manage employees, roles, departments, and active seats.", "/operations/employees"],
     ["Structure", "Review hierarchy and reporting lines.", "/operations/structure"],
@@ -290,4 +291,5 @@ export default function OperationsPage() {
     </section>
   );
 }
+
 
