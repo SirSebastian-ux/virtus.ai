@@ -8,11 +8,16 @@ const cards = [
   { key: "openUrgentIssues", label: "Urgent Issues" },
   { key: "pendingDecisions", label: "Pending Decisions" },
   { key: "todayReports", label: "Reports Today" },
-  { key: "pendingPayments", label: "Pending Payments" },
 ];
 
+function formatRole(role) {
+  return String(role || "employee").replaceAll("_", " ");
+}
+
 export default function OperationsDashboardPage() {
-  const [data, setData] = useState(null);
+  const [accessContext, setAccessContext] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [workspaceId, setWorkspaceId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -21,18 +26,43 @@ export default function OperationsDashboardPage() {
 
     async function loadDashboard() {
       try {
-        const response = await fetch("/api/operations/metrics", {
+        const metricsResponse = await fetch("/api/operations/metrics", {
           cache: "no-store",
         });
 
-        const result = await response.json();
+        const metricsResult = await metricsResponse.json();
 
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to load dashboard.");
+        if (!metricsResponse.ok) {
+          throw new Error(metricsResult.error || "Failed to load workspace.");
+        }
+
+        const nextWorkspaceId = metricsResult.metrics?.workspaceId || "";
+
+        if (!nextWorkspaceId) {
+          if (alive) {
+            setMetrics(metricsResult.metrics);
+            setWorkspaceId("");
+          }
+          return;
+        }
+
+        const dashboardResponse = await fetch(
+          `/api/operations/dashboard?workspaceId=${encodeURIComponent(
+            nextWorkspaceId
+          )}`,
+          { cache: "no-store" }
+        );
+
+        const dashboardResult = await dashboardResponse.json();
+
+        if (!dashboardResponse.ok) {
+          throw new Error(dashboardResult.error || "Failed to load dashboard.");
         }
 
         if (alive) {
-          setData(result.metrics);
+          setWorkspaceId(nextWorkspaceId);
+          setAccessContext(dashboardResult.accessContext);
+          setMetrics(dashboardResult.metrics);
         }
       } catch (loadError) {
         if (alive) {
@@ -63,8 +93,8 @@ export default function OperationsDashboardPage() {
             Executive Dashboard
           </h1>
           <p className="mt-3 max-w-3xl text-slate-300">
-            Live operational command view for employees, reports, tasks,
-            urgent issues, decisions, and payments.
+            Role-aware command view filtered by company, department, team, or
+            personal operating scope.
           </p>
         </div>
 
@@ -74,7 +104,30 @@ export default function OperationsDashboardPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-slate-400">Role</p>
+            <p className="mt-2 text-2xl font-semibold capitalize">
+              {loading ? "..." : formatRole(accessContext?.role)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-slate-400">Scope</p>
+            <p className="mt-2 text-2xl font-semibold capitalize">
+              {loading ? "..." : accessContext?.scopeType || "self"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-slate-400">Workspace</p>
+            <p className="mt-2 truncate text-sm text-slate-300">
+              {loading ? "Loading..." : workspaceId || "No active workspace"}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {cards.map((card) => (
             <div
               key={card.key}
@@ -82,17 +135,10 @@ export default function OperationsDashboardPage() {
             >
               <p className="text-sm text-slate-400">{card.label}</p>
               <p className="mt-3 text-4xl font-semibold">
-                {loading ? "..." : data?.[card.key] ?? 0}
+                {loading ? "..." : metrics?.[card.key] ?? 0}
               </p>
             </div>
           ))}
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-slate-400">Workspace</p>
-          <p className="mt-2 text-sm text-slate-300">
-            {loading ? "Loading..." : data?.workspaceId || "No active workspace"}
-          </p>
         </div>
       </section>
     </main>
