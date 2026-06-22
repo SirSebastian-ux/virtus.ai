@@ -67,6 +67,8 @@ const cardsByRole = {
   owner: [
     ["Executive Dashboard", "Real-time operational metrics and executive visibility.", "/operations/dashboard"],
 ["Executive Briefing", "Leadership health score, executive summary, risks, and recommendations.", "/operations/executive-briefing"],
+["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
+["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
 ["Department Intelligence", "Department health, workload, risk ranking, reporting compliance, and operational visibility.", "/operations/department-intelligence"],
     ["Company Setup", "Workspace, departments, roles, and company structure.", "/operations/company"],
     ["Employees", "Manage employees, roles, departments, and active seats.", "/operations/employees"],
@@ -80,6 +82,7 @@ const cardsByRole = {
     ["Payments", "Review payment records, confirmations, and pending money.", "/operations/payments"],
   ],
   director: [
+    ["Daily Reporting", "Review reporting compliance, approvals, and missing department reports.", "/operations/daily-reporting"],
     ["Structure", "Review hierarchy and reporting lines.", "/operations/structure"],
     ["Operations Chat", "Review submitted operational reports.", "/operations/chat"],
     ["Reports", "Review summaries and extracted items.", "/operations/reports"],
@@ -89,6 +92,7 @@ const cardsByRole = {
     ["Payments", "Review payment records and pending confirmations.", "/operations/payments"],
   ],
   senior_manager: [
+    ["Daily Reporting", "Review department reporting activity and approvals.", "/operations/daily-reporting"],
     ["Operations Chat", "Review department reports.", "/operations/chat"],
     ["Reports", "Review reports and extracted intelligence.", "/operations/reports"],
     ["Tasks", "Track open work and follow-ups.", "/operations/tasks"],
@@ -96,6 +100,7 @@ const cardsByRole = {
     ["Decision Queue", "Review decisions requiring senior input.", "/operations/decisions"],
   ],
   department_manager: [
+    ["Daily Reporting", "Manage department reports, reviews, and compliance.", "/operations/daily-reporting"],
     ["Operations Chat", "Review department reports.", "/operations/chat"],
     ["Reports", "Review department reports and summaries.", "/operations/reports"],
     ["Tasks", "Track department execution.", "/operations/tasks"],
@@ -107,14 +112,14 @@ const cardsByRole = {
 ["Operations Chat", "Review team reports.", "/operations/chat"],
     ["Tasks", "Track team tasks and follow-ups.", "/operations/tasks"],
     ["Urgent Issues", "Escalate team blockers and risks.", "/operations/urgent"],
-    ["Daily Report", "Review team daily activity.", "/operations/daily-report"],
+    ["Daily Reporting", "Review team reports and approve submissions.", "/operations/daily-reporting"],
   ],
   employee: [
     ["My Work", "Personal dashboard for tasks, reports, activity, decisions, and performance.", "/operations/my-work"],
 ["Operations Chat", "Submit your daily report.", "/operations/chat"],
     ["Tasks", "View and update your assigned tasks.", "/operations/tasks"],
     ["Urgent Issues", "Raise or review urgent work blockers.", "/operations/urgent"],
-    ["Daily Report", "Review your daily activity.", "/operations/daily-report"],
+    ["Daily Reporting", "Submit and review your daily reports.", "/operations/daily-reporting"],
   ],
 };
 
@@ -294,3 +299,5 @@ export default function OperationsPage() {
     </section>
   );
 }
+
+
