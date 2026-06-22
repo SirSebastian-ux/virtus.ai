@@ -34,6 +34,7 @@ function scoreOperations(metrics) {
   let score = 100;
 
   score -= Math.min(metrics.openUrgentIssues * 12, 36);
+  score -= Math.min(metrics.criticalIssues * 16, 32);
   score -= Math.min(metrics.pendingDecisions * 8, 24);
   score -= Math.min(metrics.openTasks * 3, 18);
   score -= Math.min(metrics.todayReports === 0 ? 8 : 0, 8);
@@ -43,6 +44,14 @@ function scoreOperations(metrics) {
 
 function buildAlerts(metrics) {
   const alerts = [];
+
+  if (metrics.criticalIssues > 0) {
+    alerts.push({
+      level: "critical",
+      title: "Critical issues detected",
+      message: `${metrics.criticalIssues} critical issue(s) require immediate executive attention.`,
+    });
+  }
 
   if (metrics.openUrgentIssues > 0) {
     alerts.push({
@@ -168,6 +177,17 @@ export async function GET(req) {
       accessContext
     );
 
+    const criticalIssuesQuery = applyScope(
+      admin
+        .from("operations_urgent_issues")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("severity", "critical")
+        .neq("status", "resolved")
+        .neq("status", "closed"),
+      accessContext
+    );
+
     const decisionsQuery = applyScope(
       admin
         .from("operations_decision_queue")
@@ -191,12 +211,14 @@ export async function GET(req) {
       activeEmployees,
       openTasks,
       openUrgentIssues,
+      criticalIssues,
       pendingDecisions,
       todayReports,
     ] = await Promise.all([
       countRows(employeesQuery),
       countRows(tasksQuery),
       countRows(urgentIssuesQuery),
+      countRows(criticalIssuesQuery),
       countRows(decisionsQuery),
       countRows(reportsQuery),
     ]);
@@ -206,6 +228,7 @@ export async function GET(req) {
       activeEmployees,
       openTasks,
       openUrgentIssues,
+      criticalIssues,
       pendingDecisions,
       todayReports,
     };
