@@ -334,4 +334,3 @@ export default function DecisionCenterPage() {
     </main>
   );
 }
-
