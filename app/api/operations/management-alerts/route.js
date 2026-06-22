@@ -148,6 +148,160 @@ async function getCounts(admin, workspaceId, accessContext) {
   };
 }
 
+
+async function unresolvedAlertExists(admin, workspaceId, alertType, sourceTable, sourceId) {
+  const { data, error } = await admin
+    .from("operations_management_alerts")
+    .select("id")
+    .eq("workspace_id", workspaceId)
+    .eq("alert_type", alertType)
+    .eq("source_table", sourceTable)
+    .eq("source_id", sourceId)
+    .in("status", ["open", "acknowledged", "investigating"])
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return Boolean(data?.id);
+}
+
+async function createSystemAlert(admin, alert) {
+  const exists = await unresolvedAlertExists(
+    admin,
+    alert.workspace_id,
+    alert.alert_type,
+    alert.source_table,
+    alert.source_id
+  );
+
+  if (exists) return false;
+
+  const { error } = await admin.from("operations_management_alerts").insert({
+    ...alert,
+    status: "open",
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) throw new Error(error.message);
+  return true;
+}
+
+async function syncManagementAlerts(admin, workspaceId) {
+  let createdCount = 0;
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data: urgentIssues, error: urgentError } = await admin
+    .from("operations_urgent_issues")
+    .select("id,workspace_id,department_id,title,description,severity,status,assigned_to")
+    .eq("workspace_id", workspaceId)
+    .eq("severity", "critical")
+    .not("status", "in", '("resolved","closed")');
+
+  if (urgentError) throw new Error(urgentError.message);
+
+  for (const issue of urgentIssues || []) {
+    const created = await createSystemAlert(admin, {
+      workspace_id: workspaceId,
+      department_id: issue.department_id,
+      alert_type: "critical_urgent_issue",
+      title: `Critical urgent issue: ${issue.title}`,
+      message: issue.description || "A critical urgent issue is unresolved and requires executive attention.",
+      severity: "critical",
+      source_table: "operations_urgent_issues",
+      source_id: issue.id,
+      assigned_to: issue.assigned_to,
+    });
+
+    if (created) createdCount += 1;
+  }
+
+  const { data: overdueTasks, error: taskError } = await admin
+    .from("operations_tasks")
+    .select("id,workspace_id,department_id,title,description,status,priority,due_date")
+    .eq("workspace_id", workspaceId)
+    .lt("due_date", today)
+    .not("status", "in", '("completed","done","closed")');
+
+  if (taskError) throw new Error(taskError.message);
+
+  for (const task of overdueTasks || []) {
+    const created = await createSystemAlert(admin, {
+      workspace_id: workspaceId,
+      department_id: task.department_id,
+      alert_type: "overdue_task",
+      title: `Overdue task: ${task.title}`,
+      message: task.description || `Task was due on ${task.due_date} and is not completed.`,
+      severity: task.priority === "urgent" || task.priority === "high" ? "high" : "medium",
+      source_table: "operations_tasks",
+      source_id: task.id,
+      assigned_to: null,
+    });
+
+    if (created) createdCount += 1;
+  }
+
+  const { data: pendingDecisions, error: decisionError } = await admin
+    .from("operations_decision_queue")
+    .select("id,workspace_id,department_id,title,description,status,priority,assigned_to")
+    .eq("workspace_id", workspaceId)
+    .eq("status", "pending")
+    .in("priority", ["high", "urgent"]);
+
+  if (decisionError) throw new Error(decisionError.message);
+
+  for (const decision of pendingDecisions || []) {
+    const created = await createSystemAlert(admin, {
+      workspace_id: workspaceId,
+      department_id: decision.department_id,
+      alert_type: "pending_high_priority_decision",
+      title: `Pending decision: ${decision.title}`,
+      message: decision.description || "A high-priority decision is pending and requires leadership action.",
+      severity: decision.priority === "urgent" ? "critical" : "high",
+      source_table: "operations_decision_queue",
+      source_id: decision.id,
+      assigned_to: decision.assigned_to,
+    });
+
+    if (created) createdCount += 1;
+  }
+
+  const { data: departments, error: departmentError } = await admin
+    .from("departments")
+    .select("id,name")
+    .eq("workspace_id", workspaceId);
+
+  if (departmentError) throw new Error(departmentError.message);
+
+  const { data: dailyReports, error: reportsError } = await admin
+    .from("operations_daily_reports")
+    .select("department_id")
+    .eq("workspace_id", workspaceId)
+    .eq("report_date", today);
+
+  if (reportsError) throw new Error(reportsError.message);
+
+  const reportedDepartmentIds = new Set((dailyReports || []).map((report) => report.department_id));
+
+  for (const department of departments || []) {
+    if (reportedDepartmentIds.has(department.id)) continue;
+
+    const created = await createSystemAlert(admin, {
+      workspace_id: workspaceId,
+      department_id: department.id,
+      alert_type: "missing_daily_report",
+      title: `Missing daily report: ${department.name}`,
+      message: `${department.name} has not submitted a daily operational report for ${today}.`,
+      severity: "medium",
+      source_table: "departments",
+      source_id: department.id,
+      assigned_to: null,
+    });
+
+    if (created) createdCount += 1;
+  }
+
+  return { createdCount };
+}
+
 export async function GET(req) {
   try {
     const supabase = await createClient();
@@ -180,6 +334,8 @@ export async function GET(req) {
     if (!canViewManagementAlerts(accessContext.role)) {
       return NextResponse.json({ error: "Management alerts access denied." }, { status: 403 });
     }
+
+    const syncResult = await syncManagementAlerts(admin, workspaceId);
 
     let query = admin
       .from("operations_management_alerts")
@@ -221,7 +377,10 @@ export async function GET(req) {
 
     return NextResponse.json({
       accessContext,
-      metrics: counts,
+      metrics: {
+        ...counts,
+        generatedAlerts: syncResult.createdCount,
+      },
       alerts: (data || []).map(mapAlert),
     });
   } catch (error) {
