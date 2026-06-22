@@ -17,6 +17,7 @@ function formatRole(role) {
 export default function OperationsDashboardPage() {
   const [accessContext, setAccessContext] = useState(null);
   const [metrics, setMetrics] = useState(null);
+  const [intelligence, setIntelligence] = useState(null);
   const [workspaceId, setWorkspaceId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -63,6 +64,7 @@ export default function OperationsDashboardPage() {
           setWorkspaceId(nextWorkspaceId);
           setAccessContext(dashboardResult.accessContext);
           setMetrics(dashboardResult.metrics);
+          setIntelligence(dashboardResult.intelligence);
         }
       } catch (loadError) {
         if (alive) {
@@ -104,7 +106,14 @@ export default function OperationsDashboardPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-sm text-slate-400">Health Score</p>
+            <p className="mt-2 text-4xl font-semibold">
+              {loading ? "..." : intelligence?.healthScore ?? 0}
+            </p>
+          </div>
+
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p className="text-sm text-slate-400">Role</p>
             <p className="mt-2 text-2xl font-semibold capitalize">
@@ -139,6 +148,30 @@ export default function OperationsDashboardPage() {
               </p>
             </div>
           ))}
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <h2 className="text-xl font-semibold">Executive Alerts</h2>
+
+          <div className="mt-5 space-y-3">
+            {(intelligence?.alerts || []).map((alert) => (
+              <div
+                key={`${alert.level}-${alert.title}`}
+                className="rounded-xl border border-white/10 bg-slate-950/60 p-4"
+              >
+                <p className="text-sm font-semibold capitalize text-cyan-200">
+                  {alert.level}: {alert.title}
+                </p>
+                <p className="mt-1 text-sm text-slate-400">{alert.message}</p>
+              </div>
+            ))}
+
+            {!loading && !intelligence?.alerts?.length ? (
+              <p className="text-sm text-slate-400">
+                No executive alerts available.
+              </p>
+            ) : null}
+          </div>
         </div>
       </section>
     </main>
