@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { bootstrapWorkspace } from "@/lib/operations/bootstrap";
 
 const DEFAULT_DEPARTMENTS = [
   "Management",
@@ -110,7 +111,7 @@ export async function POST(req) {
         status: "manual_testing",
         owner_user_id: user.id,
       })
-      .select("id, name, slug, status, created_at, updated_at")
+      .select("id, name, slug, status, created_at, updated_at, owner_user_id")
       .single();
 
     if (workspaceError) {
@@ -137,9 +138,10 @@ export async function POST(req) {
       status: "active",
     }));
 
-    const { error: departmentsError } = await admin
+    const { data: createdDepartments, error: departmentsError } = await admin
       .from("departments")
-      .insert(departments);
+      .insert(departments)
+      .select("id, name");
 
     if (departmentsError) {
       return NextResponse.json(
@@ -168,6 +170,31 @@ export async function POST(req) {
       );
     }
 
+    const managementDepartment =
+      (createdDepartments || []).find(
+        (department) => department.name === "Management"
+      ) || null;
+
+    try {
+      await bootstrapWorkspace({
+        admin,
+        workspaceId: workspace.id,
+        ownerUserId: user.id,
+        ownerEmail: user.email,
+        ownerName:
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email ||
+          "Workspace Owner",
+        managementDepartmentId: managementDepartment?.id || null,
+      });
+    } catch (bootstrapError) {
+      return NextResponse.json(
+        { error: bootstrapError.message },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       ok: true,
       workspace: {
@@ -183,4 +210,3 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
