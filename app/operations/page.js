@@ -68,6 +68,9 @@ const cardsByRole = {
     ["Executive Dashboard", "Real-time operational metrics and executive visibility.", "/operations/dashboard"],
     ["Executive Briefing", "Leadership health score, executive summary, risks, and recommendations.", "/operations/executive-briefing"],
     ["Management Alerts", "Critical alerts, overdue work, missing reports, unresolved risks, and escalations.", "/operations/management-alerts"],
+    ["Decision Center", "Executive priorities, critical alerts, pending decisions, overdue work, and urgent issues.", "/operations/decision-center"],
+    ["AI Intelligence", "Executive summaries, operational risk, recommendations, and leadership insights.", "/operations/ai-intelligence"],
+    ["Operations Copilot", "Ask questions about risks, decisions, reports, tasks, alerts, and urgent issues.", "/operations/copilot"],
     ["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
     ["Department Intelligence", "Department health, workload, risk ranking, reporting compliance, and operational visibility.", "/operations/department-intelligence"],
     ["Company Setup", "Workspace, departments, roles, and company structure.", "/operations/company"],
@@ -299,4 +302,5 @@ export default function OperationsPage() {
     </section>
   );
 }
+
 
