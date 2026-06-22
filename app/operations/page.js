@@ -299,5 +299,3 @@ export default function OperationsPage() {
     </section>
   );
 }
-
-
