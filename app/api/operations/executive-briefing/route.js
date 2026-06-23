@@ -28,38 +28,46 @@ function scoreDepartment(department) {
   return score;
 }
 
+function priorityScore(item) {
+  if (item.type === "critical_alert") return 100;
+  if (item.type === "urgent_decision") return 90;
+  if (item.type === "high_decision") return 80;
+  if (item.type === "overdue_task") return 70;
+  if (item.type === "urgent_issue") return 65;
+  return 40;
+}
+
 function buildExecutiveSummary(metrics) {
   return [
+    `Today the workspace has ${metrics.todayReports} report(s), ${metrics.openTasks} open task(s), ${metrics.overdueTasks} overdue task(s), ${metrics.urgentIssues} urgent issue(s), ${metrics.pendingDecisions} pending decision(s), and ${metrics.activeAlerts} active management alert(s).`,
+    `Current operational health score is ${metrics.healthScore}/100.`,
+    `Current operational risk score is ${metrics.riskScore}/100 based on alerts, urgent issues, overdue tasks, and pending decisions.`,
     `${metrics.criticalIssues} critical issue(s) require executive visibility.`,
-    `${metrics.urgentIssues} urgent issue(s) remain active.`,
-    `${metrics.pendingDecisions} decision(s) are awaiting approval.`,
-    `${metrics.highPriorityDecisions} high-priority decision(s) require leadership review.`,
-    `${metrics.overdueTasks} overdue task(s) are creating execution risk.`,
-    `${metrics.todayReports} report(s) were submitted today.`,
+    `${metrics.criticalAlerts} critical alert(s) require leadership attention.`,
   ];
 }
 
 function buildRecommendations(metrics) {
   const recommendations = [];
 
+  if (metrics.criticalAlerts > 0) {
+    recommendations.push("Resolve or assign all critical management alerts before the next operating cycle.");
+  }
+
   if (metrics.criticalIssues > 0) {
-    recommendations.push("Review all critical issues before normal operational work.");
+    recommendations.push("Review all critical urgent issues and move them into a clear owner-action-resolution workflow.");
   }
 
   if (metrics.overdueTasks > 0) {
-    recommendations.push("Assign owners to overdue tasks and force same-day status updates.");
+    recommendations.push("Reassign, close, or re-prioritize overdue tasks to prevent execution drift.");
   }
 
   if (metrics.highPriorityDecisions > 0) {
-    recommendations.push("Clear high-priority pending decisions to prevent leadership bottlenecks.");
+    recommendations.push("Clear high-priority pending decisions to remove leadership bottlenecks.");
   }
 
   if (metrics.departmentsWithoutReports > 0) {
     recommendations.push("Follow up with departments that have not submitted reports today.");
-  }
-
-  if (metrics.urgentIssues > 0) {
-    recommendations.push("Separate urgent issues by severity and escalate unresolved blockers.");
   }
 
   if (recommendations.length === 0) {
@@ -209,6 +217,9 @@ export async function GET(req) {
       pendingDecisionResult,
       recentActivityResult,
       todayDepartmentReportsResult,
+      managementAlertsResult,
+      priorityAlertsResult,
+      priorityTasksResult,
     ] = await Promise.all([
       admin
         .from("departments")
@@ -228,7 +239,7 @@ export async function GET(req) {
 
       admin
         .from("operations_decision_queue")
-        .select("id,title,priority,status,department_id,created_at")
+        .select("id,title,description,priority,status,department_id,created_at")
         .eq("workspace_id", workspaceId)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -246,6 +257,32 @@ export async function GET(req) {
         .select("department_id")
         .eq("workspace_id", workspaceId)
         .eq("report_date", today),
+
+      admin
+        .from("operations_management_alerts")
+        .select("id,title,message,severity,status,department_id,alert_type,created_at")
+        .eq("workspace_id", workspaceId)
+        .in("status", ["open", "acknowledged", "investigating"])
+        .order("created_at", { ascending: false })
+        .limit(20),
+
+      admin
+        .from("operations_management_alerts")
+        .select("id,title,message,severity,status,department_id,alert_type,created_at")
+        .eq("workspace_id", workspaceId)
+        .in("status", ["open", "acknowledged", "investigating"])
+        .in("severity", ["critical", "high"])
+        .order("created_at", { ascending: false })
+        .limit(10),
+
+      admin
+        .from("operations_tasks")
+        .select("id,title,description,status,priority,due_date,department_id,created_at")
+        .eq("workspace_id", workspaceId)
+        .lt("due_date", today)
+        .neq("status", "completed")
+        .order("due_date", { ascending: true })
+        .limit(10),
     ]);
 
     for (const result of [
@@ -254,6 +291,9 @@ export async function GET(req) {
       pendingDecisionResult,
       recentActivityResult,
       todayDepartmentReportsResult,
+      managementAlertsResult,
+      priorityAlertsResult,
+      priorityTasksResult,
     ]) {
       if (result.error) {
         throw new Error(result.error.message);
@@ -261,6 +301,7 @@ export async function GET(req) {
     }
 
     const departments = departmentsResult.data || [];
+    const managementAlerts = managementAlertsResult.data || [];
     const todayDepartmentIds = new Set(
       (todayDepartmentReportsResult.data || [])
         .map((report) => report.department_id)
@@ -349,6 +390,26 @@ export async function GET(req) {
       (department) => !todayDepartmentIds.has(department.id)
     );
 
+    const activeAlerts = managementAlerts.length;
+    const criticalAlerts = managementAlerts.filter(
+      (alert) => alert.severity === "critical"
+    ).length;
+    const highAlerts = managementAlerts.filter(
+      (alert) => alert.severity === "high"
+    ).length;
+    const openAlerts = managementAlerts.filter(
+      (alert) => alert.status === "open"
+    ).length;
+
+    const riskScore = Math.min(
+      100,
+      criticalAlerts * 20 +
+        criticalIssues * 20 +
+        highPriorityDecisions * 12 +
+        overdueTasks * 8 +
+        urgentIssues * 6
+    );
+
     const healthScore = Math.max(
       0,
       100 -
@@ -357,12 +418,94 @@ export async function GET(req) {
         pendingDecisions * 5 -
         highPriorityDecisions * 6 -
         overdueTasks * 4 -
-        departmentsWithoutReports.length * 3
+        departmentsWithoutReports.length * 3 -
+        criticalAlerts * 10 -
+        highAlerts * 5
     );
+
+    const executivePriorities = [
+      ...(priorityAlertsResult.data || []).map((alert) => ({
+        id: alert.id,
+        type: alert.severity === "critical" ? "critical_alert" : "high_alert",
+        title: alert.title,
+        description: alert.message,
+        severity: alert.severity,
+        status: alert.status,
+        source: "management_alerts",
+        createdAt: alert.created_at,
+        score: priorityScore({
+          type: alert.severity === "critical" ? "critical_alert" : "high_alert",
+        }),
+      })),
+      ...(pendingDecisionResult.data || []).map((decision) => ({
+        id: decision.id,
+        type: decision.priority === "urgent" ? "urgent_decision" : "high_decision",
+        title: decision.title,
+        description: decision.description,
+        severity: decision.priority === "urgent" ? "critical" : "high",
+        status: decision.status,
+        source: "decision_queue",
+        createdAt: decision.created_at,
+        score: priorityScore({
+          type: decision.priority === "urgent" ? "urgent_decision" : "high_decision",
+        }),
+      })),
+      ...(priorityTasksResult.data || []).map((task) => ({
+        id: task.id,
+        type: "overdue_task",
+        title: task.title,
+        description: task.description || `Task was due on ${task.due_date}.`,
+        severity: task.priority === "urgent" || task.priority === "high" ? "high" : "medium",
+        status: task.status,
+        source: "tasks",
+        createdAt: task.created_at,
+        score: priorityScore({ type: "overdue_task" }),
+      })),
+      ...(recentUrgentResult.data || []).map((issue) => ({
+        id: issue.id,
+        type: "urgent_issue",
+        title: issue.title,
+        description: null,
+        severity: issue.severity,
+        status: issue.status,
+        source: "urgent_issues",
+        createdAt: issue.created_at,
+        score: priorityScore({ type: "urgent_issue" }),
+      })),
+    ]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    const leadershipInsights = [];
+
+    if (pendingDecisions > 0) {
+      leadershipInsights.push({
+        title: "Decision Bottleneck",
+        value: pendingDecisions,
+        severity: highPriorityDecisions > 0 ? "high" : "medium",
+      });
+    }
+
+    if (criticalAlerts > 0) {
+      leadershipInsights.push({
+        title: "Critical Alert Exposure",
+        value: criticalAlerts,
+        severity: "critical",
+      });
+    }
+
+    if (departmentsWithoutReports.length > 0) {
+      leadershipInsights.push({
+        title: "Reporting Visibility Gap",
+        value: departmentsWithoutReports.length,
+        severity: "medium",
+      });
+    }
 
     const metrics = {
       workspaceId,
       healthScore,
+      riskScore,
       activeEmployees,
       openTasks,
       overdueTasks,
@@ -373,13 +516,26 @@ export async function GET(req) {
       todayReports,
       activeDepartments,
       departmentsWithoutReports: departmentsWithoutReports.length,
+      activeAlerts,
+      openAlerts,
+      criticalAlerts,
+      highAlerts,
+      executivePrioritiesCount: executivePriorities.length,
     };
+
+    const executiveSummary = buildExecutiveSummary(metrics);
+    const recommendations = buildRecommendations(metrics);
 
     return NextResponse.json({
       briefing: {
         ...metrics,
-        executiveSummary: buildExecutiveSummary(metrics),
-        recommendations: buildRecommendations(metrics),
+        executiveSummary,
+        recommendations,
+        aiExecutiveSummary: executiveSummary,
+        aiRecommendations: recommendations,
+        leadershipInsights,
+        executivePriorities,
+        managementAlerts: managementAlerts.slice(0, 10),
         urgentIssueSummary: recentUrgentResult.data || [],
         decisionSummary: pendingDecisionResult.data || [],
         criticalActivity: recentActivityResult.data || [],
