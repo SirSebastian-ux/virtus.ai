@@ -430,6 +430,17 @@ export async function POST(req) {
       return NextResponse.json({ error: "Management alert creation denied." }, { status: 403 });
     }
 
+    if (
+      !canViewCompany(accessContext.role) &&
+      departmentId &&
+      departmentId !== accessContext.departmentId
+    ) {
+      return NextResponse.json(
+        { error: "Department scope denied." },
+        { status: 403 }
+      );
+    }
+
     const insertPayload = {
       workspace_id: workspaceId,
       department_id: departmentId || accessContext.departmentId,
