@@ -4,16 +4,17 @@ import { useEffect, useState } from "react";
 
 const metricCards = [
   { key: "healthScore", label: "Health Score" },
+  { key: "riskScore", label: "Risk Score" },
+  { key: "activeAlerts", label: "Active Alerts" },
+  { key: "criticalAlerts", label: "Critical Alerts" },
+  { key: "openAlerts", label: "Open Alerts" },
   { key: "activeEmployees", label: "Active Employees" },
   { key: "openTasks", label: "Open Tasks" },
   { key: "overdueTasks", label: "Overdue Tasks" },
   { key: "urgentIssues", label: "Urgent Issues" },
-  { key: "criticalIssues", label: "Critical Issues" },
   { key: "pendingDecisions", label: "Pending Decisions" },
-  { key: "highPriorityDecisions", label: "High-Priority Decisions" },
   { key: "todayReports", label: "Reports Today" },
-  { key: "activeDepartments", label: "Active Departments" },
-  { key: "departmentsWithoutReports", label: "Departments Missing Reports" },
+  { key: "executivePrioritiesCount", label: "Executive Priorities" },
 ];
 
 function formatDate(value) {
@@ -91,6 +92,9 @@ export default function ExecutiveBriefingPage() {
   const decisionSummary = briefing?.decisionSummary || [];
   const criticalActivity = briefing?.criticalActivity || [];
   const missingDepartmentReports = briefing?.missingDepartmentReports || [];
+  const executivePriorities = briefing?.executivePriorities || [];
+  const leadershipInsights = briefing?.leadershipInsights || [];
+  const managementAlerts = briefing?.managementAlerts || [];
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
@@ -164,6 +168,73 @@ export default function ExecutiveBriefingPage() {
           </section>
         </div>
 
+        <div className="grid gap-6 lg:grid-cols-3">
+          <section className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
+            <h2 className="text-xl font-semibold">Executive Priorities</h2>
+
+            <div className="mt-5 space-y-3">
+              {executivePriorities.length === 0 ? (
+                <EmptyState message="No executive priorities." />
+              ) : (
+                executivePriorities.map((item) => (
+                  <div
+                    key={`${item.source}-${item.id}`}
+                    className="rounded-xl border border-white/10 bg-slate-950/60 p-4"
+                  >
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {item.type} · {item.severity}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h2 className="text-xl font-semibold">Leadership Insights</h2>
+
+            <div className="mt-5 space-y-3">
+              {leadershipInsights.length === 0 ? (
+                <EmptyState message="No leadership insights." />
+              ) : (
+                leadershipInsights.map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-xl border border-white/10 bg-slate-950/60 p-4"
+                  >
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {item.severity} · {item.value}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h2 className="text-xl font-semibold">Management Alerts</h2>
+
+            <div className="mt-5 space-y-3">
+              {managementAlerts.length === 0 ? (
+                <EmptyState message="No active alerts." />
+              ) : (
+                managementAlerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="rounded-xl border border-white/10 bg-slate-950/60 p-4"
+                  >
+                    <p className="font-semibold">{alert.title}</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {alert.severity} · {alert.status}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
         <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
           <h2 className="text-xl font-semibold">Department Risk Ranking</h2>
           <div className="mt-5 space-y-3">
@@ -295,3 +366,4 @@ export default function ExecutiveBriefingPage() {
     </main>
   );
 }
+
