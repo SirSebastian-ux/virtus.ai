@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 const reportingRules = [
   "Payments received",
@@ -14,89 +13,112 @@ const reportingRules = [
   "Items needing owner or manager decision",
 ];
 
+const emptyMetrics = {
+  activeEmployees: 0,
+  openTasks: 0,
+  openUrgentIssues: 0,
+  pendingDecisions: 0,
+  pendingPayments: 0,
+  todayReports: 0,
+};
+
 export default function OperationsCompanyPage() {
-  const router = useRouter();
-  const [companyName, setCompanyName] = useState("");
-  const [workspaces, setWorkspaces] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState("");
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
-
-  async function loadWorkspaces() {
-    setIsLoading(true);
-    setError("");
-
-    const response = await fetch("/api/operations/workspaces");
-    const data = await response.json();
-
-    if (!response.ok) {
-      setError(data?.error || "Unable to load workspaces.");
-      setWorkspaces([]);
-    } else {
-      setWorkspaces(Array.isArray(data.workspaces) ? data.workspaces : []);
-    }
-
-    if (typeof window !== "undefined") {
-      setActiveWorkspaceId(localStorage.getItem("virtus_active_workspace_id") || "");
-    }
-
-    setIsLoading(false);
-  }
-
-  async function createWorkspace(event) {
-    event.preventDefault();
-
-    const cleanName = companyName.trim();
-
-    if (!cleanName) {
-      setError("Company name is required.");
-      return;
-    }
-
-    setIsCreating(true);
-    setError("");
-
-    const response = await fetch("/api/operations/workspaces", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ companyName: cleanName }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setError(data?.error || "Unable to create company workspace.");
-    } else {
-      setCompanyName("");
-      await loadWorkspaces();
-    }
-
-    setIsCreating(false);
-  }
-
-  function selectWorkspace(workspace) {
-    localStorage.setItem("virtus_active_workspace_id", workspace.id);
-    localStorage.setItem("virtus_active_workspace_name", workspace.name);
-    setActiveWorkspaceId(workspace.id);
-    window.dispatchEvent(new Event("virtus-active-workspace-changed"));
-    router.push("/operations");
-    router.refresh();
-  }
+  const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
+  const [workspaces, setWorkspaces] = useState([]);
+  const [metrics, setMetrics] = useState(emptyMetrics);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    async function loadInitialWorkspaces() {
-      await loadWorkspaces();
+    let alive = true;
+
+    async function loadCompanyOverview() {
+      try {
+        const selectedWorkspaceId =
+          typeof window !== "undefined"
+            ? localStorage.getItem("virtus_active_workspace_id") || ""
+            : "";
+
+        const selectedWorkspaceName =
+          typeof window !== "undefined"
+            ? localStorage.getItem("virtus_active_workspace_name") || ""
+            : "";
+
+        if (alive) {
+          setActiveWorkspaceId(selectedWorkspaceId);
+          setActiveWorkspaceName(selectedWorkspaceName);
+        }
+
+        const workspacesResponse = await fetch("/api/operations/workspaces", {
+          cache: "no-store",
+        });
+
+        const workspacesData = await workspacesResponse.json();
+
+        if (!workspacesResponse.ok) {
+          throw new Error(workspacesData?.error || "Unable to load company workspaces.");
+        }
+
+        const nextWorkspaces = Array.isArray(workspacesData.workspaces)
+          ? workspacesData.workspaces
+          : [];
+
+        if (alive) {
+          setWorkspaces(nextWorkspaces);
+        }
+
+        const workspaceId =
+          selectedWorkspaceId || nextWorkspaces[0]?.id || "";
+
+        if (!workspaceId) return;
+
+        const metricsResponse = await fetch(
+          `/api/operations/metrics?workspaceId=${encodeURIComponent(workspaceId)}`,
+          { cache: "no-store" }
+        );
+
+        const metricsData = await metricsResponse.json();
+
+        if (!metricsResponse.ok) {
+          throw new Error(metricsData?.error || "Unable to load company metrics.");
+        }
+
+        const selectedWorkspace = nextWorkspaces.find(
+          (workspace) => workspace.id === workspaceId
+        );
+
+        if (alive) {
+          setActiveWorkspaceId(workspaceId);
+          setActiveWorkspaceName(
+            selectedWorkspace?.name || selectedWorkspaceName || workspaceId
+          );
+          setMetrics({ ...emptyMetrics, ...(metricsData.metrics || {}) });
+        }
+      } catch (loadError) {
+        if (alive) {
+          setError(loadError.message);
+        }
+      } finally {
+        if (alive) {
+          setIsLoading(false);
+        }
+      }
     }
 
-    loadInitialWorkspaces();
+    loadCompanyOverview();
+
+    return () => {
+      alive = false;
+    };
   }, []);
+
+  const activeWorkspace =
+    workspaces.find((workspace) => workspace.id === activeWorkspaceId) || null;
 
   return (
     <section className="px-6 py-8">
-      <div className="mt-6 rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
+      <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
         <p className="text-sm font-medium uppercase tracking-[0.22em] text-sky-300/60">
           Company Workspace
         </p>
@@ -106,83 +128,97 @@ export default function OperationsCompanyPage() {
         </h1>
 
         <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
-          Create a real company workspace, prepare owner access, default departments,
-          and manual testing billing structure before employee rollout.
+          Review the selected company workspace, its operational status, employee count,
+          reporting rules, and setup structure.
         </p>
 
-        <form
-          onSubmit={createWorkspace}
-          className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5"
-        >
-          <h2 className="text-lg font-semibold text-sky-100">
-            Create Company Workspace
-          </h2>
+        {error ? (
+          <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-200">
+            {error}
+          </div>
+        ) : null}
 
-          <div className="mt-4 flex flex-col gap-3 md:flex-row">
-            <input
-              value={companyName}
-              onChange={(event) => setCompanyName(event.target.value)}
-              placeholder="Company name"
-              className="min-h-12 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-sm text-white outline-none focus:border-sky-500"
-            />
+        <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
+                Selected Company
+              </p>
 
-            <button
-              type="submit"
-              disabled={isCreating}
-              className="rounded-xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isCreating ? "Creating..." : "Create Workspace"}
-            </button>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                {isLoading
+                  ? "Loading company..."
+                  : activeWorkspaceName || "No company selected"}
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                This page shows configuration and operating information for the active company only.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-emerald-200/70">
+                Active Workspace
+              </p>
+              <p className="mt-1 text-sm font-semibold text-emerald-100">
+                {activeWorkspace?.status || "active"}
+              </p>
+            </div>
           </div>
 
-          {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
-        </form>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <p className="text-xs text-zinc-500">Role</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {activeWorkspace?.role || "owner"}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <p className="text-xs text-zinc-500">Employees</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {isLoading ? "..." : metrics.activeEmployees}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <p className="text-xs text-zinc-500">Open Tasks</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {isLoading ? "..." : metrics.openTasks}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <p className="text-xs text-zinc-500">Urgent Issues</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {isLoading ? "..." : metrics.openUrgentIssues}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <p className="text-xs text-zinc-500">Pending Decisions</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {isLoading ? "..." : metrics.pendingDecisions}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+              <p className="text-xs text-zinc-500">Pending Payments</p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {isLoading ? "..." : metrics.pendingPayments}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
+            <p className="text-xs text-zinc-500">Workspace Slug</p>
+            <p className="mt-2 break-all text-sm font-semibold text-white">
+              {activeWorkspace?.slug || "Not available"}
+            </p>
+          </div>
+        </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5">
-            <h2 className="text-lg font-semibold text-sky-100">
-              Active Workspaces
-            </h2>
-
-            {isLoading ? (
-              <p className="mt-3 text-sm text-zinc-400">Loading workspaces...</p>
-            ) : workspaces.length === 0 ? (
-              <p className="mt-3 text-sm text-zinc-400">
-                No company workspace created yet.
-              </p>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {workspaces.map((workspace) => (
-                  <div
-                    key={workspace.id}
-                    className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-3"
-                  >
-                    <p className="text-sm font-semibold text-white">
-                      {workspace.name}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500">
-                      Role: {workspace.role} · Slug: {workspace.slug}
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => selectWorkspace(workspace)}
-                      className={`mt-3 rounded-xl px-4 py-2 text-xs font-semibold transition ${
-                        activeWorkspaceId === workspace.id
-                          ? "bg-emerald-500/15 text-emerald-200"
-                          : "bg-sky-500 text-white hover:bg-sky-400"
-                      }`}
-                    >
-                      {activeWorkspaceId === workspace.id
-                        ? "Active Company"
-                        : "Use This Company"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           <div className="rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5">
             <h2 className="text-lg font-semibold text-sky-100">
               Test Mode Billing
@@ -192,6 +228,16 @@ export default function OperationsCompanyPage() {
             </p>
             <p className="mt-1 text-xs text-zinc-500">
               Stripe billing remains inactive until production rollout.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5">
+            <h2 className="text-lg font-semibold text-sky-100">
+              Company Separation
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-300">
+              Every company has separate employees, reports, tasks, decisions,
+              urgent issues, permissions, payments, and danger-zone actions.
             </p>
           </div>
         </div>
@@ -215,7 +261,3 @@ export default function OperationsCompanyPage() {
     </section>
   );
 }
-
-
-
-
