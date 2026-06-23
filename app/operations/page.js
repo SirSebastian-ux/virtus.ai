@@ -74,6 +74,7 @@ const cardsByRole = {
     ["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
     ["Department Intelligence", "Department health, workload, risk ranking, reporting compliance, and operational visibility.", "/operations/department-intelligence"],
     ["Company Setup", "Workspace, departments, roles, and company structure.", "/operations/company"],
+    ["Danger Zone", "Reset data, archive company, or permanently delete the workspace.", "/operations/danger-zone"],
     ["Employees", "Manage employees, roles, departments, and active seats.", "/operations/employees"],
     ["Structure", "Review hierarchy and reporting lines.", "/operations/structure"],
     ["Permissions", "Create permission profiles and prepare access control.", "/operations/permissions"],
@@ -332,3 +333,4 @@ export default function OperationsPage() {
     </section>
   );
 }
+
