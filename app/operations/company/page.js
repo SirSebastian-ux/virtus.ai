@@ -30,9 +30,12 @@ export default function OperationsCompanyPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [lastWorkspaceId, setLastWorkspaceId] = useState("");
 
   useEffect(() => {
     function handleWorkspaceChange() {
+      const nextWorkspaceId = localStorage.getItem("virtus_active_workspace_id") || "";
+      setLastWorkspaceId(nextWorkspaceId);
       setRefreshKey((current) => current + 1);
     }
 
@@ -43,7 +46,7 @@ export default function OperationsCompanyPage() {
       window.removeEventListener("virtus-active-workspace-changed", handleWorkspaceChange);
       window.removeEventListener("storage", handleWorkspaceChange);
     };
-  }, [refreshKey]);
+  }, [refreshKey, lastWorkspaceId]);
 
   useEffect(() => {
     let alive = true;
@@ -126,7 +129,7 @@ export default function OperationsCompanyPage() {
     return () => {
       alive = false;
     };
-  }, [refreshKey]);
+  }, [refreshKey, lastWorkspaceId]);
 
   const activeWorkspace =
     workspaces.find((workspace) => workspace.id === activeWorkspaceId) || null;
@@ -276,4 +279,5 @@ export default function OperationsCompanyPage() {
     </section>
   );
 }
+
 
