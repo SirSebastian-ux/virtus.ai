@@ -38,6 +38,8 @@ export default function OperationsLayout({ children }) {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
   useEffect(() => {
     function handleActiveWorkspaceChange() {
@@ -71,6 +73,31 @@ export default function OperationsLayout({ children }) {
         if (isMounted) {
           setActiveWorkspaceId(selectedWorkspaceId);
           setActiveWorkspaceName(selectedWorkspaceName);
+        }
+
+        const workspacesResponse = await fetch("/api/operations/workspaces", {
+          cache: "no-store",
+        });
+
+        const workspacesData = await workspacesResponse.json();
+
+        if (isMounted && workspacesResponse.ok) {
+          const nextWorkspaces = Array.isArray(workspacesData.workspaces)
+            ? workspacesData.workspaces
+            : [];
+
+          setWorkspaces(nextWorkspaces);
+
+          if (!selectedWorkspaceName && selectedWorkspaceId) {
+            const selectedWorkspace = nextWorkspaces.find(
+              (workspace) => workspace.id === selectedWorkspaceId
+            );
+
+            if (selectedWorkspace?.name) {
+              setActiveWorkspaceName(selectedWorkspace.name);
+              localStorage.setItem("virtus_active_workspace_name", selectedWorkspace.name);
+            }
+          }
         }
 
         const metricsUrl = selectedWorkspaceId
@@ -121,6 +148,15 @@ export default function OperationsLayout({ children }) {
     };
   }, [workspaceRefreshKey]);
 
+  function selectWorkspace(workspace) {
+    localStorage.setItem("virtus_active_workspace_id", workspace.id);
+    localStorage.setItem("virtus_active_workspace_name", workspace.name);
+    setActiveWorkspaceId(workspace.id);
+    setActiveWorkspaceName(workspace.name);
+    setIsSwitcherOpen(false);
+    window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+  }
+
   const visibleNavigation = useMemo(
     () => navigation.filter((item) => item.visible(role)),
     [role]
@@ -152,12 +188,13 @@ export default function OperationsLayout({ children }) {
               </p>
             </div>
 
-            <Link
-              href="/operations/company"
+            <button
+              type="button"
+              onClick={() => setIsSwitcherOpen(true)}
               className="inline-flex rounded-xl border border-sky-800/50 px-4 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-500"
             >
               Change Company
-            </Link>
+            </button>
           </div>
         </div>
       </header>
@@ -192,8 +229,97 @@ export default function OperationsLayout({ children }) {
 
         <main className="flex-1">{children}</main>
       </div>
+
+      {isSwitcherOpen ? (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60">
+          <button
+            type="button"
+            aria-label="Close company switcher"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setIsSwitcherOpen(false)}
+          />
+
+          <aside className="relative z-10 h-full w-full max-w-md border-l border-sky-900/30 bg-zinc-950 p-6 shadow-2xl shadow-black/50">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
+                  Company Switcher
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">
+                  Choose Company
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Select the company workspace you want to operate inside.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsSwitcherOpen(false)}
+                className="rounded-xl border border-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-600"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {workspaces.length === 0 ? (
+                <p className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 text-sm text-zinc-400">
+                  No active company workspaces found.
+                </p>
+              ) : (
+                workspaces.map((workspace) => {
+                  const isActive = workspace.id === activeWorkspaceId;
+
+                  return (
+                    <button
+                      key={workspace.id}
+                      type="button"
+                      onClick={() => selectWorkspace(workspace)}
+                      className={`w-full rounded-2xl border p-4 text-left transition ${
+                        isActive
+                          ? "border-emerald-500/40 bg-emerald-500/10"
+                          : "border-zinc-800 bg-zinc-900/70 hover:border-sky-700/60"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-white">
+                            {workspace.name}
+                          </p>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            Role: {workspace.role} · Status: {workspace.status}
+                          </p>
+                          <p className="mt-1 text-xs text-zinc-600">
+                            Slug: {workspace.slug}
+                          </p>
+                        </div>
+
+                        {isActive ? (
+                          <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200">
+                            Active
+                          </span>
+                        ) : null}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <Link
+              href="/operations/company"
+              onClick={() => setIsSwitcherOpen(false)}
+              className="mt-6 inline-flex w-full justify-center rounded-xl border border-sky-800/50 px-4 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-500"
+            >
+              Manage Companies
+            </Link>
+          </aside>
+        </div>
+      ) : null}
     </div>
   );
 }
+
 
 
