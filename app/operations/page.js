@@ -182,9 +182,10 @@ export default function OperationsPage() {
     };
   }, []);
 
-  const role = normalizeRole(accessContext?.role || "owner");
+  const hasOperationsAccess = Boolean(accessContext?.role && workspaceId);
+  const role = normalizeRole(accessContext?.role || "employee");
   const copy = dashboardCopy[role];
-  const actionCards = cardsByRole[role] || cardsByRole.employee;
+  const actionCards = hasOperationsAccess ? cardsByRole[role] || cardsByRole.employee : [];
 
   const summaryCards = useMemo(
     () => [
@@ -224,6 +225,42 @@ export default function OperationsPage() {
     ],
     [metrics, role]
   );
+
+  if (!loading && !hasOperationsAccess) {
+    return (
+      <section className="px-6 py-8">
+        <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
+          <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
+            Operations Access
+          </p>
+
+          <h1 className="mt-3 text-3xl font-semibold text-white">
+            Operations is not active
+          </h1>
+
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
+            You need an account and an active company workspace before using Operations Intelligence.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/login"
+              className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
+            >
+              Sign in
+            </Link>
+
+            <Link
+              href="/operations/company"
+              className="inline-flex rounded-xl border border-sky-900/40 px-4 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-600"
+            >
+              Create company workspace
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="px-6 py-8">
