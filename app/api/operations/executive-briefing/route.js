@@ -1,6 +1,10 @@
 ﻿import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import {
+  getOperationsAccessContext,
+  applyDepartmentScope,
+} from "@/lib/operations/scope";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -116,6 +120,24 @@ export async function GET(req) {
     if (!membership) {
       return NextResponse.json(
         { error: "Workspace access denied." },
+        { status: 403 }
+      );
+    }
+
+    const accessContext = await getOperationsAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    if (
+      !accessContext.canViewCompany &&
+      !accessContext.canViewDepartment &&
+      !accessContext.canViewTeam
+    ) {
+      return NextResponse.json(
+        { error: "Executive briefing access denied." },
         { status: 403 }
       );
     }
