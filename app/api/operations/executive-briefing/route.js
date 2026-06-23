@@ -154,6 +154,96 @@ export async function GET(req) {
 
     const today = new Date().toISOString().slice(0, 10);
 
+    const activeEmployeesQuery = accessContext.canViewCompany
+      ? admin
+          .from("employees")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", workspaceId)
+          .eq("employment_status", "active")
+      : admin
+          .from("employees")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", workspaceId)
+          .eq("employment_status", "active")
+          .eq("department_id", accessContext.departmentId || "00000000-0000-0000-0000-000000000000");
+
+    const openTasksQuery = applyDepartmentScope(
+      admin
+        .from("operations_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .neq("status", "completed"),
+      accessContext
+    );
+
+    const overdueTasksQuery = applyDepartmentScope(
+      admin
+        .from("operations_tasks")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .neq("status", "completed")
+        .lt("due_date", today),
+      accessContext
+    );
+
+    const urgentIssuesQuery = applyDepartmentScope(
+      admin
+        .from("operations_urgent_issues")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .neq("status", "resolved")
+        .neq("status", "closed"),
+      accessContext
+    );
+
+    const criticalIssuesQuery = applyDepartmentScope(
+      admin
+        .from("operations_urgent_issues")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("severity", "critical")
+        .neq("status", "resolved")
+        .neq("status", "closed"),
+      accessContext
+    );
+
+    const pendingDecisionsQuery = applyDepartmentScope(
+      admin
+        .from("operations_decision_queue")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("status", "pending"),
+      accessContext
+    );
+
+    const highPriorityDecisionsQuery = applyDepartmentScope(
+      admin
+        .from("operations_decision_queue")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("status", "pending")
+        .in("priority", ["high", "urgent"]),
+      accessContext
+    );
+
+    const todayReportsQuery = applyDepartmentScope(
+      admin
+        .from("operations_reports")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("report_date", today),
+      accessContext
+    );
+
+    const activeDepartmentsQuery = applyDepartmentDirectoryScope(
+      admin
+        .from("departments")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("status", "active"),
+      accessContext
+    );
+
     const [
       activeEmployees,
       openTasks,
@@ -165,82 +255,15 @@ export async function GET(req) {
       todayReports,
       activeDepartments,
     ] = await Promise.all([
-      countRows(
-        admin
-          .from("employees")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("employment_status", "active")
-      ),
-
-      countRows(
-        admin
-          .from("operations_tasks")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .neq("status", "completed")
-      ),
-
-      countRows(
-        admin
-          .from("operations_tasks")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .neq("status", "completed")
-          .lt("due_date", today)
-      ),
-
-      countRows(
-        admin
-          .from("operations_urgent_issues")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .neq("status", "resolved")
-          .neq("status", "closed")
-      ),
-
-      countRows(
-        admin
-          .from("operations_urgent_issues")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("severity", "critical")
-          .neq("status", "resolved")
-          .neq("status", "closed")
-      ),
-
-      countRows(
-        admin
-          .from("operations_decision_queue")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("status", "pending")
-      ),
-
-      countRows(
-        admin
-          .from("operations_decision_queue")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("status", "pending")
-          .in("priority", ["high", "urgent"])
-      ),
-
-      countRows(
-        admin
-          .from("operations_reports")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("report_date", today)
-      ),
-
-      countRows(
-        admin
-          .from("departments")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("status", "active")
-      ),
+      countRows(activeEmployeesQuery),
+      countRows(openTasksQuery),
+      countRows(overdueTasksQuery),
+      countRows(urgentIssuesQuery),
+      countRows(criticalIssuesQuery),
+      countRows(pendingDecisionsQuery),
+      countRows(highPriorityDecisionsQuery),
+      countRows(todayReportsQuery),
+      countRows(activeDepartmentsQuery),
     ]);
 
     const departmentsQuery = applyDepartmentDirectoryScope(
