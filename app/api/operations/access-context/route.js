@@ -124,6 +124,7 @@ export async function GET(req) {
       scopeType,
       departmentId,
       employeeId,
+      permissions,
       roleAssignment: roleAssignment ? normalizeRoleAssignment(roleAssignment) : null,
       capabilities: {
         canApproveRequests: canApproveRequests(role),
@@ -141,6 +142,3 @@ export async function GET(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-
-
