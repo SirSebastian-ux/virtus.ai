@@ -51,6 +51,16 @@ function buildExecutiveSummary(metrics) {
   ];
 }
 
+function applyDepartmentDirectoryScope(query, accessContext) {
+  if (accessContext.canViewCompany) return query;
+
+  if (accessContext.departmentId) {
+    return query.eq("id", accessContext.departmentId);
+  }
+
+  return query.eq("id", "00000000-0000-0000-0000-000000000000");
+}
+
 function buildRecommendations(metrics) {
   const recommendations = [];
 
@@ -233,7 +243,7 @@ export async function GET(req) {
       ),
     ]);
 
-    const departmentsQuery = applyDepartmentScope(
+    const departmentsQuery = applyDepartmentDirectoryScope(
       admin
         .from("departments")
         .select("id,name,status")
