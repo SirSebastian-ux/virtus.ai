@@ -231,30 +231,23 @@ export default function OperationsPage() {
       <section className="px-6 py-8">
         <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
           <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
-            Operations Access
+            Business Access
           </p>
 
           <h1 className="mt-3 text-3xl font-semibold text-white">
-            Operations is not active
+            Business is not active
           </h1>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
-            You need an account and an active company workspace before using Operations Intelligence.
+            You need to sign in before using the Business workspace.
           </p>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-6">
             <Link
               href="/login"
               className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
             >
-              Sign in
-            </Link>
-
-            <Link
-              href="/operations/company"
-              className="inline-flex rounded-xl border border-sky-900/40 px-4 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-600"
-            >
-              Create company workspace
+              Sign in to Business
             </Link>
           </div>
         </div>
