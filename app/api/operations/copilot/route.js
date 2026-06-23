@@ -1,6 +1,10 @@
 ﻿import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import {
+  applyDepartmentScope,
+  getOperationsAccessContext,
+} from "@/lib/operations/scope";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -87,39 +91,66 @@ export async function POST(req) {
       return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
     }
 
-    const { data: reports, error: reportsError } = await admin
+    const accessContext = await getOperationsAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    let reportsQuery = admin
       .from("operations_daily_reports")
-      .select("id")
+      .select("id,department_id")
       .eq("workspace_id", workspaceId)
       .eq("report_date", today);
 
+    reportsQuery = applyDepartmentScope(reportsQuery, accessContext);
+
+    const { data: reports, error: reportsError } = await reportsQuery;
+
     if (reportsError) throw new Error(reportsError.message);
 
-    const { data: tasks, error: tasksError } = await admin
+    let tasksQuery = admin
       .from("operations_tasks")
-      .select("id,status,due_date")
+      .select("id,department_id,status,due_date")
       .eq("workspace_id", workspaceId);
+
+    tasksQuery = applyDepartmentScope(tasksQuery, accessContext);
+
+    const { data: tasks, error: tasksError } = await tasksQuery;
 
     if (tasksError) throw new Error(tasksError.message);
 
-    const { data: urgentIssues, error: urgentError } = await admin
+    let urgentIssuesQuery = admin
       .from("operations_urgent_issues")
-      .select("id,status,severity")
+      .select("id,department_id,status,severity")
       .eq("workspace_id", workspaceId);
+
+    urgentIssuesQuery = applyDepartmentScope(urgentIssuesQuery, accessContext);
+
+    const { data: urgentIssues, error: urgentError } = await urgentIssuesQuery;
 
     if (urgentError) throw new Error(urgentError.message);
 
-    const { data: decisions, error: decisionsError } = await admin
+    let decisionsQuery = admin
       .from("operations_decision_queue")
-      .select("id,status,priority")
+      .select("id,department_id,status,priority")
       .eq("workspace_id", workspaceId);
+
+    decisionsQuery = applyDepartmentScope(decisionsQuery, accessContext);
+
+    const { data: decisions, error: decisionsError } = await decisionsQuery;
 
     if (decisionsError) throw new Error(decisionsError.message);
 
-    const { data: alerts, error: alertsError } = await admin
+    let alertsQuery = admin
       .from("operations_management_alerts")
-      .select("id,status,severity")
+      .select("id,department_id,status,severity")
       .eq("workspace_id", workspaceId);
+
+    alertsQuery = applyDepartmentScope(alertsQuery, accessContext);
+
+    const { data: alerts, error: alertsError } = await alertsQuery;
 
     if (alertsError) throw new Error(alertsError.message);
 
