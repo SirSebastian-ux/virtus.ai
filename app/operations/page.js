@@ -250,7 +250,7 @@ export default function OperationsPage() {
             Business Access
           </p>
 
-          <h1 className="mt-3 text-3xl font-semibold text-white">
+          <h1 className="mt-2 text-2xl font-semibold text-white">
             Business is not active
           </h1>
 
@@ -301,14 +301,14 @@ export default function OperationsPage() {
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {summaryCards.map((card) => (
           <div
             key={card.label}
-            className="rounded-2xl border border-sky-900/25 bg-zinc-900/70 p-5"
+            className="rounded-2xl border border-sky-900/25 bg-zinc-900/70 p-4"
           >
             <p className="text-sm text-zinc-400">{card.label}</p>
-            <p className="mt-3 text-3xl font-semibold text-white">
+            <p className="mt-2 text-2xl font-semibold text-white">
               {loading ? "..." : card.value}
             </p>
             <p className="mt-2 text-sm leading-6 text-zinc-500">
@@ -331,15 +331,15 @@ export default function OperationsPage() {
           Areas available for your current role and operating scope.
         </p>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {actionCards.map(([title, description, href]) => (
             <Link
               key={href}
               href={href}
-              className="rounded-2xl border border-sky-900/25 bg-zinc-900/60 p-5 transition hover:border-sky-700/50 hover:bg-zinc-900"
+              className="rounded-xl border border-sky-900/25 bg-zinc-900/60 p-4 transition hover:border-sky-700/50 hover:bg-zinc-900"
             >
-              <h3 className="text-lg font-semibold text-sky-100">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-400">
+              <h3 className="text-base font-semibold text-sky-100">{title}</h3>
+              <p className="mt-2 text-xs leading-5 text-zinc-400">
                 {description}
               </p>
             </Link>
@@ -349,5 +349,6 @@ export default function OperationsPage() {
     </section>
   );
 }
+
 
 
