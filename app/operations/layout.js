@@ -29,18 +29,40 @@ const navigation = [
   { label: "Decision Queue", href: "/operations/decisions", metricKey: "pendingDecisions", visible: canViewDecisionQueueModule },
   { label: "Permissions", href: "/operations/permissions", metricKey: null, visible: canViewPermissionsModule },
   { label: "Admin Dashboard", href: "/operations/admin", metricKey: null, visible: canViewAdminModule },
+  { label: "Danger Zone", href: "/operations/danger-zone", metricKey: null, visible: (role) => role === "owner" },
 ];
 
 export default function OperationsLayout({ children }) {
   const [metrics, setMetrics] = useState(null);
   const [role, setRole] = useState("employee");
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
+  const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadData() {
       try {
-        const metricsResponse = await fetch("/api/operations/metrics", {
+        const selectedWorkspaceId =
+          typeof window !== "undefined"
+            ? localStorage.getItem("virtus_active_workspace_id") || ""
+            : "";
+
+        const selectedWorkspaceName =
+          typeof window !== "undefined"
+            ? localStorage.getItem("virtus_active_workspace_name") || ""
+            : "";
+
+        if (isMounted) {
+          setActiveWorkspaceId(selectedWorkspaceId);
+          setActiveWorkspaceName(selectedWorkspaceName);
+        }
+
+        const metricsUrl = selectedWorkspaceId
+          ? `/api/operations/metrics?workspaceId=${encodeURIComponent(selectedWorkspaceId)}`
+          : "/api/operations/metrics";
+
+        const metricsResponse = await fetch(metricsUrl, {
           cache: "no-store",
         });
 
@@ -51,6 +73,10 @@ export default function OperationsLayout({ children }) {
         setMetrics(metricsData.metrics || null);
 
         const workspaceId = metricsData?.metrics?.workspaceId;
+
+        if (workspaceId && isMounted) {
+          setActiveWorkspaceId(workspaceId);
+        }
 
         if (!workspaceId) return;
 
@@ -100,6 +126,24 @@ export default function OperationsLayout({ children }) {
           <p className="mt-2 text-sm text-zinc-400">
             Operational visibility, reporting, approvals, risks, payments, and AI management intelligence.
           </p>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
+                Active Company
+              </p>
+              <p className="mt-1 text-sm font-semibold text-white">
+                {activeWorkspaceName || activeWorkspaceId || "No company selected"}
+              </p>
+            </div>
+
+            <Link
+              href="/operations/company"
+              className="inline-flex rounded-xl border border-sky-800/50 px-4 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-500"
+            >
+              Change Company
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -136,3 +180,4 @@ export default function OperationsLayout({ children }) {
     </div>
   );
 }
+
