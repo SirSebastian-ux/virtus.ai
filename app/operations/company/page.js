@@ -81,6 +81,7 @@ export default function OperationsCompanyPage() {
     localStorage.setItem("virtus_active_workspace_id", workspace.id);
     localStorage.setItem("virtus_active_workspace_name", workspace.name);
     setActiveWorkspaceId(workspace.id);
+    window.dispatchEvent(new Event("virtus-active-workspace-changed"));
     router.push("/operations");
     router.refresh();
   }
@@ -214,6 +215,7 @@ export default function OperationsCompanyPage() {
     </section>
   );
 }
+
 
 
 

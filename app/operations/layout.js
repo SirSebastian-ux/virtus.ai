@@ -37,6 +37,21 @@ export default function OperationsLayout({ children }) {
   const [role, setRole] = useState("employee");
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
+  const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
+
+  useEffect(() => {
+    function handleActiveWorkspaceChange() {
+      setWorkspaceRefreshKey((current) => current + 1);
+    }
+
+    window.addEventListener("virtus-active-workspace-changed", handleActiveWorkspaceChange);
+    window.addEventListener("storage", handleActiveWorkspaceChange);
+
+    return () => {
+      window.removeEventListener("virtus-active-workspace-changed", handleActiveWorkspaceChange);
+      window.removeEventListener("storage", handleActiveWorkspaceChange);
+    };
+  }, [workspaceRefreshKey]);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,7 +119,7 @@ export default function OperationsLayout({ children }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [workspaceRefreshKey]);
 
   const visibleNavigation = useMemo(
     () => navigation.filter((item) => item.visible(role)),
@@ -180,4 +195,5 @@ export default function OperationsLayout({ children }) {
     </div>
   );
 }
+
 
