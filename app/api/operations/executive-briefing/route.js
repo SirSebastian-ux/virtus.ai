@@ -233,6 +233,90 @@ export async function GET(req) {
       ),
     ]);
 
+    const departmentsQuery = applyDepartmentScope(
+      admin
+        .from("departments")
+        .select("id,name,status")
+        .eq("workspace_id", workspaceId)
+        .eq("status", "active")
+        .order("name", { ascending: true }),
+      accessContext
+    );
+
+    const recentUrgentQuery = applyDepartmentScope(
+      admin
+        .from("operations_urgent_issues")
+        .select("id,title,severity,status,department_id,created_at")
+        .eq("workspace_id", workspaceId)
+        .neq("status", "resolved")
+        .neq("status", "closed")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      accessContext
+    );
+
+    const pendingDecisionQuery = applyDepartmentScope(
+      admin
+        .from("operations_decision_queue")
+        .select("id,title,description,priority,status,department_id,created_at")
+        .eq("workspace_id", workspaceId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(8),
+      accessContext
+    );
+
+    const recentActivityQuery = admin
+      .from("operations_activity_logs")
+      .select("id,action,entity_table,entity_id,created_at")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    const todayDepartmentReportsQuery = applyDepartmentScope(
+      admin
+        .from("operations_reports")
+        .select("department_id")
+        .eq("workspace_id", workspaceId)
+        .eq("report_date", today),
+      accessContext
+    );
+
+    const managementAlertsQuery = applyDepartmentScope(
+      admin
+        .from("operations_management_alerts")
+        .select("id,title,message,severity,status,department_id,alert_type,created_at")
+        .eq("workspace_id", workspaceId)
+        .in("status", ["open", "acknowledged", "investigating"])
+        .order("created_at", { ascending: false })
+        .limit(20),
+      accessContext
+    );
+
+    const priorityAlertsQuery = applyDepartmentScope(
+      admin
+        .from("operations_management_alerts")
+        .select("id,title,message,severity,status,department_id,alert_type,created_at")
+        .eq("workspace_id", workspaceId)
+        .in("status", ["open", "acknowledged", "investigating"])
+        .in("severity", ["critical", "high"])
+        .order("created_at", { ascending: false })
+        .limit(10),
+      accessContext
+    );
+
+    const priorityTasksQuery = applyDepartmentScope(
+      admin
+        .from("operations_tasks")
+        .select("id,title,description,status,priority,due_date,department_id,created_at")
+        .eq("workspace_id", workspaceId)
+        .lt("due_date", today)
+        .neq("status", "completed")
+        .order("due_date", { ascending: true })
+        .limit(10),
+      accessContext
+    );
+
     const [
       departmentsResult,
       recentUrgentResult,
@@ -243,68 +327,14 @@ export async function GET(req) {
       priorityAlertsResult,
       priorityTasksResult,
     ] = await Promise.all([
-      admin
-        .from("departments")
-        .select("id,name,status")
-        .eq("workspace_id", workspaceId)
-        .eq("status", "active")
-        .order("name", { ascending: true }),
-
-      admin
-        .from("operations_urgent_issues")
-        .select("id,title,severity,status,department_id,created_at")
-        .eq("workspace_id", workspaceId)
-        .neq("status", "resolved")
-        .neq("status", "closed")
-        .order("created_at", { ascending: false })
-        .limit(8),
-
-      admin
-        .from("operations_decision_queue")
-        .select("id,title,description,priority,status,department_id,created_at")
-        .eq("workspace_id", workspaceId)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(8),
-
-      admin
-        .from("operations_activity_logs")
-        .select("id,action,entity_table,entity_id,created_at")
-        .eq("workspace_id", workspaceId)
-        .order("created_at", { ascending: false })
-        .limit(10),
-
-      admin
-        .from("operations_reports")
-        .select("department_id")
-        .eq("workspace_id", workspaceId)
-        .eq("report_date", today),
-
-      admin
-        .from("operations_management_alerts")
-        .select("id,title,message,severity,status,department_id,alert_type,created_at")
-        .eq("workspace_id", workspaceId)
-        .in("status", ["open", "acknowledged", "investigating"])
-        .order("created_at", { ascending: false })
-        .limit(20),
-
-      admin
-        .from("operations_management_alerts")
-        .select("id,title,message,severity,status,department_id,alert_type,created_at")
-        .eq("workspace_id", workspaceId)
-        .in("status", ["open", "acknowledged", "investigating"])
-        .in("severity", ["critical", "high"])
-        .order("created_at", { ascending: false })
-        .limit(10),
-
-      admin
-        .from("operations_tasks")
-        .select("id,title,description,status,priority,due_date,department_id,created_at")
-        .eq("workspace_id", workspaceId)
-        .lt("due_date", today)
-        .neq("status", "completed")
-        .order("due_date", { ascending: true })
-        .limit(10),
+      departmentsQuery,
+      recentUrgentQuery,
+      pendingDecisionQuery,
+      recentActivityQuery,
+      todayDepartmentReportsQuery,
+      managementAlertsQuery,
+      priorityAlertsQuery,
+      priorityTasksQuery,
     ]);
 
     for (const result of [
