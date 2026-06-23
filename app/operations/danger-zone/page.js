@@ -54,7 +54,16 @@ export default function DangerZonePage() {
 
     async function loadAccess() {
       try {
-        const metricsResponse = await fetch("/api/operations/metrics", {
+        const selectedWorkspaceId =
+          typeof window !== "undefined"
+            ? localStorage.getItem("virtus_active_workspace_id") || ""
+            : "";
+
+        const metricsUrl = selectedWorkspaceId
+          ? `/api/operations/metrics?workspaceId=${encodeURIComponent(selectedWorkspaceId)}`
+          : "/api/operations/metrics";
+
+        const metricsResponse = await fetch(metricsUrl, {
           cache: "no-store",
         });
         const metricsData = await metricsResponse.json();
@@ -266,4 +275,5 @@ export default function DangerZonePage() {
     </section>
   );
 }
+
 

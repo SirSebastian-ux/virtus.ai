@@ -136,13 +136,23 @@ export default function OperationsPage() {
   const [accessContext, setAccessContext] = useState(null);
   const [workspaceId, setWorkspaceId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
 
   useEffect(() => {
     let alive = true;
 
     async function loadDashboard() {
       try {
-        const metricsResponse = await fetch("/api/operations/metrics", {
+        const selectedWorkspaceId =
+          typeof window !== "undefined"
+            ? localStorage.getItem("virtus_active_workspace_id") || ""
+            : "";
+
+        const metricsUrl = selectedWorkspaceId
+          ? `/api/operations/metrics?workspaceId=${encodeURIComponent(selectedWorkspaceId)}`
+          : "/api/operations/metrics";
+
+        const metricsResponse = await fetch(metricsUrl, {
           cache: "no-store",
         });
         const metricsData = await metricsResponse.json();
@@ -152,6 +162,11 @@ export default function OperationsPage() {
         if (metricsData?.metrics) {
           setMetrics({ ...emptyMetrics, ...metricsData.metrics });
           setWorkspaceId(metricsData.metrics.workspaceId || "");
+
+          if (typeof window !== "undefined" && metricsData.metrics.workspaceId) {
+            localStorage.setItem("virtus_active_workspace_id", metricsData.metrics.workspaceId);
+            setActiveWorkspaceName(localStorage.getItem("virtus_active_workspace_name") || "");
+          }
         }
 
         const nextWorkspaceId = metricsData?.metrics?.workspaceId;
@@ -272,7 +287,8 @@ export default function OperationsPage() {
           {accessContext ? (
             <p className="mt-3 text-xs text-zinc-500">
               Role: {accessContext.role.replaceAll("_", " ")} · Scope:{" "}
-              {accessContext.scopeType} · Workspace: {workspaceId || "active"}
+              {accessContext.scopeType} · Company:{" "}
+              {activeWorkspaceName || workspaceId || "active"}
             </p>
           ) : null}
         </div>
@@ -333,4 +349,5 @@ export default function OperationsPage() {
     </section>
   );
 }
+
 

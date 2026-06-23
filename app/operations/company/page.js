@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const reportingRules = [
   "Payments received",
@@ -14,11 +15,13 @@ const reportingRules = [
 ];
 
 export default function OperationsCompanyPage() {
+  const router = useRouter();
   const [companyName, setCompanyName] = useState("");
   const [workspaces, setWorkspaces] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
 
   async function loadWorkspaces() {
     setIsLoading(true);
@@ -32,6 +35,10 @@ export default function OperationsCompanyPage() {
       setWorkspaces([]);
     } else {
       setWorkspaces(Array.isArray(data.workspaces) ? data.workspaces : []);
+    }
+
+    if (typeof window !== "undefined") {
+      setActiveWorkspaceId(localStorage.getItem("virtus_active_workspace_id") || "");
     }
 
     setIsLoading(false);
@@ -68,6 +75,14 @@ export default function OperationsCompanyPage() {
     }
 
     setIsCreating(false);
+  }
+
+  function selectWorkspace(workspace) {
+    localStorage.setItem("virtus_active_workspace_id", workspace.id);
+    localStorage.setItem("virtus_active_workspace_name", workspace.name);
+    setActiveWorkspaceId(workspace.id);
+    router.push("/operations");
+    router.refresh();
   }
 
   useEffect(() => {
@@ -147,6 +162,20 @@ export default function OperationsCompanyPage() {
                     <p className="mt-1 text-xs text-zinc-500">
                       Role: {workspace.role} · Slug: {workspace.slug}
                     </p>
+
+                    <button
+                      type="button"
+                      onClick={() => selectWorkspace(workspace)}
+                      className={`mt-3 rounded-xl px-4 py-2 text-xs font-semibold transition ${
+                        activeWorkspaceId === workspace.id
+                          ? "bg-emerald-500/15 text-emerald-200"
+                          : "bg-sky-500 text-white hover:bg-sky-400"
+                      }`}
+                    >
+                      {activeWorkspaceId === workspace.id
+                        ? "Active Company"
+                        : "Use This Company"}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -185,4 +214,6 @@ export default function OperationsCompanyPage() {
     </section>
   );
 }
+
+
 
