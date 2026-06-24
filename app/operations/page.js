@@ -43,7 +43,7 @@ const dashboardCopy = {
     description:
       "Department-level control center for reports, tasks, urgent issues, employee follow-up, and daily execution.",
     focus:
-      "Focus on the department: todayÃ¢â‚¬â„¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
+      "Focus on the department: todayÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
   },
   supervisor: {
     label: "Supervisor Dashboard",
@@ -138,12 +138,16 @@ export default function OperationsPage() {
   const [loading, setLoading] = useState(true);
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [dashboardStatus, setDashboardStatus] = useState("loading");
+  const [hasActiveWorkspace, setHasActiveWorkspace] = useState(false);
 
   useEffect(() => {
     let alive = true;
 
     async function loadDashboard() {
       try {
+        if (typeof window !== "undefined") {
+          setHasActiveWorkspace(Boolean(localStorage.getItem("virtus_active_workspace_id")));
+        }
         const selectedWorkspaceId =
           typeof window !== "undefined"
             ? localStorage.getItem("virtus_active_workspace_id") || ""
@@ -288,11 +292,20 @@ export default function OperationsPage() {
                   return;
                 }
 
+                if (hasActiveWorkspace) {
+                  window.location.href = "/operations/company";
+                  return;
+                }
+
                 window.dispatchEvent(new Event("virtus-open-company-switcher"));
               }}
               className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
             >
-              {dashboardStatus === "signed_out" ? "Login" : "Create Company"}
+              {dashboardStatus === "signed_out"
+                ? "Login"
+                : hasActiveWorkspace
+                  ? "Setup Company"
+                  : "Create Company"}
             </button>
           </div>
         </div>
@@ -315,8 +328,8 @@ export default function OperationsPage() {
 
           {accessContext ? (
             <p className="mt-3 text-xs text-zinc-500">
-              Role: {accessContext.role.replaceAll("_", " ")} Ã‚Â· Scope:{" "}
-              {accessContext.scopeType} Ã‚Â· Company:{" "}
+              Role: {accessContext.role.replaceAll("_", " ")} Ãƒâ€šÃ‚Â· Scope:{" "}
+              {accessContext.scopeType} Ãƒâ€šÃ‚Â· Company:{" "}
               {activeWorkspaceName || workspaceId || "active"}
             </p>
           ) : null}
