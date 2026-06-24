@@ -47,36 +47,13 @@ export async function GET(req) {
     }
 
     const { searchParams } = new URL(req.url);
-    let workspaceId = cleanText(searchParams.get("workspaceId"));
+    const workspaceId = cleanText(searchParams.get("workspaceId"));
 
     if (!workspaceId) {
-      const { data: firstMembership, error: membershipError } = await admin
-        .from("workspace_members")
-        .select("workspace_id")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .limit(1)
-        .maybeSingle();
-
-      if (membershipError) {
-        return NextResponse.json({ error: membershipError.message }, { status: 500 });
-      }
-
-      workspaceId = firstMembership?.workspace_id || "";
-    }
-
-    if (!workspaceId) {
-      return NextResponse.json({
-        metrics: {
-          workspaceId: null,
-          openTasks: 0,
-          pendingPayments: 0,
-          openUrgentIssues: 0,
-          pendingDecisions: 0,
-          todayReports: 0,
-          activeEmployees: 0,
-        },
-      });
+      return NextResponse.json(
+        { error: "workspaceId is required for operations metrics." },
+        { status: 400 }
+      );
     }
 
     const membership = await requireWorkspaceMember(admin, user.id, workspaceId);
@@ -155,4 +132,3 @@ export async function GET(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
