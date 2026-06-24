@@ -40,6 +40,17 @@ export default function OperationsTasksPage() {
   async function handleWorkspaceChange(event) {
     const workspaceId = event.target.value;
     setSelectedWorkspaceId(workspaceId);
+
+    if (typeof window !== "undefined") {
+      const workspace = workspaces.find((item) => item.id === workspaceId);
+      localStorage.setItem("virtus_active_workspace_id", workspaceId);
+
+      if (workspace?.name) {
+        localStorage.setItem("virtus_active_workspace_name", workspace.name);
+      }
+
+      window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+    }
     await loadWorkspaceContext(workspaceId);
   }
 
@@ -89,8 +100,30 @@ export default function OperationsTasksPage() {
       setWorkspaces(loadedWorkspaces);
 
       if (loadedWorkspaces.length > 0) {
-        setSelectedWorkspaceId(loadedWorkspaces[0].id);
-        await loadWorkspaceContext(loadedWorkspaces[0].id);
+        const activeWorkspaceId =
+          typeof window !== "undefined"
+            ? localStorage.getItem("virtus_active_workspace_id") || ""
+            : "";
+
+        const selectedWorkspace =
+          loadedWorkspaces.find((workspace) => workspace.id === activeWorkspaceId) ||
+          loadedWorkspaces[0];
+
+        if (!selectedWorkspace?.id) {
+          throw new Error("No active company selected.");
+        }
+
+        setSelectedWorkspaceId(selectedWorkspace.id);
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("virtus_active_workspace_id", selectedWorkspace.id);
+
+          if (selectedWorkspace.name) {
+            localStorage.setItem("virtus_active_workspace_name", selectedWorkspace.name);
+          }
+        }
+
+        await loadWorkspaceContext(selectedWorkspace.id);
       } else {
         setIsLoading(false);
       }
