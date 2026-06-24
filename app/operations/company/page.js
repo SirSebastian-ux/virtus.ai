@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -31,6 +31,19 @@ export default function OperationsCompanyPage() {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastWorkspaceId, setLastWorkspaceId] = useState("");
+
+  const [setupStep, setSetupStep] = useState(1);
+
+  const [companyProfile, setCompanyProfile] = useState({
+    companyName: "",
+    legalName: "",
+    industry: "",
+    businessType: "",
+    description: "",
+    ownerName: "",
+    employeeRange: "",
+    departmentCount: "",
+  });
 
   useEffect(() => {
     function handleWorkspaceChange() {
@@ -233,6 +246,21 @@ export default function OperationsCompanyPage() {
               {activeWorkspace?.slug || "Not available"}
             </p>
           </div>
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-6">
+          <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
+            Company Foundation Wizard
+          </p>
+
+          <h2 className="mt-3 text-2xl font-semibold text-white">
+            Step {setupStep} of 10
+          </h2>
+
+          <p className="mt-2 text-sm text-zinc-400">
+            Configure how this company operates before employees, departments,
+            reports, approvals, and AI intelligence are activated.
+          </p>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
