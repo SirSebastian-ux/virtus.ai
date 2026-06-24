@@ -54,23 +54,26 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const mappedWorkspaces = (data || [])
+      .filter((membership) => membership.workspaces)
+      .map((membership) => ({
+        id: membership.workspaces.id,
+        name: membership.workspaces.name,
+        slug: membership.workspaces.slug,
+        role: membership.role,
+        status: membership.workspaces.status,
+        memberStatus: membership.status,
+        createdAt: membership.workspaces.created_at,
+        updatedAt: membership.workspaces.updated_at,
+      }));
+
     return NextResponse.json({
-      workspaces: (data || [])
-        .filter(
-          (membership) =>
-            membership.workspaces &&
-            !["archived", "deleted"].includes(membership.workspaces.status)
-        )
-        .map((membership) => ({
-          id: membership.workspaces.id,
-          name: membership.workspaces.name,
-          slug: membership.workspaces.slug,
-          role: membership.role,
-          status: membership.workspaces.status,
-          memberStatus: membership.status,
-          createdAt: membership.workspaces.created_at,
-          updatedAt: membership.workspaces.updated_at,
-        })),
+      workspaces: mappedWorkspaces.filter(
+        (workspace) => !["archived", "deleted"].includes(workspace.status)
+      ),
+      archivedWorkspaces: mappedWorkspaces.filter(
+        (workspace) => workspace.status === "archived"
+      ),
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
