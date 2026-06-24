@@ -413,3 +413,25 @@ pre {
 code {
   font-family: monospace;
 }
+
+.operations-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #0ea5e9 #020617;
+}
+
+.operations-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.operations-scrollbar::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+.operations-scrollbar::-webkit-scrollbar-thumb {
+  background: #0ea5e9;
+  border-radius: 999px;
+}
+
+.operations-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
+}

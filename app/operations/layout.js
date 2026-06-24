@@ -344,7 +344,7 @@ export default function OperationsLayout({ children }) {
             onClick={() => setIsSwitcherOpen(false)}
           />
 
-          <aside className="relative z-10 h-full w-full max-w-md overflow-y-auto border-l border-sky-900/30 bg-zinc-950 p-6 shadow-2xl shadow-black/50">
+          <aside className="relative z-10 h-full w-full max-w-md overflow-y-auto operations-scrollbar border-l border-sky-900/30 bg-zinc-950 p-6 shadow-2xl shadow-black/50">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
