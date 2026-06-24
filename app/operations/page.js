@@ -43,7 +43,7 @@ const dashboardCopy = {
     description:
       "Department-level control center for reports, tasks, urgent issues, employee follow-up, and daily execution.",
     focus:
-      "Focus on the department: todayÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
+      "Focus on the department: todayÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
   },
   supervisor: {
     label: "Supervisor Dashboard",
@@ -141,6 +141,22 @@ export default function OperationsPage() {
   const [hasActiveWorkspace, setHasActiveWorkspace] = useState(false);
 
   useEffect(() => {
+    function syncActiveWorkspaceState() {
+      setHasActiveWorkspace(Boolean(localStorage.getItem("virtus_active_workspace_id")));
+    }
+
+    syncActiveWorkspaceState();
+
+    window.addEventListener("virtus-active-workspace-changed", syncActiveWorkspaceState);
+    window.addEventListener("storage", syncActiveWorkspaceState);
+
+    return () => {
+      window.removeEventListener("virtus-active-workspace-changed", syncActiveWorkspaceState);
+      window.removeEventListener("storage", syncActiveWorkspaceState);
+    };
+  }, []);
+
+  useEffect(() => {
     let alive = true;
 
     async function loadDashboard() {
@@ -163,7 +179,9 @@ export default function OperationsPage() {
           if (workspacesResponse.status === 401) {
             setDashboardStatus("signed_out");
           } else {
-            setDashboardStatus("no_company");
+            setDashboardStatus(
+            Boolean(localStorage.getItem("virtus_active_workspace_id")) ? "setup_required" : "no_company"
+          );
           }
 
           setLoading(false);
@@ -328,8 +346,8 @@ export default function OperationsPage() {
 
           {accessContext ? (
             <p className="mt-3 text-xs text-zinc-500">
-              Role: {accessContext.role.replaceAll("_", " ")} Ãƒâ€šÃ‚Â· Scope:{" "}
-              {accessContext.scopeType} Ãƒâ€šÃ‚Â· Company:{" "}
+              Role: {accessContext.role.replaceAll("_", " ")} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Scope:{" "}
+              {accessContext.scopeType} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Company:{" "}
               {activeWorkspaceName || workspaceId || "active"}
             </p>
           ) : null}
