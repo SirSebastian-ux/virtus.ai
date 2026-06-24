@@ -31,6 +31,8 @@ export default function OperationsCompanyPage() {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastWorkspaceId, setLastWorkspaceId] = useState("");
+  const [newCompanyName, setNewCompanyName] = useState("");
+  const [isCreatingCompany, setIsCreatingCompany] = useState(false);
 
   useEffect(() => {
     function handleWorkspaceChange() {
@@ -131,6 +133,54 @@ export default function OperationsCompanyPage() {
     };
   }, [refreshKey, lastWorkspaceId]);
 
+  async function createCompany(event) {
+    event.preventDefault();
+    setError("");
+
+    const companyName = newCompanyName.trim();
+
+    if (!companyName) {
+      setError("Company name is required.");
+      return;
+    }
+
+    setIsCreatingCompany(true);
+
+    try {
+      const response = await fetch("/api/operations/workspaces", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ companyName }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to create company.");
+      }
+
+      const workspace = data?.workspace;
+
+      if (!workspace?.id) {
+        throw new Error("Company was created but no workspace was returned.");
+      }
+
+      localStorage.setItem("virtus_active_workspace_id", workspace.id);
+      localStorage.setItem("virtus_active_workspace_name", workspace.name);
+
+      setNewCompanyName("");
+      setActiveWorkspaceId(workspace.id);
+      setActiveWorkspaceName(workspace.name);
+      setRefreshKey((current) => current + 1);
+      window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+    } catch (createError) {
+      setError(createError.message);
+    } finally {
+      setIsCreatingCompany(false);
+    }
+  }
   const activeWorkspace =
     workspaces.find((workspace) => workspace.id === activeWorkspaceId) || null;
 
@@ -155,6 +205,35 @@ export default function OperationsCompanyPage() {
             {error}
           </div>
         ) : null}
+        <form
+          onSubmit={createCompany}
+          className="mt-6 rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5"
+        >
+          <h2 className="text-lg font-semibold text-sky-100">
+            Create New Company
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-zinc-400">
+            Create a new active company workspace and select it automatically.
+          </p>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <input
+              value={newCompanyName}
+              onChange={(event) => setNewCompanyName(event.target.value)}
+              placeholder="Company name"
+              className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-500/60"
+            />
+
+            <button
+              type="submit"
+              disabled={isCreatingCompany}
+              className="rounded-xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isCreatingCompany ? "Creating..." : "Create Company"}
+            </button>
+          </div>
+        </form>
 
         <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -279,5 +358,3 @@ export default function OperationsCompanyPage() {
     </section>
   );
 }
-
-
