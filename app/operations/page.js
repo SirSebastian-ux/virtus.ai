@@ -43,7 +43,7 @@ const dashboardCopy = {
     description:
       "Department-level control center for reports, tasks, urgent issues, employee follow-up, and daily execution.",
     focus:
-      "Focus on the department: today’s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
+      "Focus on the department: todayâ€™s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
   },
   supervisor: {
     label: "Supervisor Dashboard",
@@ -276,7 +276,7 @@ export default function OperationsPage() {
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
             {dashboardStatus === "signed_out"
               ? "Sign in to access Operations Intelligence and manage your company workspace."
-              : "You do not currently have any active company workspaces. Set up a company to begin using Operations Intelligence."}
+              : "You do not currently have any active company workspaces. Create a company to begin using Operations Intelligence."}
           </p>
 
           <div className="mt-6">
@@ -284,7 +284,7 @@ export default function OperationsPage() {
               href={dashboardStatus === "signed_out" ? "/login" : "/operations/company"}
               className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
             >
-              {dashboardStatus === "signed_out" ? "Login" : "Setup Company"}
+              {dashboardStatus === "signed_out" ? "Login" : "Create Company"}
             </Link>
           </div>
         </div>
@@ -307,8 +307,8 @@ export default function OperationsPage() {
 
           {accessContext ? (
             <p className="mt-3 text-xs text-zinc-500">
-              Role: {accessContext.role.replaceAll("_", " ")} · Scope:{" "}
-              {accessContext.scopeType} · Company:{" "}
+              Role: {accessContext.role.replaceAll("_", " ")} Â· Scope:{" "}
+              {accessContext.scopeType} Â· Company:{" "}
               {activeWorkspaceName || workspaceId || "active"}
             </p>
           ) : null}
