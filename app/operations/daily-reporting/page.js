@@ -41,9 +41,23 @@ export default function DailyReportingPage() {
       setNotice("");
       setLoading(true);
 
-      const metricsResponse = await fetch("/api/operations/metrics", {
-        cache: "no-store",
-      });
+      const selectedWorkspaceId =
+        typeof window !== "undefined"
+          ? localStorage.getItem("virtus_active_workspace_id") || ""
+          : "";
+
+      if (!selectedWorkspaceId) {
+        throw new Error("No active company selected.");
+      }
+
+      const metricsResponse = await fetch(
+        `/api/operations/metrics?workspaceId=${encodeURIComponent(
+          selectedWorkspaceId
+        )}`,
+        {
+          cache: "no-store",
+        }
+      );
 
       const metricsResult = await metricsResponse.json();
 
@@ -348,4 +362,3 @@ export default function DailyReportingPage() {
     </main>
   );
 }
-
