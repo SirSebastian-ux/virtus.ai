@@ -43,7 +43,7 @@ const dashboardCopy = {
     description:
       "Department-level control center for reports, tasks, urgent issues, employee follow-up, and daily execution.",
     focus:
-      "Focus on the department: todayâ€™s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
+      "Focus on the department: todayÃ¢â‚¬â„¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
   },
   supervisor: {
     label: "Supervisor Dashboard",
@@ -280,12 +280,20 @@ export default function OperationsPage() {
           </p>
 
           <div className="mt-6">
-            <Link
-              href={dashboardStatus === "signed_out" ? "/login" : "/operations/company"}
+            <button
+              type="button"
+              onClick={() => {
+                if (dashboardStatus === "signed_out") {
+                  window.location.href = "/login";
+                  return;
+                }
+
+                window.dispatchEvent(new Event("virtus-open-company-switcher"));
+              }}
               className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
             >
               {dashboardStatus === "signed_out" ? "Login" : "Create Company"}
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -307,8 +315,8 @@ export default function OperationsPage() {
 
           {accessContext ? (
             <p className="mt-3 text-xs text-zinc-500">
-              Role: {accessContext.role.replaceAll("_", " ")} Â· Scope:{" "}
-              {accessContext.scopeType} Â· Company:{" "}
+              Role: {accessContext.role.replaceAll("_", " ")} Ã‚Â· Scope:{" "}
+              {accessContext.scopeType} Ã‚Â· Company:{" "}
               {activeWorkspaceName || workspaceId || "active"}
             </p>
           ) : null}

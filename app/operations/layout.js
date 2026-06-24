@@ -57,9 +57,17 @@ export default function OperationsLayout({ children }) {
     window.addEventListener("virtus-active-workspace-changed", handleActiveWorkspaceChange);
     window.addEventListener("storage", handleActiveWorkspaceChange);
 
+    function openCompanySwitcher() {
+      setIsSwitcherOpen(true);
+      setIsCreateCompanyOpen(true);
+    }
+
+    window.addEventListener("virtus-open-company-switcher", openCompanySwitcher);
+
     return () => {
       window.removeEventListener("virtus-active-workspace-changed", handleActiveWorkspaceChange);
       window.removeEventListener("storage", handleActiveWorkspaceChange);
+      window.removeEventListener("virtus-open-company-switcher", openCompanySwitcher);
     };
   }, [workspaceRefreshKey]);
 
@@ -395,7 +403,7 @@ export default function OperationsLayout({ children }) {
                             {workspace.name}
                           </p>
                           <p className="mt-1 text-xs text-zinc-500">
-                            Role: {workspace.role} · Status: {workspace.status}
+                            Role: {workspace.role} Â· Status: {workspace.status}
                           </p>
                           <p className="mt-1 text-xs text-zinc-600">
                             Slug: {workspace.slug}
