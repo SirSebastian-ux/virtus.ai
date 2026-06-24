@@ -59,9 +59,13 @@ export default function DangerZonePage() {
             ? localStorage.getItem("virtus_active_workspace_id") || ""
             : "";
 
-        const metricsUrl = selectedWorkspaceId
-          ? `/api/operations/metrics?workspaceId=${encodeURIComponent(selectedWorkspaceId)}`
-          : "/api/operations/metrics";
+        if (!selectedWorkspaceId) {
+          throw new Error("No active company selected.");
+        }
+
+        const metricsUrl = `/api/operations/metrics?workspaceId=${encodeURIComponent(
+          selectedWorkspaceId
+        )}`;
 
         const metricsResponse = await fetch(metricsUrl, {
           cache: "no-store",
@@ -275,5 +279,3 @@ export default function DangerZonePage() {
     </section>
   );
 }
-
-
