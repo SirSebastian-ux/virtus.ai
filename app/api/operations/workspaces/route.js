@@ -41,7 +41,8 @@ export async function GET() {
           name,
           slug,
           created_at,
-          updated_at
+          updated_at,
+          status
         )
       `
       )
@@ -55,13 +56,18 @@ export async function GET() {
 
     return NextResponse.json({
       workspaces: (data || [])
-        .filter((membership) => membership.workspaces)
+        .filter(
+          (membership) =>
+            membership.workspaces &&
+            !["archived", "deleted"].includes(membership.workspaces.status)
+        )
         .map((membership) => ({
           id: membership.workspaces.id,
           name: membership.workspaces.name,
           slug: membership.workspaces.slug,
           role: membership.role,
-          status: membership.status,
+          status: membership.workspaces.status,
+          memberStatus: membership.status,
           createdAt: membership.workspaces.created_at,
           updatedAt: membership.workspaces.updated_at,
         })),

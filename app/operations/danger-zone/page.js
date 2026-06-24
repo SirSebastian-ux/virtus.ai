@@ -132,6 +132,12 @@ export default function DangerZonePage() {
         action.confirmation === "ARCHIVE COMPANY" ||
         action.confirmation === "DELETE COMPANY"
       ) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("virtus_active_workspace_id");
+          localStorage.removeItem("virtus_active_workspace_name");
+          window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+        }
+
         router.push("/operations");
         router.refresh();
       }
