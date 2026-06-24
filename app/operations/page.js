@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -137,6 +137,7 @@ export default function OperationsPage() {
   const [workspaceId, setWorkspaceId] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
+  const [dashboardStatus, setDashboardStatus] = useState("loading");
 
   useEffect(() => {
     let alive = true;
@@ -149,7 +150,20 @@ export default function OperationsPage() {
             : "";
 
         if (!selectedWorkspaceId) {
-          throw new Error("No active company selected.");
+          const workspacesResponse = await fetch("/api/operations/workspaces", {
+            cache: "no-store",
+          });
+
+          if (!alive) return;
+
+          if (workspacesResponse.status === 401) {
+            setDashboardStatus("signed_out");
+          } else {
+            setDashboardStatus("no_company");
+          }
+
+          setLoading(false);
+          return;
         }
 
         const metricsUrl = `/api/operations/metrics?workspaceId=${encodeURIComponent(
@@ -164,6 +178,7 @@ export default function OperationsPage() {
         if (!alive) return;
 
         if (metricsData?.metrics) {
+          setDashboardStatus("ready");
           setMetrics({ ...emptyMetrics, ...metricsData.metrics });
           setWorkspaceId(metricsData.metrics.workspaceId || "");
 
@@ -251,23 +266,25 @@ export default function OperationsPage() {
       <section className="px-6 py-8">
         <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
           <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
-            Company Setup Required
+            {dashboardStatus === "signed_out" ? "Authentication Required" : "Company Setup Required"}
           </p>
 
           <h1 className="mt-2 text-2xl font-semibold text-white">
-            No Company Found
+            {dashboardStatus === "signed_out" ? "Login to Continue" : "No Company Found"}
           </h1>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
-            You do not currently have any active company workspaces. Create a company to begin using Operations Intelligence.
+            {dashboardStatus === "signed_out"
+              ? "Sign in to access Operations Intelligence and manage your company workspace."
+              : "You do not currently have any active company workspaces. Set up a company to begin using Operations Intelligence."}
           </p>
 
           <div className="mt-6">
             <Link
-              href="/operations/company"
+              href={dashboardStatus === "signed_out" ? "/login" : "/operations/company"}
               className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
             >
-              Create Company
+              {dashboardStatus === "signed_out" ? "Login" : "Setup Company"}
             </Link>
           </div>
         </div>

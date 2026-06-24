@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -283,24 +283,26 @@ export default function OperationsLayout({ children }) {
             Operational visibility, reporting, approvals, risks, payments, and AI management intelligence.
           </p>
 
-          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
-                Active Company
-              </p>
-              <p className="mt-1 text-sm font-semibold text-white">
-                {activeWorkspaceName || activeWorkspaceId || "No company selected"}
-              </p>
-            </div>
+          {activeWorkspaceId ? (
+            <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
+                  Active Company
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {activeWorkspaceName || activeWorkspaceId}
+                </p>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => setIsSwitcherOpen(true)}
-              className="inline-flex rounded-xl border border-sky-800/50 px-4 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-500"
-            >
-              Change Company
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setIsSwitcherOpen(true)}
+                className="inline-flex rounded-xl border border-sky-800/50 px-4 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-500"
+              >
+                Company Settings
+              </button>
+            </div>
+          ) : null}
         </div>
       </header>
 
