@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   canViewAdminModule,
@@ -33,6 +34,7 @@ const navigation = [
 ];
 
 export default function OperationsLayout({ children }) {
+  const router = useRouter();
   const [metrics, setMetrics] = useState(null);
   const [role, setRole] = useState("employee");
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
@@ -44,6 +46,8 @@ export default function OperationsLayout({ children }) {
   const [newCompanyName, setNewCompanyName] = useState("");
   const [isCreatingCompany, setIsCreatingCompany] = useState(false);
   const [restoringWorkspaceId, setRestoringWorkspaceId] = useState("");
+  const [isCreateCompanyOpen, setIsCreateCompanyOpen] = useState(false);
+  const [isArchivedCompaniesOpen, setIsArchivedCompaniesOpen] = useState(false);
 
   useEffect(() => {
     function handleActiveWorkspaceChange() {
@@ -205,6 +209,7 @@ export default function OperationsLayout({ children }) {
       localStorage.setItem("virtus_active_workspace_id", workspace.id);
       localStorage.setItem("virtus_active_workspace_name", workspace.name);
       setNewCompanyName("");
+      setIsCreateCompanyOpen(false);
       setActiveWorkspaceId(workspace.id);
       setActiveWorkspaceName(workspace.name);
       setIsSwitcherOpen(false);
@@ -247,6 +252,15 @@ export default function OperationsLayout({ children }) {
     } finally {
       setRestoringWorkspaceId("");
     }
+  }
+  function viewArchivedHistory(workspace) {
+    localStorage.setItem("virtus_active_workspace_id", workspace.id);
+    localStorage.setItem("virtus_active_workspace_name", workspace.name);
+    setActiveWorkspaceId(workspace.id);
+    setActiveWorkspaceName(workspace.name);
+    setIsSwitcherOpen(false);
+    window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+    router.push("/operations/company");
   }
   const visibleNavigation = useMemo(
     () => navigation.filter((item) => item.visible(role)),
@@ -330,7 +344,7 @@ export default function OperationsLayout({ children }) {
             onClick={() => setIsSwitcherOpen(false)}
           />
 
-          <aside className="relative z-10 h-full w-full max-w-md border-l border-sky-900/30 bg-zinc-950 p-6 shadow-2xl shadow-black/50">
+          <aside className="relative z-10 h-full w-full max-w-md overflow-y-auto border-l border-sky-900/30 bg-zinc-950 p-6 shadow-2xl shadow-black/50">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
@@ -398,78 +412,104 @@ export default function OperationsLayout({ children }) {
               )}
             </div>
 
-            <form
-              onSubmit={createCompany}
-              className="mt-6 rounded-2xl border border-sky-900/30 bg-sky-950/10 p-4"
-            >
-              <h3 className="text-sm font-semibold text-sky-100">
-                Create Company
-              </h3>
-
-              <p className="mt-2 text-xs leading-5 text-zinc-500">
-                Add a new active company workspace and select it automatically.
-              </p>
-
-              <input
-                value={newCompanyName}
-                onChange={(event) => setNewCompanyName(event.target.value)}
-                placeholder="Company name"
-                className="mt-3 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-500/60"
-              />
-
+            <div className="mt-6">
               <button
-                type="submit"
-                disabled={isCreatingCompany || !newCompanyName.trim()}
-                className="mt-3 w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                onClick={() => setIsCreateCompanyOpen((current) => !current)}
+                className="w-full rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
               >
-                {isCreatingCompany ? "Creating..." : "Create Company"}
+                {isCreateCompanyOpen ? "Close Create Company" : "Create Company"}
               </button>
-            </form>
 
-            <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <h3 className="text-sm font-semibold text-zinc-100">
-                Archived Companies
-              </h3>
-
-              <p className="mt-2 text-xs leading-5 text-zinc-500">
-                View company history and restore archived workspaces when needed.
-              </p>
-
-              <div className="mt-4 space-y-3">
-                {archivedWorkspaces.length === 0 ? (
-                  <p className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-xs text-zinc-500">
-                    No archived companies found.
+              {isCreateCompanyOpen ? (
+                <form
+                  onSubmit={createCompany}
+                  className="mt-3 rounded-2xl border border-sky-900/30 bg-sky-950/10 p-4"
+                >
+                  <p className="text-xs leading-5 text-zinc-500">
+                    Add a new active company workspace and select it automatically.
                   </p>
-                ) : (
-                  archivedWorkspaces.map((workspace) => (
-                    <div
-                      key={workspace.id}
-                      className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3"
-                    >
-                      <p className="text-sm font-semibold text-white">
-                        {workspace.name}
-                      </p>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        Status: {workspace.status}
-                      </p>
-                      <p className="mt-1 break-all text-xs text-zinc-600">
-                        Slug: {workspace.slug}
-                      </p>
 
-                      <button
-                        type="button"
-                        onClick={() => restoreWorkspace(workspace)}
-                        disabled={restoringWorkspaceId === workspace.id}
-                        className="mt-3 w-full rounded-lg border border-emerald-700/50 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:border-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {restoringWorkspaceId === workspace.id
-                          ? "Restoring..."
-                          : "Restore Company"}
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
+                  <input
+                    value={newCompanyName}
+                    onChange={(event) => setNewCompanyName(event.target.value)}
+                    placeholder="Company name"
+                    className="mt-3 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-500/60"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={isCreatingCompany || !newCompanyName.trim()}
+                    className="mt-3 w-full rounded-xl border border-sky-700/50 px-4 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isCreatingCompany ? "Creating..." : "Create"}
+                  </button>
+                </form>
+              ) : null}
+            </div>
+
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setIsArchivedCompaniesOpen((current) => !current)}
+                className="w-full rounded-xl border border-zinc-700 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:border-zinc-500"
+              >
+                {isArchivedCompaniesOpen ? "Hide Archived Companies" : "Archived Companies"}
+              </button>
+
+              {isArchivedCompaniesOpen ? (
+                <div className="mt-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+                  <p className="text-xs leading-5 text-zinc-500">
+                    View company history or restore archived companies.
+                  </p>
+
+                  <div className="mt-4 space-y-3">
+                    {archivedWorkspaces.length === 0 ? (
+                      <p className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-xs text-zinc-500">
+                        No archived companies found.
+                      </p>
+                    ) : (
+                      archivedWorkspaces.map((workspace) => (
+                        <div
+                          key={workspace.id}
+                          className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3"
+                        >
+                          <p className="text-sm font-semibold text-white">
+                            {workspace.name}
+                          </p>
+                          <p className="mt-1 text-xs text-zinc-500">
+                            Status: {workspace.status}
+                          </p>
+                          <p className="mt-1 break-all text-xs text-zinc-600">
+                            Slug: {workspace.slug}
+                          </p>
+
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => viewArchivedHistory(workspace)}
+                              className="rounded-lg border border-sky-700/50 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-500"
+                            >
+                              History
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => restoreWorkspace(workspace)}
+                              disabled={restoringWorkspaceId === workspace.id}
+                              className="rounded-lg border border-emerald-700/50 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:border-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {restoringWorkspaceId === workspace.id
+                                ? "Restoring..."
+                                : "Restore"}
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <Link
