@@ -77,6 +77,7 @@ export default function OperationsCompanyPage() {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [setupStep, setSetupStep] = useState(1);
+  const [newDepartmentName, setNewDepartmentName] = useState("");
 
   const [companyProfile, setCompanyProfile] = useState({
     companyName: "",
@@ -95,7 +96,7 @@ export default function OperationsCompanyPage() {
     employeeRange: "",
     annualRevenueRange: "",
     departments: defaultDepartments,
-    reportingFlow: "Owner → Directors → Managers → Supervisors → Employees",
+    reportingFlow: "Owner â†’ Directors â†’ Managers â†’ Supervisors â†’ Employees",
     headquarters: "",
     branches: "",
     dailyReports: true,
@@ -126,14 +127,18 @@ export default function OperationsCompanyPage() {
   }
 
   function addDepartment() {
-    const departmentName = window.prompt("Department name");
+    const departmentName = newDepartmentName.trim();
 
-    if (!departmentName?.trim()) return;
+    if (!departmentName) return;
 
     setCompanyProfile((current) => ({
       ...current,
-      departments: [...current.departments, departmentName.trim()],
+      departments: current.departments.includes(departmentName)
+        ? current.departments
+        : [...current.departments, departmentName],
     }));
+
+    setNewDepartmentName("");
   }
 
   function removeDepartment(departmentName) {
@@ -387,10 +392,37 @@ export default function OperationsCompanyPage() {
 
           {setupStep === 4 ? (
             <div>
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-semibold text-white">Departments</h2>
-                <button type="button" onClick={addDepartment} className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white">Add Department</button>
+              <h2 className="text-xl font-semibold text-white">Departments</h2>
+
+              <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
+                <label className="text-xs uppercase tracking-[0.18em] text-sky-300/60">
+                  Add Department
+                </label>
+
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    value={newDepartmentName}
+                    onChange={(event) => setNewDepartmentName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        addDepartment();
+                      }
+                    }}
+                    placeholder="Department name"
+                    className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-white outline-none transition focus:border-sky-500"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addDepartment}
+                    className="rounded-xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
+                  >
+                    Add Department
+                  </button>
+                </div>
               </div>
+
               <div className="mt-6 grid gap-3 md:grid-cols-2">
                 {companyProfile.departments.map((department) => (
                   <div key={department} className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3">
@@ -458,10 +490,59 @@ export default function OperationsCompanyPage() {
           {setupStep === 10 ? (
             <div>
               <h2 className="text-xl font-semibold text-white">Final Review</h2>
-              <pre className="mt-6 overflow-auto rounded-xl border border-zinc-800 bg-zinc-900 p-4 text-xs leading-6 text-zinc-300">
-                {JSON.stringify(companyProfile, null, 2)}
-              </pre>
-              <button type="button" className="mt-6 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white">
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Company</p>
+                  <h3 className="mt-2 text-lg font-semibold text-white">{companyProfile.companyName || activeWorkspaceName || "Not set"}</h3>
+                  <p className="mt-2 text-sm text-zinc-400">{companyProfile.description || "No company description added yet."}</p>
+                  <p className="mt-3 text-sm text-zinc-300">Industry: {companyProfile.industry || "Not set"}</p>
+                  <p className="mt-1 text-sm text-zinc-300">Business Type: {companyProfile.businessType || "Not set"}</p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Leadership</p>
+                  <p className="mt-3 text-sm text-zinc-300">Owner: {companyProfile.ownerName || "Not set"}</p>
+                  <p className="mt-1 text-sm text-zinc-300">CEO: {companyProfile.ceo || "Not set"}</p>
+                  <p className="mt-1 text-sm text-zinc-300">Managing Director: {companyProfile.managingDirector || "Not set"}</p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Company Size</p>
+                  <p className="mt-3 text-sm text-zinc-300">Stage: {companyProfile.companyStage || "Not set"}</p>
+                  <p className="mt-1 text-sm text-zinc-300">Employees: {companyProfile.employeeRange || "Not set"}</p>
+                  <p className="mt-1 text-sm text-zinc-300">Revenue Range: {companyProfile.annualRevenueRange || "Not set"}</p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Departments</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {companyProfile.departments.map((department) => (
+                      <span key={department} className="rounded-full border border-sky-900/40 bg-sky-950/30 px-3 py-1 text-xs text-sky-100">
+                        {department}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Reporting Structure</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-300">{companyProfile.reportingFlow || "Not set"}</p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">AI Monitoring</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {companyProfile.aiMonitoring.map((area) => (
+                      <span key={area} className="rounded-full border border-emerald-900/40 bg-emerald-950/20 px-3 py-1 text-xs text-emerald-100">
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" className="mt-6 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400">
                 Activate Company Foundation
               </button>
             </div>
