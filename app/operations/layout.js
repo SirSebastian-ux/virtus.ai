@@ -17,7 +17,7 @@ import {
 } from "@/lib/operations/access";
 
 const navigation = [
-  { label: "Overview", href: "/operations", metricKey: null, visible: () => true },
+  { label: "Dashboard", href: "/operations/dashboard", metricKey: null, visible: () => true },
   { label: "Company", href: "/operations/company", metricKey: null, visible: canViewCompanyModule },
   { label: "Employees", href: "/operations/employees", metricKey: "activeEmployees", visible: canViewEmployeesModule },
   { label: "Structure", href: "/operations/structure", metricKey: null, visible: canViewStructureModule },
@@ -403,7 +403,7 @@ export default function OperationsLayout({ children }) {
                             {workspace.name}
                           </p>
                           <p className="mt-1 text-xs text-zinc-500">
-                            Role: {workspace.role} Â· Status: {workspace.status}
+                            Role: {workspace.role} Ã‚Â· Status: {workspace.status}
                           </p>
                           <p className="mt-1 text-xs text-zinc-600">
                             Slug: {workspace.slug}

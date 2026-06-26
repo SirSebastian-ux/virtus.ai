@@ -43,7 +43,7 @@ const dashboardCopy = {
     description:
       "Department-level control center for reports, tasks, urgent issues, employee follow-up, and daily execution.",
     focus:
-      "Focus on the department: todayÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
+      "Focus on the department: todayÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¾ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
   },
   supervisor: {
     label: "Supervisor Dashboard",
@@ -61,70 +61,6 @@ const dashboardCopy = {
     focus:
       "Focus on your own work: submit accurate reports, complete assigned tasks, raise blockers early, and communicate clearly.",
   },
-};
-
-const cardsByRole = {
-  owner: [
-    ["Executive Dashboard", "Real-time operational metrics and executive visibility.", "/operations/dashboard"],
-    ["Executive Briefing", "Leadership health score, executive summary, risks, and recommendations.", "/operations/executive-briefing"],
-    ["Management Alerts", "Critical alerts, overdue work, missing reports, unresolved risks, and escalations.", "/operations/management-alerts"],
-    ["Decision Center", "Executive priorities, critical alerts, pending decisions, overdue work, and urgent issues.", "/operations/decision-center"],
-    ["AI Intelligence", "Executive summaries, operational risk, recommendations, and leadership insights.", "/operations/ai-intelligence"],
-    ["Operations Copilot", "Ask questions about risks, decisions, reports, tasks, alerts, and urgent issues.", "/operations/copilot"],
-    ["Daily Reporting", "Employee submissions, reviews, approvals, compliance, and missing reports.", "/operations/daily-reporting"],
-    ["Department Intelligence", "Department health, workload, risk ranking, reporting compliance, and operational visibility.", "/operations/department-intelligence"],
-    ["Company Setup", "Workspace, departments, roles, and company structure.", "/operations/company"],
-    ["Danger Zone", "Reset data, archive company, or permanently delete the workspace.", "/operations/danger-zone"],
-    ["Employees", "Manage employees, roles, departments, and active seats.", "/operations/employees"],
-    ["Structure", "Review hierarchy and reporting lines.", "/operations/structure"],
-    ["Permissions", "Create permission profiles and prepare access control.", "/operations/permissions"],
-    ["Operations Chat", "Collect daily reports and extract operational intelligence.", "/operations/chat"],
-    ["Reports", "Review employee reports, summaries, and extracted items.", "/operations/reports"],
-    ["Tasks", "Track open work, completed work, blockers, and follow-ups.", "/operations/tasks"],
-    ["Urgent Issues", "Monitor risks, escalations, blocked work, and serious issues.", "/operations/urgent"],
-    ["Decision Queue", "Review decisions, approvals, and management escalations.", "/operations/decisions"],
-    ["Payments", "Review payment records, confirmations, and pending money.", "/operations/payments"],
-  ],
-  director: [
-    ["Daily Reporting", "Review reporting compliance, approvals, and missing department reports.", "/operations/daily-reporting"],
-    ["Structure", "Review hierarchy and reporting lines.", "/operations/structure"],
-    ["Operations Chat", "Review submitted operational reports.", "/operations/chat"],
-    ["Reports", "Review summaries and extracted items.", "/operations/reports"],
-    ["Tasks", "Track work execution across assigned leadership scope.", "/operations/tasks"],
-    ["Urgent Issues", "Monitor escalations and serious issues.", "/operations/urgent"],
-    ["Decision Queue", "Review approvals and management decisions.", "/operations/decisions"],
-    ["Payments", "Review payment records and pending confirmations.", "/operations/payments"],
-  ],
-  senior_manager: [
-    ["Daily Reporting", "Review department reporting activity and approvals.", "/operations/daily-reporting"],
-    ["Operations Chat", "Review department reports.", "/operations/chat"],
-    ["Reports", "Review reports and extracted intelligence.", "/operations/reports"],
-    ["Tasks", "Track open work and follow-ups.", "/operations/tasks"],
-    ["Urgent Issues", "Monitor escalations and blockers.", "/operations/urgent"],
-    ["Decision Queue", "Review decisions requiring senior input.", "/operations/decisions"],
-  ],
-  department_manager: [
-    ["Daily Reporting", "Manage department reports, reviews, and compliance.", "/operations/daily-reporting"],
-    ["Operations Chat", "Review department reports.", "/operations/chat"],
-    ["Reports", "Review department reports and summaries.", "/operations/reports"],
-    ["Tasks", "Track department execution.", "/operations/tasks"],
-    ["Urgent Issues", "Manage department blockers and risks.", "/operations/urgent"],
-    ["Decision Queue", "Handle department approvals and decisions.", "/operations/decisions"],
-  ],
-  supervisor: [
-    ["Supervisor Dashboard", "Team members, execution visibility, blockers, reports, and decisions.", "/operations/supervisor-dashboard"],
-["Operations Chat", "Review team reports.", "/operations/chat"],
-    ["Tasks", "Track team tasks and follow-ups.", "/operations/tasks"],
-    ["Urgent Issues", "Escalate team blockers and risks.", "/operations/urgent"],
-    ["Daily Reporting", "Review team reports and approve submissions.", "/operations/daily-reporting"],
-  ],
-  employee: [
-    ["My Work", "Personal dashboard for tasks, reports, activity, decisions, and performance.", "/operations/my-work"],
-["Operations Chat", "Submit your daily report.", "/operations/chat"],
-    ["Tasks", "View and update your assigned tasks.", "/operations/tasks"],
-    ["Urgent Issues", "Raise or review urgent work blockers.", "/operations/urgent"],
-    ["Daily Reporting", "Submit and review your daily reports.", "/operations/daily-reporting"],
-  ],
 };
 
 function normalizeRole(role) {
@@ -242,7 +178,6 @@ export default function OperationsPage() {
   const hasOperationsAccess = Boolean(accessContext?.role && workspaceId);
   const role = normalizeRole(accessContext?.role || "employee");
   const copy = dashboardCopy[role];
-  const actionCards = hasOperationsAccess ? cardsByRole[role] || cardsByRole.employee : [];
 
   const summaryCards = useMemo(
     () => [
@@ -382,29 +317,6 @@ export default function OperationsPage() {
           Management Focus
         </h2>
         <p className="mt-2 text-sm leading-6 text-amber-100/70">{copy.focus}</p>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-white">Operational Areas</h2>
-        <p className="mt-2 text-sm text-zinc-400">
-          Areas available for your current role and operating scope.
-        </p>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {actionCards.map(([title, description, href]) => (
-            <Link
-              key={href}
-              href={href}
-              className="rounded-xl border border-sky-900/25 bg-zinc-900/60 p-4 transition hover:border-sky-700/50 hover:bg-zinc-900"
-            >
-              <h3 className="text-base font-semibold text-sky-100">{title}</h3>
-              <p className="mt-2 text-xs leading-5 text-zinc-400">
-                {description}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
+      </div></section>
   );
 }
