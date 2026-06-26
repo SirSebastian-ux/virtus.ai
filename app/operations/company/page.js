@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const emptyMetrics = {
   activeEmployees: 0,
@@ -69,6 +70,7 @@ const aiAreas = [
 ];
 
 export default function OperationsCompanyPage() {
+  const router = useRouter();
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [workspaces, setWorkspaces] = useState([]);
@@ -96,7 +98,7 @@ export default function OperationsCompanyPage() {
     employeeRange: "",
     annualRevenueRange: "",
     departments: defaultDepartments,
-    reportingFlow: "Owner â†’ Directors â†’ Managers â†’ Supervisors â†’ Employees",
+    reportingFlow: "Owner Ã¢â€ â€™ Directors Ã¢â€ â€™ Managers Ã¢â€ â€™ Supervisors Ã¢â€ â€™ Employees",
     headquarters: "",
     branches: "",
     dailyReports: true,
@@ -542,7 +544,14 @@ export default function OperationsCompanyPage() {
                 </div>
               </div>
 
-              <button type="button" className="mt-6 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400">
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+                  router.push("/operations/dashboard");
+                }}
+                className="mt-6 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
+              >
                 Activate Company Foundation
               </button>
             </div>
