@@ -98,7 +98,7 @@ export default function OperationsCompanyPage() {
     employeeRange: "",
     annualRevenueRange: "",
     departments: defaultDepartments,
-    reportingFlow: "Owner ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Directors ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Managers ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Supervisors ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Employees",
+    reportingFlow: "Owner ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Directors ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Managers ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Supervisors ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Employees",
     headquarters: "",
     branches: "",
     dailyReports: true,
@@ -268,49 +268,6 @@ export default function OperationsCompanyPage() {
             {error}
           </div>
         ) : null}
-
-        <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
-                Selected Company
-              </p>
-
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                {isLoading ? "Loading company..." : activeWorkspaceName || "No company selected"}
-              </h2>
-
-              <p className="mt-2 text-sm leading-6 text-zinc-400">
-                This setup applies only to the active company workspace.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-emerald-200/70">
-                Active Workspace
-              </p>
-              <p className="mt-1 text-sm font-semibold text-emerald-100">
-                {activeWorkspace?.status || "active"}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {[
-              ["Role", activeWorkspace?.role || "owner"],
-              ["Employees", isLoading ? "..." : metrics.activeEmployees],
-              ["Open Tasks", isLoading ? "..." : metrics.openTasks],
-              ["Urgent Issues", isLoading ? "..." : metrics.openUrgentIssues],
-              ["Pending Decisions", isLoading ? "..." : metrics.pendingDecisions],
-              ["Pending Payments", isLoading ? "..." : metrics.pendingPayments],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
-                <p className="text-xs text-zinc-500">{label}</p>
-                <p className="mt-2 text-sm font-semibold text-white">{value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
         <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-950/50 p-6">
           <p className="text-xs uppercase tracking-[0.22em] text-sky-300/60">
