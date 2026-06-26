@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   canViewAdminModule,
@@ -35,10 +35,12 @@ const navigation = [
 
 export default function OperationsLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [metrics, setMetrics] = useState(null);
   const [role, setRole] = useState("employee");
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
+  const [isCompanyFoundationActive, setIsCompanyFoundationActive] = useState(false);
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
   const [workspaces, setWorkspaces] = useState([]);
   const [archivedWorkspaces, setArchivedWorkspaces] = useState([]);
@@ -315,7 +317,7 @@ export default function OperationsLayout({ children }) {
       </header>
 
       <div className="mx-auto flex max-w-7xl">
-        {activeWorkspaceId ? (
+        {activeWorkspaceId && isCompanyFoundationActive ? (
         <aside className="hidden w-72 shrink-0 border-r border-zinc-800 xl:block">
           <nav className="p-4">
             <div className="space-y-1">
@@ -344,7 +346,7 @@ export default function OperationsLayout({ children }) {
         </aside>
         ) : null}
 
-        <main className={activeWorkspaceId ? "flex-1" : "mx-auto w-full max-w-5xl"}>{children}</main>
+        <main className={activeWorkspaceId && isCompanyFoundationActive ? "flex-1" : "mx-auto w-full max-w-5xl"}>{children}</main>
       </div>
 
       {isSwitcherOpen ? (
@@ -405,7 +407,7 @@ export default function OperationsLayout({ children }) {
                             {workspace.name}
                           </p>
                           <p className="mt-1 text-xs text-zinc-500">
-                            Role: {workspace.role} Ãƒâ€šÃ‚Â· Status: {workspace.status}
+                            Role: {workspace.role} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Status: {workspace.status}
                           </p>
                           <p className="mt-1 text-xs text-zinc-600">
                             Slug: {workspace.slug}
