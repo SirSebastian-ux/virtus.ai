@@ -521,7 +521,7 @@ export default function OperationsCompanyPage() {
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
                   <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Reporting Structure</p>
-                  <p className="mt-3 text-sm leading-6 text-zinc-300">{(companyProfile.reportingFlow || "Not set").replaceAll("->", " Ã¢â€ â€™ ")}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-300">{(companyProfile.reportingFlow || "Not set").replaceAll("->", " â†’ ")}</p>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
@@ -539,7 +539,6 @@ export default function OperationsCompanyPage() {
               <button
                 type="button"
                 onClick={() => {
-                  localStorage.setItem("virtus_company_foundation_active", "true");
                   window.dispatchEvent(new Event("virtus-active-workspace-changed"));
                   router.push("/operations/dashboard");
                 }}
