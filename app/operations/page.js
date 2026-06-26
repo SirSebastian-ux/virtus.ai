@@ -43,7 +43,7 @@ const dashboardCopy = {
     description:
       "Department-level control center for reports, tasks, urgent issues, employee follow-up, and daily execution.",
     focus:
-      "Focus on the department: todayÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
+      "Focus on the department: todayÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢s reports, open tasks, blocked employees, urgent issues, and decisions waiting for action.",
   },
   supervisor: {
     label: "Supervisor Dashboard",
@@ -346,8 +346,7 @@ export default function OperationsPage() {
 
           {accessContext ? (
             <p className="mt-3 text-xs text-zinc-500">
-              Role: {accessContext.role.replaceAll("_", " ")} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Scope:{" "}
-              {accessContext.scopeType} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Company:{" "}
+              Role: {accessContext.role.replaceAll("_", " ")}{" | "}Scope: {accessContext.scopeType}{" | "}Company:{" "}
               {activeWorkspaceName || workspaceId || "active"}
             </p>
           ) : null}
