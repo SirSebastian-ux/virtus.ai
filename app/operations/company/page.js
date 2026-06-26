@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getIndustryTemplate, industryTemplateNames } from "@/lib/operations/industry-templates";
 
 const emptyMetrics = {
   activeEmployees: 0,
@@ -109,6 +110,19 @@ export default function OperationsCompanyPage() {
     aiMonitoring: ["Tasks", "Risks", "Approvals"],
   });
 
+  function applyIndustryTemplate(industry) {
+    const template = getIndustryTemplate(industry);
+
+    setCompanyProfile((current) => ({
+      ...current,
+      industry,
+      departments: template.departments,
+      reportingFlow: template.hierarchy,
+      kpis: template.kpis,
+      approvalRules: template.reportingRules,
+      aiMonitoring: template.aiMonitoring,
+    }));
+  }
   function updateProfile(field, value) {
     setCompanyProfile((current) => ({
       ...current,
@@ -303,7 +317,18 @@ export default function OperationsCompanyPage() {
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <input value={companyProfile.companyName} onChange={(event) => updateProfile("companyName", event.target.value)} placeholder="Company Name" className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white" />
                 <input value={companyProfile.legalName} onChange={(event) => updateProfile("legalName", event.target.value)} placeholder="Legal Company Name" className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white" />
-                <input value={companyProfile.industry} onChange={(event) => updateProfile("industry", event.target.value)} placeholder="Industry" className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white" />
+                <select
+                  value={companyProfile.industry}
+                  onChange={(event) => applyIndustryTemplate(event.target.value)}
+                  className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white"
+                >
+                  <option value="">Choose Industry Template</option>
+                  {industryTemplateNames.map((industry) => (
+                    <option key={industry} value={industry}>
+                      {industry}
+                    </option>
+                  ))}
+                </select>
                 <select value={companyProfile.businessType} onChange={(event) => updateProfile("businessType", event.target.value)} className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white">
                   <option value="">Business Type</option>
                   {businessTypes.map((type) => <option key={type}>{type}</option>)}
@@ -348,7 +373,20 @@ export default function OperationsCompanyPage() {
 
           {setupStep === 4 ? (
             <div>
-              <h2 className="text-xl font-semibold text-white">Departments</h2>
+              <h2 className="text-xl font-semibold text-white">Organization Builder</h2>
+
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Departments are generated from the selected industry template. You can still add or remove departments manually.
+              </p>
+
+              <div className="mt-4 rounded-2xl border border-sky-900/25 bg-sky-950/20 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">
+                  Active Template
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {companyProfile.industry || "No industry selected"}
+                </p>
+              </div>
 
               <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
                 <label className="text-xs uppercase tracking-[0.18em] text-sky-300/60">
@@ -483,7 +521,7 @@ export default function OperationsCompanyPage() {
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
                   <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Reporting Structure</p>
-                  <p className="mt-3 text-sm leading-6 text-zinc-300">{(companyProfile.reportingFlow || "Not set").replaceAll("->", " → ")}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-300">{(companyProfile.reportingFlow || "Not set").replaceAll("->", " â†’ ")}</p>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
