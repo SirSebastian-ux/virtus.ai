@@ -98,7 +98,7 @@ export default function OperationsCompanyPage() {
     employeeRange: "",
     annualRevenueRange: "",
     departments: defaultDepartments,
-    reportingFlow: "Owner Ã¢â€ â€™ Directors Ã¢â€ â€™ Managers Ã¢â€ â€™ Supervisors Ã¢â€ â€™ Employees",
+    reportingFlow: "Owner ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Directors ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Managers ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Supervisors ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Employees",
     headquarters: "",
     branches: "",
     dailyReports: true,
@@ -246,9 +246,6 @@ export default function OperationsCompanyPage() {
       alive = false;
     };
   }, [refreshKey]);
-
-  const activeWorkspace =
-    workspaces.find((workspace) => workspace.id === activeWorkspaceId) || null;
 
   return (
     <section className="px-6 py-8">
