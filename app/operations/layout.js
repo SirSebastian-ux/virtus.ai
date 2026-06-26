@@ -315,6 +315,7 @@ export default function OperationsLayout({ children }) {
       </header>
 
       <div className="mx-auto flex max-w-7xl">
+        {activeWorkspaceId ? (
         <aside className="hidden w-72 shrink-0 border-r border-zinc-800 xl:block">
           <nav className="p-4">
             <div className="space-y-1">
@@ -341,8 +342,9 @@ export default function OperationsLayout({ children }) {
             </div>
           </nav>
         </aside>
+        ) : null}
 
-        <main className="flex-1">{children}</main>
+        <main className={activeWorkspaceId ? "flex-1" : "mx-auto w-full max-w-5xl"}>{children}</main>
       </div>
 
       {isSwitcherOpen ? (
@@ -403,7 +405,7 @@ export default function OperationsLayout({ children }) {
                             {workspace.name}
                           </p>
                           <p className="mt-1 text-xs text-zinc-500">
-                            Role: {workspace.role} Ã‚Â· Status: {workspace.status}
+                            Role: {workspace.role} Ãƒâ€šÃ‚Â· Status: {workspace.status}
                           </p>
                           <p className="mt-1 text-xs text-zinc-600">
                             Slug: {workspace.slug}
