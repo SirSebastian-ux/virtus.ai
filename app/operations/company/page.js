@@ -98,7 +98,7 @@ export default function OperationsCompanyPage() {
     employeeRange: "",
     annualRevenueRange: "",
     departments: defaultDepartments,
-    reportingFlow: "Owner ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Directors ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Managers ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Supervisors ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Employees",
+    reportingFlow: "Owner -> Directors -> Managers -> Supervisors -> Employees",
     headquarters: "",
     branches: "",
     dailyReports: true,
@@ -483,7 +483,7 @@ export default function OperationsCompanyPage() {
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
                   <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Reporting Structure</p>
-                  <p className="mt-3 text-sm leading-6 text-zinc-300">{companyProfile.reportingFlow || "Not set"}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-300">{(companyProfile.reportingFlow || "Not set").replaceAll("->", " → ")}</p>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
