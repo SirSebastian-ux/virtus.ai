@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -10,7 +10,6 @@ export default function OperationsEmployeesPage() {
   const [billingProfile, setBillingProfile] = useState(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [positionTitle, setPositionTitle] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [role, setRole] = useState("employee");
   const [isLoading, setIsLoading] = useState(true);
@@ -126,7 +125,6 @@ export default function OperationsEmployeesPage() {
         workspaceId: selectedWorkspaceId,
         fullName,
         email,
-        positionTitle,
         departmentId,
         role,
       }),
@@ -139,7 +137,6 @@ export default function OperationsEmployeesPage() {
     } else {
       setFullName("");
       setEmail("");
-      setPositionTitle("");
       setDepartmentId("");
       setRole("employee");
       await loadEmployees(selectedWorkspaceId);
@@ -285,15 +282,7 @@ export default function OperationsEmployeesPage() {
             placeholder="Email address"
             className="min-h-12 rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-sm text-white outline-none focus:border-sky-500"
           />
-
-          <input
-            value={positionTitle}
-            onChange={(event) => setPositionTitle(event.target.value)}
-            placeholder="Position title"
-            className="min-h-12 rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-sm text-white outline-none focus:border-sky-500"
-          />
-
-          <select
+<select
             value={departmentId}
             onChange={(event) => setDepartmentId(event.target.value)}
             className="min-h-12 rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-sm text-white outline-none focus:border-sky-500"
@@ -311,9 +300,12 @@ export default function OperationsEmployeesPage() {
             onChange={(event) => setRole(event.target.value)}
             className="min-h-12 rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-sm text-white outline-none focus:border-sky-500"
           >
+            <option value="owner">Owner</option>
+            <option value="director">Director</option>
+            <option value="senior_manager">Senior Manager</option>
+            <option value="department_manager">Department Manager</option>
+            <option value="supervisor">Supervisor</option>
             <option value="employee">Employee</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Admin</option>
           </select>
         </div>
 
@@ -349,8 +341,8 @@ export default function OperationsEmployeesPage() {
                     {employee.fullName}
                   </h2>
                   <p className="mt-2 text-sm text-zinc-400">
-                    {employee.positionTitle || "Employee"} ·{" "}
-                    {employee.departmentName || "No department"}
+                    {employee.role?.replaceAll("_", " ") || "employee"} |{" "}
+                    {employee.departmentName || "No Department"}
                   </p>
                   <p className="mt-1 text-xs text-zinc-500">
                     {employee.email || "No email assigned"}
