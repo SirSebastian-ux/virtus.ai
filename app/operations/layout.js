@@ -344,7 +344,7 @@ export default function OperationsLayout({ children }) {
         </aside>
         ) : null}
 
-        <main className={activeWorkspaceId ? "flex-1" : "mx-auto w-full max-w-5xl"}>{children}</main>
+        <main className={setupRequired || !activeWorkspaceId ? "mx-auto w-full max-w-6xl" : "flex-1"}>{children}</main>
       </div>
 
       {isSwitcherOpen ? (
@@ -405,7 +405,7 @@ export default function OperationsLayout({ children }) {
                             {workspace.name}
                           </p>
                           <p className="mt-1 text-xs text-zinc-500">
-                            Role: {workspace.role} Ãƒâ€šÃ‚Â· Status: {workspace.status}
+                            Role: {workspace.role} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Status: {workspace.status}
                           </p>
                           <p className="mt-1 text-xs text-zinc-600">
                             Slug: {workspace.slug}
