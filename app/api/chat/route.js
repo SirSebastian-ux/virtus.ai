@@ -1912,7 +1912,7 @@ if (!userId.startsWith("guest-") && fileContextRequested) {
   if (uploadedFileIds.length > 0) {
     const { data: attachedFiles } = await supabase
       .from("user_files")
-      .select("id, file_name, extracted_text")
+      .select("id, file_name, file_type, storage_path, extracted_text")
       .eq("user_id", userId)
       .in("id", uploadedFileIds);
 
@@ -1928,7 +1928,7 @@ if (!userId.startsWith("guest-") && fileContextRequested) {
     if (activeChatSession?.active_file_id) {
       const { data: activeFile } = await supabase
         .from("user_files")
-        .select("id, file_name, extracted_text")
+        .select("id, file_name, file_type, storage_path, extracted_text")
         .eq("user_id", userId)
         .eq("id", activeChatSession.active_file_id)
         .maybeSingle();
