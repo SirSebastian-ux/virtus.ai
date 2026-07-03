@@ -869,7 +869,7 @@ async function handlePastedLongText(text) {
         });
       }
 
-      setFileNotice("Long pasted text was attached as a document.");
+      setFileNotice("");
       textareaRef.current?.focus();
       return true;
     } catch (error) {
@@ -7040,7 +7040,7 @@ setRegenerating(true);
     id="virtus-file-upload"
     type="file"
     multiple
-    accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
+    accept=".txt,.pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
     className="hidden"
     onChange={handleFileUpload}
     disabled={uploadingFile || loading}
