@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import SplashScreen from "./components/SplashScreen";
 import ReactMarkdown from "react-markdown";
@@ -1995,10 +1995,7 @@ const handleCaptureMicrophoneClick = async () => {
   const paymentSuccess = searchParams.get("success") === "true";
   const currentDailyMessagesUsed = currentAccess?.dailyMessagesUsed ?? 0;
 
-  const isDailyLimitReached =
-    currentDailyMessageLimit !== null &&
-    currentDailyMessageLimit !== undefined &&
-    currentDailyMessagesUsed >= currentDailyMessageLimit;
+  const isDailyLimitReached = !["plus", "premium"].includes(currentAccess?.plan) && currentDailyMessageLimit !== null && currentDailyMessageLimit !== undefined && currentDailyMessagesUsed >= currentDailyMessageLimit;
   const isTrialGuestExpired =
     !isAuthenticated &&
     currentAccess?.plan === "trial_guest" &&
@@ -4344,7 +4341,7 @@ async function sendMessage(overrideMessage = null, overridePracticeMode = null, 
       ? sendOptions.chatId.trim()
       : "";
 
-  if (!messageToSend.trim()) return;
+  if (!messageToSend.trim() && activeFiles.length === 0) return;
   stopVirtusVoice();
 
   setEditingIndex(null);
@@ -7358,7 +7355,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   onChange={(e) => setMessage(e.target.value)}
   onPaste={handleGlobalChatPaste}
   onKeyDown={(e) => {
-  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
     setEditingIndex(null);
@@ -7394,7 +7391,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 
                   <div className="group/send relative">
                     <span className="pointer-events-none absolute bottom-full right-0 z-[99999] mb-2 whitespace-nowrap rounded-xl border border-sky-900/40 bg-zinc-950 px-3 py-1.5 text-[11px] font-medium text-sky-100 opacity-0 shadow-[0_12px_35px_rgba(2,132,199,0.25)] transition group-hover/send:opacity-100">
-                      Ctrl + Enter
+                      Enter
                     </span>
                   <button
   disabled={isDailyLimitReached}
@@ -7439,3 +7436,6 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   </>
   );
 }
+
+
+
