@@ -821,22 +821,89 @@ async function handlePastedImage(file) {
     setUploadingFile(false);
   }
 }
+async function handlePastedLongText(text) {
+    const cleanText = String(text || "").trim();
+
+    if (cleanText.length < 1000) return false;
+
+    try {
+      setUploadingFile(true);
+      setFileNotice("Converting pasted text into a document...");
+
+      const safeFile = new File(
+        [cleanText],
+        `pasted-text-${Date.now()}.txt`,
+        { type: "text/plain" }
+      );
+
+      const formData = new FormData();
+      formData.append("file", safeFile);
+
+      const response = await fetch("/api/files/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFileNotice(data.error || "Text paste upload failed.");
+        return true;
+      }
+
+      await loadUploadedFiles();
+
+      if (data.file?.id) {
+        setActiveFile(data.file);
+        setActiveFiles((currentFiles) => {
+          if (currentFiles.some((item) => item.id === data.file.id)) {
+            return currentFiles;
+          }
+
+          return [...currentFiles, data.file];
+        });
+
+        setMessage((currentMessage) => {
+          const current = String(currentMessage || "").trim();
+          return current || "Please analyze the attached pasted text.";
+        });
+      }
+
+      setFileNotice("Long pasted text was attached as a document.");
+      textareaRef.current?.focus();
+      return true;
+    } catch (error) {
+      setFileNotice(error.message || "Text paste upload failed.");
+      return true;
+    } finally {
+      setUploadingFile(false);
+    }
+  }
+
 function handleGlobalChatPaste(event) {
-  if (activeProject?.id) return;
+    if (activeProject?.id) return;
 
-  const imageItem = Array.from(event.clipboardData?.items || []).find(
-    (item) => item.type && item.type.startsWith("image/")
-  );
+    const pastedText = event.clipboardData?.getData("text/plain") || "";
 
-  if (!imageItem) return;
+    if (String(pastedText || "").trim().length >= 1000) {
+      event.preventDefault();
+      handlePastedLongText(pastedText);
+      return;
+    }
 
-  const file = imageItem.getAsFile();
-  if (!file) return;
+    const imageItem = Array.from(event.clipboardData?.items || []).find(
+      (item) => item.type && item.type.startsWith("image/")
+    );
 
-  event.preventDefault();
-  handlePastedImage(file);
-}
-useEffect(() => {
+    if (!imageItem) return;
+
+    const file = imageItem.getAsFile();
+    if (!file) return;
+
+    event.preventDefault();
+    handlePastedImage(file);
+  }
+  useEffect(() => {
   if (openMessageMenuIndex === null) return undefined;
 
   const handleOutsideMessageMenu = (event) => {

@@ -13,6 +13,7 @@ const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
 const EXTENSION_TO_MIME = {
   pdf: "application/pdf",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain",
   png: "image/png",
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -93,6 +94,10 @@ async function extractTextFromFile({ bytes, fileName, fileType }) {
     return docxResult.value || "";
   }
 
+  if (extension === "txt" || fileType === "text/plain") {
+    return Buffer.from(bytes).toString("utf8");
+  }
+
   return "";
 }
 
@@ -134,7 +139,7 @@ export async function POST(req) {
 
     if (!normalizedFileType) {
       return Response.json(
-        { error: "Only PDF, DOCX, PNG, JPG, JPEG, and WEBP files are allowed." },
+        { error: "Only PDF, DOCX, TXT, PNG, JPG, JPEG, and WEBP files are allowed." },
         { status: 400 }
       );
     }
