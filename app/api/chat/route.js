@@ -1958,6 +1958,35 @@ ${String(file.extracted_text || "").slice(0, 5000)}
 }
 
 
+const imageFiles = latestFiles.filter((file) =>
+  String(file?.file_type || "").startsWith("image/") && file?.storage_path
+);
+
+if (imageFiles.length > 0 && !userId.startsWith("guest-")) {
+  latestImageInputs = [];
+
+  for (const file of imageFiles.slice(0, 4)) {
+    try {
+      const { data: imageBlob, error: imageDownloadError } = await admin.storage
+        .from("user-files")
+        .download(file.storage_path);
+
+      if (imageDownloadError || !imageBlob) continue;
+
+      const imageArrayBuffer = await imageBlob.arrayBuffer();
+      const imageBase64 = Buffer.from(imageArrayBuffer).toString("base64");
+      const imageMimeType = String(file.file_type || "image/png");
+
+      latestImageInputs.push({
+        type: "input_image",
+        image_url: `data:${imageMimeType};base64,${imageBase64}`,
+      });
+    } catch {
+      continue;
+    }
+  }
+}
+
 const isContinuationOnlyMessage =
   /^(yes\s*)?(please\s*)?(continue|continiue|go on|tell me more|give me more|more info|more information|carry on)\.?\s*$/i.test(
     String(message || "").trim()
@@ -4859,7 +4888,13 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
     virtus_plan_status: planStatus,
     virtus_support_layer: supportLayer,
   },
-  input: `${webSearchContext ? `${webSearchContext}
+  input: [
+    {
+      role: "user",
+      content: [
+        {
+          type: "input_text",
+          text: `${webSearchContext ? `${webSearchContext}
 
 ` : ""}${latestFileText ? `${latestFileText}
 
@@ -4867,8 +4902,15 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
 
 ` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
+` : ""}${latestImageInputs.length > 0 ? `User attached ${latestImageInputs.length} image(s). Analyze the visible image content directly. Do not say you only have a file reference.
+
 ` : ""}User request:
 ${message}`,
+        },
+        ...latestImageInputs,
+      ],
+    },
+  ],
 });
 
 let memoryWriteReply = null;
