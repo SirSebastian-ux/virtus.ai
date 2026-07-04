@@ -516,11 +516,11 @@ export async function POST(req) {
               created_at: new Date().toISOString()
             });
           if (error) throw error;
-          console.log("✅ LOCATION MEMORY SAVED:", factText);
+          console.log("? LOCATION MEMORY SAVED:", factText);
         } else {
-          console.log("📍 Location memory already exists:", factText);
+          console.log("?? Location memory already exists:", factText);
         }
-      } catch(e) { console.error("❌ Location save error:", e.message); }
+      } catch(e) { console.error("? Location save error:", e.message); }
     }
   }
 
@@ -1901,6 +1901,7 @@ const prioritizedRuntimeFacts = [...dedupedMergedFacts].sort((a, b) => {
 // Load file context only when the user attaches or clearly asks about a file.
 let latestFileText = "";
 let latestFiles = [];
+let latestImageInputs = [];
 
 const fileContextRequested =
   uploadedFileIds.length > 0 ||
@@ -5475,3 +5476,5 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
+
