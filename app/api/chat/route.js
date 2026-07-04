@@ -1959,7 +1959,7 @@ ${String(file.extracted_text || "").slice(0, 5000)}
 }
 
 
-console.log("VISION DEBUG latestFiles", latestFiles.map((file) => ({ id: file.id, name: file.file_name, type: file.file_type, hasPath: !!file.storage_path })));`n`nconst imageFiles = latestFiles.filter((file) =>
+const imageFiles = latestFiles.filter((file) =>
   String(file?.file_type || "").startsWith("image/") && file?.storage_path
 );
 
@@ -1988,7 +1988,7 @@ if (imageFiles.length > 0 && !userId.startsWith("guest-")) {
   }
 }
 
-console.log("VISION DEBUG imageInputs", latestImageInputs.length);`n`nconst isContinuationOnlyMessage =
+const isContinuationOnlyMessage =
   /^(yes\s*)?(please\s*)?(continue|continiue|go on|tell me more|give me more|more info|more information|carry on)\.?\s*$/i.test(
     String(message || "").trim()
   );
@@ -5476,6 +5476,5 @@ return new Response(readableStream, {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
-
 
 
