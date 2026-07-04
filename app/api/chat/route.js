@@ -1907,7 +1907,7 @@ let latestImageInputs = [];
 
 const fileContextRequested =
   uploadedFileIds.length > 0 ||
-  /\b(file|document|pdf|docx|word file|active file|attached file|uploaded file|this file|this document|this pdf|this word file|summarize the file|summarize this file|use the file|use this document|based on the file|based on this document|content from the file|content from this document)\b/i.test(
+  /\b(file|document|pdf|docx|word file|active file|attached file|uploaded file|this file|this document|this pdf|this word file|summarize the file|summarize this file|use the file|use this document|based on the file|based on this document|content from the file|content from this document|image|screenshot|screen shot|photo|picture|png|jpg|jpeg|attached image|uploaded image|pasted image|check the screenshot|check screenshot|look at the screenshot|see the screenshot)\b/i.test(
     message || ""
   );
 
