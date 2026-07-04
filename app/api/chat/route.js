@@ -85,7 +85,9 @@ async function createMeaningfulChatTitle({ message, reply }) {
   const fallback = cleanChatSessionTitle(message) || "New chat";
 
   try {
-    const response = await client.responses.create({
+    console.log("VISION DEBUG latestImageInputs count before main response:", latestImageInputs.length);
+
+const response = await client.responses.create({
       model: "gpt-4.1-mini",
       input: `Create one short, meaningful chat title based on the real discussion.
 
@@ -1963,6 +1965,20 @@ const imageFiles = latestFiles.filter((file) =>
   String(file?.file_type || "").startsWith("image/") && file?.storage_path
 );
 
+console.log("VISION DEBUG uploadedFileIds:", uploadedFileIds);
+console.log("VISION DEBUG latestFiles:", latestFiles.map((f) => ({
+  id: f.id,
+  file_name: f.file_name,
+  file_type: f.file_type,
+  storage_path: f.storage_path,
+})));
+console.log("VISION DEBUG imageFiles:", imageFiles.map((f) => ({
+  id: f.id,
+  file_name: f.file_name,
+  file_type: f.file_type,
+  storage_path: f.storage_path,
+})));
+
 if (imageFiles.length > 0 && !userId.startsWith("guest-")) {
   latestImageInputs = [];
 
@@ -1972,7 +1988,10 @@ if (imageFiles.length > 0 && !userId.startsWith("guest-")) {
         .from("user-files")
         .download(file.storage_path);
 
-      if (imageDownloadError || !imageBlob) continue;
+      if (imageDownloadError || !imageBlob) {
+        console.error("VISION DEBUG image download failed:", file.id, imageDownloadError);
+        continue;
+      }
 
       const imageArrayBuffer = await imageBlob.arrayBuffer();
       const imageBase64 = Buffer.from(imageArrayBuffer).toString("base64");
