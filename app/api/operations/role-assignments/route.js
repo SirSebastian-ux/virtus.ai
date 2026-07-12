@@ -1,6 +1,7 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { ROLE_LEVELS } from "@/lib/operations/access";
 
 const ALLOWED_ROLES = new Set([
   "owner",
@@ -12,6 +13,27 @@ const ALLOWED_ROLES = new Set([
 ]);
 
 const ALLOWED_SCOPE_TYPES = new Set(["company", "department", "team", "self"]);
+
+// Role hierarchy: defines which roles can assign which roles
+// Owner role assignments must go through dedicated ownership workflow
+const ROLE_ASSIGNMENT_PERMISSIONS = {
+  owner: new Set(["director", "senior_manager", "department_manager", "supervisor", "employee"]),
+  director: new Set(["department_manager", "supervisor", "employee"]),
+  senior_manager: new Set(["department_manager", "supervisor", "employee"]),
+  department_manager: new Set(["supervisor", "employee"]),
+  supervisor: new Set([]),
+  employee: new Set([]),
+};
+
+// Role and scope_type compatibility: which scope_types are valid for each role
+const ROLE_SCOPE_COMPATIBILITY = {
+  owner: new Set(["company"]),
+  director: new Set(["company", "department"]),
+  senior_manager: new Set(["company", "department"]),
+  department_manager: new Set(["department"]),
+  supervisor: new Set(["team", "department"]),
+  employee: new Set(["self"]),
+};
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -65,6 +87,127 @@ async function validateEmployee(admin, workspaceId, employeeId) {
   }
 
   return Boolean(data);
+}
+
+async function resolveTargetUserId(admin, workspaceId, userId, employeeId) {
+  // Determine target user_id from either direct userId or employee record
+  let targetUserId = userId || null;
+  let employeeUserId = null;
+
+  if (employeeId) {
+    const { data: employee, error } = await admin
+      .from("employees")
+      .select("user_id")
+      .eq("id", employeeId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    employeeUserId = employee?.user_id || null;
+  }
+
+  // Detect conflict: both userId and employeeId supplied with different values
+  if (userId && employeeUserId && userId !== employeeUserId) {
+    return {
+      valid: false,
+      targetUserId: null,
+      error: "userId and employeeId refer to different users. Provide only one.",
+    };
+  }
+
+  // Use employee's user_id if not explicitly provided
+  targetUserId = targetUserId || employeeUserId;
+
+  return {
+    valid: true,
+    targetUserId,
+    error: null,
+  };
+}
+
+async function getRequestingUserOperationalRole(admin, userId, workspaceId) {
+  const { data, error } = await admin
+    .from("operations_role_assignments")
+    .select("role")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId)
+    .eq("status", "active");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  // Load all active roles and find the highest level
+  const roles = Array.isArray(data) ? data : [];
+  
+  let highestRole = null;
+  let highestLevel = -1;
+
+  for (const assignment of roles) {
+    const role = assignment.role;
+    const roleLevel = ROLE_LEVELS[role];
+
+    // Ignore unknown or legacy roles
+    if (roleLevel === undefined) {
+      continue;
+    }
+
+    if (roleLevel > highestLevel) {
+      highestLevel = roleLevel;
+      highestRole = role;
+    }
+  }
+
+  return highestRole;
+}
+
+function validateRoleHierarchy(requestingUserRole, targetRole, targetUserId, requestingUserId) {
+  // Check if attempting to assign owner role through regular API
+  if (targetRole === "owner") {
+    return {
+      valid: false,
+      error: "Owner role assignments must be managed through dedicated ownership workflow.",
+    };
+  }
+
+  // Check if requesting user has permission to assign target role
+  if (!ROLE_ASSIGNMENT_PERMISSIONS[requestingUserRole]?.has(targetRole)) {
+    return {
+      valid: false,
+      error: `Your role (${requestingUserRole}) cannot assign ${targetRole} role.`,
+    };
+  }
+
+  // Prevent self-elevation: a user cannot assign themselves a role equal to or higher than current
+  if (targetUserId && targetUserId === requestingUserId) {
+    const requestingUserRoleLevel = ROLE_LEVELS[requestingUserRole] || 0;
+    const targetRoleLevel = ROLE_LEVELS[targetRole] || 0;
+
+    if (targetRoleLevel >= requestingUserRoleLevel) {
+      return {
+        valid: false,
+        error: "You cannot assign yourself a role equal to or higher than your own.",
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
+function validateRoleScopeCompatibility(role, scopeType) {
+  if (!ROLE_SCOPE_COMPATIBILITY[role]?.has(scopeType)) {
+    return {
+      valid: false,
+      error: `Role ${role} cannot have scope_type ${scopeType}. Valid scope types: ${Array.from(
+        ROLE_SCOPE_COMPATIBILITY[role] || []
+      ).join(", ")}.`,
+    };
+  }
+
+  return { valid: true };
 }
 
 export async function GET(req) {
@@ -212,6 +355,56 @@ export async function POST(req) {
 
     if (!membership || !["owner", "admin", "manager"].includes(membership.role)) {
       return NextResponse.json({ error: "Manager access required." }, { status: 403 });
+    }
+
+    // Resolve target user_id from either userId or employeeId
+    const userResolution = await resolveTargetUserId(admin, workspaceId, userId, employeeId);
+
+    if (!userResolution.valid) {
+      return NextResponse.json({ error: userResolution.error }, { status: 400 });
+    }
+
+    const targetUserId = userResolution.targetUserId;
+
+    // Get the requesting user's operational role
+    const requestingUserOperationalRole = await getRequestingUserOperationalRole(
+      admin,
+      user.id,
+      workspaceId
+    );
+
+    // Only operational roles (owner, director, senior_manager, department_manager) can assign roles
+    // Supervisors and employees cannot
+    if (
+      !requestingUserOperationalRole ||
+      !ROLE_ASSIGNMENT_PERMISSIONS[requestingUserOperationalRole]
+    ) {
+      return NextResponse.json(
+        { error: "Your role does not have permission to assign roles." },
+        { status: 403 }
+      );
+    }
+
+    // Validate role hierarchy: check if requesting user can assign target role
+    const hierarchyValidation = validateRoleHierarchy(
+      requestingUserOperationalRole,
+      role,
+      targetUserId, // The target user who will get the role assignment
+      user.id // The current user's ID
+    );
+
+    if (!hierarchyValidation.valid) {
+      return NextResponse.json({ error: hierarchyValidation.error }, { status: 403 });
+    }
+
+    // Validate role/scope type compatibility
+    const scopeCompatibilityValidation = validateRoleScopeCompatibility(role, scopeType);
+
+    if (!scopeCompatibilityValidation.valid) {
+      return NextResponse.json(
+        { error: scopeCompatibilityValidation.error },
+        { status: 400 }
+      );
     }
 
     const validEmployee = await validateEmployee(admin, workspaceId, employeeId);
