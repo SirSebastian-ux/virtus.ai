@@ -219,7 +219,7 @@ export default function OperationsCompanyPage() {
           setWorkspaces(nextWorkspaces);
         }
 
-        const workspaceId = selectedWorkspaceId || nextWorkspaces[0]?.id || "";
+        const workspaceId = selectedWorkspaceId || "";
 
         if (!workspaceId) return;
 
