@@ -17,7 +17,7 @@ const ALLOWED_SCOPE_TYPES = new Set(["company", "department", "team", "self"]);
 // Role hierarchy: defines which roles can assign which roles
 // Owner role assignments must go through dedicated ownership workflow
 const ROLE_ASSIGNMENT_PERMISSIONS = {
-  owner: new Set(["director", "senior_manager"]),
+  owner: new Set(["director", "senior_manager", "department_manager", "supervisor", "employee"]),
   director: new Set(["department_manager", "supervisor", "employee"]),
   senior_manager: new Set(["department_manager", "supervisor", "employee"]),
   department_manager: new Set(["supervisor", "employee"]),
@@ -165,19 +165,19 @@ async function getRequestingUserOperationalRole(admin, userId, workspaceId) {
 }
 
 function validateRoleHierarchy(requestingUserRole, targetRole, targetUserId, requestingUserId) {
-  // Check if requesting user has permission to assign target role
-  if (!ROLE_ASSIGNMENT_PERMISSIONS[requestingUserRole]?.has(targetRole)) {
-    return {
-      valid: false,
-      error: `Your role (${requestingUserRole}) cannot assign ${targetRole} role.`,
-    };
-  }
-
   // Check if attempting to assign owner role through regular API
   if (targetRole === "owner") {
     return {
       valid: false,
       error: "Owner role assignments must be managed through dedicated ownership workflow.",
+    };
+  }
+
+  // Check if requesting user has permission to assign target role
+  if (!ROLE_ASSIGNMENT_PERMISSIONS[requestingUserRole]?.has(targetRole)) {
+    return {
+      valid: false,
+      error: `Your role (${requestingUserRole}) cannot assign ${targetRole} role.`,
     };
   }
 
