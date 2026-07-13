@@ -7,6 +7,7 @@ import {
   canViewTeamData,
 } from "@/lib/operations/access";
 import { hasPermission } from "@/lib/operations/permissions";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -337,6 +338,14 @@ export async function POST(req) {
       );
     }
 
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
+    }
+
     // Check for duplicate urgent issue title (case-insensitive)
     const { data: existingIssue, error: duplicateCheckError } = await admin
       .from("operations_urgent_issues")
@@ -470,6 +479,14 @@ export async function PATCH(req) {
       return NextResponse.json(
         { error: "Urgent issue management access denied." },
         { status: 403 }
+      );
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, existingIssue.workspace_id);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
       );
     }
 

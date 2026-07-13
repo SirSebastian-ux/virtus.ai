@@ -1,6 +1,7 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -335,7 +336,12 @@ export async function GET(req) {
       return NextResponse.json({ error: "Management alerts access denied." }, { status: 403 });
     }
 
-    const syncResult = await syncManagementAlerts(admin, workspaceId);
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    
+    let syncResult = { createdCount: 0 };
+    if (wsValidation.allowed) {
+      syncResult = await syncManagementAlerts(admin, workspaceId);
+    }
 
     let query = admin
       .from("operations_management_alerts")
@@ -428,6 +434,14 @@ export async function POST(req) {
 
     if (!canManageManagementAlerts(accessContext.role)) {
       return NextResponse.json({ error: "Management alert creation denied." }, { status: 403 });
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
     }
 
     if (
@@ -545,6 +559,14 @@ export async function PATCH(req) {
 
     if (!canManageManagementAlerts(accessContext.role)) {
       return NextResponse.json({ error: "Management alert update denied." }, { status: 403 });
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, existingAlert.workspace_id);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
     }
 
     if (

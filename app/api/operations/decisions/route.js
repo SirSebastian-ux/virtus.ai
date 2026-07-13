@@ -7,6 +7,7 @@ import {
   canViewTeamData,
 } from "@/lib/operations/access";
 import { hasPermission } from "@/lib/operations/permissions";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -331,6 +332,14 @@ export async function POST(req) {
       );
     }
 
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
+    }
+
     const accessContext = await getAccessContext(
       admin,
       user.id,
@@ -487,15 +496,22 @@ export async function PATCH(req) {
       );
     }
 
-    const teamEmployeeIds = await getTeamEmployeeIds(
-      admin,
-      existingDecision.workspace_id,
-      accessContext.employeeId
-    );
-
-    if (!canManageDecision(existingDecision, accessContext, teamEmployeeIds)) {
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
       return NextResponse.json(
-        { error: "Decision update access denied." },
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
+    }
+
+    if (
+      !canViewCompanyData(accessContext.role) &&
+      existingDecision.department_id &&
+      departmentId &&
+      departmentId !== existingDecision.department_id
+    ) {
+      return NextResponse.json(
+        { error: "Decision scope denied." },
         { status: 403 }
       );
     }
@@ -503,7 +519,8 @@ export async function PATCH(req) {
     const now = new Date().toISOString();
     const updatePayload = {
       status,
-      decision_note: decisionNote || existingDecision.decision_note,
+      priority: priority !== existingDecision.priority ? priority : undefined,
+      assigned_to: assignedTo !== undefined ? assignedTo : undefined,
       updated_at: now,
     };
 

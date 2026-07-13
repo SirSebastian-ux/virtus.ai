@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { ROLE_LEVELS } from "@/lib/operations/access";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 const ALLOWED_ROLES = new Set([
   "owner",
@@ -355,6 +356,14 @@ export async function POST(req) {
 
     if (!membership || !["owner", "admin", "manager"].includes(membership.role)) {
       return NextResponse.json({ error: "Manager access required." }, { status: 403 });
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
     }
 
     // Resolve target user_id from either userId or employeeId

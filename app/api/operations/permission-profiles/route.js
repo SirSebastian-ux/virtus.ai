@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
@@ -6,6 +6,7 @@ import {
   normalizePermissions,
 } from "@/lib/operations/permissions";
 import { canManagePermissions } from "@/lib/operations/access";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 const ALLOWED_ROLES = new Set([
   "owner",
@@ -145,6 +146,14 @@ export async function POST(req) {
       return NextResponse.json(
         { error: "Permission management access denied." },
         { status: 403 }
+      );
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
       );
     }
 

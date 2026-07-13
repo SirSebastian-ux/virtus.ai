@@ -6,6 +6,7 @@ import {
   canViewDepartmentData,
   canViewTeamData,
 } from "@/lib/operations/access";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -265,6 +266,14 @@ export async function POST(req) {
 
     if (!membership || !["owner", "admin", "manager"].includes(membership.role)) {
       return NextResponse.json({ error: "Manager access required." }, { status: 403 });
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
     }
 
     if (departmentId) {

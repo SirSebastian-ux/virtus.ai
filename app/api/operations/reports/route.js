@@ -1,6 +1,12 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import {
+  canViewCompanyData,
+  canViewDepartmentData,
+  canViewTeamData,
+} from "@/lib/operations/access";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -21,13 +27,6 @@ async function requireWorkspaceMember(admin, userId, workspaceId) {
 
   return data;
 }
-
-
-import {
-  canViewCompanyData,
-  canViewDepartmentData,
-  canViewTeamData,
-} from "@/lib/operations/access";
 
 async function getAccessContext(admin, userId, workspaceId, membershipRole) {
   const { data, error } = await admin
@@ -246,6 +245,14 @@ export async function POST(req) {
       );
     }
 
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
+    }
+
     const { data: report, error: reportError } = await admin
       .from("operations_reports")
       .insert({
@@ -343,6 +350,14 @@ export async function PATCH(req) {
 
     if (!membership) {
       return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, report.workspace_id);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
     }
 
     const { data: updatedReport, error: updateError } = await admin

@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
@@ -6,6 +6,7 @@ import {
   canViewDepartmentData,
   canViewTeamData,
 } from "@/lib/operations/access";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -272,6 +273,14 @@ export async function PATCH(req) {
 
     if (!membership) {
       return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, existingTask.workspace_id);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
     }
 
     const accessContext = await getAccessContext(
