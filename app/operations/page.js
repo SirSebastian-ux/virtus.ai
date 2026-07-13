@@ -220,41 +220,52 @@ export default function OperationsPage() {
     [metrics, role]
   );
 
-  if (loading || !hasOperationsAccess) {
+  if (loading) {
     return (
       <section className="px-6 py-8">
         <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
           <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
-            {dashboardStatus === "signed_out"
-              ? "Authentication Required"
-              : "Company Setup Required"}
+            Loading Operations Intelligence
           </p>
 
           <h1 className="mt-2 text-2xl font-semibold text-white">
-            {dashboardStatus === "signed_out"
-              ? "Login to Continue"
-              : hasActiveWorkspace
-                ? "Complete Company Setup"
-                : "No Company Found"}
+            Preparing Dashboard
           </h1>
 
           <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
-            {dashboardStatus === "signed_out"
+            Loading your company workspace, access level, and operational data.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  if (!hasOperationsAccess) {
+    const isSignedOut = dashboardStatus === "signed_out";
+
+    return (
+      <section className="px-6 py-8">
+        <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
+          <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
+            {isSignedOut ? "Authentication Required" : "Company Required"}
+          </p>
+
+          <h1 className="mt-2 text-2xl font-semibold text-white">
+            {isSignedOut ? "Login to Continue" : "No Company Selected"}
+          </h1>
+
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
+            {isSignedOut
               ? "Sign in to access Operations Intelligence and manage your company workspace."
-              : "Create your first company workspace to activate dashboards, employees, reports, tasks, and AI intelligence."}
+              : "Select or create a company workspace to access dashboards, employees, reports, tasks, and AI intelligence."}
           </p>
 
           <div className="mt-6">
             <button
               type="button"
               onClick={() => {
-                if (dashboardStatus === "signed_out") {
+                if (isSignedOut) {
                   window.location.href = "/login";
-                  return;
-                }
-
-                if (hasActiveWorkspace) {
-                  window.location.href = "/operations/company";
                   return;
                 }
 
@@ -262,11 +273,7 @@ export default function OperationsPage() {
               }}
               className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
             >
-              {dashboardStatus === "signed_out"
-                ? "Login"
-                : hasActiveWorkspace
-                  ? "Setup Company"
-                  : "Create Company"}
+              {isSignedOut ? "Login" : "Choose Company"}
             </button>
           </div>
         </div>
@@ -296,7 +303,7 @@ export default function OperationsPage() {
         </div>
 
         <Link
-          href="/operations/chat"
+          href="/operations/daily-reporting"
           className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
         >
           {role === "employee" ? "Submit Report" : "Submit or Review Report"}
