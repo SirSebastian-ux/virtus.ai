@@ -105,26 +105,64 @@ export async function POST(req) {
     }
 
     // Check for duplicate company name (case-insensitive)
-    const { data: existingWorkspace, error: duplicateCheckError } = await admin
+    // User cannot create duplicate if they are owner or active member
+    const { data: ownedWorkspace, error: ownerCheckError } = await admin
       .from("workspaces")
-      .select("id, name")
+      .select("id")
       .ilike("name", companyName)
       .eq("owner_user_id", user.id)
-      .eq("status", "manual_testing")
       .maybeSingle();
 
-    if (duplicateCheckError) {
+    if (ownerCheckError) {
       return NextResponse.json(
         { error: "Failed to check for duplicate company name." },
         { status: 500 }
       );
     }
 
-    if (existingWorkspace) {
+    if (ownedWorkspace) {
       return NextResponse.json(
         { error: "This company already exists." },
         { status: 409 }
       );
+    }
+
+    // Check if user is an active member of a workspace with the same name
+    const { data: userMemberships, error: memberFetchError } = await admin
+      .from("workspace_members")
+      .select("workspace_id")
+      .eq("user_id", user.id)
+      .eq("status", "active");
+
+    if (memberFetchError) {
+      return NextResponse.json(
+        { error: "Failed to check for duplicate company name." },
+        { status: 500 }
+      );
+    }
+
+    if (userMemberships && userMemberships.length > 0) {
+      const workspaceIds = userMemberships.map(m => m.workspace_id);
+      const { data: memberWorkspace, error: memberCheckError } = await admin
+        .from("workspaces")
+        .select("id")
+        .ilike("name", companyName)
+        .in("id", workspaceIds)
+        .maybeSingle();
+
+      if (memberCheckError) {
+        return NextResponse.json(
+          { error: "Failed to check for duplicate company name." },
+          { status: 500 }
+        );
+      }
+
+      if (memberWorkspace) {
+        return NextResponse.json(
+          { error: "This company already exists." },
+          { status: 409 }
+        );
+      }
     }
 
     const slugBase = companyName
