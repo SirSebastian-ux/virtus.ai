@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 
@@ -291,10 +291,36 @@ export async function POST(req) {
 
     const accessContext = await getAccessContext(admin, user.id, workspaceId, membership.role);
 
+    const reportEmployeeId = employeeId || accessContext.employeeId;
+    const reportDepartmentId = departmentId || accessContext.departmentId;
+    const today = new Date().toISOString().split("T")[0];
+
+    // Check for duplicate report for same employee on same day
+    if (reportEmployeeId) {
+      const { data: existingReport, error: duplicateCheckError } = await admin
+        .from("operations_reports")
+        .select("id")
+        .eq("workspace_id", workspaceId)
+        .eq("employee_id", reportEmployeeId)
+        .eq("report_date", today)
+        .maybeSingle();
+
+      if (duplicateCheckError) {
+        return NextResponse.json({ error: duplicateCheckError.message }, { status: 500 });
+      }
+
+      if (existingReport) {
+        return NextResponse.json(
+          { error: "A daily report has already been submitted for this date." },
+          { status: 409 }
+        );
+      }
+    }
+
     const insertPayload = {
       workspace_id: workspaceId,
-      employee_id: employeeId || accessContext.employeeId,
-      department_id: departmentId || accessContext.departmentId,
+      employee_id: reportEmployeeId,
+      department_id: reportDepartmentId,
       raw_report: rawReport,
       source: "daily_reporting",
       ai_summary: null,
