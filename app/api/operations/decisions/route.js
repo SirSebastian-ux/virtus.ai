@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
@@ -342,6 +342,25 @@ export async function POST(req) {
       return NextResponse.json(
         { error: "Decision management access denied." },
         { status: 403 }
+      );
+    }
+
+    // Check for duplicate decision title (case-insensitive)
+    const { data: existingDecision, error: duplicateCheckError } = await admin
+      .from("operations_decision_queue")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .ilike("title", title)
+      .maybeSingle();
+
+    if (duplicateCheckError) {
+      return NextResponse.json({ error: duplicateCheckError.message }, { status: 500 });
+    }
+
+    if (existingDecision) {
+      return NextResponse.json(
+        { error: "A decision with this title already exists." },
+        { status: 409 }
       );
     }
 
