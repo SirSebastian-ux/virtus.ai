@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -95,11 +95,16 @@ export default function OperationsStructurePage() {
             ? localStorage.getItem("virtus_active_workspace_id") || ""
             : "";
 
-        const selectedWorkspace =
-          loadedWorkspaces.find((workspace) => workspace.id === activeWorkspaceId) ||
-          loadedWorkspaces[0];
+        const selectedWorkspace = loadedWorkspaces.find(
+          (workspace) => workspace.id === activeWorkspaceId
+        );
 
         if (!selectedWorkspace?.id) {
+          // Clear invalid workspace ID from localStorage
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("virtus_active_workspace_id");
+            localStorage.removeItem("virtus_active_workspace_name");
+          }
           throw new Error("No active company selected.");
         }
 
