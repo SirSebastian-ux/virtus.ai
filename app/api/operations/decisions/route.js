@@ -496,7 +496,7 @@ export async function PATCH(req) {
       );
     }
 
-    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, existingDecision.workspace_id);
     if (!wsValidation.allowed) {
       return NextResponse.json(
         { error: wsValidation.message },
@@ -504,14 +504,15 @@ export async function PATCH(req) {
       );
     }
 
-    if (
-      !canViewCompanyData(accessContext.role) &&
-      existingDecision.department_id &&
-      departmentId &&
-      departmentId !== existingDecision.department_id
-    ) {
+    const teamEmployeeIds = await getTeamEmployeeIds(
+      admin,
+      existingDecision.workspace_id,
+      accessContext.employeeId
+    );
+
+    if (!canManageDecision(existingDecision, accessContext, teamEmployeeIds)) {
       return NextResponse.json(
-        { error: "Decision scope denied." },
+        { error: "Decision update access denied." },
         { status: 403 }
       );
     }
@@ -519,8 +520,7 @@ export async function PATCH(req) {
     const now = new Date().toISOString();
     const updatePayload = {
       status,
-      priority: priority !== existingDecision.priority ? priority : undefined,
-      assigned_to: assignedTo !== undefined ? assignedTo : undefined,
+      decision_note: decisionNote || existingDecision.decision_note,
       updated_at: now,
     };
 
