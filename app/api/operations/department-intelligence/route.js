@@ -1,9 +1,26 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import {
+  getOperationsAccessContext,
+  applyDepartmentScope,
+} from "@/lib/operations/scope";
 
 function cleanText(value) {
   return String(value || "").trim();
+}
+
+async function requireWorkspaceMember(admin, userId, workspaceId) {
+  const { data, error } = await admin
+    .from("workspace_members")
+    .select("role,status")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 async function countRows(query) {
@@ -59,17 +76,7 @@ export async function GET(req) {
       );
     }
 
-    const { data: membership, error: membershipError } = await admin
-      .from("workspace_members")
-      .select("role,status")
-      .eq("workspace_id", workspaceId)
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (membershipError) {
-      return NextResponse.json({ error: membershipError.message }, { status: 500 });
-    }
+    const membership = await requireWorkspaceMember(admin, user.id, workspaceId);
 
     if (!membership) {
       return NextResponse.json(
@@ -78,14 +85,37 @@ export async function GET(req) {
       );
     }
 
+    const accessContext = await getOperationsAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    if (
+      !accessContext.canViewCompany &&
+      !accessContext.canViewDepartment &&
+      !accessContext.canViewTeam
+    ) {
+      return NextResponse.json(
+        { error: "Department intelligence access denied." },
+        { status: 403 }
+      );
+    }
+
     const today = new Date().toISOString().slice(0, 10);
 
-    const { data: departments, error: departmentsError } = await admin
+    let departmentsQuery = admin
       .from("departments")
       .select("id,name,status")
       .eq("workspace_id", workspaceId)
       .eq("status", "active")
       .order("name", { ascending: true });
+
+    // Apply department scope: Owner/Director see all, Department Manager sees only their dept, Supervisor sees supervised depts, Employee sees none
+    departmentsQuery = applyDepartmentScope(departmentsQuery, accessContext);
+
+    const { data: departments, error: departmentsError } = await departmentsQuery;
 
     if (departmentsError) {
       return NextResponse.json({ error: departmentsError.message }, { status: 500 });

@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
@@ -7,6 +7,7 @@ import {
   canViewTeamData,
 } from "@/lib/operations/access";
 import { hasPermission } from "@/lib/operations/permissions";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -331,6 +332,14 @@ export async function POST(req) {
       );
     }
 
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
+    }
+
     const accessContext = await getAccessContext(
       admin,
       user.id,
@@ -342,6 +351,25 @@ export async function POST(req) {
       return NextResponse.json(
         { error: "Decision management access denied." },
         { status: 403 }
+      );
+    }
+
+    // Check for duplicate decision title (case-insensitive)
+    const { data: existingDecision, error: duplicateCheckError } = await admin
+      .from("operations_decision_queue")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .ilike("title", title)
+      .maybeSingle();
+
+    if (duplicateCheckError) {
+      return NextResponse.json({ error: duplicateCheckError.message }, { status: 500 });
+    }
+
+    if (existingDecision) {
+      return NextResponse.json(
+        { error: "A decision with this title already exists." },
+        { status: 409 }
       );
     }
 
@@ -465,6 +493,14 @@ export async function PATCH(req) {
       return NextResponse.json(
         { error: "Decision management access denied." },
         { status: 403 }
+      );
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, existingDecision.workspace_id);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
       );
     }
 

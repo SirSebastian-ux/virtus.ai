@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
@@ -6,6 +6,7 @@ import {
   canViewDepartmentData,
   canViewTeamData,
 } from "@/lib/operations/access";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -267,6 +268,14 @@ export async function POST(req) {
       return NextResponse.json({ error: "Manager access required." }, { status: 403 });
     }
 
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
+    }
+
     if (departmentId) {
       const { data: department, error: departmentError } = await admin
         .from("departments")
@@ -281,6 +290,27 @@ export async function POST(req) {
 
       if (!department) {
         return NextResponse.json({ error: "Invalid department." }, { status: 400 });
+      }
+    }
+
+    // Check for duplicate email (case-insensitive), ignore NULL or empty emails
+    if (email) {
+      const { data: existingEmployee, error: duplicateCheckError } = await admin
+        .from("employees")
+        .select("id")
+        .eq("workspace_id", workspaceId)
+        .ilike("email", email)
+        .maybeSingle();
+
+      if (duplicateCheckError) {
+        return NextResponse.json({ error: duplicateCheckError.message }, { status: 500 });
+      }
+
+      if (existingEmployee) {
+        return NextResponse.json(
+          { error: "An employee with this email already exists." },
+          { status: 409 }
+        );
       }
     }
 

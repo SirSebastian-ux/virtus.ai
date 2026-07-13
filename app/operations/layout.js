@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -96,6 +96,12 @@ export default function OperationsLayout({ children }) {
           cache: "no-store",
         });
 
+        // Redirect if unauthenticated
+        if (workspacesResponse.status === 401) {
+          router.push("/login");
+          return;
+        }
+
         const workspacesData = await workspacesResponse.json();
 
         if (isMounted && workspacesResponse.ok) {
@@ -134,6 +140,12 @@ export default function OperationsLayout({ children }) {
           cache: "no-store",
         });
 
+        // Redirect if session expired
+        if (metricsResponse.status === 401) {
+          router.push("/login");
+          return;
+        }
+
         const metricsData = await metricsResponse.json();
 
         if (!isMounted || !metricsResponse.ok) return;
@@ -155,6 +167,12 @@ export default function OperationsLayout({ children }) {
           { cache: "no-store" }
         );
 
+        // Redirect if session expired
+        if (accessResponse.status === 401) {
+          router.push("/login");
+          return;
+        }
+
         const accessData = await accessResponse.json();
 
         if (
@@ -172,7 +190,7 @@ export default function OperationsLayout({ children }) {
     return () => {
       isMounted = false;
     };
-  }, [workspaceRefreshKey]);
+  }, [workspaceRefreshKey, router]);
 
   function selectWorkspace(workspace) {
     localStorage.setItem("virtus_active_workspace_id", workspace.id);

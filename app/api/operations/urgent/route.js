@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
@@ -7,6 +7,7 @@ import {
   canViewTeamData,
 } from "@/lib/operations/access";
 import { hasPermission } from "@/lib/operations/permissions";
+import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -337,6 +338,33 @@ export async function POST(req) {
       );
     }
 
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
+      );
+    }
+
+    // Check for duplicate urgent issue title (case-insensitive)
+    const { data: existingIssue, error: duplicateCheckError } = await admin
+      .from("operations_urgent_issues")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .ilike("title", title)
+      .maybeSingle();
+
+    if (duplicateCheckError) {
+      return NextResponse.json({ error: duplicateCheckError.message }, { status: 500 });
+    }
+
+    if (existingIssue) {
+      return NextResponse.json(
+        { error: "An urgent issue with this title already exists." },
+        { status: 409 }
+      );
+    }
+
     const insertPayload = {
       workspace_id: workspaceId,
       department_id: departmentId || accessContext.departmentId,
@@ -451,6 +479,14 @@ export async function PATCH(req) {
       return NextResponse.json(
         { error: "Urgent issue management access denied." },
         { status: 403 }
+      );
+    }
+
+    const wsValidation = await validateWorkspaceMutationAllowed(admin, existingIssue.workspace_id);
+    if (!wsValidation.allowed) {
+      return NextResponse.json(
+        { error: wsValidation.message },
+        { status: wsValidation.status }
       );
     }
 
