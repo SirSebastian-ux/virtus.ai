@@ -77,20 +77,10 @@ export default function OperationsPage() {
   const [hasActiveWorkspace, setHasActiveWorkspace] = useState(() =>
     typeof window !== "undefined" && Boolean(localStorage.getItem("virtus_active_workspace_id"))
   );
-  const [isCompanyFoundationActive, setIsCompanyFoundationActive] = useState(() =>
-    typeof window !== "undefined" &&
-    localStorage.getItem("virtus_company_foundation_active") === "true"
-  );
 
   useEffect(() => {
     function syncActiveWorkspaceState() {
       setHasActiveWorkspace(Boolean(localStorage.getItem("virtus_active_workspace_id")));
-          setIsCompanyFoundationActive(
-            localStorage.getItem("virtus_company_foundation_active") === "true"
-          );
-      setIsCompanyFoundationActive(
-        localStorage.getItem("virtus_company_foundation_active") === "true"
-      );
     }
 
     syncActiveWorkspaceState();
@@ -111,12 +101,6 @@ export default function OperationsPage() {
       try {
         if (typeof window !== "undefined") {
           setHasActiveWorkspace(Boolean(localStorage.getItem("virtus_active_workspace_id")));
-          setIsCompanyFoundationActive(
-            localStorage.getItem("virtus_company_foundation_active") === "true"
-          );
-      setIsCompanyFoundationActive(
-        localStorage.getItem("virtus_company_foundation_active") === "true"
-      );
         }
         const selectedWorkspaceId =
           typeof window !== "undefined"
@@ -236,16 +220,14 @@ export default function OperationsPage() {
     [metrics, role]
   );
 
-  if (loading || !hasOperationsAccess || !isCompanyFoundationActive) {
+  if (loading || !hasOperationsAccess) {
     return (
       <section className="px-6 py-8">
         <div className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
           <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
             {dashboardStatus === "signed_out"
               ? "Authentication Required"
-              : hasActiveWorkspace
-                ? "Company Setup Required"
-                : "Company Setup Required"}
+              : "Company Setup Required"}
           </p>
 
           <h1 className="mt-2 text-2xl font-semibold text-white">
