@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { bootstrapWorkspace } from "@/lib/operations/bootstrap";
@@ -101,6 +101,29 @@ export async function POST(req) {
       return NextResponse.json(
         { error: "Company name is required." },
         { status: 400 }
+      );
+    }
+
+    // Check for duplicate company name (case-insensitive)
+    const { data: existingWorkspace, error: duplicateCheckError } = await admin
+      .from("workspaces")
+      .select("id, name")
+      .ilike("name", companyName)
+      .eq("owner_user_id", user.id)
+      .eq("status", "manual_testing")
+      .maybeSingle();
+
+    if (duplicateCheckError) {
+      return NextResponse.json(
+        { error: "Failed to check for duplicate company name." },
+        { status: 500 }
+      );
+    }
+
+    if (existingWorkspace) {
+      return NextResponse.json(
+        { error: "This company already exists." },
+        { status: 409 }
       );
     }
 
