@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {
@@ -334,6 +334,25 @@ export async function POST(req) {
       return NextResponse.json(
         { error: "Urgent issue management access denied." },
         { status: 403 }
+      );
+    }
+
+    // Check for duplicate urgent issue title (case-insensitive)
+    const { data: existingIssue, error: duplicateCheckError } = await admin
+      .from("operations_urgent_issues")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .ilike("title", title)
+      .maybeSingle();
+
+    if (duplicateCheckError) {
+      return NextResponse.json({ error: duplicateCheckError.message }, { status: 500 });
+    }
+
+    if (existingIssue) {
+      return NextResponse.json(
+        { error: "An urgent issue with this title already exists." },
+        { status: 409 }
       );
     }
 
