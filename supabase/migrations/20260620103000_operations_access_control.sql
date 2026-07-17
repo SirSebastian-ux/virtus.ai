@@ -1,4 +1,4 @@
-﻿create table if not exists public.operations_role_assignments (
+create table if not exists public.operations_role_assignments (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references public.workspaces(id) on delete cascade,
   user_id uuid references auth.users(id) on delete cascade,

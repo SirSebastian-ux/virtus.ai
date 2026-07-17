@@ -14,7 +14,7 @@ const emptyMetrics = {
 
 const wizardSteps = [
   "Company Identity",
-  "Ownership & Leadership",
+  "Leadership Structure",
   "Company Size",
   "Departments",
   "Reporting Structure",
@@ -81,6 +81,7 @@ export default function OperationsCompanyPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [setupStep, setSetupStep] = useState(1);
   const [newDepartmentName, setNewDepartmentName] = useState("");
+  const [isSavingSetup, setIsSavingSetup] = useState(false);
 
   const [companyProfile, setCompanyProfile] = useState({
     companyName: "",
@@ -91,10 +92,10 @@ export default function OperationsCompanyPage() {
     mainProducts: "",
     mainServices: "",
     targetClients: "",
-    ownerName: "",
-    coOwners: "",
-    ceo: "",
-    managingDirector: "",
+    dailyLeaderRole: "ceo",
+    leadershipStructure: "ceo_directors",
+    departmentScale: "1-3",
+    departmentsReportDirectly: true,
     companyStage: "",
     employeeRange: "",
     annualRevenueRange: "",
@@ -164,6 +165,46 @@ export default function OperationsCompanyPage() {
     }));
   }
 
+  async function completeCompanySetup() {
+    if (!activeWorkspaceId) {
+      setError("Choose an active company before completing setup.");
+      return;
+    }
+
+    try {
+      setIsSavingSetup(true);
+      setError("");
+
+      const response = await fetch("/api/operations/organization-setup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workspaceId: activeWorkspaceId,
+          profile: companyProfile,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to complete company setup.");
+      }
+
+      const savedCompanyName = companyProfile.companyName.trim();
+
+      localStorage.setItem("virtus_active_workspace_name", savedCompanyName);
+      setActiveWorkspaceName(savedCompanyName);
+      window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+      router.push("/operations/organization");
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setIsSavingSetup(false);
+    }
+  }
+
   useEffect(() => {
     function handleWorkspaceChange() {
       setRefreshKey((current) => current + 1);
@@ -222,6 +263,26 @@ export default function OperationsCompanyPage() {
         const workspaceId = selectedWorkspaceId || "";
 
         if (!workspaceId) return;
+
+        const setupResponse = await fetch(
+          `/api/operations/organization-setup?workspaceId=${encodeURIComponent(workspaceId)}`,
+          { cache: "no-store" }
+        );
+
+        const setupData = await setupResponse.json();
+
+        if (!setupResponse.ok) {
+          throw new Error(
+            setupData?.error || "Unable to load company setup."
+          );
+        }
+
+        if (alive && setupData.profile) {
+          setCompanyProfile((current) => ({
+            ...current,
+            ...setupData.profile,
+          }));
+        }
 
         const metricsResponse = await fetch(
           `/api/operations/metrics?workspaceId=${encodeURIComponent(workspaceId)}`,
@@ -340,12 +401,116 @@ export default function OperationsCompanyPage() {
 
           {setupStep === 2 ? (
             <div>
-              <h2 className="text-xl font-semibold text-white">Ownership & Leadership</h2>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <input value={companyProfile.ownerName} onChange={(event) => updateProfile("ownerName", event.target.value)} placeholder="Owner Name" className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white" />
-                <input value={companyProfile.coOwners} onChange={(event) => updateProfile("coOwners", event.target.value)} placeholder="Co-Owners" className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white" />
-                <input value={companyProfile.ceo} onChange={(event) => updateProfile("ceo", event.target.value)} placeholder="CEO" className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white" />
-                <input value={companyProfile.managingDirector} onChange={(event) => updateProfile("managingDirector", event.target.value)} placeholder="Managing Director" className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white" />
+              <h2 className="text-xl font-semibold text-white">
+                Leadership Structure
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Define how daily leadership and reporting will work. People will be assigned later through Team Members.
+              </p>
+
+              <div className="mt-6 space-y-6">
+                <div>
+                  <label className="text-sm font-semibold text-white">
+                    Who manages the daily operations of the company?
+                  </label>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    {[
+                      { value: "ceo", label: "CEO" },
+                      { value: "managing_director", label: "Managing Director" },
+                      { value: "president", label: "President" },
+                      { value: "founder", label: "Founder" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateProfile("dailyLeaderRole", option.value)}
+                        className={`rounded-xl border px-4 py-4 text-left text-sm font-semibold transition ${
+                          companyProfile.dailyLeaderRole === option.value
+                            ? "border-sky-500 bg-sky-950/40 text-sky-100"
+                            : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-white">
+                    How is the leadership team structured?
+                  </label>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    {[
+                      { value: "executive_only", label: "Executive only" },
+                      { value: "ceo_directors", label: "CEO + Directors" },
+                      { value: "director_managers", label: "Managing Director + Department Managers" },
+                      { value: "custom", label: "Custom structure" },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateProfile("leadershipStructure", option.value)}
+                        className={`rounded-xl border px-4 py-4 text-left text-sm font-semibold transition ${
+                          companyProfile.leadershipStructure === option.value
+                            ? "border-sky-500 bg-sky-950/40 text-sky-100"
+                            : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-white">
+                    How many departments do you plan to have initially?
+                  </label>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    {["1-3", "4-8", "9+"].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => updateProfile("departmentScale", value)}
+                        className={`rounded-xl border px-4 py-4 text-left text-sm font-semibold transition ${
+                          companyProfile.departmentScale === value
+                            ? "border-sky-500 bg-sky-950/40 text-sky-100"
+                            : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700"
+                        }`}
+                      >
+                        {value}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-white">
+                    Who will Department Managers report to?
+                  </label>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    {[true, false].map((value) => (
+                      <button
+                        key={String(value)}
+                        type="button"
+                        onClick={() => updateProfile("departmentsReportDirectly", value)}
+                        className={`rounded-xl border px-4 py-4 text-left text-sm font-semibold transition ${
+                          companyProfile.departmentsReportDirectly === value
+                            ? "border-sky-500 bg-sky-950/40 text-sky-100"
+                            : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-700"
+                        }`}
+                      >
+                        {value ? "Directly to the Managing Director / CEO" : "Through Directors"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ) : null}
@@ -496,9 +661,15 @@ export default function OperationsCompanyPage() {
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
                   <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Leadership</p>
-                  <p className="mt-3 text-sm text-zinc-300">Owner: {companyProfile.ownerName || "Not set"}</p>
-                  <p className="mt-1 text-sm text-zinc-300">CEO: {companyProfile.ceo || "Not set"}</p>
-                  <p className="mt-1 text-sm text-zinc-300">Managing Director: {companyProfile.managingDirector || "Not set"}</p>
+                  <p className="mt-3 text-sm text-zinc-300">
+                    Daily leader: {companyProfile.dailyLeaderRole.replaceAll("_", " ")}
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-300">
+                    Structure: {companyProfile.leadershipStructure.replaceAll("_", " ")}
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-300">
+                    Departments: {companyProfile.departmentScale}
+                  </p>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
@@ -521,7 +692,7 @@ export default function OperationsCompanyPage() {
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
                   <p className="text-xs uppercase tracking-[0.18em] text-sky-300/60">Reporting Structure</p>
-                  <p className="mt-3 text-sm leading-6 text-zinc-300">{(companyProfile.reportingFlow || "Not set").replaceAll("->", " Ã¢â€ â€™ ")}</p>
+                  <p className="mt-3 text-sm leading-6 text-zinc-300">{(companyProfile.reportingFlow || "Not set").replaceAll("->", " \u2192 ")}</p>
                 </div>
 
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5">
@@ -538,13 +709,13 @@ export default function OperationsCompanyPage() {
 
               <button
                 type="button"
-                onClick={() => {
-                  window.dispatchEvent(new Event("virtus-active-workspace-changed"));
-                  router.push("/operations/dashboard");
-                }}
-                className="mt-6 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400"
+                onClick={completeCompanySetup}
+                disabled={isSavingSetup}
+                className="mt-6 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Activate Company Foundation
+                {isSavingSetup
+                  ? "Activating Company Foundation..."
+                  : "Activate Company Foundation"}
               </button>
             </div>
           ) : null}
