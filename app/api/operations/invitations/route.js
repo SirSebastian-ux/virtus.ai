@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
+import { sendOperationsInvitationEmail } from "@/lib/operations/invitation-delivery";
 
 const ALLOWED_ROLES = new Set([
   "owner",
@@ -12,7 +13,26 @@ const ALLOWED_ROLES = new Set([
   "employee",
 ]);
 
-const ALLOWED_SCOPE_TYPES = new Set(["company", "department", "team", "self"]);
+const INVITATION_REQUEST_ROLES = new Set([
+  "owner",
+  "director",
+  "senior_manager",
+  "department_manager",
+  "supervisor",
+]);
+
+const ALLOWED_SCOPE_TYPES = new Set([
+  "company",
+  "department",
+  "team",
+  "self",
+]);
+
+const ACTIVE_INVITATION_STATUSES = [
+  "pending_approval",
+  "approved",
+  "sent",
+];
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -20,6 +40,34 @@ function cleanText(value) {
 
 function cleanEmail(value) {
   return cleanText(value).toLowerCase();
+}
+
+function mapInvitation(item) {
+  return {
+    id: item.id,
+    workspaceId: item.workspace_id,
+    email: item.email,
+    invitedName: item.invited_name,
+    requestedRole: item.requested_role,
+    requestedScopeType: item.requested_scope_type,
+    departmentId: item.department_id,
+    departmentName: item.departments?.name || null,
+    reportsToEmployeeId: item.reports_to_employee_id,
+    reportsToEmployeeName: item.manager?.full_name || null,
+    status: item.status,
+    requestedBy: item.requested_by,
+    approvedBy: item.approved_by,
+    approvedAt: item.approved_at,
+    acceptedBy: item.accepted_by,
+    acceptedAt: item.accepted_at,
+    authUserId: item.auth_user_id,
+    sentAt: item.sent_at,
+    deliveryAttempts: item.delivery_attempts || 0,
+    deliveryError: item.delivery_error,
+    expiresAt: item.expires_at,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+  };
 }
 
 async function requireWorkspaceMember(admin, userId, workspaceId) {
@@ -46,6 +94,7 @@ async function validateDepartment(admin, workspaceId, departmentId) {
     .select("id")
     .eq("id", departmentId)
     .eq("workspace_id", workspaceId)
+    .eq("status", "active")
     .maybeSingle();
 
   if (error) {
@@ -63,6 +112,7 @@ async function validateEmployee(admin, workspaceId, employeeId) {
     .select("id")
     .eq("id", employeeId)
     .eq("workspace_id", workspaceId)
+    .eq("employment_status", "active")
     .maybeSingle();
 
   if (error) {
@@ -70,10 +120,6 @@ async function validateEmployee(admin, workspaceId, employeeId) {
   }
 
   return Boolean(data);
-}
-
-function canRequestInvitation(membershipRole) {
-  return ["owner", "admin", "manager"].includes(membershipRole);
 }
 
 export async function GET(req) {
@@ -100,10 +146,17 @@ export async function GET(req) {
       );
     }
 
-    const membership = await requireWorkspaceMember(admin, user.id, workspaceId);
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      workspaceId
+    );
 
     if (!membership) {
-      return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Workspace access denied." },
+        { status: 403 }
+      );
     }
 
     const { data, error } = await admin
@@ -124,6 +177,10 @@ export async function GET(req) {
         approved_at,
         accepted_by,
         accepted_at,
+        auth_user_id,
+        sent_at,
+        delivery_attempts,
+        delivery_error,
         expires_at,
         created_at,
         updated_at,
@@ -147,27 +204,7 @@ export async function GET(req) {
     }
 
     return NextResponse.json({
-      invitations: (data || []).map((item) => ({
-        id: item.id,
-        workspaceId: item.workspace_id,
-        email: item.email,
-        invitedName: item.invited_name,
-        requestedRole: item.requested_role,
-        requestedScopeType: item.requested_scope_type,
-        departmentId: item.department_id,
-        departmentName: item.departments?.name || null,
-        reportsToEmployeeId: item.reports_to_employee_id,
-        reportsToEmployeeName: item.manager?.full_name || null,
-        status: item.status,
-        requestedBy: item.requested_by,
-        approvedBy: item.approved_by,
-        approvedAt: item.approved_at,
-        acceptedBy: item.accepted_by,
-        acceptedAt: item.accepted_at,
-        expiresAt: item.expires_at,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-      })),
+      invitations: (data || []).map(mapInvitation),
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -185,7 +222,10 @@ export async function POST(req) {
     } = await supabase.auth.getUser();
 
     if (authError || !user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Not authenticated." },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
@@ -193,10 +233,16 @@ export async function POST(req) {
     const workspaceId = cleanText(body?.workspaceId);
     const email = cleanEmail(body?.email);
     const invitedName = cleanText(body?.invitedName);
-    const requestedRole = cleanText(body?.requestedRole || "employee");
-    const requestedScopeType = cleanText(body?.requestedScopeType || "self");
+    const requestedRole = cleanText(
+      body?.requestedRole || "employee"
+    );
+    const requestedScopeType = cleanText(
+      body?.requestedScopeType || "self"
+    );
     const departmentId = cleanText(body?.departmentId);
-    const reportsToEmployeeId = cleanText(body?.reportsToEmployeeId);
+    const reportsToEmployeeId = cleanText(
+      body?.reportsToEmployeeId
+    );
 
     if (!workspaceId || !email || !requestedRole || !requestedScopeType) {
       return NextResponse.json(
@@ -209,11 +255,17 @@ export async function POST(req) {
     }
 
     if (!email.includes("@")) {
-      return NextResponse.json({ error: "Invalid email." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid email." },
+        { status: 400 }
+      );
     }
 
     if (!ALLOWED_ROLES.has(requestedRole)) {
-      return NextResponse.json({ error: "Invalid requestedRole." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid requestedRole." },
+        { status: 400 }
+      );
     }
 
     if (!ALLOWED_SCOPE_TYPES.has(requestedScopeType)) {
@@ -223,38 +275,116 @@ export async function POST(req) {
       );
     }
 
-    const membership = await requireWorkspaceMember(admin, user.id, workspaceId);
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      workspaceId
+    );
 
     if (!membership) {
-      return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Workspace access denied." },
+        { status: 403 }
+      );
     }
 
-    if (!canRequestInvitation(membership.role)) {
+    if (!INVITATION_REQUEST_ROLES.has(membership.role)) {
       return NextResponse.json(
         { error: "Invitation request access denied." },
         { status: 403 }
       );
     }
 
-    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
-    if (!wsValidation.allowed) {
+    const workspaceValidation =
+      await validateWorkspaceMutationAllowed(admin, workspaceId);
+
+    if (!workspaceValidation.allowed) {
       return NextResponse.json(
-        { error: wsValidation.message },
-        { status: wsValidation.status }
+        { error: workspaceValidation.message },
+        { status: workspaceValidation.status }
       );
     }
 
-    const validDepartment = await validateDepartment(admin, workspaceId, departmentId);
+    const { data: workspace, error: workspaceError } = await admin
+      .from("workspaces")
+      .select("id, name, owner_user_id")
+      .eq("id", workspaceId)
+      .maybeSingle();
+
+    if (workspaceError) {
+      return NextResponse.json(
+        { error: workspaceError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: "Workspace not found." },
+        { status: 404 }
+      );
+    }
+
+    const validDepartment = await validateDepartment(
+      admin,
+      workspaceId,
+      departmentId
+    );
 
     if (!validDepartment) {
-      return NextResponse.json({ error: "Invalid department." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid department." },
+        { status: 400 }
+      );
     }
 
-    const validManager = await validateEmployee(admin, workspaceId, reportsToEmployeeId);
+    const validManager = await validateEmployee(
+      admin,
+      workspaceId,
+      reportsToEmployeeId
+    );
 
     if (!validManager) {
-      return NextResponse.json({ error: "Invalid reporting manager." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid reporting manager." },
+        { status: 400 }
+      );
     }
+
+    const { data: existingInvitation, error: existingError } =
+      await admin
+        .from("operations_invitations")
+        .select("id, status")
+        .eq("workspace_id", workspaceId)
+        .ilike("email", email)
+        .in("status", ACTIVE_INVITATION_STATUSES)
+        .maybeSingle();
+
+    if (existingError) {
+      return NextResponse.json(
+        { error: existingError.message },
+        { status: 500 }
+      );
+    }
+
+    if (existingInvitation) {
+      return NextResponse.json(
+        {
+          error:
+            "An active invitation already exists for this email address.",
+          invitationId: existingInvitation.id,
+        },
+        { status: 409 }
+      );
+    }
+
+    const requesterIsOwner =
+      membership.role === "owner" ||
+      workspace.owner_user_id === user.id;
+
+    const approvedAt = requesterIsOwner
+      ? new Date().toISOString()
+      : null;
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 14);
@@ -269,18 +399,39 @@ export async function POST(req) {
         requested_scope_type: requestedScopeType,
         department_id: departmentId || null,
         reports_to_employee_id: reportsToEmployeeId || null,
-        status: "pending_approval",
+        status: requesterIsOwner
+          ? "approved"
+          : "pending_approval",
         requested_by: user.id,
+        approved_by: requesterIsOwner ? user.id : null,
+        approved_at: approvedAt,
         expires_at: expiresAt.toISOString(),
       })
       .select(
-        "id, workspace_id, email, invited_name, requested_role, requested_scope_type, department_id, reports_to_employee_id, status, requested_by, created_at, updated_at"
+        "id, workspace_id, email, invited_name, requested_role, requested_scope_type, department_id, reports_to_employee_id, status, requested_by, approved_by, approved_at, auth_user_id, sent_at, delivery_attempts, delivery_error, expires_at, created_at, updated_at"
       )
       .single();
 
     if (invitationError) {
-      return NextResponse.json({ error: invitationError.message }, { status: 500 });
+      if (invitationError.code === "23505") {
+        return NextResponse.json(
+          {
+            error:
+              "An active invitation already exists for this email address.",
+          },
+          { status: 409 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: invitationError.message },
+        { status: 500 }
+      );
     }
+
+    const approvalStatus = requesterIsOwner
+      ? "approved"
+      : "pending";
 
     const { data: approvalRequest, error: approvalError } = await admin
       .from("operations_approval_requests")
@@ -290,55 +441,111 @@ export async function POST(req) {
         related_table: "operations_invitations",
         related_id: invitation.id,
         title: `Approve invitation for ${email}`,
-        description: `${invitedName || email} was requested as ${requestedRole} with ${requestedScopeType} scope.`,
-        status: "pending",
+        description:
+          `${invitedName || email} was requested as ` +
+          `${requestedRole} with ${requestedScopeType} scope.`,
+        status: approvalStatus,
         requested_by: user.id,
+        assigned_approver: workspace.owner_user_id,
+        decided_by: requesterIsOwner ? user.id : null,
+        decided_at: approvedAt,
+        decision_notes: requesterIsOwner
+          ? "Automatically approved because the workspace owner created the invitation."
+          : null,
       })
       .select("id, status, created_at")
       .single();
 
     if (approvalError) {
-      return NextResponse.json({ error: approvalError.message }, { status: 500 });
+      await admin
+        .from("operations_invitations")
+        .delete()
+        .eq("id", invitation.id)
+        .eq("workspace_id", workspaceId);
+
+      return NextResponse.json(
+        { error: approvalError.message },
+        { status: 500 }
+      );
+    }
+
+    let finalInvitation = invitation;
+    let deliveryMode = null;
+
+    if (requesterIsOwner) {
+      try {
+        const delivery = await sendOperationsInvitationEmail({
+          admin,
+          invitation,
+          workspaceName: workspace.name,
+        });
+
+        finalInvitation = delivery.invitation;
+        deliveryMode = delivery.deliveryMode;
+      } catch (deliveryError) {
+        await admin.from("operations_activity_logs").insert({
+          workspace_id: workspaceId,
+          actor_user_id: user.id,
+          action: "invitation.delivery_failed",
+          entity_table: "operations_invitations",
+          entity_id: invitation.id,
+          new_data: {
+            invitationId: invitation.id,
+            email,
+          },
+          metadata: {
+            source: "operations_invitations_api",
+            error: cleanText(deliveryError.message).slice(0, 1000),
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error:
+              "The invitation was approved, but the email could not be sent. It can be retried.",
+            details: deliveryError.message,
+            invitationId: invitation.id,
+          },
+          { status: 502 }
+        );
+      }
     }
 
     await admin.from("operations_activity_logs").insert({
       workspace_id: workspaceId,
       actor_user_id: user.id,
-      action: "invitation.requested",
+      action: requesterIsOwner
+        ? "invitation.sent"
+        : "invitation.requested",
       entity_table: "operations_invitations",
       entity_id: invitation.id,
       new_data: {
-        invitation,
+        invitation: finalInvitation,
         approvalRequest,
       },
       metadata: {
         source: "operations_invitations_api",
+        deliveryMode,
       },
     });
 
-    return NextResponse.json({
-      ok: true,
-      invitation: {
-        id: invitation.id,
-        workspaceId: invitation.workspace_id,
-        email: invitation.email,
-        invitedName: invitation.invited_name,
-        requestedRole: invitation.requested_role,
-        requestedScopeType: invitation.requested_scope_type,
-        departmentId: invitation.department_id,
-        reportsToEmployeeId: invitation.reports_to_employee_id,
-        status: invitation.status,
-        requestedBy: invitation.requested_by,
-        createdAt: invitation.created_at,
-        updatedAt: invitation.updated_at,
+    return NextResponse.json(
+      {
+        ok: true,
+        invitation: mapInvitation(finalInvitation),
+        approvalRequest: {
+          id: approvalRequest.id,
+          status: approvalRequest.status,
+          createdAt: approvalRequest.created_at,
+        },
+        deliveryMode,
       },
-      approvalRequest: {
-        id: approvalRequest.id,
-        status: approvalRequest.status,
-        createdAt: approvalRequest.created_at,
-      },
-    });
+      { status: 201 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }

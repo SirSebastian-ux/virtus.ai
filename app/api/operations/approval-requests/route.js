@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
+import { sendOperationsInvitationEmail } from "@/lib/operations/invitation-delivery";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -24,7 +25,7 @@ async function requireWorkspaceMember(admin, userId, workspaceId) {
 }
 
 function canDecideApproval(role) {
-  return ["owner", "admin", "manager"].includes(role);
+  return ["owner", "admin", "manager", "director", "senior_manager", "department_manager"].includes(role);
 }
 
 function mapApprovalRequest(item) {
@@ -252,6 +253,16 @@ export async function PATCH(req) {
       return NextResponse.json({ error: "Approval request not found." }, { status: 404 });
     }
 
+    if (
+      existingRequest.request_type === "invitation" &&
+      membership.role !== "owner"
+    ) {
+      return NextResponse.json(
+        { error: "Only the workspace owner can approve invitations." },
+        { status: 403 }
+      );
+    }
+
     if (existingRequest.status !== "pending") {
       return NextResponse.json(
         { error: "Only pending approval requests can be decided." },
@@ -304,7 +315,7 @@ export async function PATCH(req) {
         .eq("id", existingRequest.related_id)
         .eq("workspace_id", workspaceId)
         .select(
-          "id, workspace_id, email, invited_name, requested_role, requested_scope_type, department_id, reports_to_employee_id, status, requested_by, approved_by, approved_at, created_at"
+          "id, workspace_id, email, invited_name, requested_role, requested_scope_type, department_id, reports_to_employee_id, status, requested_by, approved_by, approved_at, auth_user_id, sent_at, delivery_attempts, delivery_error, expires_at, created_at, updated_at"
         )
         .single();
 
@@ -313,6 +324,57 @@ export async function PATCH(req) {
       }
 
       invitation = updatedInvitation;
+
+      if (action === "approve") {
+        const { data: workspace, error: workspaceError } = await admin
+          .from("workspaces")
+          .select("name")
+          .eq("id", workspaceId)
+          .maybeSingle();
+
+        if (workspaceError) {
+          return NextResponse.json(
+            { error: workspaceError.message },
+            { status: 500 }
+          );
+        }
+
+        try {
+          const delivery = await sendOperationsInvitationEmail({
+            admin,
+            invitation: updatedInvitation,
+            workspaceName: workspace?.name || "",
+          });
+
+          invitation = delivery.invitation;
+        } catch (deliveryError) {
+          await admin.from("operations_activity_logs").insert({
+            workspace_id: workspaceId,
+            actor_user_id: user.id,
+            action: "invitation.delivery_failed",
+            entity_table: "operations_invitations",
+            entity_id: updatedInvitation.id,
+            new_data: {
+              invitationId: updatedInvitation.id,
+              email: updatedInvitation.email,
+            },
+            metadata: {
+              source: "operations_approval_requests_api",
+              error: cleanText(deliveryError.message).slice(0, 1000),
+            },
+          });
+
+          return NextResponse.json(
+            {
+              error:
+                "The invitation was approved, but the email could not be sent. It can be retried.",
+              details: deliveryError.message,
+              invitationId: updatedInvitation.id,
+            },
+            { status: 502 }
+          );
+        }
+      }
     }
 
     await admin.from("operations_activity_logs").insert({
@@ -321,7 +383,7 @@ export async function PATCH(req) {
       action: `approval_request.${nextStatus}`,
       entity_table: "operations_approval_requests",
       entity_id: approvalRequest.id,
-      old_data: existingRequest,
+      previous_data: existingRequest,
       new_data: {
         approvalRequest,
         invitation,
