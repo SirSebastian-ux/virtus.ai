@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 
@@ -7,6 +7,11 @@ const sections = [
     title: "Company Profile",
     description: "Manage your company information and workspace settings.",
     href: "/operations/company",
+  },
+  {
+    title: "Leadership Team",
+    description: "Create leadership positions and assign responsible people.",
+    href: "/operations/organization/leadership",
   },
   {
     title: "Team Members",
