@@ -74,23 +74,25 @@ export default function OperationsPage() {
   const [loading, setLoading] = useState(true);
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [dashboardStatus, setDashboardStatus] = useState("loading");
-  const [hasActiveWorkspace, setHasActiveWorkspace] = useState(() =>
-    typeof window !== "undefined" && Boolean(localStorage.getItem("virtus_active_workspace_id"))
-  );
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
 
   useEffect(() => {
-    function syncActiveWorkspaceState() {
-      setHasActiveWorkspace(Boolean(localStorage.getItem("virtus_active_workspace_id")));
+    function refreshDashboard() {
+      setDashboardRefreshKey((current) => current + 1);
     }
 
-    syncActiveWorkspaceState();
-
-    window.addEventListener("virtus-active-workspace-changed", syncActiveWorkspaceState);
-    window.addEventListener("storage", syncActiveWorkspaceState);
+    window.addEventListener(
+      "virtus-active-workspace-changed",
+      refreshDashboard
+    );
+    window.addEventListener("storage", refreshDashboard);
 
     return () => {
-      window.removeEventListener("virtus-active-workspace-changed", syncActiveWorkspaceState);
-      window.removeEventListener("storage", syncActiveWorkspaceState);
+      window.removeEventListener(
+        "virtus-active-workspace-changed",
+        refreshDashboard
+      );
+      window.removeEventListener("storage", refreshDashboard);
     };
   }, []);
 
@@ -99,9 +101,6 @@ export default function OperationsPage() {
 
     async function loadDashboard() {
       try {
-        if (typeof window !== "undefined") {
-          setHasActiveWorkspace(Boolean(localStorage.getItem("virtus_active_workspace_id")));
-        }
         const selectedWorkspaceId =
           typeof window !== "undefined"
             ? localStorage.getItem("virtus_active_workspace_id") || ""
@@ -126,6 +125,45 @@ export default function OperationsPage() {
           return;
         }
 
+        const setupResponse = await fetch(
+          `/api/operations/organization-setup?workspaceId=${encodeURIComponent(
+            selectedWorkspaceId
+          )}`,
+          { cache: "no-store" }
+        );
+        const setupData = await setupResponse.json().catch(() => ({}));
+
+        if (!alive) return;
+
+        if (setupResponse.status === 401) {
+          setDashboardStatus("signed_out");
+          return;
+        }
+
+        if (
+          setupResponse.status === 403 ||
+          setupResponse.status === 404
+        ) {
+          setDashboardStatus("no_company");
+          return;
+        }
+
+        if (!setupResponse.ok) {
+          throw new Error(
+            setupData?.error || "Unable to load company setup."
+          );
+        }
+
+        if (setupData?.profile?.setupStatus !== "completed") {
+          setWorkspaceId(
+            setupData?.workspace?.id || selectedWorkspaceId
+          );
+          setActiveWorkspaceName(
+            setupData?.workspace?.name || ""
+          );
+          setDashboardStatus("setup_required");
+          return;
+        }
         const metricsUrl = `/api/operations/metrics?workspaceId=${encodeURIComponent(
           selectedWorkspaceId
         )}`;
@@ -175,7 +213,7 @@ export default function OperationsPage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [dashboardRefreshKey]);
 
   const hasOperationsAccess = Boolean(accessContext?.role && workspaceId);
   const role = normalizeRole(accessContext?.role || "employee");
@@ -240,6 +278,33 @@ export default function OperationsPage() {
     );
   }
 
+  if (dashboardStatus === "setup_required" && workspaceId) {
+    return (
+      <section className="px-6 py-8">
+        <div className="rounded-3xl border border-sky-500/30 bg-zinc-900/60 p-6">
+          <p className="text-sm font-medium uppercase tracking-[0.25em] text-sky-300/60">
+            Company Setup Required
+          </p>
+
+          <h1 className="mt-2 text-2xl font-semibold text-white">
+            Company Created Successfully
+          </h1>
+
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
+            {activeWorkspaceName || "Your company"} is selected. Complete the
+            company foundation wizard before opening the operations dashboard.
+          </p>
+
+          <Link
+            href="/operations/company"
+            className="mt-6 inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
+          >
+            Set Up Company
+          </Link>
+        </div>
+      </section>
+    );
+  }
   if (!hasOperationsAccess) {
     const isSignedOut = dashboardStatus === "signed_out";
 
