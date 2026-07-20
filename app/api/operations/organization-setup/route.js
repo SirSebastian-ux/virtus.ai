@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
+import { bootstrapWorkspace } from "@/lib/operations/bootstrap";
 
 const DAILY_LEADER_ROLES = new Set([
   "ceo",
@@ -438,6 +439,43 @@ export async function POST(req) {
     if (error) {
       return rpcErrorResponse(error);
     }
+
+    const { data: ownerDepartments, error: ownerDepartmentsError } =
+      await admin
+        .from("departments")
+        .select("id, name")
+        .eq("workspace_id", workspaceId)
+        .eq("status", "active")
+        .order("created_at", { ascending: true });
+
+    if (ownerDepartmentsError) {
+      throw new Error(ownerDepartmentsError.message);
+    }
+
+    const ownerDepartment =
+      (ownerDepartments || []).find(
+        (department) =>
+          department.name?.trim().toLowerCase() === "executive office"
+      ) ||
+      (ownerDepartments || []).find(
+        (department) =>
+          department.name?.trim().toLowerCase() === "management"
+      ) ||
+      null;
+
+    await bootstrapWorkspace({
+      admin,
+      workspaceId,
+      ownerUserId: user.id,
+      ownerEmail: user.email,
+      ownerName:
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email ||
+        "Workspace Owner",
+      managementDepartmentId: ownerDepartment?.id || null,
+      createOwnerEmployee: true,
+    });
 
     return NextResponse.json({
       ok: true,

@@ -51,6 +51,8 @@ function normalizeInvitation(payload, invitationId) {
       source.department?.name ??
       null,
     reportingManager:
+      source.reportsToEmployeeName ??
+      source.reports_to_employee_name ??
       source.reportingManagerName ??
       source.reporting_manager_name ??
       source.managerName ??

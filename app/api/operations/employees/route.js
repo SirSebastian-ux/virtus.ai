@@ -193,6 +193,39 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const employeeIds = (employees || [])
+      .map((employee) => employee.id)
+      .filter(Boolean);
+
+    let roleAssignments = [];
+
+    if (employeeIds.length > 0) {
+      const { data: assignmentRows, error: assignmentsError } = await admin
+        .from("operations_role_assignments")
+        .select(
+          "employee_id, role, department_id, reports_to_employee_id, scope_type"
+        )
+        .eq("workspace_id", workspaceId)
+        .eq("status", "active")
+        .in("employee_id", employeeIds);
+
+      if (assignmentsError) {
+        return NextResponse.json(
+          { error: assignmentsError.message },
+          { status: 500 }
+        );
+      }
+
+      roleAssignments = assignmentRows || [];
+    }
+
+    const assignmentByEmployeeId = new Map(
+      roleAssignments.map((assignment) => [
+        assignment.employee_id,
+        assignment,
+      ])
+    );
+
     const { data: departments, error: departmentsError } = await admin
       .from("departments")
       .select("id, name, status")
@@ -211,19 +244,28 @@ export async function GET(req) {
       .maybeSingle();
 
     return NextResponse.json({
-      employees: (employees || []).map((employee) => ({
-        id: employee.id,
-        workspaceId: employee.workspace_id,
-        userId: employee.user_id,
-        departmentId: employee.department_id,
-        departmentName: employee.departments?.name || null,
-        fullName: employee.full_name,
-        email: employee.email,
-        positionTitle: employee.position_title,
-        employmentStatus: employee.employment_status,
-        createdAt: employee.created_at,
-        updatedAt: employee.updated_at,
-      })),
+      employees: (employees || []).map((employee) => {
+        const assignment = assignmentByEmployeeId.get(employee.id);
+
+        return {
+          id: employee.id,
+          workspaceId: employee.workspace_id,
+          userId: employee.user_id,
+          departmentId:
+            assignment?.department_id || employee.department_id,
+          departmentName: employee.departments?.name || null,
+          fullName: employee.full_name,
+          email: employee.email,
+          positionTitle: employee.position_title,
+          employmentStatus: employee.employment_status,
+          role: assignment?.role || "employee",
+          scopeType: assignment?.scope_type || "self",
+          reportsToEmployeeId:
+            assignment?.reports_to_employee_id || null,
+          createdAt: employee.created_at,
+          updatedAt: employee.updated_at,
+        };
+      }),
       departments: departments || [],
       billingProfile: billingProfile || null,
     });
