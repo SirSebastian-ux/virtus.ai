@@ -33,6 +33,73 @@ const navigation = [
   { label: "Danger Zone", href: "/operations/danger-zone", metricKey: null, visible: (role) => role === "owner" },
 ];
 
+const ACTIVE_WORKSPACE_ID_KEY = "virtus_active_workspace_id";
+const ACTIVE_WORKSPACE_NAME_KEY = "virtus_active_workspace_name";
+const ACTIVE_WORKSPACE_USER_KEY = "virtus_active_workspace_user_id";
+
+function getScopedWorkspaceKey(baseKey, userId) {
+  return `${baseKey}:${userId}`;
+}
+
+function readStoredWorkspaceId(userId) {
+  if (typeof window === "undefined" || !userId) return "";
+
+  return (
+    window.localStorage.getItem(
+      getScopedWorkspaceKey(ACTIVE_WORKSPACE_ID_KEY, userId)
+    ) ||
+    window.localStorage.getItem(ACTIVE_WORKSPACE_ID_KEY) ||
+    ""
+  );
+}
+
+function persistStoredWorkspaceSelection(userId, workspace) {
+  if (
+    typeof window === "undefined" ||
+    !userId ||
+    !workspace?.id
+  ) {
+    return;
+  }
+
+  const workspaceId = String(workspace.id);
+  const workspaceName = String(workspace.name || "");
+
+  window.localStorage.setItem(
+    getScopedWorkspaceKey(ACTIVE_WORKSPACE_ID_KEY, userId),
+    workspaceId
+  );
+  window.localStorage.setItem(
+    getScopedWorkspaceKey(ACTIVE_WORKSPACE_NAME_KEY, userId),
+    workspaceName
+  );
+  window.localStorage.setItem(ACTIVE_WORKSPACE_ID_KEY, workspaceId);
+  window.localStorage.setItem(ACTIVE_WORKSPACE_NAME_KEY, workspaceName);
+  window.localStorage.setItem(ACTIVE_WORKSPACE_USER_KEY, userId);
+}
+
+function clearStoredWorkspaceSelection(userId = "") {
+  if (typeof window === "undefined") return;
+
+  const storedUserId =
+    userId ||
+    window.localStorage.getItem(ACTIVE_WORKSPACE_USER_KEY) ||
+    "";
+
+  window.localStorage.removeItem(ACTIVE_WORKSPACE_ID_KEY);
+  window.localStorage.removeItem(ACTIVE_WORKSPACE_NAME_KEY);
+  window.localStorage.removeItem(ACTIVE_WORKSPACE_USER_KEY);
+  window.localStorage.removeItem("virtus_company_foundation_active");
+
+  if (storedUserId) {
+    window.localStorage.removeItem(
+      getScopedWorkspaceKey(ACTIVE_WORKSPACE_ID_KEY, storedUserId)
+    );
+    window.localStorage.removeItem(
+      getScopedWorkspaceKey(ACTIVE_WORKSPACE_NAME_KEY, storedUserId)
+    );
+  }
+}
 export default function OperationsLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -42,6 +109,7 @@ export default function OperationsLayout({ children }) {
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
   const [workspaces, setWorkspaces] = useState([]);
+  const [authenticatedUserId, setAuthenticatedUserId] = useState("");
   const [archivedWorkspaces, setArchivedWorkspaces] = useState([]);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
@@ -77,98 +145,175 @@ export default function OperationsLayout({ children }) {
 
     async function loadData() {
       try {
-        const selectedWorkspaceId =
-          typeof window !== "undefined"
-            ? localStorage.getItem("virtus_active_workspace_id") || ""
-            : "";
-
-        const selectedWorkspaceName =
-          typeof window !== "undefined"
-            ? localStorage.getItem("virtus_active_workspace_name") || ""
-            : "";
-
-        if (isMounted) {
-          setActiveWorkspaceId(selectedWorkspaceId);
-          setActiveWorkspaceName(selectedWorkspaceName);
-        }
-
         const workspacesResponse = await fetch("/api/operations/workspaces", {
           cache: "no-store",
         });
 
-        // Redirect if unauthenticated
         if (workspacesResponse.status === 401) {
+          clearStoredWorkspaceSelection();
+
+          if (isMounted) {
+            setAuthenticatedUserId("");
+            setActiveWorkspaceId("");
+            setActiveWorkspaceName("");
+            setWorkspaces([]);
+            setArchivedWorkspaces([]);
+            setMetrics(null);
+            setRole("employee");
+          }
+
           router.push("/login");
           return;
         }
 
         const workspacesData = await workspacesResponse.json();
 
-        if (isMounted && workspacesResponse.ok) {
-          const nextWorkspaces = Array.isArray(workspacesData.workspaces)
-            ? workspacesData.workspaces
-            : [];
-
-          setWorkspaces(nextWorkspaces);
-          setArchivedWorkspaces(
-            Array.isArray(workspacesData.archivedWorkspaces)
-              ? workspacesData.archivedWorkspaces
-              : []
+        if (!workspacesResponse.ok) {
+          throw new Error(
+            workspacesData?.error || "Unable to load authorized companies."
           );
+        }
 
-          if (!selectedWorkspaceName && selectedWorkspaceId) {
-            const selectedWorkspace = nextWorkspaces.find(
-              (workspace) => workspace.id === selectedWorkspaceId
-            );
+        const nextUserId = String(
+          workspacesData?.authenticatedUserId || ""
+        ).trim();
 
-            if (selectedWorkspace?.name) {
-              setActiveWorkspaceName(selectedWorkspace.name);
-              localStorage.setItem("virtus_active_workspace_name", selectedWorkspace.name);
-            }
+        const nextWorkspaces = Array.isArray(workspacesData.workspaces)
+          ? workspacesData.workspaces
+          : [];
+
+        const nextArchivedWorkspaces = Array.isArray(
+          workspacesData.archivedWorkspaces
+        )
+          ? workspacesData.archivedWorkspaces
+          : [];
+
+        if (!nextUserId) {
+          throw new Error("The authenticated user could not be verified.");
+        }
+
+        if (isMounted) {
+          setAuthenticatedUserId(nextUserId);
+          setWorkspaces(nextWorkspaces);
+          setArchivedWorkspaces(nextArchivedWorkspaces);
+        }
+
+        const storedWorkspaceId = readStoredWorkspaceId(nextUserId);
+
+        const authorizedWorkspace = [
+          ...nextWorkspaces,
+          ...nextArchivedWorkspaces,
+        ].find((workspace) => workspace.id === storedWorkspaceId);
+
+        if (!authorizedWorkspace) {
+          clearStoredWorkspaceSelection(nextUserId);
+
+          if (isMounted) {
+            setActiveWorkspaceId("");
+            setActiveWorkspaceName("");
+            setMetrics(null);
+            setRole("employee");
           }
+
+          return;
         }
 
-        if (!selectedWorkspaceId) {
-          throw new Error("No active company selected.");
+        persistStoredWorkspaceSelection(
+          nextUserId,
+          authorizedWorkspace
+        );
+
+        if (isMounted) {
+          setActiveWorkspaceId(authorizedWorkspace.id);
+          setActiveWorkspaceName(authorizedWorkspace.name);
         }
 
-        const metricsUrl = `/api/operations/metrics?workspaceId=${encodeURIComponent(
-          selectedWorkspaceId
-        )}`;
+        if (authorizedWorkspace.status === "archived") {
+          if (isMounted) {
+            setMetrics(null);
+            setRole(authorizedWorkspace.role || "employee");
+          }
 
-        const metricsResponse = await fetch(metricsUrl, {
-          cache: "no-store",
-        });
+          return;
+        }
 
-        // Redirect if session expired
+        const metricsResponse = await fetch(
+          `/api/operations/metrics?workspaceId=${encodeURIComponent(
+            authorizedWorkspace.id
+          )}`,
+          {
+            cache: "no-store",
+          }
+        );
+
         if (metricsResponse.status === 401) {
+          clearStoredWorkspaceSelection(nextUserId);
+
+          if (isMounted) {
+            setActiveWorkspaceId("");
+            setActiveWorkspaceName("");
+            setMetrics(null);
+            setRole("employee");
+          }
+
           router.push("/login");
           return;
         }
 
         const metricsData = await metricsResponse.json();
 
-        if (!isMounted || !metricsResponse.ok) return;
+        if (!metricsResponse.ok) {
+          clearStoredWorkspaceSelection(nextUserId);
 
-        setMetrics(metricsData.metrics || null);
+          if (isMounted) {
+            setActiveWorkspaceId("");
+            setActiveWorkspaceName("");
+            setMetrics(null);
+            setRole("employee");
+          }
 
-        const workspaceId = metricsData?.metrics?.workspaceId;
-
-        if (workspaceId && isMounted) {
-          setActiveWorkspaceId(workspaceId);
+          return;
         }
 
-        if (!workspaceId) return;
+        const verifiedWorkspaceId =
+          metricsData?.metrics?.workspaceId || "";
+
+        if (verifiedWorkspaceId !== authorizedWorkspace.id) {
+          clearStoredWorkspaceSelection(nextUserId);
+
+          if (isMounted) {
+            setActiveWorkspaceId("");
+            setActiveWorkspaceName("");
+            setMetrics(null);
+            setRole("employee");
+          }
+
+          return;
+        }
+
+        if (isMounted) {
+          setMetrics(metricsData.metrics || null);
+        }
 
         const accessResponse = await fetch(
           `/api/operations/access-context?workspaceId=${encodeURIComponent(
-            workspaceId
+            verifiedWorkspaceId
           )}`,
-          { cache: "no-store" }
+          {
+            cache: "no-store",
+          }
         );
 
-        // Redirect if session expired
         if (accessResponse.status === 401) {
+          clearStoredWorkspaceSelection(nextUserId);
+
+          if (isMounted) {
+            setActiveWorkspaceId("");
+            setActiveWorkspaceName("");
+            setMetrics(null);
+            setRole("employee");
+          }
+
           router.push("/login");
           return;
         }
@@ -181,24 +326,48 @@ export default function OperationsLayout({ children }) {
           accessData?.accessContext?.role
         ) {
           setRole(accessData.accessContext.role);
+        } else if (isMounted) {
+          setRole("employee");
         }
-      } catch {}
+      } catch (error) {
+        console.error("Failed to load authorized company state", error);
+        clearStoredWorkspaceSelection();
+
+        if (isMounted) {
+          setAuthenticatedUserId("");
+          setActiveWorkspaceId("");
+          setActiveWorkspaceName("");
+          setWorkspaces([]);
+          setArchivedWorkspaces([]);
+          setMetrics(null);
+          setRole("employee");
+        }
+      }
     }
 
-    loadData();
+    void loadData();
 
     return () => {
       isMounted = false;
     };
   }, [workspaceRefreshKey, router]);
+  function applyWorkspaceSelection(workspace) {
+    if (!authenticatedUserId || !workspace?.id) return;
 
-  function selectWorkspace(workspace) {
-    localStorage.setItem("virtus_active_workspace_id", workspace.id);
-    localStorage.setItem("virtus_active_workspace_name", workspace.name);
+    persistStoredWorkspaceSelection(
+      authenticatedUserId,
+      workspace
+    );
     setActiveWorkspaceId(workspace.id);
     setActiveWorkspaceName(workspace.name);
     setIsSwitcherOpen(false);
-    window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+    window.dispatchEvent(
+      new Event("virtus-active-workspace-changed")
+    );
+  }
+
+  function selectWorkspace(workspace) {
+    applyWorkspaceSelection(workspace);
   }
 
   async function createCompany(event) {
@@ -206,9 +375,7 @@ export default function OperationsLayout({ children }) {
 
     const companyName = newCompanyName.trim();
 
-    if (!companyName) {
-      return;
-    }
+    if (!companyName) return;
 
     setIsCreatingCompany(true);
 
@@ -228,19 +395,29 @@ export default function OperationsLayout({ children }) {
       }
 
       const workspace = data?.workspace;
+      const workspaceUserId = String(
+        data?.authenticatedUserId || authenticatedUserId || ""
+      ).trim();
 
-      if (!workspace?.id) {
-        throw new Error("Company was created but no workspace was returned.");
+      if (!workspace?.id || !workspaceUserId) {
+        throw new Error(
+          "Company was created but its secure ownership state was not returned."
+        );
       }
 
-      localStorage.setItem("virtus_active_workspace_id", workspace.id);
-      localStorage.setItem("virtus_active_workspace_name", workspace.name);
+      setAuthenticatedUserId(workspaceUserId);
+      persistStoredWorkspaceSelection(
+        workspaceUserId,
+        workspace
+      );
       setNewCompanyName("");
       setIsCreateCompanyOpen(false);
       setActiveWorkspaceId(workspace.id);
       setActiveWorkspaceName(workspace.name);
       setIsSwitcherOpen(false);
-      window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+      window.dispatchEvent(
+        new Event("virtus-active-workspace-changed")
+      );
     } catch (error) {
       console.error("Failed to create company", error);
     } finally {
@@ -249,16 +426,21 @@ export default function OperationsLayout({ children }) {
   }
 
   async function restoreWorkspace(workspace) {
+    if (!authenticatedUserId) return;
+
     setRestoringWorkspaceId(workspace.id);
 
     try {
-      const response = await fetch("/api/operations/danger-zone/restore-workspace", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ workspaceId: workspace.id }),
-      });
+      const response = await fetch(
+        "/api/operations/danger-zone/restore-workspace",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ workspaceId: workspace.id }),
+        }
+      );
 
       const data = await response.json();
 
@@ -268,25 +450,25 @@ export default function OperationsLayout({ children }) {
 
       const restoredWorkspace = data?.workspace || workspace;
 
-      localStorage.setItem("virtus_active_workspace_id", restoredWorkspace.id);
-      localStorage.setItem("virtus_active_workspace_name", restoredWorkspace.name);
+      persistStoredWorkspaceSelection(
+        authenticatedUserId,
+        restoredWorkspace
+      );
       setActiveWorkspaceId(restoredWorkspace.id);
       setActiveWorkspaceName(restoredWorkspace.name);
       setIsSwitcherOpen(false);
-      window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+      window.dispatchEvent(
+        new Event("virtus-active-workspace-changed")
+      );
     } catch (error) {
       console.error("Failed to restore company", error);
     } finally {
       setRestoringWorkspaceId("");
     }
   }
+
   function viewArchivedHistory(workspace) {
-    localStorage.setItem("virtus_active_workspace_id", workspace.id);
-    localStorage.setItem("virtus_active_workspace_name", workspace.name);
-    setActiveWorkspaceId(workspace.id);
-    setActiveWorkspaceName(workspace.name);
-    setIsSwitcherOpen(false);
-    window.dispatchEvent(new Event("virtus-active-workspace-changed"));
+    applyWorkspaceSelection(workspace);
     router.push("/operations/company");
   }
   const visibleNavigation = useMemo(

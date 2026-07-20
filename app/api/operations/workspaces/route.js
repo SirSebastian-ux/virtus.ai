@@ -68,6 +68,7 @@ export async function GET() {
       }));
 
     return NextResponse.json({
+      authenticatedUserId: user.id,
       workspaces: mappedWorkspaces.filter(
         (workspace) => !["archived", "deleted"].includes(workspace.status)
       ),
@@ -267,6 +268,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       ok: true,
+      authenticatedUserId: user.id,
       workspace: {
         id: workspace.id,
         name: workspace.name,
