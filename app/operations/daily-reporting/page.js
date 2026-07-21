@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -179,9 +179,22 @@ export default function DailyReportingPage() {
   const metrics = dashboard?.metrics || {};
   const reports = dashboard?.reports || [];
   const missingDepartmentReports = dashboard?.missingDepartmentReports || [];
-  const canReview = ["owner", "director", "senior_manager", "department_manager", "supervisor"].includes(
-    dashboard?.accessContext?.role
-  );
+  const role = dashboard?.accessContext?.role || "";
+  const isEmployee = role === "employee";
+  const canReview = [
+    "owner",
+    "director",
+    "senior_manager",
+    "department_manager",
+    "supervisor",
+  ].includes(role);
+  const visibleMetricCards = isEmployee
+    ? [
+        ["submittedReports", "Submitted Today"],
+        ["reviewedReports", "Reviewed"],
+        ["unreviewedReports", "Awaiting Review"],
+      ]
+    : metricCards;
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
@@ -194,10 +207,10 @@ export default function DailyReportingPage() {
             Daily Reporting System
           </h1>
           <p className="mt-3 max-w-3xl text-slate-300">
-            Structured employee report submission, leadership review,
-            reporting compliance, missing department detection, and daily
-            management visibility.
-          </p>
+              {isEmployee
+                ? "Submit your daily work update and track its review status."
+                : "Structured employee report submission, leadership review, reporting compliance, missing department detection, and daily management visibility."}
+            </p>
         </div>
 
         {error ? (
@@ -244,7 +257,7 @@ export default function DailyReportingPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {metricCards.map(([key, label]) => (
+          {visibleMetricCards.map(([key, label]) => (
             <div
               key={key}
               className="rounded-2xl border border-white/10 bg-white/5 p-5"
@@ -284,9 +297,9 @@ export default function DailyReportingPage() {
           </button>
         </form>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className={isEmployee ? "grid gap-6" : "grid gap-6 lg:grid-cols-2"}>
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h2 className="text-xl font-semibold">Submitted Reports</h2>
+            <h2 className="text-xl font-semibold">{isEmployee ? "My Reports" : "Submitted Reports"}</h2>
             <div className="mt-5 space-y-3">
               {reports.length === 0 ? (
                 <EmptyState message="No reports found for this date." />
@@ -340,8 +353,16 @@ export default function DailyReportingPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h2 className="text-xl font-semibold">Missing Department Reports</h2>
+          <section
+                className={
+                  isEmployee
+                    ? "hidden"
+                    : "rounded-2xl border border-white/10 bg-white/5 p-5"
+                }
+              >
+                <h2 className="text-xl font-semibold">
+                  Missing Department Reports
+                </h2>
             <div className="mt-5 space-y-3">
               {missingDepartmentReports.length === 0 ? (
                 <EmptyState message="No missing department reports detected." />
