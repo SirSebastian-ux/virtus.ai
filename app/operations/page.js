@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { canViewCompanyModule } from "@/lib/operations/access";
 
 const emptyMetrics = {
   activeEmployees: 0,
@@ -374,23 +375,27 @@ export default function OperationsPage() {
           {role === "employee" ? "Submit Report" : "Submit or Review Report"}
         </Link>
       </div>
-      <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-900/70 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-white">Organization</h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Build and manage your company&apos;s organizational structure.
-            </p>
-          </div>
+      {canViewCompanyModule(role) ? (
+        <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-900/70 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-white">
+                Organization
+              </h2>
+              <p className="mt-2 text-sm text-zinc-400">
+                Build and manage your company&apos;s organizational structure.
+              </p>
+            </div>
 
-          <Link
-            href="/operations/organization"
-            className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
-          >
-            Manage Organization
-          </Link>
+            <Link
+              href="/operations/organization"
+              className="inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
+            >
+              Manage Organization
+            </Link>
+          </div>
         </div>
-      </div>
+      ) : null}
 
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

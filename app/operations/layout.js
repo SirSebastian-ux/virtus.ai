@@ -33,6 +33,42 @@ const navigation = [
   { label: "Danger Zone", href: "/operations/danger-zone", metricKey: null, visible: (role) => role === "owner" },
 ];
 
+function canAccessOperationsPath(pathname, role) {
+  const path = String(pathname || "");
+
+  if (path.startsWith("/operations/invitations/accept")) return true;
+  if (path.startsWith("/operations/company")) return canViewCompanyModule(role);
+  if (path.startsWith("/operations/organization")) return canViewCompanyModule(role);
+  if (path.startsWith("/operations/employees")) return canViewEmployeesModule(role);
+  if (path.startsWith("/operations/invitations")) return canViewEmployeesModule(role);
+  if (path.startsWith("/operations/structure")) return canViewStructureModule(role);
+  if (path.startsWith("/operations/supervisor-dashboard")) {
+    return canViewEmployeesModule(role);
+  }
+  if (path.startsWith("/operations/payments")) return canViewPaymentsModule(role);
+  if (path.startsWith("/operations/decisions")) {
+    return canViewDecisionQueueModule(role);
+  }
+  if (path.startsWith("/operations/approval-requests")) {
+    return canViewDecisionQueueModule(role);
+  }
+  if (path.startsWith("/operations/management-alerts")) {
+    return canViewDecisionQueueModule(role);
+  }
+  if (path.startsWith("/operations/reports")) return canViewReportsModule(role);
+  if (path.startsWith("/operations/tasks")) return canViewTasksModule(role);
+  if (path.startsWith("/operations/urgent")) {
+    return canViewUrgentIssuesModule(role);
+  }
+  if (path.startsWith("/operations/permissions")) {
+    return canViewPermissionsModule(role);
+  }
+  if (path.startsWith("/operations/admin")) return canViewAdminModule(role);
+  if (path.startsWith("/operations/danger-zone")) return role === "owner";
+
+  return true;
+}
+
 const ACTIVE_WORKSPACE_ID_KEY = "virtus_active_workspace_id";
 const ACTIVE_WORKSPACE_NAME_KEY = "virtus_active_workspace_name";
 const ACTIVE_WORKSPACE_USER_KEY = "virtus_active_workspace_user_id";
@@ -105,6 +141,7 @@ export default function OperationsLayout({ children }) {
   const pathname = usePathname();
   const [metrics, setMetrics] = useState(null);
   const [role, setRole] = useState("employee");
+  const [isAccessResolved, setIsAccessResolved] = useState(false);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
@@ -342,6 +379,10 @@ export default function OperationsLayout({ children }) {
           setMetrics(null);
           setRole("employee");
         }
+      } finally {
+        if (isMounted) {
+          setIsAccessResolved(true);
+        }
       }
     }
 
@@ -353,6 +394,9 @@ export default function OperationsLayout({ children }) {
   }, [workspaceRefreshKey, router]);
   function applyWorkspaceSelection(workspace) {
     if (!authenticatedUserId || !workspace?.id) return;
+
+    setIsAccessResolved(false);
+    setRole("employee");
 
     persistStoredWorkspaceSelection(
       authenticatedUserId,
@@ -482,6 +526,14 @@ export default function OperationsLayout({ children }) {
     localStorage.getItem("virtus_company_foundation_active") !== "true";
 
   const hideNavigationOnLanding = pathname === "/operations";
+  const isInvitationAcceptancePage =
+    pathname.startsWith("/operations/invitations/accept");
+  const routeAllowed =
+    !activeWorkspaceId ||
+    isInvitationAcceptancePage ||
+    canAccessOperationsPath(pathname, role);
+  const showAccessLoading =
+    !isAccessResolved && !isInvitationAcceptancePage;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -510,13 +562,15 @@ export default function OperationsLayout({ children }) {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsSwitcherOpen(true)}
-                className="inline-flex rounded-xl border border-sky-800/50 px-4 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-500"
-              >
-                Company Settings
-              </button>
+              {canViewCompanyModule(role) ? (
+                <button
+                  type="button"
+                  onClick={() => setIsSwitcherOpen(true)}
+                  className="inline-flex rounded-xl border border-sky-800/50 px-4 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-500"
+                >
+                  Company Settings
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -552,7 +606,46 @@ export default function OperationsLayout({ children }) {
         </aside>
         ) : null}
 
-        <main className={pathname === "/operations" || setupRequired || !activeWorkspaceId ? "mx-auto w-full max-w-6xl" : "flex-1"}>{children}</main>
+        <main
+          className={
+            pathname === "/operations" ||
+            setupRequired ||
+            !activeWorkspaceId
+              ? "mx-auto w-full max-w-6xl"
+              : "flex-1"
+          }
+        >
+          {showAccessLoading ? (
+            <section className="px-6 py-8">
+              <p className="text-sm text-zinc-400">
+                Checking workspace access...
+              </p>
+            </section>
+          ) : !routeAllowed ? (
+            <section className="px-6 py-8">
+              <div className="rounded-3xl border border-amber-500/25 bg-amber-500/5 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-300/70">
+                  Restricted Area
+                </p>
+                <h2 className="mt-3 text-2xl font-semibold text-white">
+                  This page is not available for your role
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-zinc-400">
+                  Your employee account can use My Work, tasks, reports, daily
+                  reporting, urgent issues, and operations chat.
+                </p>
+                <Link
+                  href="/operations"
+                  className="mt-5 inline-flex rounded-xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
+                >
+                  Back to My Work
+                </Link>
+              </div>
+            </section>
+          ) : (
+            children
+          )}
+        </main>
       </div>
 
       {isSwitcherOpen ? (
