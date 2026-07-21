@@ -112,8 +112,36 @@ export async function POST(req) {
       created_by: user.id,
     }));
 
+    const { data: existingReportTasks, error: existingTasksError } = await admin
+      .from("operations_tasks")
+      .select("id, title")
+      .eq("source_report_id", report.id);
+
+    if (existingTasksError) {
+      return NextResponse.json(
+        { error: existingTasksError.message },
+        { status: 500 }
+      );
+    }
+
+    const existingTaskTitles = new Set(
+      (existingReportTasks || [])
+        .map((task) => cleanText(task.title).toLowerCase())
+        .filter(Boolean)
+    );
+
+    const newTaskRows = taskRows.filter((task) => {
+      const normalizedTitle = cleanText(task.title).toLowerCase();
+
+      if (!normalizedTitle || existingTaskTitles.has(normalizedTitle)) {
+        return false;
+      }
+
+      existingTaskTitles.add(normalizedTitle);
+      return true;
+    });
+
     const cleanupTargets = [
-      ["operations_tasks", "source_report_id"],
       ["operations_urgent_issues", "source_report_id"],
       ["operations_decision_queue", "source_report_id"],
     ];
@@ -129,8 +157,8 @@ export async function POST(req) {
       }
     }
 
-    if (taskRows.length > 0) {
-      const { error } = await admin.from("operations_tasks").insert(taskRows);
+    if (newTaskRows.length > 0) {
+      const { error } = await admin.from("operations_tasks").insert(newTaskRows);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
