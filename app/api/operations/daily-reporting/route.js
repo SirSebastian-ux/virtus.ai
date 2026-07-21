@@ -80,6 +80,81 @@ function canViewCompany(role) {
   return ["owner", "director"].includes(role);
 }
 
+const EMPTY_UUID = "00000000-0000-0000-0000-000000000000";
+
+function getReportingVisibilityScope(accessContext) {
+  if (["owner", "director"].includes(accessContext.role)) {
+    return "company";
+  }
+
+  if (
+    ["senior_manager", "department_manager"].includes(accessContext.role)
+  ) {
+    return "department";
+  }
+
+  if (accessContext.role === "supervisor") {
+    return "team";
+  }
+
+  return "self";
+}
+
+async function getTeamEmployeeIds(admin, workspaceId, managerEmployeeId) {
+  if (!managerEmployeeId) return [];
+
+  const { data, error } = await admin
+    .from("operations_role_assignments")
+    .select("employee_id")
+    .eq("workspace_id", workspaceId)
+    .eq("reports_to_employee_id", managerEmployeeId)
+    .eq("status", "active");
+
+  if (error) throw new Error(error.message);
+
+  return (data || [])
+    .map((assignment) => assignment.employee_id)
+    .filter(Boolean);
+}
+
+function applyReportingScope(
+  query,
+  accessContext,
+  visibilityScope,
+  teamEmployeeIds = [],
+  employeeColumn = "employee_id"
+) {
+  if (visibilityScope === "company") {
+    return query;
+  }
+
+  if (visibilityScope === "department") {
+    if (!accessContext.departmentId) {
+      return query.eq("department_id", EMPTY_UUID);
+    }
+
+    return query.eq("department_id", accessContext.departmentId);
+  }
+
+  if (visibilityScope === "team") {
+    const visibleEmployeeIds = [
+      accessContext.employeeId,
+      ...teamEmployeeIds,
+    ].filter(Boolean);
+
+    if (visibleEmployeeIds.length === 0) {
+      return query.eq(employeeColumn, EMPTY_UUID);
+    }
+
+    return query.in(employeeColumn, [...new Set(visibleEmployeeIds)]);
+  }
+
+  if (accessContext.employeeId) {
+    return query.eq(employeeColumn, accessContext.employeeId);
+  }
+
+  return query.eq(employeeColumn, EMPTY_UUID);
+}
 export async function GET(req) {
   try {
     const supabase = await createClient();
@@ -91,24 +166,55 @@ export async function GET(req) {
     } = await supabase.auth.getUser();
 
     if (authError || !user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(req.url);
     const workspaceId = cleanText(searchParams.get("workspaceId"));
-    const reportDate = cleanText(searchParams.get("reportDate")) || new Date().toISOString().slice(0, 10);
+    const reportDate =
+      cleanText(searchParams.get("reportDate")) ||
+      new Date().toISOString().slice(0, 10);
 
     if (!workspaceId) {
-      return NextResponse.json({ error: "workspaceId is required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "workspaceId is required." },
+        { status: 400 }
+      );
     }
 
-    const membership = await requireWorkspaceMember(admin, user.id, workspaceId);
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      workspaceId
+    );
 
     if (!membership) {
-      return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Workspace access denied." },
+        { status: 403 }
+      );
     }
 
-    const accessContext = await getAccessContext(admin, user.id, workspaceId, membership.role);
+    const accessContext = await getAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    const visibilityScope = getReportingVisibilityScope(accessContext);
+
+    const teamEmployeeIds =
+      visibilityScope === "team"
+        ? await getTeamEmployeeIds(
+            admin,
+            workspaceId,
+            accessContext.employeeId
+          )
+        : [];
 
     let reportsQuery = admin
       .from("operations_reports")
@@ -144,77 +250,96 @@ export async function GET(req) {
       .eq("report_date", reportDate)
       .order("created_at", { ascending: false });
 
-    if (!canViewCompany(accessContext.role)) {
-      if (accessContext.departmentId && accessContext.role !== "employee") {
-        reportsQuery = reportsQuery.eq("department_id", accessContext.departmentId);
-      } else if (accessContext.employeeId) {
-        reportsQuery = reportsQuery.eq("employee_id", accessContext.employeeId);
-      }
-    }
+    reportsQuery = applyReportingScope(
+      reportsQuery,
+      accessContext,
+      visibilityScope,
+      teamEmployeeIds
+    );
 
     const { data: reports, error: reportsError } = await reportsQuery;
 
     if (reportsError) {
-      return NextResponse.json({ error: reportsError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: reportsError.message },
+        { status: 500 }
+      );
     }
 
-    const [
-      activeEmployees,
-      submittedReports,
-      reviewedReports,
-      activeDepartments,
-      departmentsResult,
-    ] = await Promise.all([
-      countRows(
-        admin
-          .from("employees")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("employment_status", "active")
-      ),
+    let visibleEmployeesQuery = admin
+      .from("employees")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId)
+      .eq("employment_status", "active");
 
-      countRows(
-        admin
-          .from("operations_reports")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("report_date", reportDate)
-      ),
+    visibleEmployeesQuery = applyReportingScope(
+      visibleEmployeesQuery,
+      accessContext,
+      visibilityScope,
+      teamEmployeeIds,
+      "id"
+    );
 
-      countRows(
-        admin
-          .from("operations_reports")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("report_date", reportDate)
-          .eq("review_status", "reviewed")
-      ),
+    const activeEmployees = await countRows(visibleEmployeesQuery);
 
-      countRows(
-        admin
-          .from("departments")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("status", "active")
-      ),
+    let visibleDepartments = [];
 
-      admin
+    if (visibilityScope === "company") {
+      const { data, error } = await admin
         .from("departments")
         .select("id,name")
         .eq("workspace_id", workspaceId)
         .eq("status", "active")
-        .order("name", { ascending: true }),
-    ]);
+        .order("name", { ascending: true });
 
-    if (departmentsResult.error) {
-      return NextResponse.json({ error: departmentsResult.error.message }, { status: 500 });
+      if (error) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
+
+      visibleDepartments = data || [];
+    } else if (
+      visibilityScope === "department" &&
+      accessContext.departmentId
+    ) {
+      const { data, error } = await admin
+        .from("departments")
+        .select("id,name")
+        .eq("workspace_id", workspaceId)
+        .eq("id", accessContext.departmentId)
+        .eq("status", "active");
+
+      if (error) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
+
+      visibleDepartments = data || [];
     }
 
+    const reviewedStatuses = [
+      "supervisor_reviewed",
+      "manager_reviewed",
+      "approved",
+      "rejected",
+    ];
+
+    const submittedReports = (reports || []).length;
+    const reviewedReports = (reports || []).filter((report) =>
+      reviewedStatuses.includes(report.review_status)
+    ).length;
+
     const submittedDepartmentIds = new Set(
-      (reports || []).map((report) => report.department_id).filter(Boolean)
+      (reports || [])
+        .map((report) => report.department_id)
+        .filter(Boolean)
     );
 
-    const missingDepartmentReports = (departmentsResult.data || []).filter(
+    const missingDepartmentReports = visibleDepartments.filter(
       (department) => !submittedDepartmentIds.has(department.id)
     );
 
@@ -222,12 +347,16 @@ export async function GET(req) {
       workspaceId,
       reportDate,
       accessContext,
+      visibilityScope,
       metrics: {
         activeEmployees,
         submittedReports,
         reviewedReports,
-        unreviewedReports: Math.max(submittedReports - reviewedReports, 0),
-        activeDepartments,
+        unreviewedReports: Math.max(
+          submittedReports - reviewedReports,
+          0
+        ),
+        activeDepartments: visibleDepartments.length,
         departmentsMissingReports: missingDepartmentReports.length,
       },
       reports: (reports || []).map((report) => ({
@@ -253,10 +382,12 @@ export async function GET(req) {
       missingDepartmentReports,
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }
-
 export async function POST(req) {
   try {
     const supabase = await createClient();
@@ -268,14 +399,15 @@ export async function POST(req) {
     } = await supabase.auth.getUser();
 
     if (authError || !user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
     const workspaceId = cleanText(body?.workspaceId);
     const rawReport = cleanText(body?.rawReport);
-    const departmentId = cleanText(body?.departmentId) || null;
-    const employeeId = cleanText(body?.employeeId) || null;
 
     if (!workspaceId || !rawReport) {
       return NextResponse.json(
@@ -284,13 +416,24 @@ export async function POST(req) {
       );
     }
 
-    const membership = await requireWorkspaceMember(admin, user.id, workspaceId);
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      workspaceId
+    );
 
     if (!membership) {
-      return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Workspace access denied." },
+        { status: 403 }
+      );
     }
 
-    const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);
+    const wsValidation = await validateWorkspaceMutationAllowed(
+      admin,
+      workspaceId
+    );
+
     if (!wsValidation.allowed) {
       return NextResponse.json(
         { error: wsValidation.message },
@@ -298,15 +441,55 @@ export async function POST(req) {
       );
     }
 
-    const accessContext = await getAccessContext(admin, user.id, workspaceId, membership.role);
+    const accessContext = await getAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
 
-    const reportEmployeeId = employeeId || accessContext.employeeId;
-    const reportDepartmentId = departmentId || accessContext.departmentId;
+    if (!accessContext.employeeId) {
+      return NextResponse.json(
+        { error: "No employee profile is linked to this account." },
+        { status: 403 }
+      );
+    }
+
+    const {
+      data: submittingEmployee,
+      error: submittingEmployeeError,
+    } = await admin
+      .from("employees")
+      .select("id,department_id")
+      .eq("id", accessContext.employeeId)
+      .eq("workspace_id", workspaceId)
+      .eq("employment_status", "active")
+      .maybeSingle();
+
+    if (submittingEmployeeError) {
+      return NextResponse.json(
+        { error: submittingEmployeeError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!submittingEmployee) {
+      return NextResponse.json(
+        { error: "Your active employee profile was not found." },
+        { status: 403 }
+      );
+    }
+
+    const reportEmployeeId = submittingEmployee.id;
+    const reportDepartmentId =
+      accessContext.departmentId ||
+      submittingEmployee.department_id ||
+      null;
+
     const today = new Date().toISOString().split("T")[0];
 
-    // Check for duplicate report for same employee on same day
-    if (reportEmployeeId) {
-      const { data: existingReport, error: duplicateCheckError } = await admin
+    const { data: existingReport, error: duplicateCheckError } =
+      await admin
         .from("operations_reports")
         .select("id")
         .eq("workspace_id", workspaceId)
@@ -314,16 +497,21 @@ export async function POST(req) {
         .eq("report_date", today)
         .maybeSingle();
 
-      if (duplicateCheckError) {
-        return NextResponse.json({ error: duplicateCheckError.message }, { status: 500 });
-      }
+    if (duplicateCheckError) {
+      return NextResponse.json(
+        { error: duplicateCheckError.message },
+        { status: 500 }
+      );
+    }
 
-      if (existingReport) {
-        return NextResponse.json(
-          { error: "A daily report has already been submitted for this date." },
-          { status: 409 }
-        );
-      }
+    if (existingReport) {
+      return NextResponse.json(
+        {
+          error:
+            "A daily report has already been submitted for this date.",
+        },
+        { status: 409 }
+      );
     }
 
     const insertPayload = {
@@ -341,11 +529,16 @@ export async function POST(req) {
     const { data: report, error: insertError } = await admin
       .from("operations_reports")
       .insert(insertPayload)
-      .select("id,workspace_id,employee_id,department_id,report_date,review_status,created_at")
+      .select(
+        "id,workspace_id,employee_id,department_id,report_date,review_status,created_at"
+      )
       .single();
 
     if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: insertError.message },
+        { status: 500 }
+      );
     }
 
     await admin.from("operations_activity_logs").insert({
@@ -375,7 +568,10 @@ export async function POST(req) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }
 
@@ -390,7 +586,10 @@ export async function PATCH(req) {
     } = await supabase.auth.getUser();
 
     if (authError || !user?.id) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
@@ -398,30 +597,53 @@ export async function PATCH(req) {
     const reviewStatus = normalizeReviewStatus(body?.reviewStatus);
 
     if (!reportId) {
-      return NextResponse.json({ error: "reportId is required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "reportId is required." },
+        { status: 400 }
+      );
     }
 
-    const { data: existingReport, error: existingError } = await admin
-      .from("operations_reports")
-      .select("id,workspace_id,department_id,employee_id,review_status")
-      .eq("id", reportId)
-      .maybeSingle();
+    const { data: existingReport, error: existingError } =
+      await admin
+        .from("operations_reports")
+        .select(
+          "id,workspace_id,department_id,employee_id,review_status"
+        )
+        .eq("id", reportId)
+        .maybeSingle();
 
     if (existingError) {
-      return NextResponse.json({ error: existingError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: existingError.message },
+        { status: 500 }
+      );
     }
 
     if (!existingReport) {
-      return NextResponse.json({ error: "Report not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Report not found." },
+        { status: 404 }
+      );
     }
 
-    const membership = await requireWorkspaceMember(admin, user.id, existingReport.workspace_id);
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      existingReport.workspace_id
+    );
 
     if (!membership) {
-      return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Workspace access denied." },
+        { status: 403 }
+      );
     }
 
-    const wsValidation = await validateWorkspaceMutationAllowed(admin, existingReport.workspace_id);
+    const wsValidation = await validateWorkspaceMutationAllowed(
+      admin,
+      existingReport.workspace_id
+    );
+
     if (!wsValidation.allowed) {
       return NextResponse.json(
         { error: wsValidation.message },
@@ -437,25 +659,69 @@ export async function PATCH(req) {
     );
 
     if (!canReviewReports(accessContext.role)) {
-      return NextResponse.json({ error: "Report review access denied." }, { status: 403 });
+      return NextResponse.json(
+        { error: "Report review access denied." },
+        { status: 403 }
+      );
+    }
+
+    const visibilityScope =
+      getReportingVisibilityScope(accessContext);
+
+    let reportIsInsideScope = false;
+
+    if (visibilityScope === "company") {
+      reportIsInsideScope = true;
+    } else if (visibilityScope === "department") {
+      reportIsInsideScope =
+        Boolean(accessContext.departmentId) &&
+        existingReport.department_id ===
+          accessContext.departmentId;
+    } else if (visibilityScope === "team") {
+      const teamEmployeeIds = await getTeamEmployeeIds(
+        admin,
+        existingReport.workspace_id,
+        accessContext.employeeId
+      );
+
+      reportIsInsideScope = teamEmployeeIds.includes(
+        existingReport.employee_id
+      );
+    }
+
+    if (!reportIsInsideScope) {
+      return NextResponse.json(
+        {
+          error:
+            "This report is outside your permitted review scope.",
+        },
+        { status: 403 }
+      );
     }
 
     const now = new Date().toISOString();
 
-    const { data: updatedReport, error: updateError } = await admin
-      .from("operations_reports")
-      .update({
-        review_status: reviewStatus,
-        reviewed_by: user.id,
-        reviewed_at: now,
-        updated_at: now,
-      })
-      .eq("id", reportId)
-      .select("id,workspace_id,review_status,reviewed_by,reviewed_at,updated_at")
-      .single();
+    const { data: updatedReport, error: updateError } =
+      await admin
+        .from("operations_reports")
+        .update({
+          review_status: reviewStatus,
+          reviewed_by: user.id,
+          reviewed_at: now,
+          updated_at: now,
+        })
+        .eq("id", reportId)
+        .eq("workspace_id", existingReport.workspace_id)
+        .select(
+          "id,workspace_id,review_status,reviewed_by,reviewed_at,updated_at"
+        )
+        .single();
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: updateError.message },
+        { status: 500 }
+      );
     }
 
     await admin.from("operations_activity_logs").insert({
@@ -473,6 +739,7 @@ export async function PATCH(req) {
       metadata: {
         source: "operations_daily_reporting_api",
         accessContext,
+        visibilityScope,
       },
     });
 
@@ -488,6 +755,9 @@ export async function PATCH(req) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }
