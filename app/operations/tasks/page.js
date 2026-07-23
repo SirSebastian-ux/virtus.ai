@@ -1,256 +1,825 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-const STATUS_OPTIONS = ["open", "in_progress", "completed", "blocked"];
+const MANAGER_ROLES = new Set([
+  "owner",
+  "director",
+  "senior_manager",
+  "department_manager",
+  "supervisor",
+]);
+
+const EXPLANATION_ACTIONS = new Set([
+  "progress_update",
+  "mark_blocked",
+  "reassign",
+  "request_changes",
+  "reopen",
+  "cancel",
+  "comment",
+]);
+
+const REASSIGNABLE_STATUSES = new Set([
+  "open",
+  "assigned",
+  "in_progress",
+  "blocked",
+  "changes_requested",
+]);
+
+const STATUS_LABELS = {
+  open: "Open",
+  assigned: "Assigned",
+  in_progress: "In progress",
+  blocked: "Blocked",
+  submitted_for_review: "Awaiting review",
+  changes_requested: "Changes requested",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+const ACTION_LABELS = {
+  acknowledge: "Acknowledge and start",
+  progress_update: "Record progress",
+  mark_blocked: "Mark blocked",
+  resume: "Resume task",
+  submit_for_review: "Submit for review",
+  request_changes: "Request changes",
+  approve: "Approve",
+  reopen: "Reopen",
+  cancel: "Cancel task",
+  comment: "Add comment",
+};
+
+function getStatusLabel(status) {
+  return STATUS_LABELS[status] || status || "Unknown";
+}
+
+function getStatusClasses(status) {
+  switch (status) {
+    case "completed":
+      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
+    case "submitted_for_review":
+      return "border-sky-500/30 bg-sky-500/10 text-sky-300";
+    case "in_progress":
+      return "border-blue-500/30 bg-blue-500/10 text-blue-300";
+    case "blocked":
+      return "border-red-500/30 bg-red-500/10 text-red-300";
+    case "changes_requested":
+      return "border-amber-500/30 bg-amber-500/10 text-amber-300";
+    case "cancelled":
+      return "border-zinc-600 bg-zinc-800 text-zinc-400";
+    case "assigned":
+      return "border-violet-500/30 bg-violet-500/10 text-violet-300";
+    default:
+      return "border-zinc-700 bg-zinc-900 text-zinc-300";
+  }
+}
+
+function getPriorityClasses(priority) {
+  switch (priority) {
+    case "critical":
+      return "text-red-300";
+    case "high":
+      return "text-orange-300";
+    case "medium":
+      return "text-amber-300";
+    default:
+      return "text-zinc-400";
+   }
+}
+
+function getAssigneeActions(status) {
+  switch (status) {
+    case "assigned":
+    case "changes_requested":
+      return ["acknowledge"];
+    case "in_progress":
+      return ["progress_update", "mark_blocked", "submit_for_review"];
+    case "blocked":
+      return ["progress_update", "resume"];
+    default:
+      return [];
+  }
+}
+
+function getManagerActions(status) {
+  if (status === "submitted_for_review") {
+    return ["request_changes", "approve", "cancel"];
+  }
+
+  if (status === "completed" || status === "cancelled") {
+    return ["reopen"];
+  }
+
+  return ["cancel"];
+}
+
+function formatDateTime(value) {
+  if (!value) return "No deadline";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "No deadline";
+  }
+
+  return date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function toDateTimeLocalValue(value) {
+  if (!value) return "";
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const pad = (number) => String(number).padStart(2, "0");
+
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+  ].join("T");
+}
+
+function formatDeadlineDistance(milliseconds) {
+  const totalMinutes = Math.max(
+    1,
+    Math.ceil(Math.abs(milliseconds) / 60000)
+  );
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}
+
+function getDeadlineState(task, nowMs) {
+  if (
+    !nowMs ||
+    ["completed", "cancelled"].includes(task?.status)
+  ) {
+    return null;
+  }
+
+  const deadlineValue = task?.dueAt || task?.dueDate;
+
+  if (!deadlineValue) {
+    return null;
+  }
+
+  const deadline = new Date(deadlineValue);
+
+  if (Number.isNaN(deadline.getTime())) {
+    return null;
+  }
+
+  const remainingMs = deadline.getTime() - nowMs;
+
+  if (remainingMs <= 0) {
+    return {
+      label: `Overdue · ${formatDeadlineDistance(remainingMs)}`,
+      classes: "border-red-500/30 bg-red-500/10 text-red-300",
+    };
+  }
+
+  if (remainingMs <= 24 * 60 * 60 * 1000) {
+    return {
+      label: `Approaching · ${formatDeadlineDistance(remainingMs)}`,
+      classes: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    };
+  }
+
+  return {
+    label: `Due in ${formatDeadlineDistance(remainingMs)}`,
+    classes: "border-sky-500/30 bg-sky-500/10 text-sky-300",
+  };
+}
+
+function getEmployeeId(employee) {
+  return employee?.id || "";
+}
+
+function getEmployeeName(employee) {
+  return (
+    employee?.fullName ||
+    employee?.full_name ||
+    employee?.name ||
+    employee?.email ||
+    "Unnamed employee"
+  );
+}
+
+function getEmployeeDepartmentId(employee) {
+  return employee?.departmentId || employee?.department_id || null;
+}
+
+
 
 export default function OperationsTasksPage() {
-  const [workspaces, setWorkspaces] = useState([]);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("");
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
+  const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [tasks, setTasks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [employees, setEmployees] = useState([]);
+  const [accessContext, setAccessContext] = useState(null);
+  const [notes, setNotes] = useState({});
+  const [assignmentSelections, setAssignmentSelections] = useState({});
+  const [assignmentDeadlines, setAssignmentDeadlines] = useState({});
+  const [clockNow, setClockNow] = useState(null);
   const [updatingTaskId, setUpdatingTaskId] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function loadTasks(workspaceId) {
-    if (!workspaceId) return;
+  useEffect(() => {
+    const refreshClock = () => {
+      setClockNow(Date.now());
+    };
 
-    setError("");
+    const initialTimer = window.setTimeout(refreshClock, 0);
+    const intervalTimer = window.setInterval(refreshClock, 60000);
 
-    const response = await fetch(
-      `/api/operations/tasks?workspaceId=${encodeURIComponent(workspaceId)}`
-    );
-    const data = await response.json();
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(intervalTimer);
+    };
+  }, []);
 
-    if (!response.ok) {
-      setError(data?.error || "Unable to load tasks.");
+  const loadWorkspaceContext = useCallback(async (workspaceId) => {
+    if (!workspaceId) {
       setTasks([]);
+      setEmployees([]);
+      setAccessContext(null);
+      setIsLoading(false);
       return;
     }
 
-    setTasks(Array.isArray(data.tasks) ? data.tasks : []);
-  }
-
-  async function loadWorkspaceContext(workspaceId) {
     setIsLoading(true);
-    await loadTasks(workspaceId);
-    setIsLoading(false);
-  }
-
-  async function handleWorkspaceChange(event) {
-    const workspaceId = event.target.value;
-    setSelectedWorkspaceId(workspaceId);
-
-    if (typeof window !== "undefined") {
-      const workspace = workspaces.find((item) => item.id === workspaceId);
-      localStorage.setItem("virtus_active_workspace_id", workspaceId);
-
-      if (workspace?.name) {
-        localStorage.setItem("virtus_active_workspace_name", workspace.name);
-      }
-
-      window.dispatchEvent(new Event("virtus-active-workspace-changed"));
-    }
-    await loadWorkspaceContext(workspaceId);
-  }
-
-  async function updateTaskStatus(taskId, status) {
-    setUpdatingTaskId(taskId);
     setError("");
 
-    const response = await fetch("/api/operations/tasks", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ taskId, status }),
-    });
+    try {
+      const encodedWorkspaceId = encodeURIComponent(workspaceId);
 
-    const data = await response.json();
+      const [taskResponse, employeeResponse] = await Promise.all([
+        fetch(`/api/operations/tasks?workspaceId=${encodedWorkspaceId}`, {
+          cache: "no-store",
+        }),
+        fetch(`/api/operations/employees?workspaceId=${encodedWorkspaceId}`, {
+          cache: "no-store",
+        }),
+      ]);
 
-    if (!response.ok) {
-      setError(data?.error || "Unable to update task.");
-    } else {
-      await loadTasks(selectedWorkspaceId);
+      const taskData = await taskResponse.json().catch(() => ({}));
+      const employeeData = await employeeResponse.json().catch(() => ({}));
+
+      if (!taskResponse.ok) {
+        throw new Error(taskData?.error || "Unable to load tasks.");
+      }
+
+      setTasks(Array.isArray(taskData?.tasks) ? taskData.tasks : []);
+      setAccessContext(taskData?.accessContext || null);
+
+      if (employeeResponse.ok && Array.isArray(employeeData?.employees)) {
+        setEmployees(employeeData.employees);
+      } else {
+        setEmployees([]);
+      }
+    } catch (loadError) {
+      setTasks([]);
+      setEmployees([]);
+      setAccessContext(null);
+      setError(loadError.message || "Unable to load the task workspace.");
+    } finally {
+      setIsLoading(false);
     }
-
-    setUpdatingTaskId("");
-  }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    function synchronizeActiveWorkspace() {
+      const workspaceId =
+        window.localStorage.getItem("virtus_active_workspace_id") || "";
+      const workspaceName =
+        window.localStorage.getItem("virtus_active_workspace_name") || "";
 
-    async function loadInitialData() {
-      setIsLoading(true);
-      setError("");
+      setActiveWorkspaceId(workspaceId);
+      setActiveWorkspaceName(workspaceName);
+    }
 
-      const response = await fetch("/api/operations/workspaces");
-      const data = await response.json();
+    synchronizeActiveWorkspace();
 
-      if (!isMounted) return;
+    window.addEventListener(
+      "virtus-active-workspace-changed",
+      synchronizeActiveWorkspace
+    );
 
-      if (!response.ok) {
-        setError(data?.error || "Unable to load workspaces.");
-        setWorkspaces([]);
-        setIsLoading(false);
+    return () => {
+      window.removeEventListener(
+        "virtus-active-workspace-changed",
+        synchronizeActiveWorkspace
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadTimer = window.setTimeout(() => {
+      loadWorkspaceContext(activeWorkspaceId);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(loadTimer);
+    };
+  }, [activeWorkspaceId, loadWorkspaceContext]);
+
+  async function handleAction(
+    task,
+    action,
+    assignedEmployeeId = "",
+    dueAt = ""
+  ) {
+    const updateText = (notes[task.id] || "").trim();
+    const isAssignmentAction = ["assign", "reassign"].includes(action);
+
+    if (EXPLANATION_ACTIONS.has(action) && !updateText) {
+      setError(`A written explanation is required to ${ACTION_LABELS[action].toLowerCase()}.`);
+      return;
+    }
+
+    if (isAssignmentAction && !assignedEmployeeId) {
+      setError("Select an employee before assigning the task.");
+      return;
+    }
+
+    let normalizedDueAt = "";
+
+    if (isAssignmentAction) {
+      if (!dueAt) {
+        setError("Select an exact deadline before assigning the task.");
         return;
       }
 
-      const loadedWorkspaces = Array.isArray(data.workspaces) ? data.workspaces : [];
-      setWorkspaces(loadedWorkspaces);
+      const parsedDueAt = new Date(dueAt);
 
-      if (loadedWorkspaces.length > 0) {
-        const activeWorkspaceId =
-          typeof window !== "undefined"
-            ? localStorage.getItem("virtus_active_workspace_id") || ""
-            : "";
-
-        const selectedWorkspace = loadedWorkspaces.find(
-          (workspace) => workspace.id === activeWorkspaceId
-        );
-
-        if (!selectedWorkspace?.id) {
-          // Clear invalid workspace ID from localStorage
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("virtus_active_workspace_id");
-            localStorage.removeItem("virtus_active_workspace_name");
-          }
-          throw new Error("No active company selected.");
-        }
-
-        setSelectedWorkspaceId(selectedWorkspace.id);
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("virtus_active_workspace_id", selectedWorkspace.id);
-
-          if (selectedWorkspace.name) {
-            localStorage.setItem("virtus_active_workspace_name", selectedWorkspace.name);
-          }
-        }
-
-        await loadWorkspaceContext(selectedWorkspace.id);
-      } else {
-        setIsLoading(false);
+      if (Number.isNaN(parsedDueAt.getTime())) {
+        setError("The selected deadline is not a valid date and time.");
+        return;
       }
+
+      const taskHasExistingDeadline = Boolean(task?.dueAt || task?.dueDate);
+
+      if (
+        clockNow !== null &&
+        (action === "assign" || !taskHasExistingDeadline) &&
+        parsedDueAt.getTime() <= clockNow
+      ) {
+        setError("The task deadline must be in the future.");
+        return;
+      }
+
+      normalizedDueAt = parsedDueAt.toISOString();
     }
 
-    loadInitialData();
+    setUpdatingTaskId(task.id);
+    setError("");
 
-    return () => {
-      isMounted = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    try {
+      const response = await fetch("/api/operations/tasks", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          taskId: task.id,
+          action,
+          updateText,
+          ...(isAssignmentAction
+            ? {
+                assignedEmployeeId,
+                dueAt: normalizedDueAt,
+              }
+            : {}),
+        }),
+      });
 
-  const openTasks = tasks.filter((task) => task.status !== "completed");
-  const completedTasks = tasks.filter((task) => task.status === "completed");
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to update the task.");
+      }
+
+      setNotes((current) => ({
+        ...current,
+        [task.id]: "",
+      }));
+
+      await loadWorkspaceContext(activeWorkspaceId);
+    } catch (actionError) {
+      setError(actionError.message || "Unable to update the task.");
+    } finally {
+      setUpdatingTaskId("");
+    }
+  }
+
+  const role = accessContext?.role || "";
+  const canManageTasks = MANAGER_ROLES.has(role);
 
   return (
-    <section className="px-6 py-8">
-      <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
-          <p className="text-sm font-medium uppercase tracking-[0.22em] text-sky-300/60">
-            Accountability System
+    <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-400">
+            Operations Intelligence
           </p>
 
-          <h1 className="mt-3 text-3xl font-semibold text-white">Tasks</h1>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+            Tasks
+          </h1>
 
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Review tasks extracted from employee reports and update operational status.
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
+            Assign work, record execution progress, submit evidence for review,
+            and preserve a controlled management history.
           </p>
 
-          <select
-            value={selectedWorkspaceId}
-            onChange={handleWorkspaceChange}
-            className="mt-6 min-h-12 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 text-sm text-white outline-none focus:border-sky-500"
-          >
-            {workspaces.length === 0 ? (
-              <option value="">No workspace available</option>
-            ) : (
-              workspaces.map((workspace) => (
-                <option key={workspace.id} value={workspace.id}>
-                  {workspace.name}
-                </option>
-              ))
-            )}
-          </select>
+          {activeWorkspaceId ? (
+            <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
+              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-amber-200">
+                Active company: {activeWorkspaceName || "Selected company"}
+              </span>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-                Open Tasks
-              </p>
-              <p className="mt-2 text-3xl font-semibold text-white">
-                {openTasks.length}
-              </p>
+              {accessContext?.role ? (
+                <span className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-zinc-300">
+                  Access: {accessContext.role.replaceAll("_", " ")}
+                  {accessContext.scopeType
+                    ? ` · ${accessContext.scopeType.replaceAll("_", " ")} scope`
+                    : ""}
+                </span>
+              ) : null}
             </div>
+          ) : null}
+        </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">
-                Completed
-              </p>
-              <p className="mt-2 text-3xl font-semibold text-white">
-                {completedTasks.length}
-              </p>
-            </div>
+        {error ? (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {error}
           </div>
+        ) : null}
 
-          {error ? <p className="mt-4 text-sm text-red-300">{error}</p> : null}
-        </section>
+        {!activeWorkspaceId ? (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8">
+            <h2 className="text-lg font-semibold">No active company selected</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">
+              Select the company from the Operations company switcher. This
+              page will then load only that company&apos;s tasks.
+            </p>
+          </section>
+        ) : isLoading ? (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-sm text-zinc-400">
+            Loading tasks...
+          </section>
+        ) : tasks.length === 0 ? (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8">
+            <h2 className="text-lg font-semibold">No tasks found</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              Tasks extracted from daily reports will appear here for controlled
+              assignment and execution.
+            </p>
+          </section>
+        ) : (
+          <div className="space-y-5">
+            {tasks.map((task) => {
+              const assignedEmployeeId = task.assignedEmployeeId || "";
+              const isAssignee =
+                Boolean(accessContext?.employeeId) &&
+                assignedEmployeeId === accessContext.employeeId;
+              const assigneeActions = isAssignee
+                ? getAssigneeActions(task.status)
+                : [];
+              const managerActions = canManageTasks
+                ? getManagerActions(task.status)
+                : [];
+              const canAssign =
+                canManageTasks &&
+                task.status === "open" &&
+                !assignedEmployeeId;
+              const canReassign =
+                canManageTasks &&
+                Boolean(assignedEmployeeId) &&
+                REASSIGNABLE_STATUSES.has(task.status);
+              const assignmentAction = canAssign
+                ? "assign"
+                : canReassign
+                  ? "reassign"
+                  : "";
+              const eligibleEmployees = employees.filter((employee) => {
+                if (!task.departmentId) return true;
 
-        <section className="rounded-3xl border border-sky-900/25 bg-zinc-900/60 p-6">
-          <h2 className="text-lg font-semibold text-sky-100">Task Queue</h2>
+                return (
+                  getEmployeeDepartmentId(employee) === task.departmentId
+                );
+              });
+              const selectedEmployeeId =
+                assignmentSelections[task.id] ??
+                assignedEmployeeId ??
+                "";
+              const existingDeadline = task.dueAt || task.dueDate || "";
+              const preservesExistingDeadline =
+                assignmentAction === "reassign" &&
+                Boolean(existingDeadline);
+              const selectedDueAt = preservesExistingDeadline
+                ? existingDeadline
+                : assignmentDeadlines[task.id] || "";
+              const deadlineInputValue = preservesExistingDeadline
+                ? toDateTimeLocalValue(existingDeadline)
+                : selectedDueAt;
+              const deadlineMustBeFuture =
+                Boolean(assignmentAction) &&
+                (assignmentAction === "assign" ||
+                  !preservesExistingDeadline);
+              const minimumDeadlineValue = clockNow
+                ? toDateTimeLocalValue(new Date(clockNow + 60000))
+                : undefined;
+              const deadlineState = getDeadlineState(task, clockNow);
+              const busy = updatingTaskId === task.id;
+              const note = notes[task.id] || "";
 
-          <div className="mt-4 grid gap-4">
-            {isLoading ? (
-              <p className="text-sm text-zinc-400">Loading tasks...</p>
-            ) : tasks.length === 0 ? (
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-                <p className="text-sm text-zinc-400">
-                  No extracted tasks yet.
-                </p>
-              </div>
-            ) : (
-              tasks.map((task) => (
-                <div
+              return (
+                <article
                   key={task.id}
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4"
+                  className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 shadow-lg shadow-black/10"
                 >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold text-sky-100">
-                        {task.title}
-                      </h3>
-                      <p className="mt-2 text-sm leading-6 text-zinc-400">
-                        {task.description || "No description"}
-                      </p>
-                      <p className="mt-2 text-xs text-zinc-500">
-                        {task.departmentName || "No department"} ·{" "}
-                        {task.assignedEmployeeName || "Unassigned"}
-                      </p>
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(task.status)}`}
+                        >
+                          {getStatusLabel(task.status)}
+                        </span>
+
+                        <span
+                          className={`text-xs font-semibold uppercase tracking-wider ${getPriorityClasses(task.priority)}`}
+                        >
+                          {task.priority || "normal"} priority
+                        </span>
+
+                        {deadlineState ? (
+                          <span
+                            className={`rounded-full border px-2.5 py-1 text-xs font-medium ${deadlineState.classes}`}
+                          >
+                            {deadlineState.label}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <h2 className="mt-4 text-xl font-semibold">
+                        {task.title || "Untitled task"}
+                      </h2>
+
+                      {task.description ? (
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+                          {task.description}
+                        </p>
+                      ) : null}
+
+                      <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+                        <div>
+                          <dt className="text-xs uppercase tracking-wider text-zinc-500">
+                            Assigned to
+                          </dt>
+                          <dd className="mt-1 text-zinc-200">
+                            {task.assignedEmployeeName || "Unassigned"}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs uppercase tracking-wider text-zinc-500">
+                            Department
+                          </dt>
+                          <dd className="mt-1 text-zinc-200">
+                            {task.departmentName || "Not specified"}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs uppercase tracking-wider text-zinc-500">
+                            Exact deadline
+                          </dt>
+                          <dd className="mt-1 text-zinc-200">
+                            {formatDateTime(task.dueAt || task.dueDate)}
+                          </dd>
+
+                          {task.deadlineExtensionCount > 0 ? (
+                            <dd className="mt-1 text-xs leading-5 text-amber-300">
+                              Original: {formatDateTime(task.originalDueAt)}
+                              {" · "}
+                              {task.deadlineExtensionCount} approved extension
+                              {task.deadlineExtensionCount === 1 ? "" : "s"}
+                            </dd>
+                          ) : null}
+                        </div>
+                      </dl>
                     </div>
 
-                    <select
-                      value={task.status}
-                      onChange={(event) =>
-                        updateTaskStatus(task.id, event.target.value)
-                      }
-                      disabled={updatingTaskId === task.id}
-                      className="min-h-10 rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-xs text-white outline-none focus:border-sky-500 disabled:opacity-60"
-                    >
-                      {STATUS_OPTIONS.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
+                    {assignmentAction ? (
+                      <div className="w-full rounded-xl border border-zinc-800 bg-zinc-950/70 p-4 lg:w-80">
+                        <label
+                          className="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                          htmlFor={`assignment-${task.id}`}
+                        >
+                          {assignmentAction === "assign"
+                            ? "Assign employee"
+                            : "Reassign employee"}
+                        </label>
+
+                        <select
+                          id={`assignment-${task.id}`}
+                          value={selectedEmployeeId}
+                          onChange={(event) => {
+                            const employeeId = event.target.value;
+
+                            setAssignmentSelections((current) => ({
+                              ...current,
+                              [task.id]: employeeId,
+                            }));
+                          }}
+                          className="mt-3 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                          disabled={busy}
+                        >
+                          <option value="">Select employee</option>
+
+                          {eligibleEmployees.map((employee) => (
+                            <option
+                              key={getEmployeeId(employee)}
+                              value={getEmployeeId(employee)}
+                            >
+                              {getEmployeeName(employee)}
+                            </option>
+                          ))}
+                        </select>
+
+                        <label
+                          className="mt-4 block text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                          htmlFor={`deadline-${task.id}`}
+                        >
+                          Exact deadline
+                        </label>
+
+                        <input
+                          id={`deadline-${task.id}`}
+                          type="datetime-local"
+                          value={deadlineInputValue}
+                          min={
+                            deadlineMustBeFuture
+                              ? minimumDeadlineValue
+                              : undefined
+                          }
+                          onChange={(event) => {
+                            const value = event.target.value;
+
+                            setAssignmentDeadlines((current) => ({
+                              ...current,
+                              [task.id]: value,
+                            }));
+                          }}
+                          className="mt-3 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-amber-500 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={busy || preservesExistingDeadline}
+                          required
+                        />
+
+                        <p className="mt-2 text-xs leading-5 text-zinc-500">
+                          {preservesExistingDeadline
+                            ? "Reassignment preserves the existing deadline. A change requires the controlled extension workflow."
+                            : "Choose the exact local date and time when this work must be completed."}
+                        </p>
+
+                        <button
+                          type="button"
+                          className="mt-3 w-full rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={
+                            busy ||
+                            !selectedEmployeeId ||
+                            !selectedDueAt ||
+                            (assignmentAction === "reassign" &&
+                              selectedEmployeeId === assignedEmployeeId) ||
+                            (assignmentAction === "reassign" && !note.trim())
+                          }
+                          onClick={() =>
+                            handleAction(
+                              task,
+                              assignmentAction,
+                              selectedEmployeeId,
+                              selectedDueAt
+                            )
+                          }
+                        >
+                          {busy
+                            ? "Updating..."
+                            : assignmentAction === "assign"
+                              ? "Assign task"
+                              : "Reassign task"}
+                        </button>
+
+                        {eligibleEmployees.length === 0 ? (
+                          <p className="mt-2 text-xs leading-5 text-zinc-500">
+                            No eligible employee is available in this task&apos;s
+                            department.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
-                </div>
-              ))
-            )}
+
+                  <div className="mt-6 border-t border-zinc-800 pt-5">
+                    <label
+                      className="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                      htmlFor={`note-${task.id}`}
+                    >
+                      Update note
+                    </label>
+
+                    <textarea
+                      id={`note-${task.id}`}
+                      rows={3}
+                      value={note}
+                      onChange={(event) => {
+                        const value = event.target.value;
+
+                        setNotes((current) => ({
+                          ...current,
+                          [task.id]: value,
+                        }));
+                      }}
+                      maxLength={4000}
+                      placeholder="Record progress, evidence, a blocker, review feedback, or another important update."
+                      className="mt-3 w-full resize-y rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-amber-500"
+                      disabled={busy}
+                    />
+
+                    <p className="mt-2 text-xs text-zinc-500">
+                      A written explanation is required for progress updates,
+                      blockers, reassignment, requested changes, reopening,
+                      cancellation, and comments.
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {assigneeActions.map((action) => (
+                        <button
+                          key={action}
+                          type="button"
+                          className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-200 transition hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={
+                            busy ||
+                            (EXPLANATION_ACTIONS.has(action) && !note.trim())
+                          }
+                          onClick={() => handleAction(task, action)}
+                        >
+                          {busy ? "Updating..." : ACTION_LABELS[action]}
+                        </button>
+                      ))}
+
+                      {managerActions.map((action) => (
+                        <button
+                          key={action}
+                          type="button"
+                          className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-200 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={
+                            busy ||
+                            (EXPLANATION_ACTIONS.has(action) && !note.trim())
+                          }
+                          onClick={() => handleAction(task, action)}
+                        >
+                          {busy ? "Updating..." : ACTION_LABELS[action]}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-200 transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={busy || !note.trim()}
+                        onClick={() => handleAction(task, "comment")}
+                      >
+                        {busy ? "Updating..." : ACTION_LABELS.comment}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
-        </section>
+        )}
       </div>
-    </section>
+    </main>
   );
 }

@@ -78,13 +78,15 @@ export async function POST(req) {
     const taskRows = extracted.tasks.map((task) => ({
       workspace_id: report.workspace_id,
       department_id: report.department_id,
-      assigned_employee_id: report.employee_id,
+      assigned_employee_id: null,
       title: task.title,
       description: task.description,
-      status: task.status,
+      status: "open",
       priority: task.priority,
       source_report_id: report.id,
       created_by: user.id,
+      assigned_by_user_id: null,
+      assigned_at: null,
     }));
 
     const urgentRows = extracted.urgentIssues.map((issue) => ({
