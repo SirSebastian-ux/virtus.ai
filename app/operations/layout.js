@@ -237,10 +237,14 @@ export default function OperationsLayout({ children }) {
 
         const storedWorkspaceId = readStoredWorkspaceId(nextUserId);
 
-        const authorizedWorkspace = [
+        const storedWorkspace = [
           ...nextWorkspaces,
           ...nextArchivedWorkspaces,
         ].find((workspace) => workspace.id === storedWorkspaceId);
+
+        const authorizedWorkspace =
+          storedWorkspace ||
+          (nextWorkspaces.length === 1 ? nextWorkspaces[0] : null);
 
         if (!authorizedWorkspace) {
           clearStoredWorkspaceSelection(nextUserId);
