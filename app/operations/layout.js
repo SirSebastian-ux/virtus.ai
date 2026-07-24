@@ -400,6 +400,70 @@ export default function OperationsLayout({ children }) {
       isMounted = false;
     };
   }, [workspaceRefreshKey, router]);
+  useEffect(() => {
+    if (!activeWorkspaceId) return undefined;
+
+    let isCancelled = false;
+
+    async function refreshMetrics() {
+      try {
+        const response = await fetch(
+          `/api/operations/metrics?workspaceId=${encodeURIComponent(
+            activeWorkspaceId
+          )}`,
+          {
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok || isCancelled) return;
+
+        const data = await response.json();
+
+        if (
+          !isCancelled &&
+          data?.metrics?.workspaceId === activeWorkspaceId
+        ) {
+          setMetrics(data.metrics);
+        }
+      } catch {
+        // The next secure refresh will retry automatically.
+      }
+    }
+
+    function handleMetricsChanged(event) {
+      const changedWorkspaceId =
+        event?.detail?.workspaceId || "";
+
+      if (
+        !changedWorkspaceId ||
+        changedWorkspaceId === activeWorkspaceId
+      ) {
+        void refreshMetrics();
+      }
+    }
+
+    void refreshMetrics();
+
+    const intervalId = window.setInterval(() => {
+      void refreshMetrics();
+    }, 10000);
+
+    window.addEventListener(
+      "virtus-operations-metrics-changed",
+      handleMetricsChanged
+    );
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener(
+        "virtus-operations-metrics-changed",
+        handleMetricsChanged
+      );
+    };
+  }, [activeWorkspaceId]);
+
   function applyWorkspaceSelection(workspace) {
     if (!authenticatedUserId || !workspace?.id) return;
 

@@ -6,6 +6,11 @@ import {
   canViewDepartmentData,
   canViewTeamData,
 } from "@/lib/operations/access";
+import {
+  applyTaskScope,
+  getOperationsAccessContext,
+  getTeamEmployeeIds,
+} from "@/lib/operations/scope";
 import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
 
 function cleanText(value) {
@@ -28,46 +33,7 @@ async function requireWorkspaceMember(admin, userId, workspaceId) {
   return data;
 }
 
-async function getAccessContext(admin, userId, workspaceId, membershipRole) {
-  const { data, error } = await admin
-    .from("operations_role_assignments")
-    .select("employee_id, role, department_id, reports_to_employee_id, scope_type, status")
-    .eq("workspace_id", workspaceId)
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .maybeSingle();
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const role = data?.role || membershipRole || "employee";
-
-  return {
-    role,
-    employeeId: data?.employee_id || null,
-    departmentId: data?.department_id || null,
-    reportsToEmployeeId: data?.reports_to_employee_id || null,
-    scopeType: data?.scope_type || "self",
-  };
-}
-
-async function getTeamEmployeeIds(admin, workspaceId, managerEmployeeId) {
-  if (!managerEmployeeId) return [];
-
-  const { data, error } = await admin
-    .from("operations_role_assignments")
-    .select("employee_id")
-    .eq("workspace_id", workspaceId)
-    .eq("reports_to_employee_id", managerEmployeeId)
-    .eq("status", "active");
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data || []).map((item) => item.employee_id).filter(Boolean);
-}
 
 function mapTask(task) {
   return {
@@ -86,34 +52,12 @@ function mapTask(task) {
     originalDueAt: task.original_due_at || null,
     deadlineExtensionCount: task.deadline_extension_count || 0,
     sourceReportId: task.source_report_id,
+    completedAt: task.completed_at || null,
     createdAt: task.created_at,
     updatedAt: task.updated_at,
   };
 }
 
-function applyTaskAccessFilter(query, accessContext, teamEmployeeIds = []) {
-  if (canViewCompanyData(accessContext.role)) {
-    return query;
-  }
-
-  if (canViewDepartmentData(accessContext.role) && accessContext.departmentId) {
-    return query.eq("department_id", accessContext.departmentId);
-  }
-
-  if (canViewTeamData(accessContext.role) && accessContext.employeeId) {
-    const allowedEmployeeIds = [accessContext.employeeId, ...teamEmployeeIds];
-
-    if (allowedEmployeeIds.length > 0) {
-      return query.in("assigned_employee_id", allowedEmployeeIds);
-    }
-  }
-
-  if (accessContext.employeeId) {
-    return query.eq("assigned_employee_id", accessContext.employeeId);
-  }
-
-  return query.eq("assigned_employee_id", "00000000-0000-0000-0000-000000000000");
-}
 
 function canUpdateTask(existingTask, accessContext, teamEmployeeIds = []) {
   if (canViewCompanyData(accessContext.role)) return true;
@@ -170,7 +114,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
     }
 
-    const accessContext = await getAccessContext(
+    const accessContext = await getOperationsAccessContext(
       admin,
       user.id,
       workspaceId,
@@ -202,6 +146,7 @@ export async function GET(req) {
         deadline_last_changed_by_user_id,
         deadline_last_changed_by_employee_id,
         source_report_id,
+        completed_at,
         created_at,
         updated_at,
         departments (
@@ -218,7 +163,7 @@ export async function GET(req) {
       .eq("workspace_id", workspaceId)
       .order("created_at", { ascending: false });
 
-    query = applyTaskAccessFilter(query, accessContext, teamEmployeeIds);
+    query = applyTaskScope(query, accessContext, teamEmployeeIds);
 
     const { data, error } = await query;
 
@@ -481,7 +426,7 @@ export async function PATCH(req) {
       );
     }
 
-    const accessContext = await getAccessContext(
+    const accessContext = await getOperationsAccessContext(
       admin,
       user.id,
       existingTask.workspace_id,

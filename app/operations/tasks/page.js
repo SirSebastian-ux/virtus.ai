@@ -28,6 +28,11 @@ const REASSIGNABLE_STATUSES = new Set([
   "changes_requested",
 ]);
 
+const HISTORICAL_TASK_STATUSES = new Set([
+  "completed",
+  "cancelled",
+]);
+
 const STATUS_LABELS = {
   open: "Open",
   assigned: "Assigned",
@@ -234,6 +239,7 @@ export default function OperationsTasksPage() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
   const [activeWorkspaceName, setActiveWorkspaceName] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [taskView, setTaskView] = useState("active");
   const [employees, setEmployees] = useState([]);
   const [accessContext, setAccessContext] = useState(null);
   const [notes, setNotes] = useState({});
@@ -424,6 +430,14 @@ export default function OperationsTasksPage() {
         [task.id]: "",
       }));
 
+      window.dispatchEvent(
+        new CustomEvent("virtus-operations-metrics-changed", {
+          detail: {
+            workspaceId: activeWorkspaceId,
+          },
+        })
+      );
+
       await loadWorkspaceContext(activeWorkspaceId);
     } catch (actionError) {
       setError(actionError.message || "Unable to update the task.");
@@ -434,6 +448,23 @@ export default function OperationsTasksPage() {
 
   const role = accessContext?.role || "";
   const canManageTasks = MANAGER_ROLES.has(role);
+  const activeTasks = tasks.filter(
+    (task) => !HISTORICAL_TASK_STATUSES.has(task.status)
+  );
+  const historicalTasks = tasks
+    .filter((task) => HISTORICAL_TASK_STATUSES.has(task.status))
+    .sort((left, right) => {
+      const rightTime = new Date(
+        right.completedAt || right.updatedAt || right.createdAt
+      ).getTime();
+      const leftTime = new Date(
+        left.completedAt || left.updatedAt || left.createdAt
+      ).getTime();
+
+      return rightTime - leftTime;
+    });
+  const visibleTasks =
+    taskView === "history" ? historicalTasks : activeTasks;
 
   return (
     <main className="min-h-screen bg-zinc-950 px-6 py-8 text-zinc-100">
@@ -470,6 +501,36 @@ export default function OperationsTasksPage() {
           ) : null}
         </div>
 
+        {activeWorkspaceId ? (
+          <div className="mb-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              aria-pressed={taskView === "active"}
+              onClick={() => setTaskView("active")}
+              className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+                taskView === "active"
+                  ? "border-amber-400 bg-amber-400 text-zinc-950"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600"
+              }`}
+            >
+              Active Tasks ({activeTasks.length})
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={taskView === "history"}
+              onClick={() => setTaskView("history")}
+              className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+                taskView === "history"
+                  ? "border-emerald-400 bg-emerald-400 text-zinc-950"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600"
+              }`}
+            >
+              Task History ({historicalTasks.length})
+            </button>
+          </div>
+        ) : null}
+
         {error ? (
           <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
             {error}
@@ -488,17 +549,23 @@ export default function OperationsTasksPage() {
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-sm text-zinc-400">
             Loading tasks...
           </section>
-        ) : tasks.length === 0 ? (
+        ) : visibleTasks.length === 0 ? (
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8">
-            <h2 className="text-lg font-semibold">No tasks found</h2>
+            <h2 className="text-lg font-semibold">
+              {taskView === "history"
+                ? "No task history yet"
+                : "No active tasks"}
+            </h2>
+
             <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Tasks extracted from daily reports will appear here for controlled
-              assignment and execution.
+              {taskView === "history"
+                ? "Completed and cancelled work will remain here as a permanent operational record."
+                : "There are no open or actionable tasks in your permitted scope."}
             </p>
           </section>
         ) : (
           <div className="space-y-5">
-            {tasks.map((task) => {
+            {visibleTasks.map((task) => {
               const assignedEmployeeId = task.assignedEmployeeId || "";
               const isAssignee =
                 Boolean(accessContext?.employeeId) &&
@@ -593,7 +660,7 @@ export default function OperationsTasksPage() {
                         </p>
                       ) : null}
 
-                      <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+                      <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
                         <div>
                           <dt className="text-xs uppercase tracking-wider text-zinc-500">
                             Assigned to
@@ -629,6 +696,21 @@ export default function OperationsTasksPage() {
                             </dd>
                           ) : null}
                         </div>
+
+                        {HISTORICAL_TASK_STATUSES.has(task.status) ? (
+                          <div>
+                            <dt className="text-xs uppercase tracking-wider text-zinc-500">
+                              {task.status === "completed"
+                                ? "Completed on"
+                                : "Closed on"}
+                            </dt>
+                            <dd className="mt-1 text-zinc-200">
+                              {formatDateTime(
+                                task.completedAt || task.updatedAt
+                              )}
+                            </dd>
+                          </div>
+                        ) : null}
                       </dl>
                     </div>
 

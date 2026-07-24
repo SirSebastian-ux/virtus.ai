@@ -1,6 +1,11 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import {
+  applyTaskScope,
+  getOperationsAccessContext,
+  getTeamEmployeeIds,
+} from "@/lib/operations/scope";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -62,6 +67,32 @@ export async function GET(req) {
       return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
     }
 
+    const accessContext = await getOperationsAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    const teamEmployeeIds = await getTeamEmployeeIds(
+      admin,
+      workspaceId,
+      accessContext.employeeId
+    );
+
+    let openTasksQuery = admin
+      .from("operations_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId)
+      .neq("status", "completed")
+      .neq("status", "cancelled");
+
+    openTasksQuery = applyTaskScope(
+      openTasksQuery,
+      accessContext,
+      teamEmployeeIds
+    );
+
     const today = new Date().toISOString().slice(0, 10);
 
     const [
@@ -72,13 +103,7 @@ export async function GET(req) {
       todayReports,
       activeEmployees,
     ] = await Promise.all([
-      countRows(
-        admin
-          .from("operations_tasks")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .neq("status", "completed")
-      ),
+      countRows(openTasksQuery),
       countRows(
         admin
           .from("operations_payments")
