@@ -7,6 +7,10 @@ import {
   canViewTeamData,
 } from "@/lib/operations/access";
 import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
+import {
+  hasPermission,
+  normalizePermissions,
+} from "@/lib/operations/permissions";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -43,12 +47,41 @@ async function getAccessContext(admin, userId, workspaceId, membershipRole) {
 
   const role = data?.role || membershipRole || "employee";
 
+  const { data: defaultProfile, error: profileError } = await admin
+    .from("operations_permission_profiles")
+    .select("permissions")
+    .eq("workspace_id", workspaceId)
+    .eq("role", role)
+    .eq("is_default", true)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  const { data: overrides, error: overridesError } = await admin
+    .from("operations_user_permissions")
+    .select("permission_key, permission_value")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId);
+
+  if (overridesError) {
+    throw new Error(overridesError.message);
+  }
+
+  const permissions = normalizePermissions(defaultProfile?.permissions);
+
+  (overrides || []).forEach((item) => {
+    permissions[item.permission_key] = Boolean(item.permission_value);
+  });
+
   return {
     role,
     employeeId: data?.employee_id || null,
     departmentId: data?.department_id || null,
     reportsToEmployeeId: data?.reports_to_employee_id || null,
     scopeType: data?.scope_type || "self",
+    permissions,
   };
 }
 
@@ -136,6 +169,13 @@ export async function GET(req) {
       membership.role
     );
 
+    if (!hasPermission(accessContext.permissions, "reports.view")) {
+      return NextResponse.json(
+        { error: "You do not have permission to view reports." },
+        { status: 403 }
+      );
+    }
+
     const teamEmployeeIds = await getTeamEmployeeIds(
       admin,
       workspaceId,
@@ -155,6 +195,9 @@ export async function GET(req) {
         source,
         ai_summary,
         ai_extracted,
+        review_status,
+        reviewed_by,
+        reviewed_at,
         created_by,
         created_at,
         updated_at,
@@ -199,6 +242,9 @@ export async function GET(req) {
         source: report.source,
         aiSummary: report.ai_summary,
         aiExtracted: report.ai_extracted || {},
+        reviewStatus: report.review_status || "pending",
+        reviewedBy: report.reviewed_by || null,
+        reviewedAt: report.reviewed_at || null,
         createdAt: report.created_at,
         updatedAt: report.updated_at,
       })),
@@ -225,8 +271,6 @@ export async function POST(req) {
     const body = await req.json();
 
     const workspaceId = cleanText(body?.workspaceId);
-    const employeeId = cleanText(body?.employeeId);
-    const departmentId = cleanText(body?.departmentId);
     const rawReport = cleanText(body?.rawReport);
 
     if (!workspaceId || !rawReport) {
@@ -253,12 +297,54 @@ export async function POST(req) {
       );
     }
 
+    const accessContext = await getAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    if (!accessContext.employeeId) {
+      return NextResponse.json(
+        { error: "No employee profile is linked to this account." },
+        { status: 403 }
+      );
+    }
+
+    const { data: submittingEmployee, error: submittingEmployeeError } =
+      await admin
+        .from("employees")
+        .select("id, department_id")
+        .eq("id", accessContext.employeeId)
+        .eq("workspace_id", workspaceId)
+        .maybeSingle();
+
+    if (submittingEmployeeError) {
+      return NextResponse.json(
+        { error: submittingEmployeeError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!submittingEmployee) {
+      return NextResponse.json(
+        { error: "Your employee profile was not found." },
+        { status: 403 }
+      );
+    }
+
+    const reportEmployeeId = submittingEmployee.id;
+    const reportDepartmentId =
+      accessContext.departmentId ||
+      submittingEmployee.department_id ||
+      null;
+
     const { data: report, error: reportError } = await admin
       .from("operations_reports")
       .insert({
         workspace_id: workspaceId,
-        employee_id: employeeId || null,
-        department_id: departmentId || null,
+        employee_id: reportEmployeeId,
+        department_id: reportDepartmentId,
         raw_report: rawReport,
         source: "operations_chat",
         ai_summary: null,
@@ -281,8 +367,8 @@ export async function POST(req) {
       entity_table: "operations_reports",
       entity_id: report.id,
       new_data: {
-        employee_id: employeeId || null,
-        department_id: departmentId || null,
+        employee_id: reportEmployeeId,
+        department_id: reportDepartmentId,
         raw_report: rawReport,
       },
       metadata: {
@@ -350,6 +436,52 @@ export async function PATCH(req) {
 
     if (!membership) {
       return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+    }
+
+    const accessContext = await getAccessContext(
+      admin,
+      user.id,
+      report.workspace_id,
+      membership.role
+    );
+
+    if (!hasPermission(accessContext.permissions, "reports.review")) {
+      return NextResponse.json(
+        { error: "You do not have permission to review reports." },
+        { status: 403 }
+      );
+    }
+
+    const teamEmployeeIds = await getTeamEmployeeIds(
+      admin,
+      report.workspace_id,
+      accessContext.employeeId
+    );
+
+    let reportAccessQuery = admin
+      .from("operations_reports")
+      .select("id")
+      .eq("id", reportId)
+      .eq("workspace_id", report.workspace_id);
+
+    reportAccessQuery = applyReportAccessFilter(
+      reportAccessQuery,
+      accessContext,
+      teamEmployeeIds
+    );
+
+    const { data: accessibleReport, error: accessError } =
+      await reportAccessQuery.maybeSingle();
+
+    if (accessError) {
+      return NextResponse.json({ error: accessError.message }, { status: 500 });
+    }
+
+    if (!accessibleReport) {
+      return NextResponse.json(
+        { error: "Report access denied." },
+        { status: 403 }
+      );
     }
 
     const wsValidation = await validateWorkspaceMutationAllowed(admin, report.workspace_id);

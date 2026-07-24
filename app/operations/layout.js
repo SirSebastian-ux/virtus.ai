@@ -25,7 +25,7 @@ const navigation = [
   { label: "Tasks", href: "/operations/tasks", metricKey: "openTasks", visible: canViewTasksModule },
   { label: "Payments", href: "/operations/payments", metricKey: "pendingPayments", visible: canViewPaymentsModule },
   { label: "Reports", href: "/operations/reports", metricKey: "todayReports", visible: canViewReportsModule },
-  { label: "Daily Report", href: "/operations/daily-report", metricKey: null, visible: () => true },
+  { label: "Daily Report", href: "/operations/daily-report", metricKey: null, visible: canViewReportsModule },
   { label: "Urgent Issues", href: "/operations/urgent", metricKey: "openUrgentIssues", visible: canViewUrgentIssuesModule },
   { label: "Decision Queue", href: "/operations/decisions", metricKey: "pendingDecisions", visible: canViewDecisionQueueModule },
   { label: "Permissions", href: "/operations/permissions", metricKey: null, visible: canViewPermissionsModule },
@@ -56,6 +56,10 @@ function canAccessOperationsPath(pathname, role) {
     return canViewDecisionQueueModule(role);
   }
   if (path.startsWith("/operations/reports")) return canViewReportsModule(role);
+  if (path.startsWith("/operations/daily-reporting")) return true;
+  if (path.startsWith("/operations/daily-report")) {
+    return canViewReportsModule(role);
+  }
   if (path.startsWith("/operations/tasks")) return canViewTasksModule(role);
   if (path.startsWith("/operations/urgent")) {
     return canViewUrgentIssuesModule(role);

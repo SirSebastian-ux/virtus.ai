@@ -3,6 +3,15 @@ import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { extractOperationsFromReport } from "@/lib/operations-extraction";
 import { validateWorkspaceMutationAllowed } from "@/lib/operations/workspace-status";
+import {
+  canViewCompanyData,
+  canViewDepartmentData,
+  canViewTeamData,
+} from "@/lib/operations/access";
+import {
+  hasPermission,
+  normalizePermissions,
+} from "@/lib/operations/permissions";
 
 function cleanText(value) {
   return String(value || "").trim();
@@ -22,6 +31,103 @@ async function requireWorkspaceMember(admin, userId, workspaceId) {
   }
 
   return data;
+}
+
+async function getAccessContext(admin, userId, workspaceId, membershipRole) {
+  const { data, error } = await admin
+    .from("operations_role_assignments")
+    .select("employee_id, role, department_id, reports_to_employee_id, scope_type, status")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const role = data?.role || membershipRole || "employee";
+
+  const { data: defaultProfile, error: profileError } = await admin
+    .from("operations_permission_profiles")
+    .select("permissions")
+    .eq("workspace_id", workspaceId)
+    .eq("role", role)
+    .eq("is_default", true)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  const { data: overrides, error: overridesError } = await admin
+    .from("operations_user_permissions")
+    .select("permission_key, permission_value")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId);
+
+  if (overridesError) {
+    throw new Error(overridesError.message);
+  }
+
+  const permissions = normalizePermissions(defaultProfile?.permissions);
+
+  (overrides || []).forEach((item) => {
+    permissions[item.permission_key] = Boolean(item.permission_value);
+  });
+
+  return {
+    role,
+    employeeId: data?.employee_id || null,
+    departmentId: data?.department_id || null,
+    reportsToEmployeeId: data?.reports_to_employee_id || null,
+    scopeType: data?.scope_type || "self",
+    permissions,
+  };
+}
+
+async function getTeamEmployeeIds(admin, workspaceId, managerEmployeeId) {
+  if (!managerEmployeeId) return [];
+
+  const { data, error } = await admin
+    .from("operations_role_assignments")
+    .select("employee_id")
+    .eq("workspace_id", workspaceId)
+    .eq("reports_to_employee_id", managerEmployeeId)
+    .eq("status", "active");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data || []).map((item) => item.employee_id).filter(Boolean);
+}
+
+function applyReportAccessFilter(query, accessContext, teamEmployeeIds = []) {
+  if (canViewCompanyData(accessContext.role)) {
+    return query;
+  }
+
+  if (canViewDepartmentData(accessContext.role) && accessContext.departmentId) {
+    return query.eq("department_id", accessContext.departmentId);
+  }
+
+  if (canViewTeamData(accessContext.role) && accessContext.employeeId) {
+    const allowedEmployeeIds = [accessContext.employeeId, ...teamEmployeeIds];
+
+    if (allowedEmployeeIds.length > 0) {
+      return query.in("employee_id", allowedEmployeeIds);
+    }
+  }
+
+  if (accessContext.employeeId) {
+    return query.eq("employee_id", accessContext.employeeId);
+  }
+
+  return query.eq(
+    "employee_id",
+    "00000000-0000-0000-0000-000000000000"
+  );
 }
 
 export async function POST(req) {
@@ -63,6 +169,55 @@ export async function POST(req) {
 
     if (!membership) {
       return NextResponse.json({ error: "Workspace access denied." }, { status: 403 });
+    }
+
+    const accessContext = await getAccessContext(
+      admin,
+      user.id,
+      report.workspace_id,
+      membership.role
+    );
+
+    if (!hasPermission(accessContext.permissions, "reports.review")) {
+      return NextResponse.json(
+        { error: "You do not have permission to extract reports." },
+        { status: 403 }
+      );
+    }
+
+    const teamEmployeeIds = await getTeamEmployeeIds(
+      admin,
+      report.workspace_id,
+      accessContext.employeeId
+    );
+
+    let reportAccessQuery = admin
+      .from("operations_reports")
+      .select("id")
+      .eq("id", report.id)
+      .eq("workspace_id", report.workspace_id);
+
+    reportAccessQuery = applyReportAccessFilter(
+      reportAccessQuery,
+      accessContext,
+      teamEmployeeIds
+    );
+
+    const { data: accessibleReport, error: accessError } =
+      await reportAccessQuery.maybeSingle();
+
+    if (accessError) {
+      return NextResponse.json(
+        { error: accessError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!accessibleReport) {
+      return NextResponse.json(
+        { error: "Report access denied." },
+        { status: 403 }
+      );
     }
 
     const wsValidation = await validateWorkspaceMutationAllowed(admin, report.workspace_id);
