@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 
@@ -16,15 +16,20 @@ async function countRows(query) {
   return count || 0;
 }
 
-function applyScope(query, accessContext, column = "department_id") {
+function applyScope(
+  query,
+  accessContext,
+  departmentColumn = "department_id",
+  employeeColumn = "employee_id"
+) {
   if (accessContext.scopeType === "company") return query;
 
   if (accessContext.scopeType === "department" && accessContext.departmentId) {
-    return query.eq(column, accessContext.departmentId);
+    return query.eq(departmentColumn, accessContext.departmentId);
   }
 
   if (accessContext.scopeType === "self" && accessContext.employeeId) {
-    return query.eq("employee_id", accessContext.employeeId);
+    return query.eq(employeeColumn, accessContext.employeeId);
   }
 
   return query;
@@ -155,7 +160,9 @@ export async function GET(req) {
         .select("id", { count: "exact", head: true })
         .eq("workspace_id", workspaceId)
         .eq("employment_status", "active"),
-      accessContext
+      accessContext,
+      "department_id",
+      "id"
     );
 
     const tasksQuery = applyScope(
@@ -164,7 +171,9 @@ export async function GET(req) {
         .select("id", { count: "exact", head: true })
         .eq("workspace_id", workspaceId)
         .neq("status", "completed"),
-      accessContext
+      accessContext,
+      "department_id",
+      "assigned_employee_id"
     );
 
     const urgentIssuesQuery = applyScope(
@@ -195,7 +204,8 @@ export async function GET(req) {
         .eq("workspace_id", workspaceId)
         .eq("status", "pending"),
       accessContext,
-      "department_id"
+      "department_id",
+      "requested_by_employee_id"
     );
 
     const reportsQuery = applyScope(
