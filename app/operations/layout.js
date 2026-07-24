@@ -520,12 +520,6 @@ export default function OperationsLayout({ children }) {
     [role]
   );
 
-  const setupRequired =
-    Boolean(activeWorkspaceId) &&
-    typeof window !== "undefined" &&
-    localStorage.getItem("virtus_company_foundation_active") !== "true";
-
-  const hideNavigationOnLanding = pathname === "/operations";
   const isInvitationAcceptancePage =
     pathname.startsWith("/operations/invitations/accept");
   const routeAllowed =
@@ -577,7 +571,7 @@ export default function OperationsLayout({ children }) {
       </header>
 
       <div className="mx-auto flex max-w-7xl">
-        {!hideNavigationOnLanding && !setupRequired && activeWorkspaceId ? (
+        {activeWorkspaceId ? (
         <aside className="hidden w-72 shrink-0 border-r border-zinc-800 xl:block">
           <nav className="p-4">
             <div className="space-y-1">
@@ -608,8 +602,6 @@ export default function OperationsLayout({ children }) {
 
         <main
           className={
-            pathname === "/operations" ||
-            setupRequired ||
             !activeWorkspaceId
               ? "mx-auto w-full max-w-6xl"
               : "flex-1"
