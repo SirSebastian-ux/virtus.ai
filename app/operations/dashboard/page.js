@@ -1,8 +1,47 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
-const cards = [
+const ROLE_PRESENTATION = {
+  owner: {
+    title: "Executive Dashboard",
+    description:
+      "Company-wide operating health, priorities, and leadership signals.",
+    alertTitle: "Executive Alerts",
+  },
+  director: {
+    title: "Executive Dashboard",
+    description:
+      "Company-wide operating health, priorities, and leadership signals.",
+    alertTitle: "Executive Alerts",
+  },
+  senior_manager: {
+    title: "Operations Dashboard",
+    description:
+      "Company-wide delivery, workload, and operational risk signals.",
+    alertTitle: "Operational Signals",
+  },
+  department_manager: {
+    title: "Department Dashboard",
+    description:
+      "Department activity, delivery, and issues requiring management attention.",
+    alertTitle: "Department Signals",
+  },
+  supervisor: {
+    title: "Team Dashboard",
+    description:
+      "Direct-team workload, reporting, and issues requiring supervision.",
+    alertTitle: "Team Signals",
+  },
+  employee: {
+    title: "My Dashboard",
+    description:
+      "Your assigned work, reports, and urgent issues in one personal view.",
+    alertTitle: "My Work Signals",
+  },
+};
+
+const MANAGEMENT_CARDS = [
   { key: "activeEmployees", label: "Active Employees" },
   { key: "openTasks", label: "Open Tasks" },
   { key: "openUrgentIssues", label: "Urgent Issues" },
@@ -10,15 +49,70 @@ const cards = [
   { key: "todayReports", label: "Reports Today" },
 ];
 
+const DEPARTMENT_CARDS = [
+  { key: "activeEmployees", label: "Department Employees" },
+  { key: "openTasks", label: "Department Open Tasks" },
+  { key: "openUrgentIssues", label: "Department Urgent Issues" },
+  { key: "pendingDecisions", label: "Pending Decisions" },
+  { key: "todayReports", label: "Department Reports Today" },
+];
+
+const TEAM_CARDS = [
+  { key: "activeEmployees", label: "Team Members" },
+  { key: "openTasks", label: "Open Team Tasks" },
+  { key: "openUrgentIssues", label: "Team Urgent Issues" },
+  { key: "todayReports", label: "Team Reports Today" },
+];
+
+const EMPLOYEE_CARDS = [
+  { key: "openTasks", label: "My Open Tasks" },
+  { key: "openUrgentIssues", label: "My Urgent Issues" },
+  { key: "todayReports", label: "My Reports Today" },
+];
+
 function formatRole(role) {
-  return String(role || "employee").replaceAll("_", " ");
+  return String(role || "employee")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatScope(scopeType) {
+  const labels = {
+    company: "Company-wide",
+    department: "Department",
+    team: "Direct team",
+    self: "Personal",
+  };
+
+  return labels[scopeType] || "Personal";
+}
+
+function getPresentation(role) {
+  return ROLE_PRESENTATION[role] || ROLE_PRESENTATION.employee;
+}
+
+function getCards(role) {
+  if (role === "employee") return EMPLOYEE_CARDS;
+  if (role === "supervisor") return TEAM_CARDS;
+  if (role === "department_manager") return DEPARTMENT_CARDS;
+  return MANAGEMENT_CARDS;
+}
+
+function getHealthLabel(scopeType) {
+  const labels = {
+    company: "Company Health",
+    department: "Department Health",
+    team: "Team Health",
+    self: "Personal Health",
+  };
+
+  return labels[scopeType] || "Operational Health";
 }
 
 export default function OperationsDashboardPage() {
   const [accessContext, setAccessContext] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [intelligence, setIntelligence] = useState(null);
-  const [workspaceId, setWorkspaceId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -36,49 +130,23 @@ export default function OperationsDashboardPage() {
           throw new Error("No active company selected.");
         }
 
-        const metricsResponse = await fetch(
-          `/api/operations/metrics?workspaceId=${encodeURIComponent(
-            selectedWorkspaceId
-          )}`,
-          {
-            cache: "no-store",
-          }
-        );
-
-        const metricsResult = await metricsResponse.json();
-
-        if (!metricsResponse.ok) {
-          throw new Error(metricsResult.error || "Failed to load workspace.");
-        }
-
-        const nextWorkspaceId = metricsResult.metrics?.workspaceId || "";
-
-        if (!nextWorkspaceId) {
-          if (alive) {
-            setMetrics(metricsResult.metrics);
-            setWorkspaceId("");
-          }
-          return;
-        }
-
-        const dashboardResponse = await fetch(
+        const response = await fetch(
           `/api/operations/dashboard?workspaceId=${encodeURIComponent(
-            nextWorkspaceId
+            selectedWorkspaceId,
           )}`,
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
 
-        const dashboardResult = await dashboardResponse.json();
+        const result = await response.json();
 
-        if (!dashboardResponse.ok) {
-          throw new Error(dashboardResult.error || "Failed to load dashboard.");
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to load dashboard.");
         }
 
         if (alive) {
-          setWorkspaceId(nextWorkspaceId);
-          setAccessContext(dashboardResult.accessContext);
-          setMetrics(dashboardResult.metrics);
-          setIntelligence(dashboardResult.intelligence);
+          setAccessContext(result.accessContext);
+          setMetrics(result.metrics);
+          setIntelligence(result.intelligence);
         }
       } catch (loadError) {
         if (alive) {
@@ -98,6 +166,12 @@ export default function OperationsDashboardPage() {
     };
   }, []);
 
+  const role = accessContext?.role || "employee";
+  const scopeType = accessContext?.scopeType || "self";
+  const presentation = getPresentation(role);
+  const cards = getCards(role);
+  const showHealthScore = intelligence?.healthScore !== null;
+
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
       <section className="mx-auto max-w-6xl space-y-8">
@@ -106,11 +180,12 @@ export default function OperationsDashboardPage() {
             Operations Intelligence
           </p>
           <h1 className="mt-3 text-4xl font-semibold">
-            Executive Dashboard
+            {loading ? "Dashboard" : presentation.title}
           </h1>
           <p className="mt-3 max-w-3xl text-slate-300">
-            Role-aware command view filtered by company, department, team, or
-            personal operating scope.
+            {loading
+              ? "Loading your authorized operating view..."
+              : presentation.description}
           </p>
         </div>
 
@@ -120,32 +195,33 @@ export default function OperationsDashboardPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p className="text-sm text-slate-400">Health Score</p>
-            <p className="mt-2 text-4xl font-semibold">
-              {loading ? "..." : intelligence?.healthScore ?? 0}
-            </p>
-          </div>
+        <div
+          className={`grid gap-4 ${
+            showHealthScore ? "md:grid-cols-3" : "md:grid-cols-2"
+          }`}
+        >
+          {showHealthScore ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <p className="text-sm text-slate-400">
+                {getHealthLabel(scopeType)}
+              </p>
+              <p className="mt-2 text-4xl font-semibold">
+                {loading ? "..." : (intelligence?.healthScore ?? 0)}
+              </p>
+            </div>
+          ) : null}
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <p className="text-sm text-slate-400">Role</p>
-            <p className="mt-2 text-2xl font-semibold capitalize">
-              {loading ? "..." : formatRole(accessContext?.role)}
+            <p className="mt-2 text-2xl font-semibold">
+              {loading ? "..." : formatRole(role)}
             </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p className="text-sm text-slate-400">Scope</p>
-            <p className="mt-2 text-2xl font-semibold capitalize">
-              {loading ? "..." : accessContext?.scopeType || "self"}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p className="text-sm text-slate-400">Workspace</p>
-            <p className="mt-2 truncate text-sm text-slate-300">
-              {loading ? "Loading..." : workspaceId || "No active workspace"}
+            <p className="text-sm text-slate-400">Authorized Scope</p>
+            <p className="mt-2 text-2xl font-semibold">
+              {loading ? "..." : formatScope(scopeType)}
             </p>
           </div>
         </div>
@@ -158,14 +234,16 @@ export default function OperationsDashboardPage() {
             >
               <p className="text-sm text-slate-400">{card.label}</p>
               <p className="mt-3 text-4xl font-semibold">
-                {loading ? "..." : metrics?.[card.key] ?? 0}
+                {loading ? "..." : (metrics?.[card.key] ?? 0)}
               </p>
             </div>
           ))}
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <h2 className="text-xl font-semibold">Executive Alerts</h2>
+          <h2 className="text-xl font-semibold">
+            {loading ? "Operating Signals" : presentation.alertTitle}
+          </h2>
 
           <div className="mt-5 space-y-3">
             {(intelligence?.alerts || []).map((alert) => (
@@ -182,7 +260,7 @@ export default function OperationsDashboardPage() {
 
             {!loading && !intelligence?.alerts?.length ? (
               <p className="text-sm text-slate-400">
-                No executive alerts available.
+                No operating signals are available in your authorized scope.
               </p>
             ) : null}
           </div>
