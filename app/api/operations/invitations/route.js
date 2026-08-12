@@ -13,13 +13,6 @@ const ALLOWED_ROLES = new Set([
   "employee",
 ]);
 
-const INVITATION_REQUEST_ROLES = new Set([
-  "owner",
-  "director",
-  "senior_manager",
-  "department_manager",
-  "supervisor",
-]);
 
 const ALLOWED_SCOPE_TYPES = new Set([
   "company",
@@ -159,6 +152,13 @@ export async function GET(req) {
       );
     }
 
+    if (membership.role !== "owner") {
+      return NextResponse.json(
+        { error: "Only the workspace owner can view invitations." },
+        { status: 403 }
+      );
+    }
+
     const { data, error } = await admin
       .from("operations_invitations")
       .select(
@@ -288,9 +288,9 @@ export async function POST(req) {
       );
     }
 
-    if (!INVITATION_REQUEST_ROLES.has(membership.role)) {
+    if (membership.role !== "owner") {
       return NextResponse.json(
-        { error: "Invitation request access denied." },
+        { error: "Only the workspace owner can create invitations." },
         { status: 403 }
       );
     }

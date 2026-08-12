@@ -152,6 +152,8 @@ export async function GET(req) {
       membership.role
     );
 
+    const canAdministerTeam = membership.role === "owner";
+
     const teamEmployeeIds = await getTeamEmployeeIds(
       admin,
       workspaceId,
@@ -226,24 +228,63 @@ export async function GET(req) {
       ])
     );
 
-    const { data: departments, error: departmentsError } = await admin
+    let departmentsQuery = admin
       .from("departments")
       .select("id, name, status")
       .eq("workspace_id", workspaceId)
       .eq("status", "active")
       .order("name", { ascending: true });
 
-    if (departmentsError) {
-      return NextResponse.json({ error: departmentsError.message }, { status: 500 });
+    if (!canAdministerTeam) {
+      departmentsQuery = accessContext.departmentId
+        ? departmentsQuery.eq("id", accessContext.departmentId)
+        : departmentsQuery.eq(
+            "id",
+            "00000000-0000-0000-0000-000000000000"
+          );
     }
 
-    const { data: billingProfile } = await admin
-      .from("workspace_billing_profiles")
-      .select("billable_employee_count, included_employee_seats, billing_mode, billing_status")
-      .eq("workspace_id", workspaceId)
-      .maybeSingle();
+    const { data: departments, error: departmentsError } =
+      await departmentsQuery;
+
+    if (departmentsError) {
+      return NextResponse.json(
+        { error: departmentsError.message },
+        { status: 500 }
+      );
+    }
+
+    let billingProfile = null;
+
+    if (canAdministerTeam) {
+      const { data, error: billingError } = await admin
+        .from("workspace_billing_profiles")
+        .select(
+          "billable_employee_count, included_employee_seats, billing_mode, billing_status"
+        )
+        .eq("workspace_id", workspaceId)
+        .maybeSingle();
+
+      if (billingError) {
+        return NextResponse.json(
+          { error: billingError.message },
+          { status: 500 }
+        );
+      }
+
+      billingProfile = data || null;
+    }
 
     return NextResponse.json({
+      accessContext: {
+        role: accessContext.role,
+        employeeId: accessContext.employeeId,
+        departmentId: accessContext.departmentId,
+        scopeType: accessContext.scopeType,
+      },
+      permissions: {
+        canAdministerTeam,
+      },
       employees: (employees || []).map((employee) => {
         const assignment = assignmentByEmployeeId.get(employee.id);
 
@@ -306,8 +347,11 @@ export async function POST(req) {
 
     const membership = await requireWorkspaceMember(admin, user.id, workspaceId);
 
-    if (!membership || !["owner", "admin", "manager"].includes(membership.role)) {
-      return NextResponse.json({ error: "Manager access required." }, { status: 403 });
+    if (!membership || membership.role !== "owner") {
+      return NextResponse.json(
+        { error: "Only the workspace owner can create employee records." },
+        { status: 403 }
+      );
     }
 
     const wsValidation = await validateWorkspaceMutationAllowed(admin, workspaceId);

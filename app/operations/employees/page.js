@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 
@@ -24,6 +24,7 @@ export default function OperationsEmployeesPage() {
   const [departments, setDepartments] = useState([]);
   const [invitations, setInvitations] = useState([]);
   const [billingProfile, setBillingProfile] = useState(null);
+  const [canAdministerTeam, setCanAdministerTeam] = useState(false);
 
   const [mode, setMode] = useState("invitation");
   const [step, setStep] = useState(1);
@@ -50,9 +51,16 @@ export default function OperationsEmployeesPage() {
       throw new Error(data?.error || "Unable to load team members.");
     }
 
+    const canAdministerTeam = Boolean(
+      data?.permissions?.canAdministerTeam
+    );
+
     setEmployees(Array.isArray(data.employees) ? data.employees : []);
     setDepartments(Array.isArray(data.departments) ? data.departments : []);
     setBillingProfile(data.billingProfile || null);
+    setCanAdministerTeam(canAdministerTeam);
+
+    return canAdministerTeam;
   }
 
   async function loadInvitations(workspaceId) {
@@ -73,12 +81,15 @@ export default function OperationsEmployeesPage() {
 
     setIsLoading(true);
     setError("");
+    setCanAdministerTeam(false);
+    setInvitations([]);
 
     try {
-      await Promise.all([
-        loadEmployees(workspaceId),
-        loadInvitations(workspaceId),
-      ]);
+      const canAdminister = await loadEmployees(workspaceId);
+
+      if (canAdminister) {
+        await loadInvitations(workspaceId);
+      }
     } catch (loadError) {
       setError(loadError.message);
     } finally {
@@ -303,11 +314,13 @@ export default function OperationsEmployeesPage() {
       </h1>
 
       <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-400">
-        Create internal employee records or invite new members through one
-        organizational onboarding workflow.
+        {canAdministerTeam
+          ? "Create internal employee records or invite new members through one organizational onboarding workflow."
+          : "View the team members available within your authorized operational scope."}
       </p>
 
-      <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-900/60 p-5">
+      {canAdministerTeam ? (
+        <div className="mt-8 rounded-2xl border border-sky-900/25 bg-zinc-900/60 p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">
@@ -571,17 +584,19 @@ export default function OperationsEmployeesPage() {
             )}
           </div>
         </form>
-      </div>
+        </div>
+      ) : null}
 
       <div className="mt-8 grid gap-6 xl:grid-cols-2">
         <section className="rounded-2xl border border-sky-900/25 bg-zinc-900/60 p-5">
           <div>
             <h2 className="text-lg font-semibold text-sky-100">
-              Leadership Team
+              {canAdministerTeam ? "Leadership Team" : "Authorized Team"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-zinc-400">
-              Build the leadership structure of your organization and assign
-              responsibility at every level.
+              {canAdministerTeam
+                ? "Build the leadership structure of your organization and assign responsibility at every level."
+                : "Team members within your authorized department or reporting scope."}
             </p>
           </div>
 
@@ -637,7 +652,8 @@ export default function OperationsEmployeesPage() {
                         </p>
                       </div>
 
-                      {(!group.single || roleMembers.length === 0) && (
+                      {canAdministerTeam &&
+                        (!group.single || roleMembers.length === 0) && (
                         <button
                           type="button"
                           onClick={() => {
@@ -684,7 +700,8 @@ export default function OperationsEmployeesPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-amber-500/20 bg-zinc-900/60 p-5">
+        {canAdministerTeam ? (
+          <section className="rounded-2xl border border-amber-500/20 bg-zinc-900/60 p-5">
           <h2 className="text-lg font-semibold text-amber-100">
             Invitation Requests
           </h2>
@@ -753,7 +770,8 @@ export default function OperationsEmployeesPage() {
               ))
             )}
           </div>
-        </section>
+          </section>
+        ) : null}
       </div>
     </section>
   );
