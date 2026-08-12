@@ -80,6 +80,44 @@ export async function GET(req) {
       accessContext.employeeId
     );
 
+    let activeEmployeesQuery = admin
+      .from("employees")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId)
+      .eq("employment_status", "active");
+
+    const canCountCompanyEmployees =
+      accessContext.role === "owner" ||
+      (accessContext.scopeType === "company" &&
+        accessContext.canViewCompany);
+
+    if (!canCountCompanyEmployees) {
+      if (
+        accessContext.scopeType === "department" &&
+        accessContext.canViewDepartment &&
+        accessContext.departmentId
+      ) {
+        activeEmployeesQuery = activeEmployeesQuery.eq(
+          "department_id",
+          accessContext.departmentId
+        );
+      } else if (
+        accessContext.scopeType === "team" &&
+        accessContext.canViewTeam &&
+        teamEmployeeIds.length > 0
+      ) {
+        activeEmployeesQuery = activeEmployeesQuery.in(
+          "id",
+          teamEmployeeIds
+        );
+      } else {
+        activeEmployeesQuery = activeEmployeesQuery.eq(
+          "id",
+          "00000000-0000-0000-0000-000000000000"
+        );
+      }
+    }
+
     let openTasksQuery = admin
       .from("operations_tasks")
       .select("id", { count: "exact", head: true })
@@ -133,13 +171,7 @@ export async function GET(req) {
           .eq("report_date", today)
           .eq("review_status", "unreviewed")
       ),
-      countRows(
-        admin
-          .from("employees")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", workspaceId)
-          .eq("employment_status", "active")
-      ),
+      countRows(activeEmployeesQuery),
     ]);
 
     return NextResponse.json({
