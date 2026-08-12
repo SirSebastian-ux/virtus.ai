@@ -36,6 +36,7 @@ export default function OperationsEmployeesPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [resendingInvitationId, setResendingInvitationId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -194,6 +195,41 @@ export default function OperationsEmployeesPage() {
       setError(submitError.message);
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function resendInvitation(invitation) {
+    if (!selectedWorkspaceId || !invitation?.id) return;
+
+    setResendingInvitationId(invitation.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/operations/invitations", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workspaceId: selectedWorkspaceId,
+          invitationId: invitation.id,
+          action: "resend",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to resend invitation.");
+      }
+
+      setSuccess("Invitation resent to " + invitation.email + ".");
+      await loadInvitations(selectedWorkspaceId);
+    } catch (resendError) {
+      setError(resendError.message);
+    } finally {
+      setResendingInvitationId("");
     }
   }
 
@@ -696,6 +732,23 @@ export default function OperationsEmployeesPage() {
                       {invitation.reportsToEmployeeName || "No manager"}
                     </p>
                   </div>
+
+                  {workspaces.find(
+                    (workspace) => workspace.id === selectedWorkspaceId
+                  )?.role === "owner" &&
+                  ["approved", "sent"].includes(invitation.status) &&
+                  !invitation.acceptedAt ? (
+                    <button
+                      type="button"
+                      onClick={() => resendInvitation(invitation)}
+                      disabled={Boolean(resendingInvitationId)}
+                      className="mt-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {resendingInvitationId === invitation.id
+                        ? "Resending..."
+                        : "Resend Invitation"}
+                    </button>
+                  ) : null}
                 </div>
               ))
             )}

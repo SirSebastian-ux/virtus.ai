@@ -549,3 +549,218 @@ export async function POST(req) {
     );
   }
 }
+
+export async function PATCH(req) {
+  try {
+    const supabase = await createClient();
+    const admin = createAdminClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user?.id) {
+      return NextResponse.json(
+        { error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
+    const workspaceId = cleanText(body?.workspaceId);
+    const invitationId = cleanText(body?.invitationId);
+    const action = cleanText(body?.action);
+
+    if (!workspaceId || !invitationId) {
+      return NextResponse.json(
+        { error: "workspaceId and invitationId are required." },
+        { status: 400 }
+      );
+    }
+
+    if (action !== "resend") {
+      return NextResponse.json(
+        { error: "Unsupported invitation action." },
+        { status: 400 }
+      );
+    }
+
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      workspaceId
+    );
+
+    const { data: workspace, error: workspaceError } = await admin
+      .from("workspaces")
+      .select("id, name, owner_user_id, status")
+      .eq("id", workspaceId)
+      .maybeSingle();
+
+    if (workspaceError) {
+      throw new Error(workspaceError.message);
+    }
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: "Workspace not found." },
+        { status: 404 }
+      );
+    }
+
+    if (
+      !membership ||
+      (membership.role !== "owner" && workspace.owner_user_id !== user.id)
+    ) {
+      return NextResponse.json(
+        { error: "Only the workspace owner can resend invitations." },
+        { status: 403 }
+      );
+    }
+
+    const workspaceValidation = await validateWorkspaceMutationAllowed(
+      admin,
+      workspaceId
+    );
+
+    if (!workspaceValidation.allowed) {
+      return NextResponse.json(
+        { error: workspaceValidation.message },
+        { status: workspaceValidation.status }
+      );
+    }
+
+    const invitationFields =
+      "id, workspace_id, email, invited_name, requested_role, requested_scope_type, department_id, reports_to_employee_id, status, requested_by, approved_by, approved_at, accepted_by, accepted_at, auth_user_id, sent_at, delivery_attempts, delivery_error, expires_at, created_at, updated_at";
+
+    const { data: invitation, error: invitationError } = await admin
+      .from("operations_invitations")
+      .select(invitationFields)
+      .eq("id", invitationId)
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+
+    if (invitationError) {
+      throw new Error(invitationError.message);
+    }
+
+    if (!invitation) {
+      return NextResponse.json(
+        { error: "Invitation not found." },
+        { status: 404 }
+      );
+    }
+
+    if (
+      invitation.accepted_at ||
+      invitation.accepted_by ||
+      !["approved", "sent"].includes(invitation.status)
+    ) {
+      return NextResponse.json(
+        { error: "Only an approved, unaccepted invitation can be resent." },
+        { status: 409 }
+      );
+    }
+
+    const renewedAt = new Date().toISOString();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 14);
+
+    const { data: renewedInvitation, error: renewError } = await admin
+      .from("operations_invitations")
+      .update({
+        expires_at: expiresAt.toISOString(),
+        delivery_error: null,
+        updated_at: renewedAt,
+      })
+      .eq("id", invitationId)
+      .eq("workspace_id", workspaceId)
+      .in("status", ["approved", "sent"])
+      .is("accepted_at", null)
+      .select(invitationFields)
+      .maybeSingle();
+
+    if (renewError) {
+      throw new Error(renewError.message);
+    }
+
+    if (!renewedInvitation) {
+      return NextResponse.json(
+        { error: "The invitation changed and can no longer be resent." },
+        { status: 409 }
+      );
+    }
+
+    let delivery;
+
+    try {
+      delivery = await sendOperationsInvitationEmail({
+        admin,
+        invitation: renewedInvitation,
+        workspaceName: workspace.name,
+      });
+    } catch (deliveryError) {
+      await admin.from("operations_activity_logs").insert({
+        workspace_id: workspaceId,
+        actor_user_id: user.id,
+        action: "invitation.resend_failed",
+        entity_table: "operations_invitations",
+        entity_id: invitationId,
+        previous_data: {
+          status: invitation.status,
+          sentAt: invitation.sent_at,
+          deliveryAttempts: invitation.delivery_attempts || 0,
+          expiresAt: invitation.expires_at,
+        },
+        metadata: {
+          source: "operations_invitations_api",
+          error: cleanText(deliveryError.message).slice(0, 1000),
+        },
+      });
+
+      return NextResponse.json(
+        {
+          error: "The invitation could not be resent.",
+          details: deliveryError.message,
+        },
+        { status: 502 }
+      );
+    }
+
+    await admin.from("operations_activity_logs").insert({
+      workspace_id: workspaceId,
+      actor_user_id: user.id,
+      action: "invitation.resent",
+      entity_table: "operations_invitations",
+      entity_id: invitationId,
+      previous_data: {
+        status: invitation.status,
+        sentAt: invitation.sent_at,
+        deliveryAttempts: invitation.delivery_attempts || 0,
+        expiresAt: invitation.expires_at,
+      },
+      new_data: {
+        status: delivery.invitation.status,
+        sentAt: delivery.invitation.sent_at,
+        deliveryAttempts: delivery.invitation.delivery_attempts || 0,
+        expiresAt: delivery.invitation.expires_at,
+      },
+      metadata: {
+        source: "operations_invitations_api",
+        deliveryMode: delivery.deliveryMode,
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      invitation: mapInvitation(delivery.invitation),
+      deliveryMode: delivery.deliveryMode,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}
