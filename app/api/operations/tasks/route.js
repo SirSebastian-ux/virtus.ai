@@ -33,6 +33,117 @@ async function requireWorkspaceMember(admin, userId, workspaceId) {
   return data;
 }
 
+const REVIEW_ROLE_LEVELS = {
+  employee: 0,
+  supervisor: 1,
+  department_manager: 2,
+  senior_manager: 3,
+  director: 4,
+  owner: 5,
+};
+
+async function getPrimaryRoleAssignment(admin, workspaceId, employeeId) {
+  if (!employeeId) return null;
+
+  const { data, error } = await admin
+    .from("operations_role_assignments")
+    .select("employee_id, role, reports_to_employee_id, created_at")
+    .eq("workspace_id", workspaceId)
+    .eq("employee_id", employeeId)
+    .eq("status", "active");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data || []).sort((left, right) => {
+    const roleDifference =
+      (REVIEW_ROLE_LEVELS[right.role] ?? -1) -
+      (REVIEW_ROLE_LEVELS[left.role] ?? -1);
+
+    if (roleDifference !== 0) return roleDifference;
+
+    return String(right.created_at || "").localeCompare(
+      String(left.created_at || "")
+    );
+  })[0] || null;
+}
+
+async function getOwnerEmployeeId(admin, workspaceId) {
+  const { data, error } = await admin
+    .from("operations_role_assignments")
+    .select("employee_id, created_at")
+    .eq("workspace_id", workspaceId)
+    .eq("role", "owner")
+    .eq("status", "active")
+    .not("employee_id", "is", null)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data?.employee_id || null;
+}
+
+async function getReviewRoute(admin, workspaceId, employeeId) {
+  const sourceAssignment = await getPrimaryRoleAssignment(
+    admin,
+    workspaceId,
+    employeeId
+  );
+
+  if (!sourceAssignment) {
+    return {
+      sourceRole: null,
+      reviewerEmployeeId: null,
+      reviewerName: null,
+    };
+  }
+
+  if (sourceAssignment.role === "owner") {
+    return {
+      sourceRole: "owner",
+      reviewerEmployeeId: null,
+      reviewerName: null,
+    };
+  }
+
+  let reviewerEmployeeId = sourceAssignment.reports_to_employee_id || null;
+
+  if (!reviewerEmployeeId) {
+    reviewerEmployeeId = await getOwnerEmployeeId(admin, workspaceId);
+  }
+
+  if (!reviewerEmployeeId || reviewerEmployeeId === employeeId) {
+    return {
+      sourceRole: sourceAssignment.role,
+      reviewerEmployeeId: null,
+      reviewerName: null,
+    };
+  }
+
+  const { data: reviewer, error: reviewerError } = await admin
+    .from("employees")
+    .select("id, full_name, email")
+    .eq("workspace_id", workspaceId)
+    .eq("id", reviewerEmployeeId)
+    .maybeSingle();
+
+  if (reviewerError) {
+    throw new Error(reviewerError.message);
+  }
+
+  return {
+    sourceRole: sourceAssignment.role,
+    reviewerEmployeeId: reviewer?.id || null,
+    reviewerName:
+      reviewer?.full_name || reviewer?.email || "the next reviewer",
+  };
+}
+
 
 
 function mapTask(task) {
@@ -52,6 +163,13 @@ function mapTask(task) {
     originalDueAt: task.original_due_at || null,
     deadlineExtensionCount: task.deadline_extension_count || 0,
     sourceReportId: task.source_report_id,
+    currentReviewerEmployeeId: task.current_reviewer_employee_id || null,
+    currentReviewerName:
+      task.current_reviewer?.full_name ||
+      task.current_reviewer?.email ||
+      null,
+    reviewStepCount: task.review_step_count || 0,
+    finalVerifiedAt: task.final_verified_at || null,
     completedAt: task.completed_at || null,
     createdAt: task.created_at,
     updatedAt: task.updated_at,
@@ -146,6 +264,11 @@ export async function GET(req) {
         deadline_last_changed_by_user_id,
         deadline_last_changed_by_employee_id,
         source_report_id,
+        current_reviewer_employee_id,
+        review_step_count,
+        final_verified_by_user_id,
+        final_verified_by_employee_id,
+        final_verified_at,
         completed_at,
         created_at,
         updated_at,
@@ -154,6 +277,11 @@ export async function GET(req) {
           name
         ),
         assigned_employee:employees!operations_tasks_assigned_employee_id_fkey (
+          id,
+          full_name,
+          email
+        ),
+        current_reviewer:employees!operations_tasks_current_reviewer_employee_id_fkey (
           id,
           full_name,
           email
@@ -834,6 +962,11 @@ export async function PATCH(req) {
         reviewed_by_user_id,
         reviewed_by_employee_id,
         reviewed_at,
+        current_reviewer_employee_id,
+        review_step_count,
+        final_verified_by_user_id,
+        final_verified_by_employee_id,
+        final_verified_at,
         completed_at,
         created_at,
         updated_at
@@ -898,6 +1031,10 @@ export async function PATCH(req) {
       accessContext,
       teamEmployeeIds
     );
+    const isCurrentReviewer = Boolean(
+      accessContext.employeeId &&
+        existingTask.current_reviewer_employee_id === accessContext.employeeId
+    );
 
     if (ASSIGNEE_TASK_ACTIONS.has(action) && !isAssignee) {
       return NextResponse.json(
@@ -916,6 +1053,16 @@ export async function PATCH(req) {
     if (action === "comment" && !isAssignee && !hasManagerAuthority) {
       return NextResponse.json(
         { error: "You do not have permission to comment on this task." },
+        { status: 403 }
+      );
+    }
+
+    if (
+      ["request_changes", "approve"].includes(action) &&
+      !isCurrentReviewer
+    ) {
+      return NextResponse.json(
+        { error: "This review step is assigned to another manager." },
         { status: 403 }
       );
     }
@@ -1032,6 +1179,7 @@ export async function PATCH(req) {
     let newStatus = existingTask.status;
     let eventType = "status_change";
     let defaultUpdateText = "Task status updated.";
+    let eventMetadata = {};
 
     switch (action) {
       case "assign":
@@ -1104,6 +1252,11 @@ export async function PATCH(req) {
         updatePayload.reviewed_by_user_id = null;
         updatePayload.reviewed_by_employee_id = null;
         updatePayload.reviewed_at = null;
+        updatePayload.current_reviewer_employee_id = null;
+        updatePayload.review_step_count = 0;
+        updatePayload.final_verified_by_user_id = null;
+        updatePayload.final_verified_by_employee_id = null;
+        updatePayload.final_verified_at = null;
         updatePayload.completed_at = null;
         break;
       }
@@ -1129,6 +1282,11 @@ export async function PATCH(req) {
           updatePayload.reviewed_by_user_id = null;
           updatePayload.reviewed_by_employee_id = null;
           updatePayload.reviewed_at = null;
+          updatePayload.current_reviewer_employee_id = null;
+          updatePayload.review_step_count = 0;
+          updatePayload.final_verified_by_user_id = null;
+          updatePayload.final_verified_by_employee_id = null;
+          updatePayload.final_verified_at = null;
           updatePayload.completed_at = null;
         }
         break;
@@ -1166,20 +1324,48 @@ export async function PATCH(req) {
         defaultUpdateText = "Progress update added.";
         break;
 
-      case "submit_for_review":
+      case "submit_for_review": {
         if (existingTask.status !== "in_progress") {
           return invalidTransition(action, existingTask.status);
         }
 
+        const reviewRoute = await getReviewRoute(
+          admin,
+          existingTask.workspace_id,
+          existingTask.assigned_employee_id
+        );
+
+        if (!reviewRoute.reviewerEmployeeId) {
+          return NextResponse.json(
+            {
+              error:
+                "No management reviewer is configured for the assigned employee. Update the reporting hierarchy before submitting this task.",
+            },
+            { status: 409 }
+          );
+        }
+
         newStatus = "submitted_for_review";
         eventType = "submission";
-        defaultUpdateText = "Task submitted for management review.";
+        defaultUpdateText = `Task submitted to ${reviewRoute.reviewerName} for management review.`;
+        eventMetadata = {
+          current_reviewer_employee_id: reviewRoute.reviewerEmployeeId,
+          current_reviewer_name: reviewRoute.reviewerName,
+          review_step_count: 0,
+        };
         updatePayload.submitted_at = now;
         updatePayload.reviewed_by_user_id = null;
         updatePayload.reviewed_by_employee_id = null;
         updatePayload.reviewed_at = null;
+        updatePayload.current_reviewer_employee_id =
+          reviewRoute.reviewerEmployeeId;
+        updatePayload.review_step_count = 0;
+        updatePayload.final_verified_by_user_id = null;
+        updatePayload.final_verified_by_employee_id = null;
+        updatePayload.final_verified_at = null;
         updatePayload.completed_at = null;
         break;
+      }
 
       case "request_changes":
         if (existingTask.status !== "submitted_for_review") {
@@ -1193,23 +1379,74 @@ export async function PATCH(req) {
         updatePayload.reviewed_by_employee_id =
           accessContext.employeeId || null;
         updatePayload.reviewed_at = now;
+        updatePayload.current_reviewer_employee_id = null;
         updatePayload.completed_at = null;
         break;
 
-      case "approve":
+      case "approve": {
         if (existingTask.status !== "submitted_for_review") {
           return invalidTransition(action, existingTask.status);
         }
 
-        newStatus = "completed";
-        eventType = "approval";
-        defaultUpdateText = "Task approved and completed.";
+        const reviewRoute = await getReviewRoute(
+          admin,
+          existingTask.workspace_id,
+          accessContext.employeeId
+        );
+
         updatePayload.reviewed_by_user_id = user.id;
         updatePayload.reviewed_by_employee_id =
           accessContext.employeeId || null;
         updatePayload.reviewed_at = now;
-        updatePayload.completed_at = now;
+
+        if (reviewRoute.sourceRole === "owner") {
+          newStatus = "completed";
+          eventType = "final_verification";
+          defaultUpdateText = "Owner verified and completed the task.";
+          eventMetadata = {
+            final_verification: true,
+            final_verifier_employee_id: accessContext.employeeId || null,
+            review_step_count: existingTask.review_step_count || 0,
+          };
+          updatePayload.current_reviewer_employee_id = null;
+          updatePayload.final_verified_by_user_id = user.id;
+          updatePayload.final_verified_by_employee_id =
+            accessContext.employeeId || null;
+          updatePayload.final_verified_at = now;
+          updatePayload.completed_at = now;
+        } else {
+          if (!reviewRoute.reviewerEmployeeId) {
+            return NextResponse.json(
+              {
+                error:
+                  "The next reviewer could not be resolved from the reporting hierarchy.",
+              },
+              { status: 409 }
+            );
+          }
+
+          const nextReviewStep = (existingTask.review_step_count || 0) + 1;
+
+          newStatus = "submitted_for_review";
+          eventType = "review_approved";
+          defaultUpdateText = `Review approved and forwarded to ${reviewRoute.reviewerName}.`;
+          eventMetadata = {
+            final_verification: false,
+            approved_by_employee_id: accessContext.employeeId || null,
+            next_reviewer_employee_id: reviewRoute.reviewerEmployeeId,
+            next_reviewer_name: reviewRoute.reviewerName,
+            review_step_count: nextReviewStep,
+          };
+          updatePayload.current_reviewer_employee_id =
+            reviewRoute.reviewerEmployeeId;
+          updatePayload.review_step_count = nextReviewStep;
+          updatePayload.final_verified_by_user_id = null;
+          updatePayload.final_verified_by_employee_id = null;
+          updatePayload.final_verified_at = null;
+          updatePayload.completed_at = null;
+        }
         break;
+      }
 
       case "reopen":
         if (!["completed", "cancelled"].includes(existingTask.status)) {
@@ -1223,6 +1460,11 @@ export async function PATCH(req) {
         updatePayload.reviewed_by_user_id = null;
         updatePayload.reviewed_by_employee_id = null;
         updatePayload.reviewed_at = null;
+        updatePayload.current_reviewer_employee_id = null;
+        updatePayload.review_step_count = 0;
+        updatePayload.final_verified_by_user_id = null;
+        updatePayload.final_verified_by_employee_id = null;
+        updatePayload.final_verified_at = null;
         updatePayload.completed_at = null;
         break;
 
@@ -1234,6 +1476,10 @@ export async function PATCH(req) {
         newStatus = "cancelled";
         eventType = "cancelled";
         defaultUpdateText = "Task cancelled by management.";
+        updatePayload.current_reviewer_employee_id = null;
+        updatePayload.final_verified_by_user_id = null;
+        updatePayload.final_verified_by_employee_id = null;
+        updatePayload.final_verified_at = null;
         updatePayload.completed_at = null;
         break;
 
@@ -1251,12 +1497,24 @@ export async function PATCH(req) {
 
     updatePayload.status = newStatus;
 
-    const { data: updatedTask, error: updateError } = await admin
+    let taskUpdateQuery = admin
       .from("operations_tasks")
       .update(updatePayload)
       .eq("id", existingTask.id)
       .eq("workspace_id", existingTask.workspace_id)
-      .eq("status", existingTask.status)
+      .eq("status", existingTask.status);
+
+    if (
+      existingTask.status === "submitted_for_review" &&
+      existingTask.current_reviewer_employee_id
+    ) {
+      taskUpdateQuery = taskUpdateQuery.eq(
+        "current_reviewer_employee_id",
+        existingTask.current_reviewer_employee_id
+      );
+    }
+
+    const { data: updatedTask, error: updateError } = await taskUpdateQuery
       .select(
         `
         id,
@@ -1283,6 +1541,11 @@ export async function PATCH(req) {
         reviewed_by_user_id,
         reviewed_by_employee_id,
         reviewed_at,
+        current_reviewer_employee_id,
+        review_step_count,
+        final_verified_by_user_id,
+        final_verified_by_employee_id,
+        final_verified_at,
         completed_at,
         created_at,
         updated_at,
@@ -1291,6 +1554,11 @@ export async function PATCH(req) {
           name
         ),
         assigned_employee:employees!operations_tasks_assigned_employee_id_fkey (
+          id,
+          full_name,
+          email
+        ),
+        current_reviewer:employees!operations_tasks_current_reviewer_employee_id_fkey (
           id,
           full_name,
           email
@@ -1332,6 +1600,7 @@ export async function PATCH(req) {
         metadata: {
           action,
           source: "tasks_api",
+          ...eventMetadata,
           ...(assignmentEmployee
             ? {
                 assigned_employee_id: assignmentEmployee.id,
@@ -1383,6 +1652,14 @@ export async function PATCH(req) {
         reviewed_by_user_id: existingTask.reviewed_by_user_id,
         reviewed_by_employee_id: existingTask.reviewed_by_employee_id,
         reviewed_at: existingTask.reviewed_at,
+        current_reviewer_employee_id:
+          existingTask.current_reviewer_employee_id,
+        review_step_count: existingTask.review_step_count,
+        final_verified_by_user_id:
+          existingTask.final_verified_by_user_id,
+        final_verified_by_employee_id:
+          existingTask.final_verified_by_employee_id,
+        final_verified_at: existingTask.final_verified_at,
         completed_at: existingTask.completed_at,
         updated_at: existingTask.updated_at,
       };

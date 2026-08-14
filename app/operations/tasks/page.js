@@ -68,6 +68,8 @@ const EVENT_LABELS = {
   submission: "Submitted for review",
   changes_requested: "Changes requested",
   approval: "Approved",
+  review_approved: "Review approved",
+  final_verification: "Owner verified",
   reopened: "Reopened",
   cancelled: "Cancelled",
   deadline_set: "Deadline set",
@@ -144,9 +146,11 @@ function getAssigneeActions(status) {
   }
 }
 
-function getManagerActions(status) {
+function getManagerActions(status, isCurrentReviewer = false) {
   if (status === "submitted_for_review") {
-    return ["request_changes", "approve", "cancel"];
+    return isCurrentReviewer
+      ? ["request_changes", "approve", "cancel"]
+      : ["cancel"];
   }
 
   if (status === "completed" || status === "cancelled") {
@@ -154,6 +158,12 @@ function getManagerActions(status) {
   }
 
   return ["cancel"];
+}
+
+function getManagerActionLabel(action, role) {
+  if (action !== "approve") return ACTION_LABELS[action];
+
+  return role === "owner" ? "Verify and complete" : "Approve and forward";
 }
 
 function formatDateTime(value) {
@@ -954,8 +964,11 @@ export default function OperationsTasksPage() {
               const assigneeActions = isAssignee
                 ? getAssigneeActions(task.status)
                 : [];
+              const isCurrentReviewer =
+                Boolean(accessContext?.employeeId) &&
+                task.currentReviewerEmployeeId === accessContext.employeeId;
               const managerActions = canManageTasks
-                ? getManagerActions(task.status)
+                ? getManagerActions(task.status, isCurrentReviewer)
                 : [];
               const canAssign =
                 canManageTasks &&
@@ -1080,6 +1093,23 @@ export default function OperationsTasksPage() {
                             </dd>
                           ) : null}
                         </div>
+
+                        {task.status === "submitted_for_review" ? (
+                          <div>
+                            <dt className="text-xs uppercase tracking-wider text-zinc-500">
+                              Current reviewer
+                            </dt>
+                            <dd className="mt-1 text-zinc-200">
+                              {task.currentReviewerName ||
+                                "Review routing unavailable"}
+                            </dd>
+                            <dd className="mt-1 text-xs leading-5 text-sky-300">
+                              {isCurrentReviewer
+                                ? "Your review action is required."
+                                : "Awaiting this reviewer’s decision."}
+                            </dd>
+                          </div>
+                        ) : null}
 
                         {HISTORICAL_TASK_STATUSES.has(task.status) ? (
                           <div>
@@ -1266,7 +1296,12 @@ export default function OperationsTasksPage() {
                           }
                           onClick={() => handleAction(task, action)}
                         >
-                          {busy ? "Updating..." : ACTION_LABELS[action]}
+                          {busy
+                            ? "Updating..."
+                            : getManagerActionLabel(
+                                action,
+                                accessContext?.role
+                              )}
                         </button>
                       ))}
 
