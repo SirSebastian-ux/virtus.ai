@@ -228,6 +228,355 @@ function invalidTransition(action, status) {
   );
 }
 
+export async function POST(req) {
+  try {
+    const supabase = await createClient();
+    const admin = createAdminClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user?.id) {
+      return NextResponse.json(
+        { error: "Not authenticated." },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
+    const workspaceId = cleanText(body?.workspaceId);
+    const title = cleanText(body?.title);
+    const description = cleanText(body?.description);
+    const assignedEmployeeId = cleanText(body?.assignedEmployeeId);
+    const dueAt = cleanText(body?.dueAt);
+    const priority = cleanText(body?.priority || "normal").toLowerCase();
+
+    if (!workspaceId) {
+      return NextResponse.json(
+        { error: "workspaceId is required." },
+        { status: 400 }
+      );
+    }
+
+    if (title.length < 3 || title.length > 200) {
+      return NextResponse.json(
+        { error: "The task title must contain between 3 and 200 characters." },
+        { status: 400 }
+      );
+    }
+
+    if (description.length < 5 || description.length > 4000) {
+      return NextResponse.json(
+        {
+          error:
+            "The task instructions must contain between 5 and 4000 characters.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!assignedEmployeeId) {
+      return NextResponse.json(
+        { error: "Select an employee for this task." },
+        { status: 400 }
+      );
+    }
+
+    if (!dueAt) {
+      return NextResponse.json(
+        { error: "An exact deadline is required." },
+        { status: 400 }
+      );
+    }
+
+    const parsedDueAt = new Date(dueAt);
+
+    if (Number.isNaN(parsedDueAt.getTime())) {
+      return NextResponse.json(
+        { error: "The task deadline is not a valid date and time." },
+        { status: 400 }
+      );
+    }
+
+    if (parsedDueAt.getTime() <= Date.now()) {
+      return NextResponse.json(
+        { error: "The task deadline must be in the future." },
+        { status: 400 }
+      );
+    }
+
+    const allowedPriorities = new Set([
+      "normal",
+      "medium",
+      "high",
+      "critical",
+    ]);
+
+    if (!allowedPriorities.has(priority)) {
+      return NextResponse.json(
+        { error: "The selected task priority is not supported." },
+        { status: 400 }
+      );
+    }
+
+    const membership = await requireWorkspaceMember(
+      admin,
+      user.id,
+      workspaceId
+    );
+
+    if (!membership) {
+      return NextResponse.json(
+        { error: "Workspace access denied." },
+        { status: 403 }
+      );
+    }
+
+    const workspaceValidation = await validateWorkspaceMutationAllowed(
+      admin,
+      workspaceId
+    );
+
+    if (!workspaceValidation.allowed) {
+      return NextResponse.json(
+        { error: workspaceValidation.message },
+        { status: workspaceValidation.status }
+      );
+    }
+
+    const accessContext = await getOperationsAccessContext(
+      admin,
+      user.id,
+      workspaceId,
+      membership.role
+    );
+
+    if (!MANAGEMENT_TASK_ROLES.has(accessContext.role)) {
+      return NextResponse.json(
+        { error: "Management authority is required to create tasks." },
+        { status: 403 }
+      );
+    }
+
+    const teamEmployeeIds = await getTeamEmployeeIds(
+      admin,
+      workspaceId,
+      accessContext.employeeId
+    );
+
+    const { data: targetEmployee, error: employeeError } = await admin
+      .from("employees")
+      .select(
+        "id, workspace_id, department_id, full_name, email, employment_status"
+      )
+      .eq("id", assignedEmployeeId)
+      .eq("workspace_id", workspaceId)
+      .eq("employment_status", "active")
+      .maybeSingle();
+
+    if (employeeError) {
+      return NextResponse.json(
+        { error: employeeError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!targetEmployee) {
+      return NextResponse.json(
+        {
+          error:
+            "The selected employee was not found or is not active in this company.",
+        },
+        { status: 404 }
+      );
+    }
+
+    const assignmentScopedTask = {
+      department_id: targetEmployee.department_id || null,
+      assigned_employee_id: targetEmployee.id,
+    };
+
+    if (
+      !canManageTask(
+        assignmentScopedTask,
+        accessContext,
+        teamEmployeeIds
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "You do not have authority to assign a task to this employee.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const now = new Date().toISOString();
+    const normalizedDueAt = parsedDueAt.toISOString();
+
+    const insertPayload = {
+      workspace_id: workspaceId,
+      department_id: targetEmployee.department_id || null,
+      assigned_employee_id: targetEmployee.id,
+      title,
+      description,
+      status: "assigned",
+      priority,
+      source_type: "manual",
+      source_report_id: null,
+      created_by: user.id,
+      assigned_by_user_id: user.id,
+      assigned_by_employee_id: accessContext.employeeId || null,
+      assigned_at: now,
+      due_at: normalizedDueAt,
+      original_due_at: normalizedDueAt,
+      deadline_extension_count: 0,
+      deadline_last_changed_at: now,
+      deadline_last_changed_by_user_id: user.id,
+      deadline_last_changed_by_employee_id:
+        accessContext.employeeId || null,
+      updated_at: now,
+    };
+
+    const { data: createdTask, error: createError } = await admin
+      .from("operations_tasks")
+      .insert(insertPayload)
+      .select(
+        `
+        id,
+        workspace_id,
+        department_id,
+        assigned_employee_id,
+        title,
+        description,
+        status,
+        priority,
+        due_date,
+        due_at,
+        original_due_at,
+        deadline_extension_count,
+        source_report_id,
+        completed_at,
+        created_at,
+        updated_at,
+        departments (
+          id,
+          name
+        ),
+        assigned_employee:employees!operations_tasks_assigned_employee_id_fkey (
+          id,
+          full_name,
+          email
+        )
+      `
+      )
+      .single();
+
+    if (createError) {
+      return NextResponse.json(
+        { error: createError.message },
+        { status: 500 }
+      );
+    }
+
+    const employeeName =
+      targetEmployee.full_name ||
+      targetEmployee.email ||
+      "the selected employee";
+
+    const { data: taskUpdate, error: historyError } = await admin
+      .from("operations_task_updates")
+      .insert({
+        workspace_id: workspaceId,
+        task_id: createdTask.id,
+        employee_id: accessContext.employeeId || null,
+        update_text: `Task created and assigned to ${employeeName}.`,
+        status_after: "assigned",
+        created_by: user.id,
+        event_type: "assignment",
+        actor_employee_id: accessContext.employeeId || null,
+        previous_status: "open",
+        new_status: "assigned",
+        evidence: [],
+        metadata: {
+          action: "create_and_assign",
+          source: "tasks_api",
+          source_type: "manual",
+          assigned_employee_id: targetEmployee.id,
+          due_at: normalizedDueAt,
+          original_due_at: normalizedDueAt,
+          priority,
+        },
+      })
+      .select(
+        `
+        id,
+        workspace_id,
+        task_id,
+        employee_id,
+        update_text,
+        status_after,
+        created_by,
+        created_at,
+        event_type,
+        actor_employee_id,
+        previous_status,
+        new_status,
+        evidence,
+        metadata
+      `
+      )
+      .single();
+
+    if (historyError) {
+      const { error: cleanupError } = await admin
+        .from("operations_tasks")
+        .delete()
+        .eq("id", createdTask.id)
+        .eq("workspace_id", workspaceId);
+
+      if (cleanupError) {
+        return NextResponse.json(
+          {
+            error:
+              "Task history creation failed and the incomplete task could not be removed.",
+            details: {
+              history: historyError.message,
+              cleanup: cleanupError.message,
+            },
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error:
+            "Task history creation failed. The incomplete task was removed.",
+          details: historyError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        task: mapTask(createdTask),
+        taskUpdate,
+        accessContext,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
+}
 export async function PATCH(req) {
   try {
     const supabase = await createClient();

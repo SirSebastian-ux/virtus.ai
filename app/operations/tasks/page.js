@@ -247,6 +247,15 @@ export default function OperationsTasksPage() {
   const [assignmentDeadlines, setAssignmentDeadlines] = useState({});
   const [clockNow, setClockNow] = useState(null);
   const [updatingTaskId, setUpdatingTaskId] = useState("");
+  const [taskDraft, setTaskDraft] = useState({
+    title: "",
+    description: "",
+    priority: "normal",
+    assignedEmployeeId: "",
+    dueAt: "",
+  });
+  const [isCreationOpen, setIsCreationOpen] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -322,6 +331,14 @@ export default function OperationsTasksPage() {
 
       setActiveWorkspaceId(workspaceId);
       setActiveWorkspaceName(workspaceName);
+      setTaskDraft({
+        title: "",
+        description: "",
+        priority: "normal",
+        assignedEmployeeId: "",
+        dueAt: "",
+      });
+      setIsCreationOpen(false);
     }
 
     synchronizeActiveWorkspace();
@@ -348,6 +365,7 @@ export default function OperationsTasksPage() {
       window.clearTimeout(loadTimer);
     };
   }, [activeWorkspaceId, loadWorkspaceContext]);
+
 
   async function handleAction(
     task,
@@ -446,8 +464,112 @@ export default function OperationsTasksPage() {
     }
   }
 
+  async function handleCreateTask(event) {
+    event.preventDefault();
+
+    const title = taskDraft.title.trim();
+    const description = taskDraft.description.trim();
+
+    if (!canManageTasks) {
+      setError("Management authority is required to create tasks.");
+      return;
+    }
+
+    if (title.length < 3) {
+      setError("Enter a task title containing at least 3 characters.");
+      return;
+    }
+
+    if (description.length < 5) {
+      setError("Enter clear task instructions containing at least 5 characters.");
+      return;
+    }
+
+    if (!taskDraft.assignedEmployeeId) {
+      setError("Select the employee who will receive this task.");
+      return;
+    }
+
+    if (!taskDraft.dueAt) {
+      setError("Select the exact task deadline.");
+      return;
+    }
+
+    const parsedDueAt = new Date(taskDraft.dueAt);
+
+    if (Number.isNaN(parsedDueAt.getTime())) {
+      setError("The selected deadline is not a valid date and time.");
+      return;
+    }
+
+    if (parsedDueAt.getTime() <= Date.now()) {
+      setError("The task deadline must be in the future.");
+      return;
+    }
+
+    setIsCreatingTask(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/operations/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workspaceId: activeWorkspaceId,
+          title,
+          description,
+          priority: taskDraft.priority,
+          assignedEmployeeId: taskDraft.assignedEmployeeId,
+          dueAt: parsedDueAt.toISOString(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to create the task.");
+      }
+
+      setTaskDraft({
+        title: "",
+        description: "",
+        priority: "normal",
+        assignedEmployeeId: "",
+        dueAt: "",
+      });
+      setIsCreationOpen(false);
+      setTaskView("active");
+
+      window.dispatchEvent(
+        new CustomEvent("virtus-operations-metrics-changed", {
+          detail: {
+            workspaceId: activeWorkspaceId,
+          },
+        })
+      );
+
+      await loadWorkspaceContext(activeWorkspaceId);
+    } catch (creationError) {
+      setError(creationError.message || "Unable to create the task.");
+    } finally {
+      setIsCreatingTask(false);
+    }
+  }
   const role = accessContext?.role || "";
   const canManageTasks = MANAGER_ROLES.has(role);
+  const assignableEmployees = employees.filter((employee) => {
+    const employmentStatus =
+      employee?.employmentStatus ||
+      employee?.employment_status ||
+      "active";
+
+    return employmentStatus === "active";
+  });
+  const creationMinimumDeadlineValue = clockNow
+    ? toDateTimeLocalValue(new Date(clockNow + 60000))
+    : undefined;
   const activeTasks = tasks.filter(
     (task) => !HISTORICAL_TASK_STATUSES.has(task.status)
   );
@@ -537,6 +659,204 @@ export default function OperationsTasksPage() {
           </div>
         ) : null}
 
+        {activeWorkspaceId && !isLoading && canManageTasks ? (
+          <section className="mb-6 rounded-2xl border border-amber-500/20 bg-zinc-900/70 p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-zinc-100">
+                  Management task assignment
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-zinc-400">
+                  Create accountable work inside your authorized organizational
+                  scope. Every assignment is recorded in Task History.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setError("");
+                  setIsCreationOpen((current) => !current);
+                }}
+                className="rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300"
+              >
+                {isCreationOpen
+                  ? "Close task creation"
+                  : "Create and assign task"}
+              </button>
+            </div>
+
+            {isCreationOpen ? (
+              <form
+                onSubmit={handleCreateTask}
+                className="mt-5 border-t border-zinc-800 pt-5"
+              >
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="new-task-title"
+                      className="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                    >
+                      Task title
+                    </label>
+                    <input
+                      id="new-task-title"
+                      type="text"
+                      value={taskDraft.title}
+                      onChange={(event) =>
+                        setTaskDraft((current) => ({
+                          ...current,
+                          title: event.target.value,
+                        }))
+                      }
+                      minLength={3}
+                      maxLength={200}
+                      required
+                      placeholder="State the required outcome"
+                      className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-amber-500"
+                      disabled={isCreatingTask}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="new-task-priority"
+                      className="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                    >
+                      Priority
+                    </label>
+                    <select
+                      id="new-task-priority"
+                      value={taskDraft.priority}
+                      onChange={(event) =>
+                        setTaskDraft((current) => ({
+                          ...current,
+                          priority: event.target.value,
+                        }))
+                      }
+                      className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                      disabled={isCreatingTask}
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label
+                    htmlFor="new-task-description"
+                    className="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                  >
+                    Task instructions
+                  </label>
+                  <textarea
+                    id="new-task-description"
+                    rows={4}
+                    value={taskDraft.description}
+                    onChange={(event) =>
+                      setTaskDraft((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
+                    minLength={5}
+                    maxLength={4000}
+                    required
+                    placeholder="Describe the expected result, relevant requirements, and completion standard."
+                    className="mt-2 w-full resize-y rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-amber-500"
+                    disabled={isCreatingTask}
+                  />
+                </div>
+
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="new-task-assignee"
+                      className="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                    >
+                      Assign to
+                    </label>
+                    <select
+                      id="new-task-assignee"
+                      value={taskDraft.assignedEmployeeId}
+                      onChange={(event) =>
+                        setTaskDraft((current) => ({
+                          ...current,
+                          assignedEmployeeId: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                      disabled={isCreatingTask}
+                    >
+                      <option value="">Select employee</option>
+                      {assignableEmployees.map((employee) => (
+                        <option
+                          key={getEmployeeId(employee)}
+                          value={getEmployeeId(employee)}
+                        >
+                          {getEmployeeName(employee)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="new-task-deadline"
+                      className="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                    >
+                      Exact deadline
+                    </label>
+                    <input
+                      id="new-task-deadline"
+                      type="datetime-local"
+                      value={taskDraft.dueAt}
+                      min={creationMinimumDeadlineValue}
+                      onChange={(event) =>
+                        setTaskDraft((current) => ({
+                          ...current,
+                          dueAt: event.target.value,
+                        }))
+                      }
+                      required
+                      className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100 outline-none focus:border-amber-500"
+                      disabled={isCreatingTask}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={
+                      isCreatingTask ||
+                      taskDraft.title.trim().length < 3 ||
+                      taskDraft.description.trim().length < 5 ||
+                      !taskDraft.assignedEmployeeId ||
+                      !taskDraft.dueAt
+                    }
+                    className="rounded-xl bg-amber-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isCreatingTask
+                      ? "Creating task..."
+                      : "Create and assign task"}
+                  </button>
+
+                  {assignableEmployees.length === 0 ? (
+                    <p className="text-sm text-zinc-500">
+                      No active employee is available inside your authorized
+                      scope.
+                    </p>
+                  ) : null}
+                </div>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
         {!activeWorkspaceId ? (
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8">
             <h2 className="text-lg font-semibold">No active company selected</h2>
