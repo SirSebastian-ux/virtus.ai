@@ -171,9 +171,109 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const taskRows = data || [];
+    const taskIds = taskRows.map((task) => task.id).filter(Boolean);
+    const taskUpdatesByTaskId = new Map();
+
+    if (taskIds.length > 0) {
+      const { data: updateRows, error: taskUpdatesError } = await admin
+        .from("operations_task_updates")
+        .select(
+          `
+          id,
+          task_id,
+          employee_id,
+          update_text,
+          status_after,
+          created_at,
+          event_type,
+          actor_employee_id,
+          previous_status,
+          new_status,
+          evidence,
+          metadata
+        `
+        )
+        .eq("workspace_id", workspaceId)
+        .in("task_id", taskIds)
+        .order("created_at", { ascending: true });
+
+      if (taskUpdatesError) {
+        return NextResponse.json(
+          { error: taskUpdatesError.message },
+          { status: 500 }
+        );
+      }
+
+      const actorEmployeeIds = [
+        ...new Set(
+          (updateRows || [])
+            .map(
+              (update) =>
+                update.actor_employee_id || update.employee_id || null
+            )
+            .filter(Boolean)
+        ),
+      ];
+      const actorNamesByEmployeeId = new Map();
+
+      if (actorEmployeeIds.length > 0) {
+        const { data: actorEmployees, error: actorEmployeesError } = await admin
+          .from("employees")
+          .select("id, full_name, email")
+          .eq("workspace_id", workspaceId)
+          .in("id", actorEmployeeIds);
+
+        if (actorEmployeesError) {
+          return NextResponse.json(
+            { error: actorEmployeesError.message },
+            { status: 500 }
+          );
+        }
+
+        for (const employee of actorEmployees || []) {
+          actorNamesByEmployeeId.set(
+            employee.id,
+            employee.full_name || employee.email || "Unnamed employee"
+          );
+        }
+      }
+
+      for (const update of updateRows || []) {
+        const actorEmployeeId =
+          update.actor_employee_id || update.employee_id || null;
+        const taskUpdate = {
+          id: update.id,
+          taskId: update.task_id,
+          employeeId: update.employee_id || null,
+          actorEmployeeId,
+          actorName:
+            actorNamesByEmployeeId.get(actorEmployeeId) || "System record",
+          updateText: update.update_text,
+          statusAfter: update.status_after || null,
+          eventType: update.event_type || "comment",
+          previousStatus: update.previous_status || null,
+          newStatus: update.new_status || null,
+          evidence: Array.isArray(update.evidence) ? update.evidence : [],
+          metadata:
+            update.metadata && typeof update.metadata === "object"
+              ? update.metadata
+              : {},
+          createdAt: update.created_at,
+        };
+        const currentUpdates = taskUpdatesByTaskId.get(update.task_id) || [];
+
+        currentUpdates.push(taskUpdate);
+        taskUpdatesByTaskId.set(update.task_id, currentUpdates);
+      }
+    }
+
     return NextResponse.json({
       accessContext,
-      tasks: (data || []).map(mapTask),
+      tasks: taskRows.map((task) => ({
+        ...mapTask(task),
+        updates: taskUpdatesByTaskId.get(task.id) || [],
+      })),
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -57,8 +57,43 @@ const ACTION_LABELS = {
   comment: "Add comment",
 };
 
+const EVENT_LABELS = {
+  assignment: "Assigned",
+  reassignment: "Reassigned",
+  acknowledgement: "Acknowledged",
+  comment: "Comment added",
+  progress_update: "Progress recorded",
+  status_change: "Status changed",
+  blocked: "Marked blocked",
+  submission: "Submitted for review",
+  changes_requested: "Changes requested",
+  approval: "Approved",
+  reopened: "Reopened",
+  cancelled: "Cancelled",
+  deadline_set: "Deadline set",
+  deadline_extension_requested: "Deadline extension requested",
+  deadline_extension_approved: "Deadline extension approved",
+  deadline_extension_rejected: "Deadline extension rejected",
+  deadline_extension_cancelled: "Deadline extension cancelled",
+};
+
 function getStatusLabel(status) {
   return STATUS_LABELS[status] || status || "Unknown";
+}
+
+function getEventLabel(eventType) {
+  return EVENT_LABELS[eventType] || "Task updated";
+}
+
+function getTaskUpdateStatusText(update) {
+  const previousStatus = update?.previousStatus || "";
+  const newStatus = update?.newStatus || update?.statusAfter || "";
+
+  if (!previousStatus || !newStatus || previousStatus === newStatus) {
+    return "";
+  }
+
+  return `${getStatusLabel(previousStatus)} → ${getStatusLabel(newStatus)}`;
 }
 
 function getStatusClasses(status) {
@@ -674,7 +709,7 @@ export default function OperationsTasksPage() {
                   : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600"
               }`}
             >
-              Task History ({historicalTasks.length})
+              Closed Tasks ({historicalTasks.length})
             </button>
           </div>
         ) : null}
@@ -899,7 +934,7 @@ export default function OperationsTasksPage() {
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8">
             <h2 className="text-lg font-semibold">
               {taskView === "history"
-                ? "No task history yet"
+                ? "No closed tasks yet"
                 : "No active tasks"}
             </h2>
 
@@ -966,6 +1001,9 @@ export default function OperationsTasksPage() {
               const deadlineState = getDeadlineState(task, clockNow);
               const busy = updatingTaskId === task.id;
               const note = notes[task.id] || "";
+              const taskUpdates = Array.isArray(task.updates)
+                ? task.updates
+                : [];
 
               return (
                 <article
@@ -1242,6 +1280,73 @@ export default function OperationsTasksPage() {
                       </button>
                     </div>
                   </div>
+
+                  <section className="mt-6 border-t border-zinc-800 pt-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-zinc-100">
+                          Task Activity
+                        </h3>
+                        <p className="mt-1 text-xs leading-5 text-zinc-500">
+                          Permanent chronological record of task actions and
+                          written updates.
+                        </p>
+                      </div>
+
+                      <span className="rounded-full border border-zinc-700 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">
+                        {taskUpdates.length}{" "}
+                        {taskUpdates.length === 1 ? "event" : "events"}
+                      </span>
+                    </div>
+
+                    {taskUpdates.length === 0 ? (
+                      <p className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-3 text-sm text-zinc-500">
+                        No task activity has been recorded.
+                      </p>
+                    ) : (
+                      <ol className="mt-4 space-y-3">
+                        {taskUpdates.map((update) => {
+                          const statusTransition =
+                            getTaskUpdateStatusText(update);
+
+                          return (
+                            <li
+                              key={update.id}
+                              className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4"
+                            >
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <p className="text-sm font-semibold text-zinc-200">
+                                    {getEventLabel(update.eventType)}
+                                  </p>
+                                  <p className="mt-1 text-xs text-zinc-500">
+                                    By {update.actorName || "System record"}
+                                  </p>
+                                </div>
+
+                                <time
+                                  dateTime={update.createdAt || undefined}
+                                  className="text-xs text-zinc-500"
+                                >
+                                  {formatDateTime(update.createdAt)}
+                                </time>
+                              </div>
+
+                              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">
+                                {update.updateText || "Task activity recorded."}
+                              </p>
+
+                              {statusTransition ? (
+                                <p className="mt-3 inline-flex rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-400">
+                                  {statusTransition}
+                                </p>
+                              ) : null}
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    )}
+                  </section>
                 </article>
               );
             })}
