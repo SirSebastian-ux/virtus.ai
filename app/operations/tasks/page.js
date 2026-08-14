@@ -229,6 +229,32 @@ function getEmployeeName(employee) {
   );
 }
 
+function formatEmployeeRole(value) {
+  return String(value || "")
+    .trim()
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function getEmployeeAssignmentLabel(employee) {
+  const name = getEmployeeName(employee);
+  const roleValue = String(employee?.role || "").trim().toLowerCase();
+  const positionTitle = String(
+    employee?.positionTitle || employee?.position_title || ""
+  ).trim();
+  const roleLabel =
+    roleValue && roleValue !== "employee"
+      ? formatEmployeeRole(roleValue)
+      : positionTitle || formatEmployeeRole(roleValue || "employee");
+  const departmentName =
+    employee?.departmentName ||
+    employee?.department_name ||
+    "No department";
+
+  return [name, roleLabel, departmentName].filter(Boolean).join(" — ");
+}
 function getEmployeeDepartmentId(employee) {
   return employee?.departmentId || employee?.department_id || null;
 }
@@ -798,7 +824,7 @@ export default function OperationsTasksPage() {
                           key={getEmployeeId(employee)}
                           value={getEmployeeId(employee)}
                         >
-                          {getEmployeeName(employee)}
+                          {getEmployeeAssignmentLabel(employee)}
                         </option>
                       ))}
                     </select>
@@ -1066,7 +1092,7 @@ export default function OperationsTasksPage() {
                               key={getEmployeeId(employee)}
                               value={getEmployeeId(employee)}
                             >
-                              {getEmployeeName(employee)}
+                              {getEmployeeAssignmentLabel(employee)}
                             </option>
                           ))}
                         </select>
