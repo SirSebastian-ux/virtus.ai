@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 
 const BLOCKED_PROFILE_FIELDS = new Set([
   "plan",
@@ -130,7 +131,7 @@ export async function POST(request) {
       });
     }
 
-    const { error } = await supabase
+    const { error } = await createAdminClient()
       .from("profiles")
       .update(profileUpdate)
       .eq("id", user.id);
