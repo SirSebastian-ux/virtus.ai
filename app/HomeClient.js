@@ -5429,11 +5429,11 @@ return (
         <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-[#102b29] via-[#0c211f] to-[#081816] border-r border-[#d8bd85]/20 h-full flex-col shadow-[inset_-1px_0_0_rgba(216,189,133,0.08)]">
           <div className="px-4 pt-5 pb-5 border-b border-[#d8bd85]/15 bg-black/10 flex flex-col items-center gap-2">
   <Image
-    src="/virtus-logo.png"
+    src="/virtus-premium-emblem.webp"
     alt="Virtus AI logo"
-    width={190}
-    height={80}
-    className="block h-auto w-[150px] object-contain"
+    width={180}
+    height={202}
+    className="block h-auto w-[100px] object-contain"
   />
   <p className="font-serif text-[25px] tracking-[0.08em] text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p>
   <p className="text-[9px] uppercase tracking-[0.18em] text-[#d8bd85]">By Enhanced Wellness Solutions</p>
@@ -6124,10 +6124,10 @@ if (data.conversation) {
     aria-label="Open Virtus menu"
   >
     <Image
-      src="/virtus-logo.png"
+      src="/virtus-premium-emblem.webp"
       alt="Virtus AI"
-      width={112}
-      height={48}
+      width={34}
+      height={38}
       className="h-7 w-auto object-contain"
     />
   </button>
@@ -6152,10 +6152,10 @@ if (data.conversation) {
 
 <div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
   <Image
-    src="/virtus-logo.png"
+    src="/virtus-premium-emblem.webp"
     alt="Virtus AI"
-    width={128}
-    height={54}
+    width={38}
+    height={42}
     className="h-8 w-auto object-contain"
   />
 </div>
@@ -6184,10 +6184,10 @@ if (data.conversation) {
         >
           <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
             <Image
-              src="/virtus-logo.png"
+              src="/virtus-premium-emblem.webp"
               alt="Virtus AI"
-              width={160}
-              height={68}
+              width={42}
+              height={47}
               className="h-10 w-auto object-contain"
             />
 
