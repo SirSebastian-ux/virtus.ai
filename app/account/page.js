@@ -102,9 +102,9 @@ export default async function AccountPage() {
                className="flex items-center justify-between virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10"
               >
                 <div>
-                  <p className="text-sm font-medium virtus-theme-title">Upgrade plan</p>
+                  <p className="text-sm font-medium virtus-theme-title">Coaching plans</p>
                   <p className="mt-1 text-xs virtus-theme-muted">
-                    Manage your Virtus access
+                    Explore Life Coach, Trainer, and Mentor
                   </p>
                 </div>
 <span className="text-sky-300/60">&rsaquo;</span>
@@ -114,7 +114,7 @@ export default async function AccountPage() {
                 <div>
                   <p className="text-sm font-medium virtus-theme-title">Settings</p>
                   <p className="mt-1 text-xs virtus-theme-muted">
-                    Account foundation page
+                    Appearance and account preferences
                   </p>
                 </div>
   <span className="text-sky-300/70">&#10003;</span>
@@ -141,7 +141,7 @@ export default async function AccountPage() {
 <section className="virtus-theme-surface rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
 <h2 className="text-xl font-semibold virtus-theme-title">Settings</h2>
             <p className="mt-2 text-sm virtus-theme-muted">
-              A cleaner account structure, closer to the style you showed.
+              Manage your personal development experience, account preferences, and coaching access.
             </p>
 
             <div className="mt-6">
