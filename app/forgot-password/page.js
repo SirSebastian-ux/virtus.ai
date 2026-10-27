@@ -57,11 +57,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen virtus-theme-page flex items-center justify-center px-6">
-      <div className="virtus-theme-surface w-full max-w-md rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-        <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
-          Virtus AI
-        </p>
+    <main className="min-h-screen flex items-center justify-center bg-[#091b1c] px-5 py-12 text-[#f5f3ec]">
+      <div className="w-full max-w-[480px] rounded-[2rem] border border-[#d8bd85]/25 bg-gradient-to-b from-[#173632] to-[#0b2422] p-7 sm:p-10 shadow-[0_30px_100px_rgba(0,0,0,0.4)]">
+        <div className="mb-6 flex flex-col items-center gap-2 border-b border-[#d8bd85]/15 pb-6"><img src="/virtus-coaching-mark.svg" alt="Virtus AI shield" width="78" height="78" className="h-[78px] w-[78px]" /><p className="font-serif text-2xl tracking-wider text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p><p className="text-[10px] uppercase tracking-[0.2em] text-[#d8bd85]">By Enhanced Wellness Solutions</p></div>
 
         <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
           Reset password
@@ -72,8 +70,8 @@ export default function ForgotPasswordPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10">
-            <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
+          <div className="bg-[#0b211f]/65 rounded-2xl border border-[#d8bd85]/20 px-4 py-4 shadow-sm shadow-sky-950/10">
+            <label className="block text-xs uppercase tracking-[0.18em] text-[#d8bd85]">
               Email
             </label>
 
@@ -82,7 +80,7 @@ export default function ForgotPasswordPage() {
               pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="virtus-theme-input mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-sm outline-none transition"
+              className="bg-[#081b1a] text-[#f5f3ec] placeholder:text-[#8daba5] focus:border-[#d8bd85] mt-3 w-full rounded-2xl border border-[#d8bd85]/30 px-4 py-3 text-sm outline-none transition"
               placeholder="you@example.com"
               required
             />
@@ -91,21 +89,21 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-2xl border border-sky-900/30 bg-sky-950/30 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-800/40 hover:bg-sky-900/35 disabled:opacity-50"
+            className="w-full rounded-2xl border border-[#e0c58c] bg-[#d8bd85] py-3 text-sm font-semibold text-[#102623] transition hover:bg-[#f0d99d] disabled:opacity-50"
           >
             {loading ? "Sending..." : "Send reset link"}
           </button>
         </form>
 
         {message ? (
-          <p className="virtus-theme-card mt-4 rounded-2xl border border-sky-900/20 px-4 py-3 text-sm virtus-theme-title">
+          <p className="virtus-theme-card mt-4 rounded-2xl border border-[#d8bd85]/20 px-4 py-3 text-sm virtus-theme-title">
             {message}
           </p>
         ) : null}
 
         <Link
           href="/login"
-          className="mt-6 inline-block text-sm text-sky-300/70 transition hover:text-sky-200"
+          className="mt-6 inline-block text-sm text-[#d8bd85] transition hover:text-[#f5e0aa]"
         >
           Return to sign in
         </Link>
