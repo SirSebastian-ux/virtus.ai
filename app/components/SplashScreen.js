@@ -29,12 +29,12 @@ export default function SplashScreen({ onFinish }) {
         className={`relative flex w-full max-w-md flex-col items-center text-center transition-all duration-700 ease-out motion-reduce:transition-none ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0"}`}
       >
         <Image
-          src="/virtus-logo.png"
+          src="/virtus-premium-emblem.webp"
           alt="Virtus AI gold and blue shield with a central I and water reflection"
-          width={220}
-          height={245}
+          width={180}
+          height={202}
           priority
-          className="h-auto w-[132px] sm:w-[170px] drop-shadow-[0_0_24px_rgba(218,181,104,0.16)]"
+          className="h-auto w-[128px] sm:w-[148px] drop-shadow-[0_0_24px_rgba(218,181,104,0.16)]"
         />
         <h1 className="mt-4 font-serif text-4xl tracking-[0.08em] text-[#e8c985] sm:text-5xl">
           Virtus <span className="text-[#8ad5e6]">AI</span>
