@@ -5329,7 +5329,7 @@ return (
   )}
 
 <main
-  className="virtus-chat-root h-[100dvh] md:h-screen overflow-hidden bg-zinc-900 text-zinc-100"
+  className="virtus-chat-root h-[100dvh] md:h-screen overflow-hidden bg-[#091b1c] text-[#f5f3ec]"
   onClick={() => {
     if (!showPlanOverlay) return;
     setShowPlanOverlay(false);
@@ -5422,19 +5422,20 @@ return (
 )}
 
  <div className="flex h-full">
-        <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-zinc-950 via-sky-950/10 to-black border-r border-sky-900/25 h-full flex-col shadow-[inset_-1px_0_0_rgba(14,165,233,0.12)]">
-          <div className="px-4 pt-4 pb-3 border-b border-sky-900/20 bg-black/20 flex justify-center">
+        <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-[#102b29] via-[#0c211f] to-[#081816] border-r border-[#d8bd85]/20 h-full flex-col shadow-[inset_-1px_0_0_rgba(216,189,133,0.08)]">
+          <div className="px-4 pt-5 pb-5 border-b border-[#d8bd85]/15 bg-black/10 flex flex-col items-center gap-2">
   <Image
     src="/virtus-logo.png"
     alt="Virtus AI logo"
     width={190}
     height={80}
-    className="block h-auto w-[190px] object-contain"
+    className="block h-auto w-[150px] object-contain"
   />
+  <p className="text-[9px] uppercase tracking-[0.18em] text-[#d8bd85]">By Enhanced Wellness Solutions</p>
 </div>
 
                     <div className="virtus-scrollbar flex-1 overflow-y-auto overflow-x-hidden p-3">
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 aria-label="Search"
@@ -5491,40 +5492,11 @@ return (
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">New Chat</span>
               </button>
 
-              <button
-                type="button"
-                aria-label="Meetings"
-                onClick={() => router.push("/meetings")}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="3" y="5" width="14" height="14" rx="2" /><path d="m17 9 4-2v10l-4-2" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Meetings</span>
-              </button>
 
-              <button
-                type="button"
-                aria-label="Business"
-                onClick={() => router.push("/operations")}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 20V8" /><path d="M10 20V4" /><path d="M16 20v-7" /><path d="M22 20H2" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Business</span>
-              </button>
 
-              <button
-                type="button"
-                aria-label="Capture"
-                onClick={() => {
-                  setCaptureOpen(!captureOpen);
-                  setSearchOpen(false);
-                  setProjectsOpen(false);
-                  setPracticeOpen(false);
-                }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Capture</span>
-              </button>
+
+
+
 
               <button
                 type="button"
@@ -5804,7 +5776,7 @@ return (
         );
   }).length === 0 ? (
     <div className="rounded-xl px-3 py-2 text-sm text-zinc-400 bg-zinc-900/60 border border-zinc-800">
-      Recent conversations will appear here
+      Your conversations will appear here
     </div>
   ) : (
     recentConversations
@@ -6576,7 +6548,7 @@ if (data.conversation) {
         href="/upgrade"
         className="select-text inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
       >
-        Plan: {displayPlanLabel}
+        Your plan: {displayPlanLabel}
       </Link>
 
       {isTrialGuestExpired && (
@@ -7002,10 +6974,11 @@ setRegenerating(true);
       </div>
     </div>
   ) : (
-    <div className="rounded-3xl border border-sky-900/20 bg-zinc-950/25 px-8 py-6 text-center shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-      <p className="text-sm font-medium text-sky-200">Ask Virtus anything.</p>
+    <div className="rounded-[2rem] border border-[#d8bd85]/20 bg-gradient-to-br from-[#173632] to-[#0c2422] px-9 py-10 text-center shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-sm max-w-xl">
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d8bd85]">Your personal development space</p>
+      <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#f5f3ec]">What would you like to explore today?</h1>
       <p className="mt-2 text-xs virtus-theme-muted">
-        Think clearly. Act deliberately. Build with discipline.
+        Reflect with your Life Coach, develop skills with your Trainer, or grow with your Mentor.
       </p>
     </div>
   )}
@@ -7348,7 +7321,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       : currentPlanKey === "plus"
       ? "Plus daily limit reached. Premium / Virtus Prime unlocks unlimited daily use."
       : "Daily limit reached for your current plan"
-      : activeProject?.title ? `New chat in ${activeProject.title}...` : "Message Virtus..."
+      : activeProject?.title ? `New chat in ${activeProject.title}...` : "Ask Virtus anything..."
   }
   value={message}
   disabled={loading || isDailyLimitReached || isTrialGuestExpired}
