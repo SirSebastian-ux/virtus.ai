@@ -1997,6 +1997,46 @@ if (imageFiles.length && !isGuest) {
     }
   }
 }
+// Latest recorded coaching observations supplement, but never override,
+// the current conversation or a client's own self-correction.
+let coachingReviewContext = "";
+if (!isGuest && memoryEnabled && chatHistoryEnabled && ["premium", "plus"].includes(plan)) {
+  try {
+    const { data: review } = await supabase
+      .from("coaching_progress_reviews")
+      .select("created_at,observations")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (review && Array.isArray(review.observations)) {
+      const observations = review.observations
+        .filter(item => item && typeof item === "object")
+        .slice(0, 8)
+        .map(item => ({
+          skill: String(item.skill || "").slice(0, 70),
+          direction: ["improving", "declining", "stable", "unclear"].includes(item.direction)
+            ? item.direction : "unclear",
+          confidence: ["low", "medium", "high"].includes(item.confidence)
+            ? item.confidence : "low",
+          evidence: String(item.evidence || "").slice(0, 300),
+        }));
+      coachingReviewContext = `
+# PREVIOUS COACHING OBSERVATIONS (TENTATIVE, USER-OWNED)
+Recorded: ${review.created_at}
+These are historical model-generated interpretations, not diagnoses, trait scores,
+or proof of growth/regression. Use only if directly relevant to the current
+coaching discussion. Verify against current statements; do not assume they
+remain true. Never cite a review as evidence of an inherent psychological trait.
+${JSON.stringify(observations)}
+`;
+    }
+  } catch (error) {
+    console.warn("Historical coaching context unavailable", error?.message || "");
+  }
+}
+
 const isContinuationOnlyMessage =
   /^(yes\s*)?(please\s*)?(continue|continiue|go on|tell me more|give me more|more info|more information|carry on)\.?\s*$/i.test(
     String(message || "").trim()
@@ -4933,7 +4973,7 @@ ${VIRTUS_INTELLIGENCE_QUALITY_LAYER}
 
 ` : ""}${latestFileText ? `${latestFileText}
 
-` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
+` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
 
 ` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
