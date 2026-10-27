@@ -3,6 +3,7 @@ import BillingPortalButton from "./BillingPortalButton";
 import LogoutButton from "./LogoutButton";
 import CustomizeAppearance from "./CustomizeAppearance";
 import ProfileNameEditor from "./ProfileNameEditor";
+import CoachingProgress from "./CoachingProgress";
 import { createClient } from "@/lib/supabase-server";
 import {
   getPlanLabel,
@@ -150,6 +151,7 @@ export default async function AccountPage() {
             </div>
 
             <div className="mt-6">
+              <CoachingProgress />
               <CustomizeAppearance />
             </div>
 
