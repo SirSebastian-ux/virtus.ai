@@ -1,6 +1,8 @@
 "use client";
 
 import SplashScreen from "./components/SplashScreen";
+import LuxuryWelcome from "./components/LuxuryWelcome";
+import LuxurySidebarNav from "./components/LuxurySidebarNav";
 import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import { useMemo } from "react";
@@ -89,6 +91,8 @@ const [showMobileMenu, setShowMobileMenu] = useState(false);
 const [practiceOpen, setPracticeOpen] = useState(false);
 const [searchOpen, setSearchOpen] = useState(false);
 const [recentOpen, setRecentOpen] = useState(false);
+const [luxuryToolsOpen, setLuxuryToolsOpen] = useState(false);
+const [luxuryActiveNav, setLuxuryActiveNav] = useState("home");
 const [captureOpen, setCaptureOpen] = useState(false);
 const [captureNotes, setCaptureNotes] = useState([]);
 const [loadingCaptureNotes, setLoadingCaptureNotes] = useState(false);
@@ -5326,6 +5330,57 @@ const renderAssistantActions = (item, index) => {
   );
 };
 
+
+  function openLuxuryHome() {
+    if (loading) {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+    }
+    stopVirtusVoice();
+    const newChatId = getGuestSidebarChatId(guestAccess?.plan, crypto.randomUUID());
+    localStorage.setItem("virtus_chat_id", newChatId);
+    setActiveChatId(newChatId);
+    setActiveProject(null);
+    setProjectHomeOpen(false);
+    setConversation([]);
+    setMessage("");
+    setReply("");
+    setStreamingReply("");
+    setRegenerating(false);
+    setEditingIndex(null);
+    setEditingText("");
+    setIsPracticeMode(null);
+    setShouldAutoScroll(true);
+    setShowMobileMenu(false);
+    setLuxuryActiveNav("home");
+  }
+  function openLuxuryTools() {
+    setLuxuryToolsOpen((previous) => !previous);
+    setSearchOpen(false);
+    setProjectsOpen(false);
+    setPracticeOpen(false);
+    setCaptureOpen(false);
+    setLuxuryActiveNav("tools");
+  }
+  function openLuxuryLibrary() {
+    setLuxuryActiveNav("library");
+    setLuxuryToolsOpen(false);
+    setShowFileMenu(true);
+    setShowDocumentLibrary(true);
+    loadUploadedFiles();
+    textareaRef.current?.focus();
+  }
+  function useLuxuryPrompt(prompt) {
+    if (loading || isDailyLimitReached || isTrialGuestExpired) return;
+    setMessage(prompt);
+    setLuxuryActiveNav("chat");
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(prompt.length, prompt.length);
+    });
+  }
+
 return (
 <>
   {showSplash && (
@@ -5333,7 +5388,7 @@ return (
   )}
 
 <main
-  className="virtus-chat-root h-[100dvh] md:h-screen overflow-hidden bg-[#091b1c] text-[#f5f3ec]"
+  className="virtus-chat-root virtus-luxury h-[100dvh] md:h-screen overflow-hidden bg-[#091b1c] text-[#f5f3ec]"
   onClick={() => {
     if (!showPlanOverlay) return;
     setShowPlanOverlay(false);
@@ -5426,21 +5481,30 @@ return (
 )}
 
  <div className="flex h-full">
-        <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-[#102b29] via-[#0c211f] to-[#081816] border-r border-[#d8bd85]/20 h-full flex-col shadow-[inset_-1px_0_0_rgba(216,189,133,0.08)]">
-          <div className="px-4 pt-5 pb-5 border-b border-[#d8bd85]/15 bg-black/10 flex flex-col items-center gap-2">
+        <aside className="virtus-luxury-sidebar hidden md:flex h-full flex-col">
+          <div className="virtus-luxury-brand flex flex-col items-center gap-2">
   <Image
     src="/virtus-premium-emblem.webp"
     alt="Virtus AI logo"
     width={180}
     height={202}
-    className="block h-auto w-[100px] object-contain"
+    className="block object-contain"
   />
-  <p className="font-serif text-[25px] tracking-[0.08em] text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p>
-  <p className="text-[9px] uppercase tracking-[0.18em] text-[#d8bd85]">By Enhanced Wellness Solutions</p>
+  <p className="virtus-luxury-brand-name">Virtus <span className="text-[#8ad5e6]">AI</span></p>
+  <p className="virtus-luxury-brand-caption">By Enhanced Wellness Solutions</p>
 </div>
 
                     <div className="virtus-scrollbar flex-1 overflow-y-auto overflow-x-hidden p-3">
-            <div className="grid grid-cols-3 gap-2">
+            <LuxurySidebarNav
+              active={luxuryActiveNav}
+              onHome={openLuxuryHome}
+              onNewChat={() => { openLuxuryHome(); textareaRef.current?.focus(); setLuxuryActiveNav("chat"); }}
+              onLibrary={openLuxuryLibrary}
+              onTools={openLuxuryTools}
+              onRecent={() => setRecentOpen((previous) => !previous)}
+              recentOpen={recentOpen}
+            />
+            <div className={luxuryToolsOpen ? "grid grid-cols-3 gap-2 mt-3" : "hidden"}>
               <button
                 type="button"
                 aria-label="Search"
@@ -5716,7 +5780,8 @@ return (
               </div>
             )}
 
-            <div className="mt-6">
+            {recentOpen && (
+            <div className="virtus-luxury-expanded mt-3">
 <div className="mb-2 flex items-center justify-between px-2">
   <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
     {chatSearchQuery.trim() ? "Search Results" : "Recent"}
@@ -5951,9 +6016,10 @@ if (data.conversation) {
                 )}
               </div>
             </div>
+            )}
           </div>
 
-                    <div className="border-t border-zinc-800 p-3 space-y-3">
+                    <div className="virtus-luxury-sidebar-footer border-t border-zinc-800 p-3 space-y-3">
   {isAuthenticated ? (
     <>
       <div className="flex items-center justify-between gap-2 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-2 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm">
@@ -6004,7 +6070,7 @@ if (data.conversation) {
         </aside>
 
 <section
-  className="relative flex-1 min-w-0 flex justify-center bg-zinc-900"
+  className="virtus-luxury-content relative flex-1 min-w-0 flex justify-center bg-zinc-900"
   onWheel={(e) => {
     if (!scrollContainerRef.current) return;
     scrollContainerRef.current.scrollTop += e.deltaY;
@@ -6114,7 +6180,7 @@ if (data.conversation) {
     </div>
   </div>
 )}
-<div className="virtus-chat-clear-bar virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-4 md:py-3">
+<div className="virtus-luxury-header virtus-chat-clear-bar virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-4 md:py-3">
   <div className="flex min-h-[44px] items-center gap-4">
 <div className="md:hidden">
   <button
@@ -6150,7 +6216,7 @@ if (data.conversation) {
 )}
 
 
-<div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
+<div className="virtus-luxury-header-mark hidden min-w-0 flex-1 items-center justify-start md:flex">
   <Image
     src="/virtus-premium-emblem.webp"
     alt="Virtus AI"
@@ -6548,10 +6614,10 @@ if (data.conversation) {
       </div>
     )}
 
-    <div className="ml-auto shrink-0 text-right">
+    <div className="virtus-luxury-plan-actions ml-auto flex flex-wrap shrink-0 items-center justify-end">
       <Link
         href="/upgrade"
-        className="select-text inline-flex items-center gap-2 rounded-full border border-[#d8bd85]/50 bg-[#0b2926] px-4 py-2 text-xs font-medium text-[#f0d79c] shadow-[0_0_18px_rgba(216,189,133,0.09)] transition hover:border-[#e8c985] hover:bg-[#173632]"
+        className="virtus-luxury-plan-pill select-text"
       >
         <span aria-hidden="true" className="text-[#e8c985]">✦</span> Your plan: {displayPlanLabel}
       </Link>
@@ -6562,22 +6628,17 @@ if (data.conversation) {
         </p>
       )}
 
-      {shouldShowUpgradePrompt && (
-        <Link
-          href={
-            isTrialGuestExpired
-              ? "/upgrade"
-              : isAuthenticated
-              ? "/upgrade"
-              : "/login"
-          }
-          className="inline-block text-xs text-sky-300/70 mt-2 hover:text-sky-200 transition"
-        >
-          {isTrialGuestExpired
-            ? "Continue with account or plan"
-            : !isAuthenticated && currentAccess?.plan === "trial_guest"
-            ? "Continue"
-            : displayUpgradeLabel}
+      {!isAuthenticated && (
+        <Link href="/login?mode=signup" className="virtus-luxury-register-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="7" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2H4Z" />
+          </svg>
+          Register to continue
+        </Link>
+      )}
+      {shouldShowUpgradePrompt && isAuthenticated && (
+        <Link href="/upgrade" className="virtus-luxury-register-pill">
+          {displayUpgradeLabel || "Explore plans"}
         </Link>
       )}
     </div>
@@ -6585,7 +6646,7 @@ if (data.conversation) {
 </div>
 <div
   ref={scrollContainerRef}
-  className={`virtus-scrollbar flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 ${
+  className={`virtus-scrollbar virtus-luxury-scroll flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 ${
     showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
@@ -6846,7 +6907,7 @@ setRegenerating(true);
                   <div ref={messagesEndRef} />
                 </div>
                             ) : (
-<div className="h-full flex items-start justify-center px-6 py-10">
+<div className="virtus-luxury-empty h-full flex items-start justify-center px-3 md:px-6">
   {activeProject?.title ? (
     <div className="w-full max-w-4xl">
       <div className="mb-8">
@@ -6979,24 +7040,18 @@ setRegenerating(true);
       </div>
     </div>
   ) : (
-    <div className="rounded-[2rem] border border-[#d8bd85]/20 bg-gradient-to-br from-[#173632] to-[#0c2422] px-9 py-10 text-center shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-sm max-w-xl">
-      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#d8bd85]">Your personal development space</p>
-      <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#f5f3ec]">What would you like to explore today?</h1>
-      <p className="mt-2 text-xs virtus-theme-muted">
-        Reflect with your Life Coach, develop skills with your Trainer, or grow with your Mentor.
-      </p>
-    </div>
+    <LuxuryWelcome onSelectPrompt={useLuxuryPrompt} disabled={loading || isDailyLimitReached || isTrialGuestExpired} />
   )}
 </div>
               )}
             </div>
 
 <div
-  className={`virtus-chat-clear-bar virtus-theme-card-soft border-t border-sky-900/20 px-3 py-3 md:px-8 md:py-5 ${
+  className={`virtus-chat-clear-bar virtus-luxury-composer-wrap virtus-theme-card-soft border-t border-sky-900/20 px-3 py-3 md:px-8 md:py-5 ${
     showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
-  <div className="virtus-theme-card relative rounded-[30px] border border-sky-900/25 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10">
+  <div className="virtus-theme-card virtus-luxury-composer relative rounded-[30px] border border-sky-900/25 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10">
 
 <div className="absolute left-3 top-1/2 -translate-y-1/2">
   <button
@@ -7341,7 +7396,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 }}
 />
 
-<div className="absolute bottom-3 right-3 flex items-center gap-3">
+<div className="virtus-luxury-composer-actions absolute bottom-3 right-3 flex items-center gap-3">
 
                  <button
   type="button"
@@ -7382,7 +7437,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 
     sendMessage();
   }}
-  className={`group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
+  className={`virtus-luxury-send group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
     loading ? "rounded-xl" : "rounded-full"
   }`}
   aria-label={loading ? "Stop" : "Send"}
@@ -7398,8 +7453,8 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       strokeWidth="2.5"
       className="h-5 w-5"
     >
-      <path d="M12 19V5" />
-      <path d="m5 12 7-7 7 7" />
+      <path d="M21.8 2.8 10.7 13.9" />
+      <path d="m21.8 2.8-6.6 19-4.5-7.9-7.9-4.5 19-6.6Z" />
     </svg>
   )}
 </button>
