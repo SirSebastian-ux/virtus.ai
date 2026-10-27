@@ -25,7 +25,7 @@ export default async function UpgradePage() {
     <main className="min-h-screen virtus-theme-page bg-[#091b1c] text-[#f5f3ec]">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-8 py-12">
         <div className="virtus-theme-surface mb-10 rounded-[2rem] border border-[#d8bd85]/25 bg-gradient-to-br from-[#173632] to-[#0b2422] px-7 py-8 shadow-xl shadow-black/20 backdrop-blur-sm">
-          <div className="mb-5 flex items-center gap-3"><img src="/virtus-coaching-mark.svg" width="54" height="60" alt="Virtus AI shield" className="h-[60px] w-auto" /><div><p className="font-serif text-2xl text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p><p className="text-[10px] uppercase tracking-[0.18em] text-[#d8bd85]">By Enhanced Wellness Solutions</p></div></div>
+          <div className="mb-5 flex items-center gap-3"><img src="/virtus-approved-shield.jpg" width="54" height="60" alt="Virtus AI shield" className="h-[60px] w-auto" /><div><p className="font-serif text-2xl text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p><p className="text-[10px] uppercase tracking-[0.18em] text-[#d8bd85]">By Enhanced Wellness Solutions</p></div></div>
 
           <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
             Choose your coaching experience
