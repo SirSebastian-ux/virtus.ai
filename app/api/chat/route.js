@@ -1749,7 +1749,8 @@ const { data: supabaseMemories } = memoryQuery
       .select("role, content, created_at")
       .eq("user_id", userId)
       .eq("chat_id", effectiveChatId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(480)
   : { data: [] };
  const mergedFacts = hasCrossChatMemory
   ? (supabaseMemories || [])
@@ -2027,7 +2028,7 @@ const projectRuntimeFacts = runtimeFacts.filter(
 );
 
 const allCurrentChatRows = hasSingleChatConversationMemory
-  ? supabaseConversations || []
+  ? [...(supabaseConversations || [])].reverse()
   : [];
 
 const conversationRows = selectVirtusConversation(
@@ -2070,7 +2071,7 @@ const importantSameChatRows = shouldUseSameChatAnchor
 
         return (isLongUserContent && looksLikeCaseOrSession) || looksLikeRoleCorrection;
       })
-      .slice(-8)
+      .slice(-4)
   : [];
 
 const sameChatAnchorContext =
@@ -2083,7 +2084,7 @@ These are important earlier messages from the same active chat. Treat them as ac
 ${importantSameChatRows
   .map((item, index) => {
     const text = String(item?.content || "").trim();
-    const snippetLimit = plan === "premium" ? 12000 : 4000;
+    const snippetLimit = plan === "premium" ? 5000 : 2500;
 
     return `Anchor ${index + 1}
 Role: ${item.role}
