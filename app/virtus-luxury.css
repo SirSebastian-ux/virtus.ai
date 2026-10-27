@@ -1,0 +1,653 @@
+/* Virtus AI / Enhanced Wellness Solutions — approved emerald-and-gold workspace.
+   Styles are scoped to the chat workspace; account, billing, Operations,
+   accessibility and existing functionality remain independent. */
+
+.virtus-chat-root.virtus-luxury {
+  --vl-gold: #edc577;
+  --vl-gold-bright: #ffe2a1;
+  --vl-gold-line: rgba(232, 193, 108, 0.52);
+  --vl-emerald: #003e35;
+  --vl-text: #f8f6f0;
+  --vl-muted: #9daead;
+  background: #071415;
+  color: var(--vl-text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.virtus-luxury .virtus-luxury-sidebar {
+  position: relative;
+  isolation: isolate;
+  width: 290px;
+  min-width: 290px;
+  background:
+    radial-gradient(ellipse at 35% 12%, rgba(9, 114, 90, 0.36), transparent 47%),
+    radial-gradient(ellipse at 90% 88%, rgba(11, 101, 80, 0.22), transparent 48%),
+    linear-gradient(175deg, #002a27 0%, #00221e 55%, #001813 100%);
+  border: 1px solid rgba(221, 180, 99, 0.43);
+  border-left-color: rgba(221, 180, 99, 0.2);
+  border-radius: 15px;
+  box-shadow: inset 0 0 75px rgba(5, 99, 82, 0.08), 5px 0 45px rgba(0, 0, 0, 0.42);
+  margin: 5px 0 5px 8px;
+  height: calc(100% - 10px);
+  overflow: hidden;
+}
+
+.virtus-luxury .virtus-luxury-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(158deg, transparent 49%, rgba(229, 175, 75, 0.09) 49.15%, transparent 49.6%),
+    linear-gradient(30deg, transparent 68%, rgba(43, 168, 132, 0.07) 68.2%, transparent 69%),
+    radial-gradient(ellipse at 35% 85%, rgba(6, 58, 48, 0.62), transparent 53%);
+  opacity: 0.8;
+}
+
+.virtus-luxury .virtus-luxury-brand {
+  position: relative;
+  padding: 31px 14px 25px;
+  margin: 0 18px 8px;
+  background: transparent;
+  border-bottom: 1px solid rgba(232, 193, 108, 0.22);
+  gap: 3px;
+  min-height: 304px;
+  justify-content: center;
+}
+
+.virtus-luxury .virtus-luxury-brand::before {
+  content: "";
+  position: absolute;
+  top: 30px;
+  left: 17%;
+  right: 17%;
+  height: 145px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(226, 188, 103, 0.18), transparent 69%);
+  filter: blur(21px);
+}
+
+.virtus-luxury .virtus-luxury-brand img {
+  position: relative;
+  width: 132px;
+  height: 148px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 19px rgba(234, 196, 108, 0.18));
+}
+
+.virtus-luxury .virtus-luxury-brand-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 32px;
+  letter-spacing: 0.065em;
+  line-height: 1.18;
+  color: #f7d391;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.virtus-luxury .virtus-luxury-brand-name span {
+  color: #91dcf0;
+}
+
+.virtus-luxury .virtus-luxury-brand-caption {
+  color: #efc982;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.19em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin-top: 6px;
+}
+
+.virtus-luxury-nav-wrap {
+  flex-shrink: 0;
+  margin: 2px 14px 0;
+}
+
+.virtus-luxury-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.virtus-luxury .virtus-luxury-nav-link {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 21px;
+  position: relative;
+  text-align: left;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #d8e2e0;
+  font-size: 15px;
+  line-height: 1.3;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.virtus-luxury .virtus-luxury-nav-link svg {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  color: #d8e2e0;
+  transition: color 160ms ease;
+}
+
+.virtus-luxury .virtus-luxury-nav-link:hover,
+.virtus-luxury .virtus-luxury-nav-link:focus-visible {
+  background: rgba(7, 105, 79, 0.34);
+  border-color: rgba(230, 191, 110, 0.35);
+  outline: none;
+  color: #f7d493;
+}
+
+.virtus-luxury .virtus-luxury-nav-link.is-active {
+  background: linear-gradient(100deg, rgba(23, 112, 77, 0.44), rgba(0, 85, 67, 0.25));
+  border-color: rgba(232, 193, 108, 0.52);
+  color: #f4d391;
+  box-shadow: inset 3px 0 0 #ffd17d, 0 0 22px rgba(174, 138, 70, 0.08);
+}
+
+.virtus-luxury .virtus-luxury-nav-link.is-active svg,
+.virtus-luxury .virtus-luxury-nav-link:hover svg {
+  color: #ffdc92;
+}
+
+.virtus-luxury-recent-toggle {
+  width: 100%;
+  margin: 21px 0 6px;
+  padding: 8px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: rgba(228, 205, 152, 0.76);
+  border-top: 1px solid rgba(227, 195, 115, 0.17);
+  border-radius: 0 0 8px 8px;
+  transition: color 160ms ease;
+}
+
+.virtus-luxury-recent-toggle:hover,
+.virtus-luxury-recent-toggle:focus-visible {
+  color: #ffe2a1;
+  outline-color: var(--vl-gold);
+}
+
+.virtus-luxury-chevron {
+  display: inline-block;
+  font-size: 20px;
+  transition: transform 160ms ease;
+  line-height: 1;
+}
+.virtus-luxury-chevron.is-open { transform: rotate(180deg); }
+
+.virtus-luxury .virtus-luxury-expanded {
+  margin: 5px 14px;
+  padding: 8px 5px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(232, 193, 108, 0.16);
+  background: rgba(0, 10, 10, 0.22);
+  min-height: 0;
+}
+.virtus-luxury .virtus-luxury-expanded.hidden { display: none; }
+.virtus-luxury .virtus-luxury-expanded [class*="text-sky"] {
+  color: #e1c17e;
+}
+.virtus-luxury .virtus-luxury-expanded [class*="border-sky"] {
+  border-color: rgba(220, 178, 91, 0.24);
+}
+.virtus-luxury .virtus-luxury-sidebar-footer {
+  border-top-color: rgba(232, 193, 108, 0.18);
+  background: rgba(0, 18, 16, 0.54);
+}
+.virtus-luxury .virtus-luxury-sidebar-footer > div,
+.virtus-luxury .virtus-luxury-sidebar-footer > a {
+  border-color: rgba(232, 193, 108, 0.27);
+  background: rgba(3, 38, 34, 0.72);
+}
+
+.virtus-luxury .virtus-luxury-content {
+  background:
+    radial-gradient(ellipse 60% 65% at 51% 37%, rgba(6, 91, 69, 0.22) 0%, rgba(2, 18, 19, 0) 65%),
+    radial-gradient(ellipse 90% 80% at 65% 85%, rgba(10, 85, 65, 0.19), transparent 62%),
+    linear-gradient(145deg, #091314 5%, #090e11 49%, #051212 100%);
+  isolation: isolate;
+}
+
+.virtus-luxury .virtus-luxury-content::before,
+.virtus-luxury .virtus-luxury-content::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.virtus-luxury .virtus-luxury-content::before {
+  opacity: 0.57;
+  background:
+    radial-gradient(ellipse at 56% 18%, rgba(115, 186, 103, 0.18), transparent 29%),
+    linear-gradient(166deg, transparent 22%, rgba(8, 46, 38, 0.16) 23%, transparent 38%),
+    linear-gradient(21deg, transparent 31%, rgba(21, 55, 47, 0.22) 31.3%, transparent 49%);
+}
+
+.virtus-luxury .virtus-luxury-content::after {
+  opacity: 0.33;
+  background:
+    radial-gradient(ellipse 75% 7% at 52% 62%, rgba(240, 193, 98, 0.26), transparent 82%),
+    linear-gradient(152deg, transparent 52%, rgba(12, 34, 31, 0.95) 52.2%, transparent 75%);
+  clip-path: polygon(0 32%, 22% 50%, 38% 37%, 58% 55%, 77% 39%, 100% 54%, 100% 100%, 0 100%);
+}
+
+.virtus-luxury .virtus-luxury-content > div {
+  z-index: 1;
+  position: relative;
+}
+
+.virtus-luxury .virtus-luxury-header {
+  padding: 22px 28px;
+  background: transparent !important;
+  border-color: transparent !important;
+  min-height: 84px;
+  flex-shrink: 0;
+}
+
+.virtus-luxury .virtus-luxury-header-mark {
+  visibility: hidden;
+}
+
+.virtus-luxury .virtus-luxury-plan-actions {
+  text-align: right;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.virtus-luxury .virtus-luxury-plan-pill,
+.virtus-luxury .virtus-luxury-register-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 43px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.virtus-luxury .virtus-luxury-plan-pill {
+  padding: 9px 17px;
+  color: #f2cf84;
+  border: 1px solid rgba(232, 193, 108, 0.65);
+  background: linear-gradient(120deg, rgba(4, 31, 27, 0.95), rgba(6, 65, 52, 0.81));
+}
+
+.virtus-luxury .virtus-luxury-register-pill {
+  padding: 9px 19px;
+  color: #e7f3f2;
+  border: 1px solid rgba(54, 183, 226, 0.78);
+  background: linear-gradient(115deg, rgba(3, 21, 29, 0.93), rgba(4, 40, 52, 0.74));
+  box-shadow: 0 0 18px rgba(0, 172, 210, 0.06);
+}
+
+.virtus-luxury .virtus-luxury-register-pill svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.virtus-luxury .virtus-luxury-plan-pill:hover,
+.virtus-luxury .virtus-luxury-register-pill:hover,
+.virtus-luxury .virtus-luxury-plan-pill:focus-visible,
+.virtus-luxury .virtus-luxury-register-pill:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 0 22px rgba(226, 182, 89, 0.12);
+  outline-offset: 3px;
+}
+
+.virtus-luxury .virtus-luxury-scroll {
+  scrollbar-color: rgba(230, 195, 123, 0.33) transparent;
+  position: relative;
+}
+
+.virtus-luxury .virtus-luxury-empty {
+  min-height: 100%;
+  padding-top: clamp(18px, 7vh, 78px);
+  padding-bottom: 26px;
+}
+
+.virtus-luxury .virtus-luxury-hero {
+  position: relative;
+  width: min(100%, 965px);
+  min-height: 480px;
+  padding: 45px clamp(20px, 5vw, 62px) 48px;
+  margin: 0 auto;
+  text-align: center;
+  border: 1px solid rgba(229, 186, 101, 0.7);
+  border-radius: 30px;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 85% 85% at 50% 5%, rgba(3, 77, 61, 0.65), transparent 75%),
+    linear-gradient(143deg, rgba(0, 42, 37, 0.98), rgba(0, 28, 27, 0.97) 75%, rgba(10, 51, 43, 0.94));
+  box-shadow: 0 22px 85px rgba(0, 0, 0, 0.45), 0 0 70px rgba(203, 168, 100, 0.05), inset 0 0 46px rgba(229, 187, 93, 0.035);
+}
+
+.virtus-luxury .virtus-luxury-hero::before {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+  inset: -2px;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 50% 12% at 52% 0, rgba(246, 207, 131, 0.24), transparent 100%),
+    radial-gradient(ellipse 44% 7% at 55% 100%, rgba(242, 191, 98, 0.23), transparent 100%);
+}
+
+.virtus-luxury .virtus-luxury-eyebrow {
+  font-size: 11px;
+  line-height: 1.5;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ecc97d;
+}
+
+.virtus-luxury .virtus-luxury-divider {
+  position: relative;
+  width: min(220px, 75%);
+  margin: 16px auto 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #f8d995;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.virtus-luxury .virtus-luxury-divider::before,
+.virtus-luxury .virtus-luxury-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(236, 199, 127, 0.48));
+}
+
+.virtus-luxury .virtus-luxury-divider::after {
+  transform: scaleX(-1);
+}
+
+.virtus-luxury .virtus-luxury-heading {
+  max-width: 850px;
+  margin: 0 auto;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(33px, 3.25vw, 55px);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
+  color: #f9f8f5;
+  text-wrap: balance;
+}
+
+.virtus-luxury .virtus-luxury-heading span {
+  display: block;
+  color: #eac178;
+}
+
+.virtus-luxury .virtus-luxury-description {
+  max-width: 660px;
+  margin: 17px auto 26px;
+  color: #a2b7b5;
+  font-size: 15px;
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+.virtus-luxury .virtus-luxury-experiences {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.virtus-luxury .virtus-luxury-experience {
+  min-width: 0;
+  min-height: 165px;
+  padding: 17px 12px 15px;
+  border: 1px solid rgba(71, 158, 130, 0.35);
+  border-radius: 19px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #dbe7e4;
+  background: radial-gradient(circle at 50% 0, rgba(20, 108, 76, 0.25), transparent 65%), rgba(0, 37, 33, 0.75);
+  box-shadow: inset 0 0 27px rgba(0, 98, 67, 0.12);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.virtus-luxury .virtus-luxury-experience:hover,
+.virtus-luxury .virtus-luxury-experience:focus-visible {
+  border-color: rgba(242, 199, 119, 0.75);
+  background: rgba(4, 64, 49, 0.9);
+  box-shadow: 0 0 32px rgba(208, 170, 94, 0.12), inset 0 0 34px rgba(27, 123, 90, 0.15);
+  transform: translateY(-3px);
+  outline: none;
+}
+
+.virtus-luxury .virtus-luxury-experience:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.virtus-luxury .virtus-luxury-experience-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #f7d285;
+  filter: drop-shadow(0 0 8px rgba(230, 192, 106, 0.14));
+}
+
+.virtus-luxury .virtus-luxury-experience-icon svg {
+  height: 46px;
+  width: 46px;
+}
+
+.virtus-luxury .virtus-luxury-experience-title {
+  color: #dce8e5;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+.virtus-luxury .virtus-luxury-experience-rule {
+  display: block;
+  width: 39px;
+  height: 1px;
+  margin-top: auto;
+  background: linear-gradient(90deg, transparent, #edc171, transparent);
+}
+
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer-wrap {
+  position: relative;
+  z-index: 2;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  padding: 5px clamp(12px, 5vw, 62px) 26px;
+}
+
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer {
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: 76px;
+  border: 1px solid rgba(235, 195, 104, 0.76);
+  border-radius: 999px;
+  background: linear-gradient(105deg, rgba(0, 32, 29, 0.98), rgba(0, 24, 25, 0.96)) !important;
+  box-shadow: 0 0 28px rgba(0, 125, 98, 0.06), inset 0 0 24px rgba(0, 67, 54, 0.24);
+}
+
+.virtus-luxury .virtus-luxury-composer textarea {
+  min-height: 75px;
+  height: 75px;
+  padding-top: 25px;
+  padding-bottom: 17px;
+  font-size: 14px;
+  line-height: 1.55;
+  caret-color: #f6cd7e;
+  color: #f5f2e9;
+}
+
+.virtus-luxury .virtus-luxury-composer textarea::placeholder {
+  color: #91a3a1;
+}
+
+.virtus-luxury .virtus-luxury-composer .virtus-file-action {
+  border-color: rgba(226, 184, 92, 0.34);
+  color: #f8e8cb;
+  background: rgba(0, 67, 54, 0.48);
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+}
+
+.virtus-luxury .virtus-luxury-composer .virtus-file-action:hover {
+  border-color: rgba(244, 207, 135, 0.82);
+  background: rgba(12, 99, 72, 0.62);
+}
+
+.virtus-luxury .virtus-luxury-send {
+  width: 53px;
+  height: 53px;
+  color: #ffdb8e;
+  border: 1px solid rgba(247, 211, 131, 0.91);
+  background: radial-gradient(circle at 40% 27%, rgba(25, 97, 67, 0.54), rgba(0, 40, 34, 0.9));
+  box-shadow: inset 0 0 12px rgba(241, 202, 124, 0.13), 0 0 17px rgba(230, 185, 90, 0.06);
+}
+
+.virtus-luxury .virtus-luxury-send:hover,
+.virtus-luxury .virtus-luxury-send:focus-visible {
+  background: #0e654d;
+  color: #ffe8b2;
+  outline: none;
+  box-shadow: 0 0 21px rgba(242, 193, 91, 0.23);
+}
+
+.virtus-luxury .virtus-luxury-send svg {
+  width: 24px;
+  height: 24px;
+}
+
+.virtus-luxury .virtus-luxury-composer .virtus-luxury-composer-actions {
+  bottom: 11px;
+  right: 11px;
+  gap: 8px;
+}
+
+.virtus-luxury .virtus-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(191, 160, 92, 0.35) rgba(0, 24, 23, 0.16);
+}
+
+.virtus-luxury .virtus-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 26, 24, 0.4);
+}
+.virtus-luxury .virtus-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(208, 166, 85, 0.38);
+  border: 2px solid rgba(0, 26, 24, 0.45);
+}
+
+/* Light appearance remains available through Settings; its existing
+   visibility rules take precedence over the dark-only decorative surfaces. */
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-content {
+  background: #d1dce0;
+}
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-content::before,
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-content::after {
+  opacity: 0.04;
+}
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-hero,
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-composer {
+  background: linear-gradient(145deg, #174b43, #0c332f) !important;
+  color: #f7f4ec;
+}
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-heading,
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-description,
+:root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-experience-title {
+  color: #f4f1e8 !important;
+}
+
+@media (max-width: 1250px) {
+  .virtus-luxury .virtus-luxury-sidebar {
+    width: 256px;
+    min-width: 256px;
+  }
+  .virtus-luxury .virtus-luxury-hero {
+    min-height: 430px;
+    padding: 37px 24px 33px;
+  }
+  .virtus-luxury .virtus-luxury-experiences { gap: 11px; }
+  .virtus-luxury .virtus-luxury-experience { min-height: 140px; padding: 13px 8px; }
+  .virtus-luxury .virtus-luxury-heading { font-size: clamp(30px, 4vw, 48px); }
+}
+
+@media (max-width: 900px) {
+  .virtus-luxury .virtus-luxury-hero { padding: 28px 22px; min-height: 0; }
+  .virtus-luxury .virtus-luxury-experiences { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .virtus-luxury .virtus-luxury-experience { min-height: 126px; }
+  .virtus-luxury .virtus-luxury-heading { font-size: clamp(29px, 4vw, 45px); }
+  .virtus-luxury .virtus-luxury-description { font-size: 13px; }
+}
+
+@media (max-width: 767px) {
+  .virtus-luxury .virtus-luxury-content { width: 100%; }
+  .virtus-luxury .virtus-luxury-header { min-height: 66px; padding: 12px 14px; }
+  .virtus-luxury .virtus-luxury-header-mark { visibility: visible; }
+  .virtus-luxury .virtus-luxury-plan-actions { gap: 7px; }
+  .virtus-luxury .virtus-luxury-plan-pill,
+  .virtus-luxury .virtus-luxury-register-pill { min-height: 36px; padding: 6px 10px; font-size: 10px; }
+  .virtus-luxury .virtus-luxury-register-pill svg { width: 15px; height: 15px; }
+  .virtus-luxury .virtus-luxury-empty { padding: 20px 8px 20px; }
+  .virtus-luxury .virtus-luxury-hero { border-radius: 22px; padding: 24px 14px; }
+  .virtus-luxury .virtus-luxury-eyebrow { font-size: 9px; letter-spacing: 0.21em; }
+  .virtus-luxury .virtus-luxury-heading { font-size: clamp(29px, 8vw, 39px); }
+  .virtus-luxury .virtus-luxury-description { font-size: 12px; margin-bottom: 19px; }
+  .virtus-luxury .virtus-luxury-experiences { gap: 9px; }
+  .virtus-luxury .virtus-luxury-experience { min-height: 117px; border-radius: 15px; }
+  .virtus-luxury .virtus-luxury-experience-icon svg { width: 36px; height: 36px; }
+  .virtus-luxury .virtus-luxury-experience-title { font-size: 12px; }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-composer-wrap { padding: 5px 8px max(12px, env(safe-area-inset-bottom)); }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-composer { min-height: 62px; }
+  .virtus-luxury .virtus-luxury-composer textarea { min-height: 61px; height: 61px; padding-top: 18px; padding-left: 60px; padding-right: 112px; }
+  .virtus-luxury .virtus-luxury-composer .virtus-file-action { width: 40px; height: 40px; }
+  .virtus-luxury .virtus-luxury-send { width: 43px; height: 43px; }
+  .virtus-luxury .virtus-luxury-composer .virtus-luxury-composer-actions { bottom: 8px; right: 8px; gap: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .virtus-luxury .virtus-luxury-experience,
+  .virtus-luxury .virtus-luxury-nav-link,
+  .virtus-luxury .virtus-luxury-register-pill,
+  .virtus-luxury .virtus-luxury-plan-pill {
+    transition: none;
+  }
+}
