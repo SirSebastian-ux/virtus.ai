@@ -88,8 +88,6 @@ async function createMeaningfulChatTitle({ message, reply }) {
   const fallback = cleanChatSessionTitle(message) || "New chat";
 
   try {
-    console.log("VISION DEBUG latestImageInputs count before main response:", latestImageInputs.length);
-
 const response = await client.responses.create({
       model: "gpt-4.1-mini",
       input: `Create one short, meaningful chat title based on the real discussion.
@@ -1965,81 +1963,39 @@ ${String(file.extracted_text || "").slice(0, 5000)}
 
 
 const imageFiles = latestFiles.filter((file) =>
-  String(file?.file_type || "").startsWith("image/") && file?.storage_path
+  ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+    String(file?.file_type || "").toLowerCase()
+  ) && file?.storage_path
 );
 
-console.log("VISION DEBUG uploadedFileIds:", uploadedFileIds);
-console.log("VISION DEBUG latestFiles:", latestFiles.map((f) => ({
-  id: f.id,
-  file_name: f.file_name,
-  file_type: f.file_type,
-  storage_path: f.storage_path,
-})));
-console.log("VISION DEBUG imageFiles:", imageFiles.map((f) => ({
-  id: f.id,
-  file_name: f.file_name,
-  file_type: f.file_type,
-  storage_path: f.storage_path,
-})));
-
-if (imageFiles.length > 0 && !userId.startsWith("guest-")) {
-  // Process each image with OCR.space with logging
+// Read only files that have already passed the authenticated user_id filter.
+// Pass images directly to the multimodal model; external OCR is neither needed
+// nor adequate for charts, screenshots, layouts, illustrations, or photographs.
+if (imageFiles.length && !isGuest) {
   for (const file of imageFiles.slice(0, 4)) {
     try {
-      if (file.extracted_text) {
-        console.log(`OCR already extracted for file ${file.id}`);
-        continue;
-      }
-
-      console.log(`Downloading image ${file.id}...`);
-      const { data: imageBlob, error: imageDownloadError } = await supabase.storage
-        .from("user-files")
-        .download(file.storage_path);
-
-      if (imageDownloadError || !imageBlob) {
-        console.error(`Download failed: ${imageDownloadError}`);
-        continue;
-      }
-
-      const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
-      const base64Image = imageBuffer.toString('base64');
-
-      console.log(`Sending to OCR.space for ${file.id}...`);
-      const ocrResponse = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          base64Image: `data:image/png;base64,${base64Image}`,
-          language: 'eng',
-          isOverlayRequired: 'false',
-          isTable: 'false',
-        })
+      const { data: imageBlob, error: downloadError } = await supabase.storage
+        .from("user-files").download(file.storage_path);
+      if (downloadError || !imageBlob) continue;
+      // Limit decoding and request payload size to protect chat latency/cost.
+      if (imageBlob.size < 64 || imageBlob.size > 6 * 1024 * 1024) continue;
+      const bytes = Buffer.from(await imageBlob.arrayBuffer());
+      const declaredType = String(file.file_type || "").toLowerCase();
+      const jpeg = declaredType === "image/jpeg" && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
+      const png = declaredType === "image/png" && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+      const webp = declaredType === "image/webp" && bytes.toString("ascii",0,4) === "RIFF" && bytes.toString("ascii",8,12) === "WEBP";
+      const gif = declaredType === "image/gif" && ["GIF87a", "GIF89a"].includes(bytes.toString("ascii",0,6));
+      if (!(jpeg || png || webp || gif)) continue;
+      latestImageInputs.push({
+        type: "input_image",
+        image_url: `data:${declaredType};base64,${bytes.toString("base64")}`,
+        detail: "auto",
       });
-
-      const ocrData = await ocrResponse.json();
-      console.log(`OCR.space response status: ${ocrResponse.status}, error: ${ocrData?.ErrorMessage || 'none'}`);
-      const extractedText = ocrData?.ParsedResults?.[0]?.ParsedText || '';
-      if (!extractedText) {
-        console.warn(`No text extracted from ${file.id}`);
-        continue;
-      }
-
-      console.log(`Extracted text length: ${extractedText.length} for ${file.id}`);
-      await supabase
-        .from("user_files")
-        .update({ extracted_text: extractedText.trim() })
-        .eq("id", file.id)
-        .eq("user_id", userId);
-
-      file.extracted_text = extractedText.trim();
-      console.log(`Updated file ${file.id} with extracted text.`);
-    } catch (err) {
-      console.error('OCR processing error:', err);
+    } catch (error) {
+      console.warn("Image attachment skipped:", error?.message || "image read error");
     }
   }
-  latestImageInputs = [];
 }
-
 const isContinuationOnlyMessage =
   /^(yes\s*)?(please\s*)?(continue|continiue|go on|tell me more|give me more|more info|more information|carry on)\.?\s*$/i.test(
     String(message || "").trim()
