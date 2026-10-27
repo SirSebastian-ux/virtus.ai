@@ -30,7 +30,9 @@ export async function GET() {
       confidence: ["low", "medium", "high"].includes(o.confidence) ? o.confidence : "low",
       evidence: String(o.evidence || "").slice(0, 500)
     }));
-    return NextResponse.json({ status: "reviewed", observations, count: messages.length, firstDate: messages[0].created_at, lastDate: messages.at(-1).created_at, note: "Tentative coaching observations, not clinical or standardized assessments." }, { headers: { "Cache-Control": "private, no-store" } });
+    const { data: saved, error: saveError } = await supabase.from("coaching_progress_reviews").insert({ user_id: user.id, message_count: messages.length, first_message_at: messages[0].created_at, last_message_at: messages.at(-1).created_at, observations }).select("id,created_at").single();
+    if (saveError) return NextResponse.json({ error: "Could not save the review" }, { status: 500 });
+    return NextResponse.json({ status: "reviewed", reviewId: saved.id, reviewedAt: saved.created_at, observations, count: messages.length, firstDate: messages[0].created_at, lastDate: messages.at(-1).created_at, note: "Tentative coaching observations, not clinical or standardized assessments." }, { headers: { "Cache-Control": "private, no-store" } });
   } catch {
     return NextResponse.json({ error: "Review unavailable" }, { status: 503 });
   }
