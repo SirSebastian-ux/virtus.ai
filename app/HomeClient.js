@@ -3,6 +3,7 @@
 import SplashScreen from "./components/SplashScreen";
 import LuxuryWelcome from "./components/LuxuryWelcome";
 import LuxurySidebarNav from "./components/LuxurySidebarNav";
+import LuxuryFileLibrary from "./components/LuxuryFileLibrary";
 import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import { useMemo } from "react";
@@ -92,6 +93,7 @@ const [practiceOpen, setPracticeOpen] = useState(false);
 const [searchOpen, setSearchOpen] = useState(false);
 const [recentOpen, setRecentOpen] = useState(false);
 const [luxuryToolsOpen, setLuxuryToolsOpen] = useState(false);
+const [luxuryLibraryOpen, setLuxuryLibraryOpen] = useState(false);
 const [luxuryActiveNav, setLuxuryActiveNav] = useState("home");
 const [captureOpen, setCaptureOpen] = useState(false);
 const [captureNotes, setCaptureNotes] = useState([]);
@@ -3314,6 +3316,7 @@ const handleCaptureMicrophoneClick = async () => {
    const fallbackPlanPolicy = getPlanPolicy(currentPlanKey);
   // Presentation names only: keep existing billing and authorization keys unchanged.
   const displayPlanLabel =
+    !isAuthenticated ? "Trial Guest" :
     currentPlanKey === "premium" ? "Mentor" :
     currentPlanKey === "plus" ? "Trainer" :
     currentPlanKey === "free" ? "Life Coach (legacy)" :
@@ -5332,6 +5335,7 @@ const renderAssistantActions = (item, index) => {
 
 
   function openLuxuryHome() {
+    setLuxuryLibraryOpen(false);
     if (loading) {
       abortControllerRef.current?.abort();
       abortControllerRef.current = null;
@@ -5356,6 +5360,7 @@ const renderAssistantActions = (item, index) => {
     setLuxuryActiveNav("home");
   }
   function openLuxuryTools() {
+    setLuxuryLibraryOpen(false);
     setLuxuryToolsOpen((previous) => !previous);
     setSearchOpen(false);
     setProjectsOpen(false);
@@ -5366,10 +5371,10 @@ const renderAssistantActions = (item, index) => {
   function openLuxuryLibrary() {
     setLuxuryActiveNav("library");
     setLuxuryToolsOpen(false);
-    setShowFileMenu(true);
-    setShowDocumentLibrary(true);
+    setShowFileMenu(false);
+    setShowDocumentLibrary(false);
+    setLuxuryLibraryOpen(true);
     loadUploadedFiles();
-    textareaRef.current?.focus();
   }
   function useLuxuryPrompt(prompt) {
     if (loading || isDailyLimitReached || isTrialGuestExpired) return;
@@ -6053,7 +6058,8 @@ if (data.conversation) {
     </>
   ) : (
 <Link
-  href="/login"
+  href="/login?next=/"
+  aria-label="Log in to Virtus AI"
   className="flex items-center gap-3 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-3 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
 >
   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sm font-semibold text-sky-200 shadow-sm shadow-sky-950/20">
@@ -6077,6 +6083,33 @@ if (data.conversation) {
   }}
 >
           <div className="w-full h-full flex flex-col">
+<LuxuryFileLibrary
+  open={luxuryLibraryOpen}
+  onClose={() => {
+    setLuxuryLibraryOpen(false);
+    setLuxuryActiveNav(conversation.length ? "chat" : "home");
+  }}
+  isAuthenticated={isAuthenticated}
+  files={uploadedFiles}
+  uploading={uploadingFile}
+  notice={fileNotice}
+  onUpload={() => document.getElementById("virtus-file-upload")?.click()}
+  onRefresh={loadUploadedFiles}
+  onAttach={(file) => {
+    setActiveFile(file);
+    setActiveFiles((previous) => previous.some((item) => item.id === file.id) ? previous : [...previous, file]);
+    setMessage((current) => current || "Review this document.");
+    setLuxuryLibraryOpen(false);
+    setLuxuryActiveNav("chat");
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }}
+  onPreview={(file) => {
+    setImagePreviewFile(file);
+    setLuxuryLibraryOpen(false);
+  }}
+  onDelete={handleDeleteFile}
+  attachedIds={activeFiles.map((file) => file.id)}
+/>
             {showPlanOverlay && (
   <div
     className="absolute inset-0 z-20 flex items-start md:items-center justify-center overflow-y-auto md:overflow-hidden bg-black/70 px-3 py-4 md:px-6 md:py-0 no-scrollbar"
@@ -6619,7 +6652,7 @@ if (data.conversation) {
         href="/upgrade"
         className="virtus-luxury-plan-pill select-text"
       >
-        <span aria-hidden="true" className="text-[#e8c985]">✦</span> Your plan: {displayPlanLabel}
+        <span aria-hidden="true" className="virtus-luxury-plan-sparkle">✦</span><span className="virtus-luxury-plan-label">Your plan: {displayPlanLabel}</span>
       </Link>
 
       {isTrialGuestExpired && (
