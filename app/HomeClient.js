@@ -5429,7 +5429,7 @@ return (
         <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-[#102b29] via-[#0c211f] to-[#081816] border-r border-[#d8bd85]/20 h-full flex-col shadow-[inset_-1px_0_0_rgba(216,189,133,0.08)]">
           <div className="px-4 pt-5 pb-5 border-b border-[#d8bd85]/15 bg-black/10 flex flex-col items-center gap-2">
   <Image
-    src="/virtus-coaching-mark.svg"
+    src="/virtus-approved-shield.jpg"
     alt="Virtus AI logo"
     width={190}
     height={80}
@@ -6124,7 +6124,7 @@ if (data.conversation) {
     aria-label="Open Virtus menu"
   >
     <Image
-      src="/virtus-coaching-mark.svg"
+      src="/virtus-approved-shield.jpg"
       alt="Virtus AI"
       width={112}
       height={48}
@@ -6152,7 +6152,7 @@ if (data.conversation) {
 
 <div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
   <Image
-    src="/virtus-coaching-mark.svg"
+    src="/virtus-approved-shield.jpg"
     alt="Virtus AI"
     width={128}
     height={54}
@@ -6184,7 +6184,7 @@ if (data.conversation) {
         >
           <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
             <Image
-              src="/virtus-coaching-mark.svg"
+              src="/virtus-approved-shield.jpg"
               alt="Virtus AI"
               width={160}
               height={68}
