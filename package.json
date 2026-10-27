@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run test:intelligence && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:intelligence": "node --test tests/virtus-intelligence.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
