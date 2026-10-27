@@ -2,6 +2,7 @@ import Link from "next/link";
 import BillingPortalButton from "./BillingPortalButton";
 import LogoutButton from "./LogoutButton";
 import CustomizeAppearance from "./CustomizeAppearance";
+import ProfileNameEditor from "./ProfileNameEditor";
 import { createClient } from "@/lib/supabase-server";
 import {
   getPlanLabel,
@@ -47,7 +48,7 @@ export default async function AccountPage() {
   if (user) {
     const { data } = await supabase
       .from("profiles")
-      .select("plan, plan_status, trial_started_at, trial_ends_at")
+      .select("plan, plan_status, trial_started_at, trial_ends_at, nickname")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -83,7 +84,7 @@ export default async function AccountPage() {
 
               <div className="min-w-0">
  <p className="truncate text-sm font-medium virtus-theme-title">
-                  {user?.email?.split("@")[0] || "Virtus User"}
+                  {profile?.nickname || user?.email?.split("@")[0] || "Virtus User"}
                 </p>
                 <p className="truncate text-xs virtus-theme-muted">{displayPlan}</p>
               </div>
@@ -143,6 +144,10 @@ export default async function AccountPage() {
             <p className="mt-2 text-sm virtus-theme-muted">
               Manage your personal development experience, account preferences, and coaching access.
             </p>
+
+            <div className="mt-6">
+              <ProfileNameEditor initialName={profile?.nickname || user?.email?.split("@")[0] || ""} />
+            </div>
 
             <div className="mt-6">
               <CustomizeAppearance />
