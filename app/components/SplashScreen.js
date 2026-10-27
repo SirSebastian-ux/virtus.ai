@@ -29,7 +29,7 @@ export default function SplashScreen({ onFinish }) {
         className={`relative flex w-full max-w-md flex-col items-center text-center transition-all duration-700 ease-out motion-reduce:transition-none ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0"}`}
       >
         <Image
-          src="/virtus-premium-emblem.webp"
+          src="/virtus-aurum-emblem.svg"
           alt="Virtus AI gold and blue shield with a central I and water reflection"
           width={180}
           height={202}
