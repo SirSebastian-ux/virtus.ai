@@ -846,3 +846,207 @@
 :root[data-virtus-appearance="light"] .virtus-chat-root.virtus-luxury .virtus-luxury-hero {
   background: linear-gradient(138deg, #174b43, #0b332f) !important;
 }
+
+
+/* October 27 QA corrections: guest plan, 50%-scale brand, first-class library and polished metal. */
+.virtus-chat-root.virtus-luxury .virtus-luxury-brand {
+  min-height: 164px;
+  max-height: 164px;
+  padding: 9px 5px 12px;
+  margin: 0 14px 8px;
+  gap: 1px;
+  justify-content: center;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-brand::before {
+  top: 8px;
+  height: 80px;
+  left: 26%;
+  right: 26%;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-brand img {
+  width: 68px;
+  height: 78px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 10px rgba(254, 204, 105, .34));
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-brand-name {
+  margin-top: 0;
+  font-size: 21px;
+  line-height: 1.1;
+  letter-spacing: .058em;
+  background-image: linear-gradient(180deg, #fffde3 0%, #ffebaf 21%, #b97829 43%, #fff5c7 57%, #f6c36e 77%, #fff1be 100%);
+  filter: drop-shadow(0 0 5px rgba(242,192,105,.2));
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-brand-caption {
+  font-size: 6.7px;
+  line-height: 1.3;
+  letter-spacing: .10em;
+  margin-top: 3px;
+  white-space: normal;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-plan-pill {
+  /* The former gradient clipped on the anchor hid the entire text in Chrome.
+     Apply clipping only to the inner text span. */
+  -webkit-text-fill-color: #ffe6a6;
+  background-image: linear-gradient(145deg, rgba(19,67,52,.94), rgba(2,31,28,.94));
+  color: #ffe6a6;
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+  text-shadow: 0 1px 10px rgba(248,205,122,.30);
+  min-width: 168px;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-plan-sparkle {
+  color: #ffe7a2;
+  -webkit-text-fill-color: #ffe7a2;
+  filter: drop-shadow(0 0 5px rgba(252,205,102,.65));
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-plan-label {
+  color: #fbe0a0;
+  background: linear-gradient(180deg, #fff9d3 0%, #e9b45c 42%, #fff1c2 58%, #c88f40 85%, #ffe1a0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-shadow: 0 0 12px rgba(255,222,150,.14);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-hero {
+  border-color: rgba(251,210,126,.9);
+  box-shadow: 0 17px 65px rgba(0,0,0,.34), 0 0 24px rgba(239,185,81,.11), inset 0 1px 0 rgba(255,245,206,.35), inset 0 -1px 0 rgba(244,189,93,.29);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-heading {
+  background-image: linear-gradient(180deg, #fffefa 0%, #fff6e5 17%, #d3b98b 37%, #fffef7 53%, #edd5a8 76%, #fff5df 100%);
+  filter: drop-shadow(0 1px 3px rgba(250,221,159,.13));
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-heading span {
+  background-image: linear-gradient(180deg, #fff6d1 0%, #ffdf92 20%, #b67825 40%, #fff5c5 52%, #edb85d 78%, #ffe7a4 100%);
+  filter: drop-shadow(0 1px 7px rgba(241,172,61,.2));
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-nav-link.is-active {
+  border-color: rgba(246,204,117,.8);
+  box-shadow: inset 3px 0 0 #ffe2a1, inset 0 1px 0 rgba(255,231,171,.22), 0 0 19px rgba(249,195,91,.12);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-register-pill {
+  border-color: rgba(136,221,242,.82);
+  box-shadow: inset 0 1px 0 rgba(209,251,255,.18), 0 0 15px rgba(103,218,229,.12);
+}
+
+/* Dedicated Library replaces the composer-anchored menu for the sidebar Library action. */
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-overlay {
+  background: rgba(0, 9, 12, .78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-panel {
+  border-color: rgba(237, 189, 92, .75);
+  color: #f9f5e9;
+  background:
+    radial-gradient(ellipse at 50% 0, rgba(15, 95, 74, .34), transparent 61%),
+    linear-gradient(135deg, #0b332e 0%, #072522 58%, #051818 100%);
+  box-shadow: 0 28px 115px rgba(0,0,0,.7), 0 0 31px rgba(239,184,93,.13), inset 0 1px 0 rgba(255,228,157,.18);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-header {
+  border-bottom: 1px solid rgba(239,188,94,.22);
+  background: linear-gradient(130deg,rgba(0,71,53,.36),rgba(0,25,26,.02));
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-title {
+  background: linear-gradient(180deg, #fff5cd 0%, #dca35b 40%, #fff6d3 54%, #e2ae5f 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #f0cb88;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-overline { color: #e9c982; }
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-description { color: #bfcfc6; }
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-emblem {
+  border: 1px solid rgba(247,211,142,.47);
+  background: rgba(7,77,57,.57);
+  color: #ffe19e;
+  box-shadow: 0 0 16px rgba(235,177,74,.11);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-empty {
+  background: rgba(3,40,34,.61);
+  border: 1px dashed rgba(231,189,106,.43);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-search {
+  outline: none;
+  background: rgba(2,24,25,.78);
+  color: #ffefd7;
+  border: 1px solid rgba(234,193,109,.4);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-search::placeholder { color: #9fbcb1; }
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-search:focus {
+  border-color: #f4d186;
+  box-shadow: 0 0 0 3px rgba(246,197,95,.1);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-item {
+  border: 1px solid rgba(226,183,94,.27);
+  background: rgba(4,47,39,.61);
+  transition: border-color .15s ease, background .15s ease;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-item:hover {
+  border-color: rgba(241,196,105,.6);
+  background: rgba(7,66,50,.72);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-footer {
+  border-top: 1px solid rgba(236,193,103,.22);
+  background: rgba(0,18,17,.36);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-gold-btn,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-outline-btn,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-small-btn,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-icon-btn,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 11px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 35px;
+  padding: 8px 12px;
+  transition: filter .15s ease, background .15s ease, border-color .15s ease;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-gold-btn {
+  color: #142a22;
+  border: 1px solid rgba(255,241,196,.58);
+  background: linear-gradient(180deg,#fff0bd 0%,#dbae65 52%,#f9d58b 100%);
+  box-shadow: inset 0 1px 0 #fffbdc, 0 0 15px rgba(229,174,76,.15);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-outline-btn,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-small-btn,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-icon-btn {
+  color: #fbe6b5;
+  border: 1px solid rgba(232,195,114,.46);
+  background: rgba(8,50,43,.65);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 7px;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-danger-btn {
+  color: #ffb9b9;
+  border: 1px solid rgba(245,125,120,.45);
+  background: rgba(74,20,21,.55);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-gold-btn:hover,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-outline-btn:hover,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-small-btn:hover,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-icon-btn:hover {
+  filter: brightness(1.13);
+  border-color: rgba(255,231,169,.85);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-gold-btn:focus-visible,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-outline-btn:focus-visible,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-small-btn:focus-visible,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-icon-btn:focus-visible {
+  outline: 2px solid #f9d98b;
+  outline-offset: 2px;
+}
+@media (max-width: 767px) {
+  .virtus-chat-root.virtus-luxury .virtus-luxury-library-panel { max-height: 95%; }
+}
