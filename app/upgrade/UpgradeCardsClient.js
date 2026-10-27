@@ -14,9 +14,9 @@ function getCheckoutSuccessMessage(searchParams) {
 
   const planLabel =
     selectedPlan === "plus"
-      ? "Plus"
+      ? "Trainer"
       : selectedPlan === "premium"
-      ? "Premium / Virtus Prime"
+      ? "Mentor"
       : "Plan";
 
   const billingLabel =
@@ -183,10 +183,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   }
 
   const cardClass =
-    "virtus-theme-card flex h-full flex-col rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/45 hover:bg-sky-950/10";
+    "virtus-theme-card flex h-full flex-col rounded-3xl border border-[#d8bd85]/25 bg-[#112d29] p-6 shadow-lg shadow-black/20 backdrop-blur-sm transition hover:border-[#d8bd85]/60 hover:bg-[#183a34]";
 
   const premiumCardClass =
-    "virtus-theme-card flex h-full flex-col rounded-3xl border border-sky-700/45 p-6 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-500/55 hover:bg-sky-950/10";
+    "virtus-theme-card flex h-full flex-col rounded-3xl border border-[#d8bd85]/60 bg-[#173832] p-6 shadow-lg shadow-black/25 backdrop-blur-sm transition hover:border-[#efd39c] hover:bg-[#1b4139]";
 
   const planLabelClass =
     "text-xs uppercase tracking-[0.18em] text-sky-300/55";
