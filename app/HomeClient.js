@@ -3308,7 +3308,11 @@ const handleCaptureMicrophoneClick = async () => {
     );
   }
    const fallbackPlanPolicy = getPlanPolicy(currentPlanKey);
+  // Presentation names only: keep existing billing and authorization keys unchanged.
   const displayPlanLabel =
+    currentPlanKey === "premium" ? "Mentor" :
+    currentPlanKey === "plus" ? "Trainer" :
+    currentPlanKey === "free" ? "Life Coach (legacy)" :
     currentAccess?.label ?? fallbackPlanPolicy.label;
   const displayUpgradeLabel =
     currentAccess?.upgradeLabel ?? fallbackPlanPolicy.upgradeLabel;
@@ -5425,12 +5429,13 @@ return (
         <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-[#102b29] via-[#0c211f] to-[#081816] border-r border-[#d8bd85]/20 h-full flex-col shadow-[inset_-1px_0_0_rgba(216,189,133,0.08)]">
           <div className="px-4 pt-5 pb-5 border-b border-[#d8bd85]/15 bg-black/10 flex flex-col items-center gap-2">
   <Image
-    src="/virtus-logo.png"
+    src="/virtus-coaching-mark.svg"
     alt="Virtus AI logo"
     width={190}
     height={80}
     className="block h-auto w-[150px] object-contain"
   />
+  <p className="font-serif text-[25px] tracking-[0.08em] text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p>
   <p className="text-[9px] uppercase tracking-[0.18em] text-[#d8bd85]">By Enhanced Wellness Solutions</p>
 </div>
 
@@ -6119,7 +6124,7 @@ if (data.conversation) {
     aria-label="Open Virtus menu"
   >
     <Image
-      src="/virtus-logo.png"
+      src="/virtus-coaching-mark.svg"
       alt="Virtus AI"
       width={112}
       height={48}
@@ -6147,7 +6152,7 @@ if (data.conversation) {
 
 <div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
   <Image
-    src="/virtus-logo.png"
+    src="/virtus-coaching-mark.svg"
     alt="Virtus AI"
     width={128}
     height={54}
@@ -6179,7 +6184,7 @@ if (data.conversation) {
         >
           <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
             <Image
-              src="/virtus-logo.png"
+              src="/virtus-coaching-mark.svg"
               alt="Virtus AI"
               width={160}
               height={68}
@@ -6546,9 +6551,9 @@ if (data.conversation) {
     <div className="ml-auto shrink-0 text-right">
       <Link
         href="/upgrade"
-        className="select-text inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
+        className="select-text inline-flex items-center gap-2 rounded-full border border-[#d8bd85]/50 bg-[#0b2926] px-4 py-2 text-xs font-medium text-[#f0d79c] shadow-[0_0_18px_rgba(216,189,133,0.09)] transition hover:border-[#e8c985] hover:bg-[#173632]"
       >
-        Your plan: {displayPlanLabel}
+        <span aria-hidden="true" className="text-[#e8c985]">✦</span> Your plan: {displayPlanLabel}
       </Link>
 
       {isTrialGuestExpired && (
