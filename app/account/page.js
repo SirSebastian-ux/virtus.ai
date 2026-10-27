@@ -3,6 +3,7 @@ import BillingPortalButton from "./BillingPortalButton";
 import LogoutButton from "./LogoutButton";
 import CustomizeAppearance from "./CustomizeAppearance";
 import ProfileNameEditor from "./ProfileNameEditor";
+import ProfilePhotoEditor from "./ProfilePhotoEditor";
 import CoachingProgress from "./CoachingProgress";
 import CoachingHistory from "./CoachingHistory";
 import { createClient } from "@/lib/supabase-server";
@@ -149,6 +150,7 @@ export default async function AccountPage() {
 
             <div className="mt-6">
               <ProfileNameEditor initialName={profile?.nickname || user?.email?.split("@")[0] || ""} />
+              <div className="mt-4"><ProfilePhotoEditor /></div>
             </div>
 
             <div className="mt-6">
