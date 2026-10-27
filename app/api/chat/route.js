@@ -36,6 +36,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
 import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
+import { rankVirtusMemories, selectVirtusConversation, chooseVirtusIntelligence, VIRTUS_INTELLIGENCE_QUALITY_LAYER } from "@/lib/virtus-intelligence.mjs";
 import Tesseract from 'tesseract.js';
 
 
@@ -2051,12 +2052,11 @@ const virtusLibraryContext = isContinuationOnlyMessage
       message,
       limit: 6,
     });
-const runtimeFacts =
-  runtimeFactsLimit === null
-    ? prioritizedRuntimeFacts
-    : runtimeFactsLimit > 0
-    ? prioritizedRuntimeFacts.slice(0, runtimeFactsLimit)
-    : [];
+const runtimeFacts = rankVirtusMemories(
+  prioritizedRuntimeFacts,
+  message,
+  { limit: runtimeFactsLimit === null ? 48 : runtimeFactsLimit }
+);
 
 const personalRuntimeFacts = runtimeFacts.filter(
   (fact) =>
@@ -2074,10 +2074,17 @@ const allCurrentChatRows = hasSingleChatConversationMemory
   ? supabaseConversations || []
   : [];
 
-const conversationRows =
-  singleChatConversationLimit === null
-    ? allCurrentChatRows
-    : allCurrentChatRows.slice(-singleChatConversationLimit);
+const conversationRows = selectVirtusConversation(
+  allCurrentChatRows,
+  message,
+  {
+    recentLimit: singleChatConversationLimit === null
+      ? 48
+      : Math.max(4, singleChatConversationLimit),
+    relevantLimit: hasPremiumAccess ? 10 : hasPlusAccess ? 5 : 2,
+    maxChars: 5200,
+  }
+);
 
 const shouldUseSameChatAnchor =
   plan === "premium" || plan === "trial_guest";
@@ -3301,9 +3308,18 @@ Say clearly: "I tried to search, but the web search service failed. I can still 
   }
 }
 
-const response = await client.responses.create({
-  model: "gpt-5.4",
+const intelligence = chooseVirtusIntelligence({
+  plan,
+  message,
+  practiceMode,
+  hasImages: latestImageInputs.length > 0,
+});
+const virtusRequest = {
+  model: process.env.VIRTUS_MAIN_MODEL || intelligence.model,
+  reasoning: { effort: intelligence.effort },
+  max_output_tokens: intelligence.maxOutputTokens,
   stream: true,
+  store: false,
   instructions: `# SECURITY AND DATA BOUNDARY
 # NUMBERING PRESERVATION
 
@@ -4943,6 +4959,7 @@ Before you respond, check the signal: is this repeated behavior, a delay, or a c
 
 If a Trial Guest response contains visible teaching labels, rewrite it before answering.
 
+${VIRTUS_INTELLIGENCE_QUALITY_LAYER}
 `,
   metadata: {
     virtus_plan: plan,
@@ -4972,7 +4989,23 @@ ${message}`,
       ],
     },
   ],
-});
+};
+let response;
+try {
+  response = await client.responses.create(virtusRequest);
+} catch (error) {
+  const code = error?.status || error?.code;
+  const reason = String(error?.message || "").toLowerCase();
+  const canFallback = code === 400 || code === 403 || code === 404 ||
+    /model.*(not found|not available|access|unsupported|not enabled)/.test(reason);
+  if (!canFallback || virtusRequest.model === "gpt-5.4") throw error;
+  console.warn("VIRTUS MODEL FALLBACK: selected model unavailable. Reverting to stable model.");
+  response = await client.responses.create({
+    ...virtusRequest,
+    model: "gpt-5.4",
+    reasoning: { effort: "medium" },
+  });
+}
 
 let memoryWriteReply = null;
 let fullReply = "";
