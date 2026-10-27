@@ -5484,7 +5484,7 @@ return (
         <aside className="virtus-luxury-sidebar hidden md:flex h-full flex-col">
           <div className="virtus-luxury-brand flex flex-col items-center gap-2">
   <Image
-    src="/virtus-premium-emblem.webp"
+    src="/virtus-aurum-emblem.svg"
     alt="Virtus AI logo"
     width={180}
     height={202}
@@ -6190,7 +6190,7 @@ if (data.conversation) {
     aria-label="Open Virtus menu"
   >
     <Image
-      src="/virtus-premium-emblem.webp"
+      src="/virtus-aurum-emblem.svg"
       alt="Virtus AI"
       width={34}
       height={38}
@@ -6218,7 +6218,7 @@ if (data.conversation) {
 
 <div className="virtus-luxury-header-mark hidden min-w-0 flex-1 items-center justify-start md:flex">
   <Image
-    src="/virtus-premium-emblem.webp"
+    src="/virtus-aurum-emblem.svg"
     alt="Virtus AI"
     width={38}
     height={42}
@@ -6250,7 +6250,7 @@ if (data.conversation) {
         >
           <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
             <Image
-              src="/virtus-premium-emblem.webp"
+              src="/virtus-aurum-emblem.svg"
               alt="Virtus AI"
               width={42}
               height={47}
