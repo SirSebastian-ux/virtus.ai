@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
 
 export async function GET() {
   const supabase = await createClient();
@@ -29,7 +30,7 @@ export async function POST(request) {
   const path = user.id + "/avatar." + extension;
   const { error: uploadError } = await supabase.storage.from("virtus-profile-photos").upload(path, bytes, { contentType: photo.type, upsert: true });
   if (uploadError) return NextResponse.json({ error: "Upload failed" }, { status: 500 });
-  const { error: profileError } = await supabase.from("profiles").update({ avatar_path: path }).eq("id", user.id);
+  const { error: profileError } = await createAdminClient().from("profiles").update({ avatar_path: path }).eq("id", user.id);
   if (profileError) return NextResponse.json({ error: "Profile update failed" }, { status: 500 });
   const { data: signed } = await supabase.storage.from("virtus-profile-photos").createSignedUrl(path, 3600);
   return NextResponse.json({ success: true, url: signed?.signedUrl || null });
