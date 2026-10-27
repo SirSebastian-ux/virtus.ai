@@ -4,6 +4,7 @@ import LogoutButton from "./LogoutButton";
 import CustomizeAppearance from "./CustomizeAppearance";
 import ProfileNameEditor from "./ProfileNameEditor";
 import ProfilePhotoEditor from "./ProfilePhotoEditor";
+import ProfileAvatar from "./ProfileAvatar";
 import CoachingProgress from "./CoachingProgress";
 import CoachingHistory from "./CoachingHistory";
 import { createClient } from "@/lib/supabase-server";
@@ -81,9 +82,7 @@ export default async function AccountPage() {
         <div className="grid gap-6 md:grid-cols-[320px_minmax(0,1fr)]">
           <aside className="virtus-theme-surface rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
             <div className="flex items-center gap-3 virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10">
-<div className="flex h-12 w-12 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sm font-semibold text-sky-200 shadow-sm shadow-sky-950/20">
-  {user?.email?.[0]?.toUpperCase() || "V"}
-</div>
+<ProfileAvatar fallback={(profile?.nickname || user?.email || "V").charAt(0).toUpperCase()} />
 
               <div className="min-w-0">
  <p className="truncate text-sm font-medium virtus-theme-title">
