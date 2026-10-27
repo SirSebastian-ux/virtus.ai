@@ -24,22 +24,21 @@ export default async function UpgradePage() {
   return (
     <main className="min-h-screen virtus-theme-page">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-8 py-12">
-        <div className="virtus-theme-surface mb-10 rounded-3xl border border-sky-900/20 px-6 py-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-          <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
+        <div className="virtus-theme-surface mb-10 rounded-3xl border border-[#42615a]/40 px-6 py-6 shadow-sm shadow-black/20 backdrop-blur-sm">
+          <p className="text-xs uppercase tracking-[0.22em] text-[#d8bd85]">
             Virtus AI
           </p>
 
           <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
-            Choose your Virtus plan
+            Choose your coaching experience
           </h1>
 
           <p className="mt-3 max-w-2xl text-sm leading-6 virtus-theme-muted">
-            Choose the level of Virtus support and continuity that matches your
-            current stage. Billing is active and plan upgrades now work through
-            the real payment flow.
+            Life Coach, Trainer, and Mentor are the upcoming cumulative coaching plans.
+            Existing subscriptions remain unchanged while the new billing tiers are prepared.
           </p>
 
-          <div className="mt-5 inline-flex rounded-full border border-sky-900/30 bg-sky-950/20 px-4 py-2 text-sm text-sky-200">
+          <div className="mt-5 inline-flex rounded-full border border-[#42615a] bg-[#173632] px-4 py-2 text-sm text-[#e4d0a5]">
             Current plan: {getPlanLabel(currentPlan)}
           </div>
 
