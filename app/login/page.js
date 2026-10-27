@@ -35,6 +35,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "signup") setMode("signup");
+  }, []);
+
+  useEffect(() => {
     function syncLoginAppearance() {
       const savedAppearance = localStorage.getItem("virtus_appearance");
       const nextAppearance = savedAppearance === "light" ? "light" : "dark";
