@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import BillingPortalButton from "./BillingPortalButton";
 import LogoutButton from "./LogoutButton";
 import CustomizeAppearance from "./CustomizeAppearance";
@@ -46,6 +47,8 @@ export default async function AccountPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login?next=/account");
 
   let profile = null;
 
