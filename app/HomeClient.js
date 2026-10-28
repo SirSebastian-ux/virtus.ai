@@ -4,6 +4,7 @@ import SplashScreen from "./components/SplashScreen";
 import LuxuryWelcome from "./components/LuxuryWelcome";
 import LuxurySidebarNav from "./components/LuxurySidebarNav";
 import LuxuryFileLibrary from "./components/LuxuryFileLibrary";
+import VirtusPracticeWorkspace from "./components/VirtusPracticeWorkspace";
 import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import { useMemo } from "react";
@@ -5370,6 +5371,7 @@ const renderAssistantActions = (item, index) => {
     setLuxuryActiveNav("tools");
   }
   function openLuxuryLibrary() {
+    setPracticeOpen(false);
     setLuxuryActiveNav("library");
     setLuxuryToolsOpen(false);
     setShowFileMenu(false);
@@ -5515,7 +5517,7 @@ return (
                 type="button"
                 aria-label="Search"
                 onClick={() => { setSearchOpen(!searchOpen); setProjectsOpen(false); setPracticeOpen(false); setCaptureOpen(false); }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Search</span>
@@ -5532,7 +5534,7 @@ return (
                   setCaptureOpen(false);
                   if (!nextState) { setProjectHomeOpen(false); setActiveProject(null); }
                 }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Projects</span>
@@ -5542,12 +5544,15 @@ return (
                 type="button"
                 aria-label="Practices"
                 onClick={() => {
-                  setPracticeOpen(!practiceOpen);
+                  setPracticeOpen(true);
+                  setLuxuryToolsOpen(false);
+                  setLuxuryLibraryOpen(false);
+                  setShowMobileMenu(false);
                   setSearchOpen(false);
                   setProjectsOpen(false);
                   setCaptureOpen(false);
                 }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M2 12h3" /><path d="M19 12h3" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Practices</span>
@@ -5690,64 +5695,6 @@ return (
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {practiceOpen && (
-              <div className="virtus-practice-panel mt-3 max-h-[min(60vh,560px)] space-y-2 overflow-y-auto rounded-2xl border p-2.5 no-scrollbar">
-                <p className="virtus-practice-panel-heading px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                  Practice Categories
-                </p>
-
-                {renderGuidedPracticeAssessment()}
-
-                {virtusPracticeCategories.map((category) => {
-                  const canUseCategory = canUsePracticeCategory(category);
-                  const requiredPlan = category.minimumPlan || "free";
-                  const accessLabel = getPracticeCategoryAccessLabel(
-                    category,
-                    canUseCategory
-                  );
-                  const categoryPrompt = getPracticeCategoryPrompt(category);
-
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => {
-                        if (!canUseCategory) {
-                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
-                          setPracticeOpen(false);
-                          setIsPracticeMode(null);
-                          return;
-                        }
-
-                        setMessage(categoryPrompt);
-                        setPracticeOpen(false);
-                        setIsPracticeMode(category.practiceMode);
-                      }}
-                      className={`virtus-practice-category w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
-                        canUseCategory
-                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
-                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
-                      }`}
-                    >
-                      <span className="virtus-practice-category-title block font-semibold">
-                        {category.title}
-                      </span>
-
-                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
-                        {category.description}
-                      </span>
-
-                      {accessLabel && (
-                        <span className="virtus-practice-badge mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
-                          {accessLabel}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
               </div>
             )}
 
@@ -6049,6 +5996,60 @@ if (data.conversation) {
   }}
 >
           <div className="w-full h-full flex flex-col">
+<VirtusPracticeWorkspace
+  open={practiceOpen}
+  onClose={() => setPracticeOpen(false)}
+  categoryCount={virtusPracticeCategories.length}
+  assessment={practiceOpen ? renderGuidedPracticeAssessment() : null}
+>
+                {virtusPracticeCategories.map((category) => {
+                  const canUseCategory = canUsePracticeCategory(category);
+                  const requiredPlan = category.minimumPlan || "free";
+                  const accessLabel = getPracticeCategoryAccessLabel(
+                    category,
+                    canUseCategory
+                  );
+                  const categoryPrompt = getPracticeCategoryPrompt(category);
+
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        if (!canUseCategory) {
+                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
+                          setPracticeOpen(false);
+                          setIsPracticeMode(null);
+                          return;
+                        }
+
+                        setMessage(categoryPrompt);
+                        setPracticeOpen(false);
+                        setIsPracticeMode(category.practiceMode);
+                      }}
+                      className={`virtus-practice-category w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
+                        canUseCategory
+                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
+                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
+                      }`}
+                    >
+                      <span className="virtus-practice-category-title block font-semibold">
+                        {category.title}
+                      </span>
+
+                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
+                        {category.description}
+                      </span>
+
+                      {accessLabel && (
+                        <span className="virtus-practice-badge mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
+                          {accessLabel}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+</VirtusPracticeWorkspace>
 <LuxuryFileLibrary
   open={luxuryLibraryOpen}
   onClose={() => {
@@ -6405,7 +6406,9 @@ if (data.conversation) {
             <button
               type="button"
               onClick={() => {
-                setPracticeOpen(!practiceOpen);
+                setPracticeOpen(true);
+                setShowMobileMenu(false);
+                setLuxuryLibraryOpen(false);
                 setProjectsOpen(false);
                 setSearchOpen(false);
                 setCaptureOpen(false);
@@ -6414,70 +6417,6 @@ if (data.conversation) {
             >
               Practice
             </button>
-
-            {practiceOpen && (
-              <div className="virtus-practice-panel max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
-                <p className="virtus-practice-panel-heading px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
-                  Practice Categories
-                </p>
-
-                {renderGuidedPracticeAssessment()}
-
-                {virtusPracticeCategories.map((category) => {
-                  const canUseCategory = canUsePracticeCategory(category);
-                  const requiredPlan = category.minimumPlan || "free";
-                  const accessLabel = getPracticeCategoryAccessLabel(
-                    category,
-                    canUseCategory
-                  );
-                  const categoryPrompt = getPracticeCategoryPrompt(category);
-
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => {
-                        if (!canUseCategory) {
-                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
-                          setPracticeOpen(false);
-                          setShowMobileMenu(false);
-                          setIsPracticeMode(null);
-                          return;
-                        }
-
-                        setMessage(categoryPrompt);
-                        setPracticeOpen(false);
-                        setShowMobileMenu(false);
-                        setIsPracticeMode(category.practiceMode);
-                      }}
-                      className={`virtus-practice-category w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
-                        canUseCategory
-                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
-                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
-                      }`}
-                    >
-                      <span className="virtus-practice-category-title block font-semibold">
-                        {category.title}
-                      </span>
-
-                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
-                        {category.description}
-                      </span>
-
-                      {accessLabel && (
-                        <span className="virtus-practice-badge mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
-                          {accessLabel}
-                        </span>
-                      )}
-                    </button>
-                  );
-            <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Meetings
-            </Link>
-
-                })}
-              </div>
-            )}
 
             <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
               Meetings
