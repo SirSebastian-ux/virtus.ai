@@ -222,7 +222,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </ul>
 
               <p className={noteClass}>
-                Best for: trying Virtus, asking practical questions, and getting
+                Best for: structured reflection, personal development, and getting
                 guided personal development.
               </p>
             </div>
