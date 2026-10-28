@@ -145,46 +145,11 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
       }
 
       if (plan === "plus" || plan === "premium") {
-        // Price migration safeguard: old subscription prices must never be shown as the new offer.
         setError("Updated membership checkout is being configured. No payment has been taken.");
         setLoadingPlan(null);
         return;
-        /*
-        const checkoutWindow =
-          typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
-
-        const res = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ plan, billingCycle }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || !data.url) {
-          if (checkoutWindow) {
-            checkoutWindow.close();
-          }
-
-          setError(data.error || "Failed to start checkout.");
-          setLoadingPlan(null);
-          return;
-        }
-
-        setLoadingPlan(null);
-
-        if (checkoutWindow) {
-          checkoutWindow.location.href = data.url;
-        } else {
-          window.location.href = data.url;
-        }
-
-        return;
       }
 
-        */
       setError("Invalid plan selected.");
       setLoadingPlan(null);
     } catch (err) {
@@ -276,7 +241,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#d8bd85]/35 bg-[#092820]/70 px-4 py-4">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  "$9.99"{" "}
+                  $9.99{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
@@ -341,7 +306,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#d8bd85]/35 bg-[#092820]/70 px-4 py-4">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  "$19.99"{" "}
+                  $19.99{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
@@ -423,7 +388,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#e8c98d]/55 bg-[#0c3027]/80 px-4 py-4 shadow-sm shadow-black/20">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  "$29.99"{" "}
+                  $29.99{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
