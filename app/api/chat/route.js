@@ -38,6 +38,7 @@ import { getVirtusLibraryContext } from "@/lib/virtus-library";
 import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 import { rankVirtusMemories, selectVirtusConversation, chooseVirtusIntelligence, VIRTUS_INTELLIGENCE_QUALITY_LAYER } from "@/lib/virtus-intelligence.mjs";
 import { buildVirtusCoachingKnowledgeLayer } from "@/lib/virtus-coaching-knowledge.mjs";
+import { classifyVirtusMemoryIntent, getVirtusPublicPlanName, VIRTUS_PROFESSIONAL_CONVERSATION_STANDARD } from "@/lib/virtus-professional-dialogue.mjs";
 import Tesseract from 'tesseract.js';
 
 
@@ -2313,11 +2314,8 @@ if (canWriteProjectMemory && activeProjectId && immediateProjectFact) {
 
 const normalizedMessageControl = String(message || "").toLowerCase();
 
-const isForgetCommand =
-  normalizedMessageControl.startsWith("forget ") ||
-  normalizedMessageControl.startsWith("forget this") ||
-  normalizedMessageControl.startsWith("remove memory ") ||
-  normalizedMessageControl.startsWith("delete memory ");
+const memoryIntent = classifyVirtusMemoryIntent(message);
+const isForgetCommand = memoryIntent.kind === "delete";
 
 const isThisProjectRecallCommand =
   /\bwhat do you know about this project\b/i.test(normalizedMessageControl) ||
@@ -2342,12 +2340,7 @@ const isMemoryCommand =
   isForgetCommand || isMemoryRecallCommand || isMemoryUpdateCommand;
 
 if (isForgetCommand) {
-  const factToRemove = String(message || "")
-    .replace(/^forget this\s*/i, "")
-    .replace(/^forget\s+/i, "")
-    .replace(/^remove memory\s+/i, "")
-    .replace(/^delete memory\s+/i, "")
-    .trim();
+  const factToRemove = memoryIntent.target;
 
      await insertGlobalLearningEvent(supabase, {
     sourceUserId: userId,
@@ -4962,6 +4955,12 @@ Before you respond, check the signal: is this repeated behavior, a delay, or a c
 If a Trial Guest response contains visible teaching labels, rewrite it before answering.
 
 ${VIRTUS_INTELLIGENCE_QUALITY_LAYER}
+
+${VIRTUS_PROFESSIONAL_CONVERSATION_STANDARD}
+
+# VERIFIED CUSTOMER PLAN
+Your actual customer-facing plan is: ${getVirtusPublicPlanName(plan)}.
+Do not confuse historic internal billing identifiers with the product name.
 
 ${coachingKnowledge.instructions}
 `,
