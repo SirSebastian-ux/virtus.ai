@@ -183,13 +183,13 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   }
 
   const cardClass =
-    "virtus-theme-card flex h-full flex-col rounded-3xl border border-[#d8bd85]/25 bg-[#112d29] p-6 shadow-lg shadow-black/20 backdrop-blur-sm transition hover:border-[#d8bd85]/60 hover:bg-[#183a34]";
+    "virtus-plan-card virtus-theme-card flex h-full flex-col rounded-3xl border border-[#d8bd85]/25 bg-[#112d29] p-6 shadow-lg shadow-black/20 backdrop-blur-sm transition hover:border-[#d8bd85]/60 hover:bg-[#183a34]";
 
   const premiumCardClass =
-    "virtus-theme-card flex h-full flex-col rounded-3xl border border-[#d8bd85]/60 bg-[#173832] p-6 shadow-lg shadow-black/25 backdrop-blur-sm transition hover:border-[#efd39c] hover:bg-[#1b4139]";
+    "virtus-plan-card virtus-theme-card flex h-full flex-col rounded-3xl border border-[#d8bd85]/60 bg-[#173832] p-6 shadow-lg shadow-black/25 backdrop-blur-sm transition hover:border-[#efd39c] hover:bg-[#1b4139]";
 
   const planLabelClass =
-    "text-xs uppercase tracking-[0.18em] text-sky-300/55";
+    "text-xs uppercase tracking-[0.18em] text-[#edc786]";
 
   const titleClass =
     "mt-3 text-xl font-semibold virtus-theme-title";
@@ -201,7 +201,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     "mt-5 space-y-3 text-sm leading-6 virtus-theme-title";
 
   const featureDotClass =
-    "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/80";
+    "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#e8bd73]";
 
   const activeButtonClass =
     "mt-6 rounded-2xl border border-sky-800/40 bg-sky-950/35 px-4 py-2.5 text-sm font-medium text-sky-100 transition hover:border-sky-600/60 hover:bg-sky-900/45 disabled:opacity-50";
@@ -217,14 +217,14 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
   const toggleButtonClass = (value) =>
     billingCycle === value
-      ? "rounded-full border border-sky-500/50 bg-sky-500/20 px-4 py-2 text-sm font-medium text-sky-50 shadow-sm shadow-sky-950/20"
+      ? "virtus-billing-active rounded-full border border-sky-500/50 bg-sky-500/20 px-4 py-2 text-sm font-medium text-sky-50 shadow-sm shadow-sky-950/20"
       : "rounded-full border border-transparent px-4 py-2 text-sm font-medium text-zinc-400 transition hover:bg-sky-950/25 hover:text-sky-100";
 
   return (
     <div className="space-y-6">
       <div className="virtus-theme-card flex flex-col gap-3 rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-sky-300/55">
+          <p className="text-xs uppercase tracking-[0.18em] text-[#edc786]">
             Billing
           </p>
           <p className="mt-1 text-sm virtus-theme-muted">
@@ -236,7 +236,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
           </p>
         </div>
 
-        <div className="inline-flex w-full rounded-full border border-sky-900/25 bg-sky-950/10 p-1 sm:w-auto">
+        <div className="virtus-billing-toggle inline-flex w-full rounded-full border border-sky-900/25 bg-sky-950/10 p-1 sm:w-auto">
           <button
             type="button"
             onClick={() => setBillingCycle("monthly")}
@@ -255,22 +255,22 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="virtus-interior-plan-grid grid gap-5">
         {isGuestSelection || currentPlan === "free" ? (
           <section className={cardClass}>
             <div className="flex-1">
-              <p className={planLabelClass}>Free</p>
+              <p className={planLabelClass}>Life Coach — Free</p>
 
-              <h2 className={titleClass}>Start with clarity</h2>
+              <h2 className={titleClass}>Begin your development</h2>
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-sky-900/25 px-4 py-3">
-                <p className="text-2xl font-semibold virtus-theme-title">
+                <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
                   $0{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / free account
                   </span>
                 </p>
-                <p className="mt-1 text-xs leading-5 text-sky-300/70">
+                <p className="mt-1 text-xs leading-5 text-[#eac789]">
                   No payment required
                 </p>
               </div>
@@ -324,18 +324,18 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
         {isGuestSelection || currentPlan === "free" || currentPlan === "plus" ? (
           <section className={cardClass}>
             <div className="flex-1">
-              <p className={planLabelClass}>Plus</p>
+              <p className={planLabelClass}>Trainer</p>
 
-              <h2 className={titleClass}>Guided coaching layer</h2>
+              <h2 className={titleClass}>Guided life coaching and training</h2>
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-sky-900/25 px-4 py-3">
-                <p className="text-2xl font-semibold virtus-theme-title">
+                <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
                   {isYearly ? "$15.99" : "$19"}{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
                 </p>
-                <p className="mt-1 text-xs leading-5 text-sky-300/70">
+                <p className="mt-1 text-xs leading-5 text-[#eac789]">
                   {isYearly
                     ? "Billed yearly at $191.88"
                     : "Yearly option: $15.99 / month when billed yearly"}
@@ -402,22 +402,22 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
           <section className={premiumCardClass}>
             <div className="flex-1">
               <div className="flex items-center justify-between gap-3">
-                <p className={planLabelClass}>Premium / Virtus Prime</p>
+                <p className={planLabelClass}>Mentor</p>
                 <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-sky-200">
                   Highest
                 </span>
               </div>
 
-              <h2 className={titleClass}>Strategic executive layer</h2>
+              <h2 className={titleClass}>Advanced coaching and mentorship</h2>
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-sky-500/30 px-4 py-3 shadow-sm shadow-sky-950/20">
-                <p className="text-2xl font-semibold virtus-theme-title">
+                <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
                   {isYearly ? "$44.99" : "$49"}{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
                 </p>
-                <p className="mt-1 text-xs leading-5 text-sky-300/80">
+                <p className="mt-1 text-xs leading-5 text-[#eac789]">
                   {isYearly
                     ? "Billed yearly at $539.88"
                     : "Yearly option: $44.99 / month when billed yearly"}
@@ -432,7 +432,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               <ul className={featureListClass}>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Deepest personalization and premium-like reasoning.</span>
+                  <span>Advanced personalization and structured reasoning.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
@@ -454,7 +454,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               <button
                 type="button"
                 onClick={() => router.push("/login")}
-                className={primaryButtonClass}
+                className={"virtus-gold-button " + primaryButtonClass}
               >
                 Create Account for Premium
               </button>
@@ -464,7 +464,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
                 disabled={currentPlan === "premium"}
                 onClick={() => handlePlanChange("premium")}
                 className={
-                  currentPlan === "premium" ? currentButtonClass : primaryButtonClass
+                  currentPlan === "premium" ? currentButtonClass : "virtus-gold-button " + primaryButtonClass
                 }
               >
                 {currentPlan === "premium"
