@@ -5,8 +5,8 @@ const MAX_WIDGET_MESSAGES = 7;
 const HOME = "https://virtusaiworld.com";
 
 function getIdentity() {
-  const guestId = localStorage.getItem("virtus_ews_embed_guest_id") || crypto.randomUUID();
-  const chatId = localStorage.getItem("virtus_ews_embed_chat_id") || crypto.randomUUID();
+  const guestId = localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
+  const chatId = localStorage.getItem("virtus_chat_id") || crypto.randomUUID();
   localStorage.setItem("virtus_ews_embed_guest_id", guestId);
   localStorage.setItem("virtus_ews_embed_chat_id", chatId);
   return { guestId, chatId };
@@ -23,6 +23,15 @@ export default function EwsEmbedPage() {
 
   useEffect(() => {
     identity.current = getIdentity();
+    fetch("/api/embed/guest", { method: "POST", credentials: "same-origin" })
+      .then(async (r) => { const data = await r.json(); if (!r.ok) throw new Error(data.error || "Trial unavailable");
+        const current = getIdentity(); identity.current = { ...current, guestId: data.guestId };
+        localStorage.setItem("virtus_guest_id", data.guestId);
+        return fetch("/api/conversations", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(identity.current) });
+      })
+      .then(r=>r.json())
+      .then(data=>{ if(Array.isArray(data.conversation)){ const history = data.conversation.filter(m=>["user","assistant"].includes(m.role)); setMessages(history); localStorage.setItem("virtus_ews_embed_messages",JSON.stringify(history)); } if(data.access) localStorage.setItem("virtus_guest_access",JSON.stringify(data.access)); })
+      .catch(err=>setNotice(err.message || "Trial unavailable"));
     try {
       const saved = JSON.parse(localStorage.getItem("virtus_ews_embed_messages") || "[]");
       if (Array.isArray(saved)) setMessages(saved.filter(m => ["user", "assistant"].includes(m.role)).slice(-30));
@@ -36,7 +45,7 @@ export default function EwsEmbedPage() {
   async function send(event) {
     event.preventDefault();
     const message = input.trim();
-    if (!message || busy || limitReached || !identity.current) return;
+    if (!message || busy || limitReached || !identity.current || notice) return;
     const next = [...messages, { role: "user", text: message }];
     setMessages(next);
     localStorage.setItem("virtus_ews_embed_messages", JSON.stringify(next));
@@ -101,7 +110,7 @@ export default function EwsEmbedPage() {
         {messages.map((m,i) => <div className={"bubble " + (m.role === "user" ? "visitor" : "bot")} key={i}>{m.text}</div>)}
         {busy && <div className="bubble bot" role="status">Virtus is thinking…</div>}
         {notice && <p className="notice" role="alert">{notice}</p>}
-        {limitReached && <div className="handoff"><strong>Continue with Virtus AI</strong><p>Your EWS website preview has ended. Continue your three-day Trial Guest experience on the full platform.</p><a href={HOME} target="_blank" rel="noopener noreferrer">Open Virtus AI World ↗</a><small>Your EWS messages are saved in the Virtus guest conversation system. Automatic cross-domain transfer is being finalized.</small></div>}
+        {limitReached && <div className="handoff"><strong>Continue with Virtus AI</strong><p>Your EWS website preview has ended. Continue your three-day Trial Guest experience on the full platform.</p><a href={HOME} target="_blank" rel="noopener noreferrer">Open Virtus AI World ↗</a><small>Your messages are saved in the same Virtus Trial Guest conversation.</small></div>}
         <div ref={bottom} />
       </div>
       <footer>
