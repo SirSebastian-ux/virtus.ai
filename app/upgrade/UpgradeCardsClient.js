@@ -35,7 +35,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loadingPlan, setLoadingPlan] = useState(null);
-  const [billingCycle, setBillingCycle] = useState("yearly");
+  const [billingCycle, setBillingCycle] = useState("monthly");
   const [error, setError] = useState("");
   const [isNativeIosApp] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -93,7 +93,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   }, []);
 
   const isGuestSelection = !isAuthenticated;
-  const isYearly = billingCycle === "yearly";
+  const isYearly = false;
 
   const canChooseFree = currentPlan === "free";
   const canChoosePlus = currentPlan === "free" || currentPlan === "plus";
@@ -104,6 +104,11 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     try {
       setLoadingPlan(plan);
       setError("");
+      if (plan === "free") {
+        setError("Life Coach at $9.99/month is not yet connected to Stripe. No payment has been taken.");
+        setLoadingPlan(null);
+        return;
+      }
 
       if (!isAuthenticated) {
         router.push("/login");
@@ -140,6 +145,11 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
       }
 
       if (plan === "plus" || plan === "premium") {
+        // Price migration safeguard: old subscription prices must never be shown as the new offer.
+        setError("Updated membership checkout is being configured. No payment has been taken.");
+        setLoadingPlan(null);
+        return;
+        /*
         const checkoutWindow =
           typeof window !== "undefined" ? window.open("about:blank", "_blank") : null;
 
@@ -174,6 +184,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
         return;
       }
 
+        */
       setError("Invalid plan selected.");
       setLoadingPlan(null);
     } catch (err) {
@@ -228,11 +239,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             Billing
           </p>
           <p className="mt-1 text-sm virtus-theme-muted">
-            Choose monthly flexibility or yearly savings before upgrading.
+            New monthly membership prices.
           </p>
           <p className="mt-3 max-w-2xl rounded-xl border border-[#ac956b]/30 bg-[#082a24] px-4 py-3 text-sm leading-6 text-[#c6d8cd]">
-            Checkout opens in a new tab. Complete your payment there. After payment,
-            Virtus will activate your plan automatically.
+            Updated prices are being connected to secure Stripe checkout. Existing memberships remain unchanged.
           </p>
         </div>
 
@@ -247,6 +257,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
           <button
             type="button"
+            hidden
             onClick={() => setBillingCycle("yearly")}
             className={toggleButtonClass("yearly")}
           >
@@ -259,24 +270,24 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
         {isGuestSelection || currentPlan === "free" ? (
           <section className={cardClass}>
             <div className="flex-1">
-              <p className={planLabelClass}>Life Coach — Free</p>
+              <p className={planLabelClass}>Life Coach</p>
 
-              <h2 className={titleClass}>Begin your development</h2>
+              <h2 className={titleClass}>Conscious personal growth</h2>
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#d8bd85]/35 bg-[#092820]/70 px-4 py-4">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  $0{" "}
+                  "$9.99"{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
-                    / free account
+                    / month
                   </span>
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[#eac789]">
-                  No payment required
+                  Monthly membership · Checkout setup in progress
                 </p>
               </div>
 
               <p className={descriptionClass}>
-                A free Life Coach experience for people who want guided reflection, saved
+                A Life Coach experience for people who want guided reflection, saved
                 chats, and an introduction to conscious personal development.
               </p>
 
@@ -307,7 +318,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
                 onClick={() => router.push("/login")}
                 className={activeButtonClass}
               >
-                Create Free Account
+                Choose Life Coach
               </button>
             ) : canChooseFree ? (
               <button
@@ -326,24 +337,24 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             <div className="flex-1">
               <p className={planLabelClass}>Trainer</p>
 
-              <h2 className={titleClass}>Guided life coaching and training</h2>
+              <h2 className={titleClass}>Guided training and development</h2>
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#d8bd85]/35 bg-[#092820]/70 px-4 py-4">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  {isYearly ? "$15.99" : "$19"}{" "}
+                  "$19.99"{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[#eac789]">
                   {isYearly
-                    ? "Billed yearly at $191.88"
-                    : "Yearly option: $15.99 / month when billed yearly"}
+                    ? "Monthly membership"
+                    : "Monthly membership"}
                 </p>
               </div>
 
               <p className={descriptionClass}>
-                A stronger personal coaching experience with better continuity,
+                A structured training experience with better continuity,
                 deeper reflection, and more support across chats.
               </p>
 
@@ -363,7 +374,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </ul>
 
               <p className={noteClass}>
-                Best for: personal growth, life coaching, emotional discipline,
+                Best for: structured learning, personal growth, emotional discipline,
                 and regular support.
               </p>
             </div>
@@ -388,8 +399,8 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
                 {currentPlan === "plus"
                   ? "Current plan"
                   : isYearly
-                  ? "Choose Trainer · Yearly"
-                  : "Choose Trainer · Monthly"}
+                  ? "Choose Trainer"
+                  : "Choose Trainer"}
               </button>
             ) : null}
           </section>
@@ -412,15 +423,15 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#e8c98d]/55 bg-[#0c3027]/80 px-4 py-4 shadow-sm shadow-black/20">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  {isYearly ? "$44.99" : "$49"}{" "}
+                  "$29.99"{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
                     / month
                   </span>
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[#eac789]">
                   {isYearly
-                    ? "Billed yearly at $539.88"
-                    : "Yearly option: $44.99 / month when billed yearly"}
+                    ? "Monthly membership"
+                    : "Monthly membership"}
                 </p>
               </div>
 
@@ -470,8 +481,8 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
                 {currentPlan === "premium"
                   ? "Current plan"
                   : isYearly
-                  ? "Choose Mentor · Yearly"
-                  : "Choose Mentor · Monthly"}
+                  ? "Choose Mentor"
+                  : "Choose Mentor"}
               </button>
             ) : null}
           </section>
