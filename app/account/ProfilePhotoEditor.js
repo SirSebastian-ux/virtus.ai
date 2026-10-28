@@ -36,7 +36,7 @@ export default function ProfilePhotoEditor() {
     <div className="mt-4 flex flex-wrap items-center gap-4">
       {url ? <img src={url} alt="Your profile photograph" className="h-20 w-20 rounded-full border border-[#d8bd85]/40 object-cover" /> : <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#d8bd85]/40 bg-[#081c1b] text-2xl">V</div>}
       <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} className="max-w-full text-sm" aria-label="Choose a profile photo" />
-      <button type="submit" disabled={!file || busy} className="rounded-xl bg-[#d8bd85] px-4 py-2 text-sm font-medium text-[#0c2421] disabled:opacity-50">{busy ? "Uploading..." : "Upload photo"}</button>
+      <button type="submit" disabled={!file || busy} className="virtus-gold-button px-4 py-2 text-sm disabled:opacity-50">{busy ? "Uploading..." : "Upload photo"}</button>
     </div>
     {message && <p role="status" className="mt-3 text-sm text-[#e8c985]">{message}</p>}
   </form>;
