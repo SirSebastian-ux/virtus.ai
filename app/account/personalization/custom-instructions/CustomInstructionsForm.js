@@ -37,7 +37,7 @@ export default function CustomInstructionsForm({
   return (
     <div className="space-y-4">
       <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-        <p className="text-xs uppercase tracking-[0.18em] text-sky-300/50">
+        <p className="text-xs uppercase tracking-[0.18em] text-[#edc786]">
           Instructions
         </p>
 
@@ -56,12 +56,12 @@ export default function CustomInstructionsForm({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-2 text-sm text-sky-700 transition hover:border-sky-800/40 hover:bg-sky-950/15 disabled:opacity-50"
+          className="virtus-gold-button px-5 py-3 text-sm disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save instructions"}
         </button>
 
-        {status ? <p className="text-sm text-sky-700">{status}</p> : null}
+        {status ? <p className="text-sm text-[#eed19a]">{status}</p> : null}
       </div>
     </div>
   );
