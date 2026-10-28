@@ -16,6 +16,7 @@ export default function EwsEmbedPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
   const [trialFinished, setTrialFinished] = useState(false);
   const identity = useRef(null);
@@ -30,7 +31,7 @@ export default function EwsEmbedPage() {
         return fetch("/api/conversations", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(identity.current) });
       })
       .then(r=>r.json())
-      .then(data=>{ if(Array.isArray(data.conversation)){ const history = data.conversation.filter(m=>["user","assistant"].includes(m.role)); setMessages(history); localStorage.setItem("virtus_ews_embed_messages",JSON.stringify(history)); } if(data.access) localStorage.setItem("virtus_guest_access",JSON.stringify(data.access)); })
+      .then(data=>{ if(Array.isArray(data.conversation)){ const history = data.conversation.filter(m=>["user","assistant"].includes(m.role)); setMessages(history); localStorage.setItem("virtus_ews_embed_messages",JSON.stringify(history)); } if(data.access) localStorage.setItem("virtus_guest_access",JSON.stringify(data.access)); setReady(true); })
       .catch(err=>setNotice(err.message || "Trial unavailable"));
     try {
       const saved = JSON.parse(localStorage.getItem("virtus_ews_embed_messages") || "[]");
@@ -45,7 +46,7 @@ export default function EwsEmbedPage() {
   async function send(event) {
     event.preventDefault();
     const message = input.trim();
-    if (!message || busy || limitReached || !identity.current || notice) return;
+    if (!message || busy || limitReached || !identity.current || !ready || notice) return;
     const next = [...messages, { role: "user", text: message }];
     setMessages(next);
     localStorage.setItem("virtus_ews_embed_messages", JSON.stringify(next));
@@ -116,8 +117,8 @@ export default function EwsEmbedPage() {
       <footer>
         <div className="quota">{Math.min(used,MAX_WIDGET_MESSAGES)} of {MAX_WIDGET_MESSAGES} preview messages used</div>
         <form onSubmit={send}>
-          <input aria-label="Message Virtus AI" placeholder={limitReached ? "Continue on Virtus AI World" : "Message Virtus AI…"} value={input} onChange={e=>setInput(e.target.value)} disabled={busy || limitReached} maxLength={2000} />
-          <button type="submit" aria-label="Send message" disabled={!input.trim() || busy || limitReached}>➤</button>
+          <input aria-label="Message Virtus AI" placeholder={limitReached ? "Continue on Virtus AI World" : "Message Virtus AI…"} value={input} onChange={e=>setInput(e.target.value)} disabled={busy || limitReached || !ready} maxLength={2000} />
+          <button type="submit" aria-label="Send message" disabled={!input.trim() || busy || limitReached || !ready}>➤</button>
         </form>
         <div className="footnote">For personal development. Not an emergency service.</div>
       </footer>
