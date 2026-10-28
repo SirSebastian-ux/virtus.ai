@@ -1137,3 +1137,95 @@
  color:#ffdfa0!important;box-shadow:inset 0 1px 0 rgba(255,239,188,.17);
 }
 .virtus-chat-root.virtus-luxury .virtus-account-footer-logout:hover{background:#17654e!important;border-color:#ffe6a7!important}
+
+/* Practice studio — branded emerald, ivory and metallic gold; desktop and mobile. */
+.virtus-chat-root.virtus-luxury .virtus-practice-panel{
+ background:radial-gradient(ellipse at 45% 0%,rgba(25,111,79,.26),transparent 62%),linear-gradient(155deg,#043d31,#052720 70%,#031f1c)!important;
+ border:1px solid rgba(232,190,102,.68)!important;
+ box-shadow:inset 0 1px 0 rgba(255,238,174,.22),0 12px 34px rgba(0,0,0,.22)!important;
+ scrollbar-color:rgba(231,193,113,.72) rgba(5,41,32,.8);
+}
+.virtus-chat-root.virtus-luxury .virtus-practice-panel-heading{
+ color:#f4d28b!important;text-shadow:0 0 9px rgba(232,182,95,.2);
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-card{
+ background:linear-gradient(135deg,rgba(4,57,46,.97),rgba(3,32,29,.98))!important;
+ border:1px solid rgba(232,191,107,.52)!important;
+ box-shadow:inset 0 1px 0 rgba(255,244,204,.12),0 8px 22px rgba(0,0,0,.13);
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-card h3,
+.virtus-chat-root.virtus-luxury .virtus-practice-category-title{
+ color:#fff1d0!important;font-weight:650;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-card p[class*="uppercase"],
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-card span[class*="text-sky"]{
+ color:#e9c37c!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-card p[class*="text-zinc"],
+.virtus-chat-root.virtus-luxury .virtus-practice-description{
+ color:#bfd6cd!important;line-height:1.6;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-primary{
+ background:linear-gradient(180deg,#fff2bf 0%,#e6b96d 23%,#bb863f 45%,#f4d393 65%,#cf9951 88%,#ffe8b2 100%)!important;
+ border:1px solid #f8dc9f!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,241,.86),0 3px 15px rgba(236,178,79,.22)!important;
+ color:#092d25!important;-webkit-text-fill-color:#092d25!important;
+ text-shadow:none!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-primary:not(:disabled):hover{
+ filter:brightness(1.13);box-shadow:0 0 18px rgba(234,189,97,.34)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-primary:disabled{opacity:.43;filter:grayscale(.4)}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-history{
+ background:rgba(2,26,25,.75)!important;border:1px solid rgba(230,190,105,.33)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-history>div>p{color:#ebc981!important}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-refresh{
+ color:#eacb8c!important;text-decoration:underline;text-underline-offset:3px;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-history .group{
+ border-color:rgba(229,190,105,.3)!important;background:rgba(4,49,40,.75)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-history .group:hover{border-color:#eed097!important}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-progress{
+ background:linear-gradient(90deg,#ab7a36,#ffeba9,#b27d3e)!important;
+ box-shadow:0 0 10px rgba(236,181,91,.22);
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-option{
+ border-color:rgba(224,180,100,.4)!important;color:#dfe9dd!important;background:rgba(4,42,36,.86)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-option:hover{border-color:#f5d393!important;background:rgba(10,83,61,.9)!important}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-option[class*="border-sky-500"]{
+ border-color:#f5d18d!important;color:#fff1c4!important;background:rgba(29,107,74,.9)!important;
+ box-shadow:inset 3px 0 0 #f1c671;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-card textarea{
+ background:#031f1e!important;border:1px solid rgba(227,186,103,.47)!important;color:#f8f2df!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-guided-practice-card textarea:focus{border-color:#f5d48b!important;outline:2px solid rgba(232,184,90,.15)}
+.virtus-chat-root.virtus-luxury .virtus-practice-category{
+ display:flex;flex-direction:column;align-items:flex-start;min-height:95px;
+ border:1px solid rgba(222,181,98,.37)!important;
+ background:linear-gradient(145deg,rgba(4,55,45,.94),rgba(4,36,33,.95))!important;
+ color:#f8edda!important;box-shadow:inset 0 1px 0 rgba(255,240,189,.11);
+}
+.virtus-chat-root.virtus-luxury .virtus-practice-category:hover{
+ border-color:rgba(255,222,149,.87)!important;
+ background:linear-gradient(138deg,rgba(10,83,62,.96),rgba(3,52,43,.98))!important;
+ box-shadow:0 0 16px rgba(232,184,97,.11)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-practice-category.virtus-practice-item-locked{
+ opacity:.72;filter:saturate(.72);
+}
+.virtus-chat-root.virtus-luxury .virtus-practice-badge{
+ border-color:rgba(243,208,136,.6)!important;
+ background:linear-gradient(115deg,rgba(124,82,31,.34),rgba(14,75,57,.8))!important;
+ color:#f8d993!important;letter-spacing:.1em;
+}
+.virtus-chat-root.virtus-luxury .virtus-practice-panel button:focus-visible{
+ outline:2px solid #fbe2a8!important;outline-offset:2px;
+}
+@media(max-width:640px){
+ .virtus-chat-root.virtus-luxury .virtus-practice-panel{max-height:min(64vh,540px)!important}
+ .virtus-chat-root.virtus-luxury .virtus-practice-category{min-height:84px;padding:11px!important}
+}
