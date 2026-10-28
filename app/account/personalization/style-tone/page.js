@@ -1,3 +1,4 @@
+import VirtusInteriorHeader from "../../../components/VirtusInteriorHeader";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import StyleToneForm from "./StyleToneForm";
@@ -25,32 +26,20 @@ export default async function StyleTonePage() {
   const currentStyle = profile?.response_style || "default";
 
   return (
-    <main className="min-h-screen virtus-theme-page">
+    <main className="virtus-interior min-h-screen virtus-theme-page">
       <AppearanceSync />
 
-      <div className="mx-auto w-full max-w-5xl px-8 py-10">
-        <div className="virtus-theme-surface mb-8 rounded-3xl border border-sky-900/20 px-6 py-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-          <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
-            Virtus AI
-          </p>
+      <div className="virtus-interior-shell narrow virtus-interior-subpage">
+        <VirtusInteriorHeader title="Style and Tone" description="Choose the communication style that suits you, from gentle coaching to strategic guidance." backHref="/account/personalization" backLabel="All personalization settings" />
 
-          <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
-            Style and Tone
-          </h1>
-
-          <p className="mt-2 max-w-2xl text-sm leading-6 virtus-theme-muted">
-            Choose how Virtus should respond to you.
-          </p>
-        </div>
-
-        <div className="virtus-theme-surface rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+        <div className="virtus-theme-surface virtus-interior-panel rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
           <StyleToneForm initialStyle={currentStyle} />
         </div>
 
         <div className="mt-8">
           <Link
             href="/account/personalization"
-            className="inline-flex items-center rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-2 text-sm text-sky-700 transition hover:border-sky-800/40 hover:bg-sky-950/15"
+            className="virtus-interior-back"
           >
             Back to personalization
           </Link>
