@@ -2130,7 +2130,8 @@ const handleCaptureMicrophoneClick = async () => {
       return "";
     }
 
-    return canUseCategory ? requiredPlan : `Locked - ${requiredPlan}`;
+    const publicTier = requiredPlan === "premium" ? "Mentor" : requiredPlan === "plus" ? "Trainer" : requiredPlan;
+    return canUseCategory ? publicTier : `Locked · ${publicTier}`;
   };
 
   const getLockedPracticeCategoryMessage = (category, requiredPlan) => {
