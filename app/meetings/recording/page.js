@@ -160,7 +160,7 @@ export default function MeetingRecordingReviewPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-5 text-zinc-100">
+    <main className="virtus-subpage-modern min-h-screen bg-zinc-950 px-4 py-5 text-zinc-100">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
