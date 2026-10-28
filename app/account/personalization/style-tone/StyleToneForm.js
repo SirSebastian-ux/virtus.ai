@@ -51,9 +51,9 @@ export default function StyleToneForm({ initialStyle = "default" }) {
             type="button"
             onClick={() => saveStyle(value)}
             disabled={saving}
-            className={`group virtus-theme-card flex w-full items-center justify-between gap-6 rounded-2xl border px-4 py-4 text-left shadow-sm backdrop-blur-sm transition disabled:opacity-50 ${
+            className={`virtus-style-option group virtus-theme-card flex w-full items-center justify-between gap-6 rounded-2xl border px-4 py-4 text-left shadow-sm backdrop-blur-sm transition disabled:opacity-50 ${
               active
-                ? "border-sky-700/60 bg-sky-950/20 shadow-sky-950/20"
+                ? "virtus-style-selected border-[#e7be78]/70 bg-[#10523f] shadow-[#e7be78]/10"
                 : "border-sky-900/20 shadow-sky-950/10 hover:border-sky-800/40 hover:bg-sky-950/10"
             }`}
           >
@@ -67,8 +67,8 @@ export default function StyleToneForm({ initialStyle = "default" }) {
             <div
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
                 active
-                  ? "border-sky-600/60 bg-sky-900/30 text-sky-100"
-                  : "border-sky-900/30 bg-sky-950/10 text-sky-700 group-hover:bg-sky-950/15"
+                  ? "border-[#e7be78]/70 bg-[#10523f] text-[#f6d18a]"
+                  : "border-sky-900/30 bg-sky-950/10 text-[#eed19a] group-hover:bg-sky-950/15"
               }`}
             >
               {active ? "\u2713" : "\u203A"}
@@ -77,7 +77,7 @@ export default function StyleToneForm({ initialStyle = "default" }) {
         );
       })}
 
-      {status ? <p className="text-sm text-sky-700">{status}</p> : null}
+      {status ? <p className="text-sm text-[#eed19a]">{status}</p> : null}
     </div>
   );
 }
