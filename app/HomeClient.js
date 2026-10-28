@@ -5992,20 +5992,20 @@ if (data.conversation) {
                     <div className="virtus-luxury-sidebar-footer border-t border-zinc-800 p-3 space-y-3">
   {isAuthenticated ? (
     <>
-      <div className="flex items-center justify-between gap-2 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-2 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+      <div className="virtus-account-footer-card flex items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-white backdrop-blur-sm">
         <button
           type="button"
           onClick={() => router.push("/account")}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-1 py-1 text-left transition hover:bg-sky-950/30"
+          className="virtus-account-footer-link flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-1 py-1 text-left transition"
           aria-label="Open account"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-xs font-semibold text-sky-200">
+          <span className="virtus-account-footer-avatar flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold">
             {(currentUser?.nickname || currentUser?.email || "S").charAt(0).toUpperCase()}
           </span>
 
           <span className="min-w-0">
-            <span className="block text-sm font-medium leading-4 text-sky-200">Account</span>
-            <span className="block truncate text-xs leading-4 text-zinc-400">
+            <span className="virtus-account-footer-title block text-sm font-medium leading-5">Account</span>
+            <span className="virtus-account-footer-subtitle block truncate text-xs leading-4">
               {currentUser?.nickname || currentUser?.email?.split("@")[0] || "You are signed in"}
             </span>
           </span>
@@ -6014,7 +6014,7 @@ if (data.conversation) {
         <button
           type="button"
           onClick={handleLogout}
-          className="shrink-0 rounded-xl border border-sky-900/40 bg-sky-950/20 px-3 py-2 text-xs text-sky-200 transition hover:bg-sky-900/35"
+          className="virtus-account-footer-logout shrink-0 rounded-xl border px-3 py-2 text-xs font-semibold transition"
         >
           Log out
         </button>
