@@ -1,6 +1,7 @@
 import "./globals.css";
 import "./virtus-luxury.css";
 import "./virtus-interior.css";
+import "./virtus-subpages.css";
 
 export const metadata = {
   title: "Virtus AI | Life Coach · Trainer · Mentor",
