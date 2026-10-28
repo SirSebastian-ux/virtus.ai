@@ -1595,7 +1595,8 @@
     border-color:#ffdda3;box-shadow:0 0 0 3px rgba(235,187,90,.16);
   }
   .virtus-chat-root.virtus-luxury .virtus-mobile-secondary-label{color:#e8c27c}
-  .virtus-chat-root.virtus-luxury .virtus-mobile-menu-stack > div.max-h-\\[45vh\\]{
+  .virtus-chat-root.virtus-luxury .virtus-mobile-menu-stack > div[aria-label="Recent chats"],
+  .virtus-chat-root.virtus-luxury .virtus-mobile-menu-stack > div[role="list"]{
     border-color:rgba(235,189,103,.4);
     background:rgba(2,38,31,.7);
   }
