@@ -63,6 +63,10 @@ export async function POST(req) {
       );
     }
 
+    // Fail closed until the profile entitlement schema supports paid Life Coach.
+    if (process.env.VIRTUS_PAID_MEMBERSHIPS_ENABLED !== "true") {
+      return NextResponse.json({error:"Membership checkout is being finalized. No payment was taken."},{status:503});
+    }
     const priceId = getPriceId(plan, billingCycle);
     const expectedProduct = { life_coach: "prod_VWZ1iHtwVgvm7C", plus: "prod_ULTRRf2Dt0mU6B", premium: "prod_ULTTKt2XlbHmOG" }[plan];
     const stripePrice = await stripe.prices.retrieve(priceId);
