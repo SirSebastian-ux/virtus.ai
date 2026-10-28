@@ -190,6 +190,7 @@ export default async function AccountPage() {
               <SettingsRow
                 label="Help"
                 value="Support and guidance area"
+                href="/support"
               />
 
                         <LogoutButton />
