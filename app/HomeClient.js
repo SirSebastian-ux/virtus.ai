@@ -3031,7 +3031,7 @@ const handleCaptureMicrophoneClick = async () => {
       isReviewStep || isGuidedPracticeAnswerReady(question);
 
     return (
-      <div className="mb-3 rounded-2xl border border-sky-900/25 bg-zinc-950/45 p-3 shadow-sm shadow-sky-950/20">
+      <div className="virtus-guided-practice-card mb-3 rounded-2xl border p-3">
         {!showGuidedPractice ? (
           <div className="space-y-3">
             <div>
@@ -3053,12 +3053,12 @@ const handleCaptureMicrophoneClick = async () => {
                 setShowGuidedPractice(true);
                 setGuidedPracticeStep(0);
               }}
-              className="w-full rounded-xl border border-sky-800/35 bg-sky-950/35 px-3 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-600/50 hover:bg-sky-900/35"
+              className="virtus-guided-practice-primary w-full rounded-xl border px-3 py-3 text-sm font-semibold transition"
             >
               Start Guided Practice
             </button>
 
-            <div className="rounded-xl border border-sky-900/15 bg-black/20 p-2">
+            <div className="virtus-guided-practice-history rounded-xl border p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-300/55">
                   Old Guided Practices
@@ -3067,7 +3067,7 @@ const handleCaptureMicrophoneClick = async () => {
                 <button
                   type="button"
                   onClick={loadGuidedPracticeHistory}
-                  className="text-[11px] text-zinc-500 transition hover:text-sky-300"
+                  className="virtus-guided-practice-refresh text-[11px] font-semibold transition"
                 >
                   Refresh
                 </button>
@@ -3174,7 +3174,7 @@ const handleCaptureMicrophoneClick = async () => {
               <button
                 type="button"
                 onClick={handleCreateGuidedPractice}
-                className="flex-1 rounded-xl border border-sky-700/45 bg-sky-950/45 px-3 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-500/60 hover:bg-sky-900/45"
+                className="virtus-guided-practice-primary flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition"
               >
                 Create My Practice
               </button>
@@ -3199,7 +3199,7 @@ const handleCaptureMicrophoneClick = async () => {
 
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-900">
                 <div
-                  className="h-full rounded-full bg-sky-500/70 transition-all"
+                  className="virtus-guided-practice-progress h-full rounded-full transition-all"
                   style={{
                     width: `${((guidedPracticeStep + 1) / guidedPracticeTotalSteps) * 100}%`,
                   }}
@@ -3253,7 +3253,7 @@ const handleCaptureMicrophoneClick = async () => {
                           detail: currentDetail,
                         });
                       }}
-                      className={`rounded-xl border px-3 py-2 text-left text-xs transition ${
+                      className={`virtus-guided-practice-option rounded-xl border px-3 py-2 text-left text-xs transition ${
                         selected
                           ? "border-sky-500/60 bg-sky-950/55 text-sky-100"
                           : "border-zinc-800/80 bg-zinc-950/35 text-zinc-300 hover:border-sky-800/40 hover:bg-sky-950/20"
@@ -3301,7 +3301,7 @@ const handleCaptureMicrophoneClick = async () => {
                     ? setGuidedPracticeStep(guidedPracticeTotalSteps)
                     : setGuidedPracticeStep((prev) => prev + 1)
                 }
-                className="flex-1 rounded-xl border border-sky-700/45 bg-sky-950/45 px-3 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-500/60 hover:bg-sky-900/45 disabled:cursor-not-allowed disabled:opacity-40"
+                className="virtus-guided-practice-primary flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {guidedPracticeStep >= guidedPracticeTotalSteps - 1
                   ? "Review"
@@ -5693,8 +5693,8 @@ return (
             )}
 
             {practiceOpen && (
-              <div className="virtus-practice-panel mt-3 max-h-[420px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
-                <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
+              <div className="virtus-practice-panel mt-3 max-h-[min(60vh,560px)] space-y-2 overflow-y-auto rounded-2xl border p-2.5 no-scrollbar">
+                <p className="virtus-practice-panel-heading px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
                   Practice Categories
                 </p>
 
@@ -5725,13 +5725,13 @@ return (
                         setPracticeOpen(false);
                         setIsPracticeMode(category.practiceMode);
                       }}
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
+                      className={`virtus-practice-category w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
                         canUseCategory
                           ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
                           : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
                       }`}
                     >
-                      <span className="block font-medium">
+                      <span className="virtus-practice-category-title block font-semibold">
                         {category.title}
                       </span>
 
@@ -5740,7 +5740,7 @@ return (
                       </span>
 
                       {accessLabel && (
-                        <span className="virtus-practice-badge mt-1 inline-flex rounded-full border border-sky-900/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]">
+                        <span className="virtus-practice-badge mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
                           {accessLabel}
                         </span>
                       )}
@@ -6416,7 +6416,7 @@ if (data.conversation) {
 
             {practiceOpen && (
               <div className="virtus-practice-panel max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
-                <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
+                <p className="virtus-practice-panel-heading px-3 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em]">
                   Practice Categories
                 </p>
 
@@ -6449,13 +6449,13 @@ if (data.conversation) {
                         setShowMobileMenu(false);
                         setIsPracticeMode(category.practiceMode);
                       }}
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
+                      className={`virtus-practice-category w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
                         canUseCategory
                           ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
                           : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
                       }`}
                     >
-                      <span className="block font-medium">
+                      <span className="virtus-practice-category-title block font-semibold">
                         {category.title}
                       </span>
 
@@ -6464,7 +6464,7 @@ if (data.conversation) {
                       </span>
 
                       {accessLabel && (
-                        <span className="virtus-practice-badge mt-1 inline-flex rounded-full border border-sky-900/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]">
+                        <span className="virtus-practice-badge mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
                           {accessLabel}
                         </span>
                       )}
