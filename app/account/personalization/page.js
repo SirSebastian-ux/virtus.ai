@@ -1,3 +1,4 @@
+import VirtusInteriorHeader from "../../components/VirtusInteriorHeader";
 import Link from "next/link";
 import AppearanceSync from "../AppearanceSync";
 
@@ -18,24 +19,12 @@ function PersonalizationCard({ title, children }) {
 
 export default function PersonalizationPage() {
   return (
-    <main className="min-h-screen virtus-theme-page">
+    <main className="virtus-interior min-h-screen virtus-theme-page">
       <AppearanceSync />
-      <div className="mx-auto w-full max-w-5xl px-8 py-10">
-<div className="virtus-theme-surface mb-8 rounded-3xl border border-sky-900/20 px-6 py-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-  <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
-    Virtus AI
-  </p>
+      <div className="virtus-interior-shell narrow virtus-interior-subpage">
+<VirtusInteriorHeader title="Personalization" description="Choose how Virtus remembers, communicates, reasons, and works with you." backHref="/account" backLabel="Account settings" />
 
-  <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
-    Personalization
-  </h1>
-
-  <p className="mt-2 max-w-2xl text-sm leading-6 virtus-theme-muted">
-    Shape how Virtus remembers, responds, and works with you.
-  </p>
-</div>
-
-        <div className="space-y-3">
+        <div className="virtus-personalization-list">
           <Link href="/account/personalization/style-tone">
             <PersonalizationCard title="Style and tone">
               Choose how Virtus responds: direct, balanced, gentle, strategic, or executive.
@@ -69,7 +58,7 @@ export default function PersonalizationPage() {
         <div className="mt-8">
           <Link
             href="/account"
-            className="inline-flex items-center rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-2 text-sm text-sky-700 transition hover:border-sky-800/40 hover:bg-sky-950/15"
+            className="virtus-interior-back"
           >
             Back to settings
           </Link>
