@@ -1229,3 +1229,71 @@
  .virtus-chat-root.virtus-luxury .virtus-practice-panel{max-height:min(64vh,540px)!important}
  .virtus-chat-root.virtus-luxury .virtus-practice-category{min-height:84px;padding:11px!important}
 }
+
+/* Gold utilities: all three toolbar actions share the primary navigation identity. */
+.virtus-chat-root.virtus-luxury .virtus-luxury-tool-button {
+  border-color:rgba(232,187,102,.55)!important;
+  background:linear-gradient(148deg,rgba(7,75,56,.94),rgba(3,48,41,.98))!important;
+  color:#f7d695!important;
+  box-shadow:inset 0 1px 0 rgba(255,231,173,.19),0 4px 14px rgba(0,0,0,.15)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-tool-button svg{color:#f8d694!important;filter:drop-shadow(0 0 4px rgba(233,183,84,.18))}
+.virtus-chat-root.virtus-luxury .virtus-luxury-tool-button:hover,
+.virtus-chat-root.virtus-luxury .virtus-luxury-tool-button:focus-visible{
+  border-color:#ffe2a0!important;background:linear-gradient(130deg,#135f47,#074636)!important;
+  box-shadow:0 0 18px rgba(237,183,86,.18),inset 0 1px 0 rgba(255,237,184,.22)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-tool-button:focus-visible{outline:2px solid #f3d48f;outline-offset:3px}
+
+/* Practice overlay reuses the document library visual system and sits on the
+   main workspace, never inside the narrow sidebar. */
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-overlay {
+  background:rgba(0,9,12,.8);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-panel {
+  border-color:rgba(239,194,105,.8)!important;
+  color:#f9f5e9;
+  background:radial-gradient(ellipse at 52% 0,rgba(17,101,75,.35),transparent 59%),linear-gradient(140deg,#093e33 0%,#072723 63%,#041c1a 100%);
+  box-shadow:0 26px 110px rgba(0,0,0,.69),0 0 35px rgba(230,179,88,.1),inset 0 1px 0 rgba(255,234,173,.21)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-section-title{color:#ffedc1;letter-spacing:.025em}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-count{color:#ecc984}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-assessment .virtus-guided-practice-card{padding:18px!important}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-assessment .virtus-guided-practice-card .space-y-3 > div:first-child p{max-width:68ch}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-body {
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(224,182,102,.77) #082e28;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-body {
+  scrollbar-gutter:stable;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(224,182,102,.77) #082e28;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-body::-webkit-scrollbar,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-body::-webkit-scrollbar {
+  width:9px;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-body::-webkit-scrollbar-track,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-body::-webkit-scrollbar-track {
+  background:#082e28;border-radius:8px;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-body::-webkit-scrollbar-thumb,
+.virtus-chat-root.virtus-luxury .virtus-luxury-library-body::-webkit-scrollbar-thumb {
+  background:linear-gradient(180deg,#eed29a,#ad8141 56%,#e5bd77);
+  border:2px solid #082e28;border-radius:10px;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-categories .virtus-practice-category {
+  min-height:119px;justify-content:flex-start;padding:15px!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-categories .virtus-practice-description{
+  font-size:13px;line-height:1.6;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-practice-categories .virtus-practice-badge{margin-top:auto}
+@media(max-width:640px){
+  .virtus-chat-root.virtus-luxury .virtus-luxury-practice-panel{max-height:94dvh}
+  .virtus-chat-root.virtus-luxury .virtus-luxury-practice-assessment .virtus-guided-practice-card{padding:13px!important}
+  .virtus-chat-root.virtus-luxury .virtus-luxury-practice-categories .virtus-practice-category{min-height:104px}
+}
