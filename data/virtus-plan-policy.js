@@ -19,7 +19,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
     },
   },
 
-  free: {
+  life_coach: {\n    plan: "life_coach", label: "Life Coach", status: "active", isGuest: false, isPaid: true, isTrial: false, inheritsPremiumExperience: false,\n    description: "Paid Life Coach membership for guided self-reflection and personal development.",\n    projectScope: { canUseProjects: true, maxProjects: 3 },\n  },\n  free: {
     plan: "free",
     label: "Free",
     status: "active",
@@ -129,7 +129,7 @@ export function getSupportLayer(plan) {
   if (isTrialGuestPlan(plan)) return "strategic";
   if (isPremiumPlan(plan)) return "strategic";
   if (isPlusPlan(plan)) return "coaching";
-  if (isFreePlan(plan)) return "standard";
+  if (getPlanKey(plan) === "life_coach") return "standard";\n  if (isFreePlan(plan)) return "standard";
 
   return "standard";
 }
@@ -166,7 +166,7 @@ export function getDailyMessageLimit(plan) {
   const planKey = getPlanKey(plan);
 
   if (planKey === "trial_guest") return 60;
-  if (planKey === "free") return 40;
+  if (planKey === "life_coach") return 40;\n  if (planKey === "free") return 40;
   if (planKey === "plus") return 120;
   if (planKey === "premium") return null;
 
@@ -177,7 +177,7 @@ export function getRecentConversationLimit(plan) {
   const planKey = getPlanKey(plan);
 
   if (planKey === "trial_guest") return 20;
-  if (planKey === "free") return 4;
+  if (planKey === "life_coach") return 4;\n  if (planKey === "free") return 4;
   if (planKey === "plus") return 12;
   if (planKey === "premium") return null;
 
@@ -233,7 +233,7 @@ export function allowsProjectMemoryWrites(plan) {
 }
 
 export function getNextPlan(plan) {
-  if (isTrialGuestPlan(plan)) return "free";
+  if (isTrialGuestPlan(plan)) return "life_coach";
   if (isFreePlan(plan)) return "plus";
   if (isPlusPlan(plan)) return "premium";
   return null;
@@ -242,7 +242,7 @@ export function getNextPlan(plan) {
 export function getUpgradeLabel(plan) {
   const nextPlan = getNextPlan(plan);
 
-  if (nextPlan === "free") return "Register to continue";
+  if (nextPlan === "life_coach") return "Choose Life Coach";
   if (nextPlan === "plus") return "Upgrade to Plus";
   if (nextPlan === "premium") return "Upgrade to Premium / Virtus Prime";
 
