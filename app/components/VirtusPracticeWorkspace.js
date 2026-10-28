@@ -11,6 +11,8 @@ export default function VirtusPracticeWorkspace({
 }) {
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -23,7 +25,7 @@ export default function VirtusPracticeWorkspace({
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
-        onClose?.();
+        onCloseRef.current?.();
         return;
       }
       if (event.key !== "Tab" || !dialog) return;
@@ -55,7 +57,7 @@ export default function VirtusPracticeWorkspace({
         previousFocus.focus();
       }
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
