@@ -159,3 +159,34 @@
 .virtus-interior .virtus-plan-card [class*="uppercase"]{color:#f0cc87 !important}
 .virtus-interior .virtus-billing-toggle .virtus-billing-active{-webkit-text-fill-color:#15372f !important;color:#15372f !important;box-shadow:inset 0 1px 0 #fff6d2,0 0 15px rgba(231,188,104,.18)}
 .virtus-interior .virtus-interior-hero-back:focus-visible,.virtus-interior a:focus-visible,.virtus-interior button:focus-visible{outline:2px solid #fce19f;outline-offset:3px}
+
+/* Mobile account and personalization parity */
+@media (max-width:600px) {
+ .virtus-interior {width:100%;overflow-x:hidden}
+ .virtus-interior .virtus-interior-shell {width:100%;max-width:100%;padding:13px 12px 36px}
+ .virtus-interior .virtus-interior-hero {margin-bottom:15px;padding:18px 16px}
+ .virtus-interior .virtus-interior-hero-main {min-width:0}
+ .virtus-interior .virtus-interior-title{font-size:clamp(28px,8vw,34px);overflow-wrap:anywhere}
+ .virtus-interior .virtus-interior-lead {font-size:13px}
+ .virtus-interior .virtus-account-grid {min-width:0;gap:14px}
+ .virtus-interior .virtus-account-sidebar {width:100%;min-width:0;padding:12px}
+ .virtus-interior .virtus-account-sidebar .virtus-theme-card {min-width:0}
+ .virtus-interior .virtus-account-section {min-width:0;padding:15px}
+ .virtus-interior .virtus-account-section form,
+ .virtus-interior .virtus-interior-panel form {min-width:0;max-width:100%;padding:15px}
+ .virtus-interior .virtus-account-section form > .flex,
+ .virtus-interior .virtus-interior-panel form > .flex {flex-wrap:wrap}
+ .virtus-interior .virtus-account-section form input:not([type="checkbox"]):not([type="radio"]),
+ .virtus-interior .virtus-interior-panel form input:not([type="checkbox"]):not([type="radio"]) {width:100%;min-width:0;max-width:100%;font-size:16px}
+ .virtus-interior .virtus-account-section form button[type="submit"] {min-height:44px;max-width:100%}
+ .virtus-interior .virtus-interior-plan-grid {display:grid;grid-template-columns:minmax(0,1fr)!important;gap:15px}
+ .virtus-interior .virtus-plan-card{padding:18px}
+ .virtus-interior .virtus-billing-toggle button {min-height:44px}
+ .virtus-interior .virtus-personalization-list>a {min-width:0}
+ .virtus-interior .virtus-personalization-list .virtus-theme-card {padding:14px}
+ .virtus-interior .virtus-interior-subpage .virtus-theme-surface {min-width:0;padding:14px}
+ .virtus-interior textarea {width:100%;max-width:100%;font-size:16px}
+ .virtus-interior .virtus-settings-row{min-width:0;overflow-wrap:anywhere}
+ .virtus-interior .virtus-settings-row > div{min-width:0;overflow-wrap:anywhere}
+ .virtus-interior .virtus-settings-row p{overflow-wrap:anywhere}
+}
