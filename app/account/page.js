@@ -1,3 +1,4 @@
+import VirtusInteriorHeader from "./components/VirtusInteriorHeader";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import BillingPortalButton from "./BillingPortalButton";
@@ -17,7 +18,7 @@ import {
 function SettingsRow({ label, value, href = null, danger = false }) {
   const content = (
     <div
-      className={`flex items-center justify-between rounded-2xl border px-4 py-4 shadow-sm backdrop-blur-sm transition ${
+      className={`virtus-settings-row flex items-center justify-between rounded-2xl border px-4 py-4 shadow-sm backdrop-blur-sm transition ${
         danger
           ? "border-red-900/40 bg-red-950/20 text-red-200 hover:bg-red-950/30"
           : "virtus-theme-card border-sky-900/25 shadow-sky-950/10 hover:border-sky-800/40"
@@ -68,22 +69,12 @@ export default async function AccountPage() {
   const dailyMessageLimit = getDailyMessageLimit(currentPlan);
 
   return (
- <main className="min-h-screen virtus-theme-page">
-  <div className="mx-auto w-full max-w-6xl px-8 py-10">
-        <div className="mb-8">
-          <p className="text-xs uppercase tracking-[0.2em] text-sky-300/50">
-  Virtus AI
-</p>
-          <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
-            Account Settings
-          </h1>
-          <p className="mt-2 text-sm virtus-theme-muted">
-            Manage your account, plan, and product settings.
-          </p>
-        </div>
+ <main className="virtus-interior min-h-screen virtus-theme-page">
+  <div className="virtus-interior-shell">
+        <VirtusInteriorHeader title="Account Settings" description="Manage your account, coaching development, preferences, and membership." eyebrow="Your personal development space" />
 
-        <div className="grid gap-6 md:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="virtus-theme-surface rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+        <div className="virtus-account-grid">
+          <aside className="virtus-theme-surface virtus-account-sidebar rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
             <div className="flex items-center gap-3 virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10">
 <ProfileAvatar fallback={(profile?.nickname || user?.email || "V").charAt(0).toUpperCase()} />
 
@@ -144,8 +135,8 @@ export default async function AccountPage() {
             </div>
           </aside>
 
-<section className="virtus-theme-surface rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-<h2 className="text-xl font-semibold virtus-theme-title">Settings</h2>
+<section className="virtus-theme-surface virtus-interior-panel virtus-account-section rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+<h2 className="font-serif text-2xl font-normal virtus-theme-title">Settings</h2>
             <p className="mt-2 text-sm virtus-theme-muted">
               Manage your personal development experience, account preferences, and coaching access.
             </p>
