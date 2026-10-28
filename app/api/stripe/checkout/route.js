@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase-server";
 
+const NEW_PRICES = { life_coach: { monthly: "price_1UVVtFPwRngeNjDXC2Gny4A1", yearly: "price_1UVVtLPwRngeNjDXrD0wCCMB" }, plus: { monthly: "price_1UVVnjPwRngeNjDXK9oivXty", yearly: "price_1UVVsoPwRngeNjDX4Fu5xMee" }, premium: { monthly: "price_1UVVnvPwRngeNjDXa4nfp47N", yearly: "price_1UVVsxPwRngeNjDXdBe0LbVk" } };
 function getPriceId(plan, billingCycle) {
+  return NEW_PRICES[plan]?.[billingCycle] || null;
+}
+
+function getLegacyPriceId(plan, billingCycle) {
   if (plan === "plus" && billingCycle === "monthly") {
     return process.env.STRIPE_PLUS_MONTHLY_PRICE_ID;
   }
@@ -30,7 +35,7 @@ export async function POST(req) {
       .trim()
       .toLowerCase();
 
-    if (plan !== "plus" && plan !== "premium") {
+    if (!["life_coach", "plus", "premium"].includes(plan)) {
       return NextResponse.json(
         { error: "Invalid plan selected." },
         { status: 400 }
@@ -59,6 +64,9 @@ export async function POST(req) {
     }
 
     const priceId = getPriceId(plan, billingCycle);
+    const expectedProduct = { life_coach: "prod_VWZ1iHtwVgvm7C", plus: "prod_ULTRRf2Dt0mU6B", premium: "prod_ULTTKt2XlbHmOG" }[plan];
+    const stripePrice = await stripe.prices.retrieve(priceId);
+    if (!stripePrice.active || stripePrice.currency !== "usd" || stripePrice.product !== expectedProduct || stripePrice.recurring?.interval !== (billingCycle === "yearly" ? "year" : "month")) return NextResponse.json({error:"Membership price verification failed."},{status:409});
 
     if (!priceId) {
       return NextResponse.json(
@@ -88,7 +96,7 @@ export async function POST(req) {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/upgrade?success=true`,
+      success_url: `${appUrl}/upgrade?success=true&plan=${encodeURIComponent(plan)}&billing=${encodeURIComponent(billingCycle)}`,
       cancel_url: `${appUrl}/upgrade?canceled=true`,
       metadata: {
         user_id: user.id,
