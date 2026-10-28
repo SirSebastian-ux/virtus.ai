@@ -4887,10 +4887,10 @@ const renderAssistantActions = (item, index) => {
     conversation[index - 1]?.role === "user";
 
   const iconClass =
-    "flex h-7 w-7 items-center justify-center rounded-md text-sky-300/70 transition hover:bg-sky-950/30 hover:text-sky-200";
+    "virtus-message-action flex h-8 min-w-8 px-1 items-center justify-center rounded-lg text-[#e7c786] transition hover:bg-[#135442] hover:text-[#fff2cb]";
 
   return (
-    <div className="relative flex items-center gap-3">
+    <div className="virtus-message-actions relative flex flex-wrap items-center gap-1.5">
       <button
         type="button"
         title="Copy"
@@ -6654,7 +6654,7 @@ if (data.conversation) {
                   {conversation.map((item, index) => (
                     <div
                       key={index}
-className={`relative select-text max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
+className={`virtus-message-bubble ${item.role === "user" ? "virtus-message-bubble--user" : "virtus-message-bubble--assistant"} relative select-text max-w-[95%] md:max-w-[82%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
 item.role === "user" && !loading
   ? "mb-12"
   : ""
@@ -6664,12 +6664,12 @@ item.role === "user"
   : "mr-auto bg-zinc-950/35 border border-zinc-800/60 text-gray-300 shadow-sm shadow-sky-950/5 transition hover:border-sky-900/30 hover:bg-zinc-950/50"
 }`}
                     >
-                      <div className="mb-1 flex items-center justify-between gap-3">
+                      <div className="virtus-message-heading mb-2 flex flex-wrap items-start justify-between gap-2">
   <p className={`text-xs ${item.role === "user" ? "text-zinc-400" : "text-sky-300"}`}>
   {item.role === "user" ? "You" : "Virtus"}
 </p>
 
-  <div className="flex items-center gap-3">
+  <div className="virtus-message-toolbar flex flex-wrap items-center justify-end gap-1.5">
 {item.role === "user" &&
   !loading &&
   editingIndex !== index && (
