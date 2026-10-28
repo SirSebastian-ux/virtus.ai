@@ -4964,7 +4964,7 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
 ${VIRTUS_INTELLIGENCE_QUALITY_LAYER}
 
 ${coachingKnowledge.instructions}
-`
+`,
   metadata: {
     virtus_plan: plan,
     virtus_plan_status: planStatus,
