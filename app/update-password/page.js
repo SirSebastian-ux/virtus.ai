@@ -99,9 +99,9 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#091b1c] px-5 py-12 text-[#f5f3ec]">
-      <div className="w-full max-w-[480px] rounded-[2rem] border border-[#d8bd85]/25 bg-gradient-to-b from-[#173632] to-[#0b2422] p-7 sm:p-10 shadow-[0_30px_100px_rgba(0,0,0,0.4)]">
-        <div className="mb-6 flex flex-col items-center gap-2 border-b border-[#d8bd85]/15 pb-6"><img src="/virtus-aurum-emblem.svg" alt="Virtus AI shield" width="78" height="78" className="h-[78px] w-[78px]" /><p className="font-serif text-2xl tracking-wider text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p><p className="text-[10px] uppercase tracking-[0.2em] text-[#d8bd85]">By Enhanced Wellness Solutions</p></div>
+    <main className="virtus-interior min-h-screen flex items-center justify-center px-5 py-12">
+      <div className="virtus-interior-panel w-full max-w-[480px] rounded-[2rem] p-7 sm:p-10">
+        <div className="mb-6 flex flex-col items-center gap-2 border-b border-[#d8bd85]/15 pb-6"><img src="/virtus-aurum-emblem.svg" alt="Virtus AI shield" width="78" height="78" className="h-[78px] w-[78px]" /><p className="virtus-interior-brand-name font-serif text-2xl tracking-wider text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p><p className="text-[10px] uppercase tracking-[0.2em] text-[#d8bd85]">By Enhanced Wellness Solutions</p></div>
 
         <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
           Create new password
@@ -171,7 +171,7 @@ export default function UpdatePasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl border border-[#e0c58c] bg-[#d8bd85] py-3 text-sm font-semibold text-[#102623] transition hover:bg-[#f0d99d] disabled:opacity-50"
+              className="virtus-gold-button w-full py-3 text-sm disabled:opacity-50"
             >
               {loading ? "Updating..." : "Update password"}
             </button>
