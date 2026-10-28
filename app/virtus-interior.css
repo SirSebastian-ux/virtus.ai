@@ -148,3 +148,14 @@
 :root[data-virtus-appearance="light"] .virtus-interior select{background:#f7faf4 !important;color:#18392f !important;border-color:rgba(156,114,59,.59) !important}
 :root[data-virtus-appearance="light"] .virtus-interior input::placeholder,
 :root[data-virtus-appearance="light"] .virtus-interior textarea::placeholder{color:#5b746b}
+
+/* Plan cards adapt when a subscriber has only one eligible membership. */
+@media(min-width:920px){
+ .virtus-interior .virtus-interior-plan-grid:has(> section:only-of-type){grid-template-columns:minmax(0,min(100%,480px));justify-content:center}
+ .virtus-interior .virtus-interior-plan-grid:has(> section:nth-of-type(2):last-of-type){grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+.virtus-interior .virtus-plan-card .virtus-theme-title{overflow-wrap:break-word}
+.virtus-interior .virtus-plan-card .virtus-plan-price{color:#f9db9f !important;text-shadow:0 1px 12px rgba(230,182,92,.18)}
+.virtus-interior .virtus-plan-card [class*="uppercase"]{color:#f0cc87 !important}
+.virtus-interior .virtus-billing-toggle .virtus-billing-active{-webkit-text-fill-color:#15372f !important;color:#15372f !important;box-shadow:inset 0 1px 0 #fff6d2,0 0 15px rgba(231,188,104,.18)}
+.virtus-interior .virtus-interior-hero-back:focus-visible,.virtus-interior a:focus-visible,.virtus-interior button:focus-visible{outline:2px solid #fce19f;outline-offset:3px}
