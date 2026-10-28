@@ -26,7 +26,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
   },
   free: {
     plan: "free",
-    label: "Free",
+    label: "No active membership",
     status: "active",
     isGuest: false,
     isPaid: false,
@@ -173,7 +173,7 @@ export function getDailyMessageLimit(plan) {
 
   if (planKey === "trial_guest") return 60;
   if (planKey === "life_coach") return 40;
-  if (planKey === "free") return 40;
+  if (planKey === "free") return 0;
   if (planKey === "plus") return 120;
   if (planKey === "premium") return null;
 
@@ -242,7 +242,7 @@ export function allowsProjectMemoryWrites(plan) {
 
 export function getNextPlan(plan) {
   if (isTrialGuestPlan(plan)) return "life_coach";
-  if (isFreePlan(plan)) return "plus";
+  if (isFreePlan(plan)) return "life_coach";
   if (isPlusPlan(plan)) return "premium";
   return null;
 }
