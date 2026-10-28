@@ -37,6 +37,7 @@ import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
 import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 import { rankVirtusMemories, selectVirtusConversation, chooseVirtusIntelligence, VIRTUS_INTELLIGENCE_QUALITY_LAYER } from "@/lib/virtus-intelligence.mjs";
+import { buildVirtusCoachingKnowledgeLayer } from "@/lib/virtus-coaching-knowledge.mjs";
 import Tesseract from 'tesseract.js';
 
 
@@ -3305,6 +3306,10 @@ Say clearly: "I tried to search, but the web search service failed. I can still 
   }
 }
 
+const coachingKnowledge = buildVirtusCoachingKnowledgeLayer({
+  message,
+  practiceMode,
+});
 const intelligence = chooseVirtusIntelligence({
   plan,
   message,
@@ -4957,7 +4962,9 @@ Before you respond, check the signal: is this repeated behavior, a delay, or a c
 If a Trial Guest response contains visible teaching labels, rewrite it before answering.
 
 ${VIRTUS_INTELLIGENCE_QUALITY_LAYER}
-`,
+
+${coachingKnowledge.instructions}
+`
   metadata: {
     virtus_plan: plan,
     virtus_plan_status: planStatus,
