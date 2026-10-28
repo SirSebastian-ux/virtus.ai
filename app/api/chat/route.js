@@ -2165,6 +2165,14 @@ const { count: todayUserMessageCount } = await supabase
   .lt("created_at", tomorrowStart.toISOString());
   const dailyMessagesUsed = todayUserMessageCount ?? 0;
   const planPolicy = getPlanPolicy(plan);
+// Legacy registered free accounts retain their data but no longer receive paid coaching.
+if (!isGuest && (plan === "free" || !["active", "trialing"].includes(planStatus))) {
+  return Response.json({
+    reply: "Your account and saved conversations are preserved. Choose Life Coach, Trainer, or Mentor to continue coaching.",
+    access: { ...planPolicy, plan, planStatus, trialStartedAt, trialEndsAt, dailyMessageLimit: 0, dailyMessagesUsed },
+    membershipRequired: true,
+  }, { status: 403 });
+}
 if (isGuest && isTrialGuestPlan(plan) && isExpiredPlanStatus(planStatus)) {
   const expiredReply =
     "Your 3-day Trial Guest access has ended. Please register or sign in to continue using Virtus.";
