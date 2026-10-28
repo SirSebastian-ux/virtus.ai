@@ -277,7 +277,7 @@ export default function NotesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+    <main className="virtus-subpage-modern min-h-screen bg-zinc-950 text-zinc-100">
       <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 gap-4 p-4 lg:grid-cols-[310px_1fr_310px]">
         <aside className="rounded-2xl border border-sky-900/30 bg-zinc-950/80 p-3 shadow-2xl shadow-sky-950/20">
           <div className="mb-4 flex items-center justify-between gap-2">
