@@ -2053,7 +2053,7 @@ const handleCaptureMicrophoneClick = async () => {
     }
 
     if (currentPlanKey === "free") {
-      return "Free includes up to 3 projects. Upgrade to Plus for 5 projects or Premium / Virtus Prime for unlimited projects.";
+      return "Choose Life Coach ($9.99/month), Trainer, or Mentor to continue using coaching features.";
     }
 
     if (currentPlanKey === "plus") {
@@ -3343,7 +3343,7 @@ const handleCaptureMicrophoneClick = async () => {
     !isAuthenticated ? "Trial Guest" :
     currentPlanKey === "premium" ? "Mentor" :
     currentPlanKey === "plus" ? "Trainer" :
-    currentPlanKey === "free" ? "Life Coach (legacy)" :
+    currentPlanKey === "free" ? "Membership required" :
     currentAccess?.label ?? fallbackPlanPolicy.label;
   const displayUpgradeLabel =
     currentAccess?.upgradeLabel ?? fallbackPlanPolicy.upgradeLabel;
@@ -6557,7 +6557,7 @@ if (data.conversation) {
         href="/upgrade"
         className="virtus-luxury-plan-pill select-text"
       >
-        <span aria-hidden="true" className="virtus-luxury-plan-sparkle">✦</span><span className="virtus-luxury-plan-label">Your plan: {displayPlanLabel}</span>
+        <span aria-hidden="true" className="virtus-luxury-plan-sparkle">✦</span><span className="virtus-luxury-plan-label">{currentPlanKey === "free" ? "Free access ended — Choose membership" : `Your plan: ${displayPlanLabel}`}</span>
       </Link>
 
       {isTrialGuestExpired && (
