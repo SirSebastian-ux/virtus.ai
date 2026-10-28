@@ -1050,3 +1050,68 @@
 @media (max-width: 767px) {
   .virtus-chat-root.virtus-luxury .virtus-luxury-library-panel { max-height: 95%; }
 }
+
+/* Premium conversation cards — shared with the homepage's emerald-and-gold
+   language. Scoped to chat; never override account or Operations screens. */
+.virtus-chat-root.virtus-luxury .virtus-message-bubble {
+  color:#f8f5e9!important; isolation:isolate;
+  box-shadow:inset 0 1px 0 rgba(255,238,174,.11),0 12px 34px rgba(0,0,0,.19)!important;
+  transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
+  line-height:1.65; min-width:0;
+  border-radius:22px!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble--user {
+  background:linear-gradient(120deg,rgba(5,69,55,.91),rgba(1,43,38,.95) 72%,rgba(3,59,48,.94))!important;
+  border:1px solid rgba(236,193,106,.61)!important;
+  box-shadow:inset 0 1px 0 rgba(255,236,180,.17),0 11px 28px rgba(0,0,0,.19),0 0 16px rgba(221,172,83,.05)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble--assistant {
+  background:linear-gradient(140deg,rgba(3,42,35,.96),rgba(5,31,29,.97))!important;
+  border:1px solid rgba(217,177,97,.4)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble--assistant:hover,
+.virtus-chat-root.virtus-luxury .virtus-message-bubble--user:hover {
+  border-color:rgba(255,220,148,.81)!important;
+  box-shadow:0 12px 38px rgba(0,0,0,.24),0 0 17px rgba(222,178,88,.08)!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-heading {
+  border-bottom:1px solid rgba(220,178,96,.14);padding-bottom:8px;margin-bottom:10px;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-heading>p {
+  color:#f0cd89!important;font-weight:650;letter-spacing:.025em;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-heading .virtus-message-toolbar,
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-actions {
+  max-width:100%;min-width:0;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-action {
+  color:#e4c17d!important;border:1px solid transparent;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-action:hover,
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-action:focus-visible {
+  color:#fff2c2!important;background:rgba(19,91,67,.62)!important;
+  border-color:rgba(234,191,105,.37);
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble strong,
+.virtus-chat-root.virtus-luxury .virtus-message-bubble h1,
+.virtus-chat-root.virtus-luxury .virtus-message-bubble h2,
+.virtus-chat-root.virtus-luxury .virtus-message-bubble h3 {color:#fff2d9}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble a {color:#f5d58f;text-decoration:underline;text-underline-offset:3px}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble p:last-child {margin-bottom:0}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble pre {
+  background:rgba(0,23,22,.8);border-color:rgba(224,181,100,.4);color:#f5eee0;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble code:not(pre code){
+  background:rgba(0,49,39,.8);border-color:rgba(220,181,99,.3);color:#f5da9c;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-toolbar .text-sky-300,
+.virtus-chat-root.virtus-luxury .virtus-message-bubble [class*="text-sky-300"]{
+ color:#eaca82!important;
+}
+.virtus-chat-root.virtus-luxury .virtus-message-bubble button:focus-visible {outline:2px solid #f7d68a;outline-offset:2px}
+@media(max-width:780px){
+ .virtus-chat-root.virtus-luxury .virtus-message-bubble{max-width:98%!important;padding:12px!important}
+ .virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-heading{align-items:flex-start}
+ .virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-actions{gap:2px}
+ .virtus-chat-root.virtus-luxury .virtus-message-bubble .virtus-message-action{min-width:32px}
+}
