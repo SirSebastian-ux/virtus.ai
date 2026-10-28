@@ -490,7 +490,7 @@ export default function MeetingsRoomPage() {
   }
 
   return (
-    <main className="relative h-screen overflow-hidden bg-black text-zinc-100">
+    <main className="virtus-subpage-modern virtus-meeting-room relative h-screen overflow-hidden bg-black text-zinc-100">
       <div className="absolute left-4 top-4 z-40">
         <Link href="/meetings" className="rounded-full border border-sky-900/40 bg-black/70 px-4 py-2 text-sm text-sky-100 backdrop-blur">
           Back
