@@ -17,7 +17,7 @@ function getCheckoutSuccessMessage(searchParams) {
       ? "Trainer"
       : selectedPlan === "premium"
       ? "Mentor"
-      : "Plan";
+      : selectedPlan === "life_coach" ? "Life Coach" : "Membership";
 
   const billingLabel =
     selectedBilling === "yearly"
@@ -27,8 +27,8 @@ function getCheckoutSuccessMessage(searchParams) {
       : "";
 
   return billingLabel
-    ? `${planLabel} ${billingLabel} plan activated successfully.`
-    : `${planLabel} activated successfully.`;
+    ? `${planLabel} ${billingLabel} checkout completed. Membership activation is being confirmed.`
+    : `${planLabel} checkout completed. Membership activation is being confirmed.`;
 }
 
 export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
@@ -71,11 +71,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
     router.refresh();
 
-    const redirectTimer = setTimeout(() => {
-      router.push("/");
-    }, 1200);
-
-    return () => clearTimeout(redirectTimer);
+    // Keep confirmation visible until Stripe webhook updates the account.
   }, [successMessage, router]);
 
   useEffect(() => {
