@@ -1,43 +1,116 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export default function ProfilePhotoEditor() {
-  const [url, setUrl] = useState(null);
+  const inputRef = useRef(null);
+  const previewRef = useRef("");
+  const [url, setUrl] = useState("");
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [problem, setProblem] = useState("");
+
   useEffect(() => {
-    fetch("/api/account/avatar", { cache: "no-store" }).then(r => r.json()).then(d => setUrl(d.url || null)).catch(() => {});
+    let mounted = true;
+    fetch("/api/account/avatar", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Current photo unavailable");
+        return response.json();
+      })
+      .then((data) => { if (mounted) setUrl(data.url || ""); })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    };
   }, []);
+
+  function selectPhoto(event) {
+    const selected = event.target.files?.[0] || null;
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = "";
+    setPreview("");
+    setProblem("");
+    setMessage("");
+    setFile(null);
+    if (!selected) return;
+    if (!PHOTO_TYPES.includes(selected.type)) {
+      setProblem("Choose a JPEG, PNG or WebP photograph.");
+      event.target.value = "";
+      return;
+    }
+    if (selected.size < 100 || selected.size > MAX_PHOTO_SIZE) {
+      setProblem("The photograph must be less than 2 MB.");
+      event.target.value = "";
+      return;
+    }
+    const localPreview = URL.createObjectURL(selected);
+    previewRef.current = localPreview;
+    setPreview(localPreview);
+    setFile(selected);
+  }
+
   async function upload(event) {
     event.preventDefault();
-    if (!file) return;
+    if (!file || busy) return;
     setBusy(true);
+    setProblem("");
     setMessage("");
     try {
       const body = new FormData();
       body.append("photo", file);
       const response = await fetch("/api/account/avatar", { method: "POST", body });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Upload failed");
-      setUrl(data.url);
+      if (!response.ok || !data.success) throw new Error(data.error || "Photo could not be saved.");
+      setUrl(data.url || "");
       setFile(null);
-      setMessage("Profile photo saved.");
+      setPreview("");
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+      previewRef.current = "";
+      if (inputRef.current) inputRef.current.value = "";
+      setMessage("Profile photograph saved successfully.");
+      window.dispatchEvent(new Event("virtus-avatar-updated"));
     } catch (error) {
-      setMessage(error.message || "Upload failed");
+      setProblem(error.message || "Photo upload failed. Please try again.");
     } finally {
       setBusy(false);
     }
   }
-  return <form onSubmit={upload} className="rounded-2xl border border-[#d8bd85]/25 bg-[#102b28] p-5 text-[#f5f3ec]">
-    <h3 className="text-base font-semibold">Profile photograph</h3>
-    <p className="mt-1 text-xs text-[#b8cbc5]">Optional private photo. JPEG, PNG or WebP, up to 2 MB.</p>
-    <div className="mt-4 flex flex-wrap items-center gap-4">
-      {url ? <img src={url} alt="Your profile photograph" className="h-20 w-20 rounded-full border border-[#d8bd85]/40 object-cover" /> : <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#d8bd85]/40 bg-[#081c1b] text-2xl">V</div>}
-      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] || null)} className="max-w-full text-sm" aria-label="Choose a profile photo" />
-      <button type="submit" disabled={!file || busy} className="virtus-gold-button px-4 py-2 text-sm disabled:opacity-50">{busy ? "Uploading..." : "Upload photo"}</button>
-    </div>
-    {message && <p role="status" className="mt-3 text-sm text-[#e8c985]">{message}</p>}
-  </form>;
+
+  return (
+    <form onSubmit={upload} className="virtus-profile-photo-card rounded-2xl border border-[#d8bd85]/30 bg-[#102b28] p-5">
+      <h3 className="text-lg font-semibold text-[#f7edda]">Profile photograph</h3>
+      <p className="mt-2 text-sm leading-6 text-[#bdd2c9]">
+        Add a private photograph to personalize your Virtus profile. Supported: JPEG, PNG or WebP (maximum 2 MB).
+      </p>
+      <div className="mt-5 flex flex-wrap items-center gap-5">
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[#e3bd79]/60 bg-[#051e1b]">
+          {preview || url ? (
+            <img src={preview || url} alt="Profile photograph preview" className="h-full w-full object-cover" />
+          ) : <span className="font-serif text-3xl text-[#f1cd8a]">V</span>}
+        </div>
+        <div className="min-w-0 flex-1 space-y-3">
+          <input ref={inputRef} id="virtus-profile-photo-file" type="file" accept="image/jpeg,image/png,image/webp" onChange={selectPhoto} className="sr-only" aria-describedby="virtus-photo-help" />
+          <div className="flex flex-wrap gap-3">
+            <label htmlFor="virtus-profile-photo-file" className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-[#e3bd79]/60 bg-[#0d4537] px-5 py-2 font-medium text-[#f3d49b] transition hover:bg-[#14604b]">
+              {url || file ? "Choose another photo" : "Choose photograph"}
+            </label>
+            <button type="submit" disabled={!file || busy} className="virtus-gold-button min-h-11 rounded-xl px-5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45">
+              {busy ? "Uploading…" : "Save photograph"}
+            </button>
+          </div>
+          <p id="virtus-photo-help" className="break-words text-xs text-[#b8cbc5]">
+            {file ? `Selected: ${file.name} — ready to save` : "Choose a photograph first, then select Save photograph."}
+          </p>
+        </div>
+      </div>
+      {problem && <p role="alert" className="mt-4 rounded-lg border border-amber-500/35 bg-amber-900/20 px-3 py-2 text-sm text-amber-100">{problem}</p>}
+      {message && <p role="status" className="mt-4 rounded-lg border border-emerald-500/35 bg-emerald-900/20 px-3 py-2 text-sm text-emerald-100">{message}</p>}
+    </form>
+  );
 }
