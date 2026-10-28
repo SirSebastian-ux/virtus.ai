@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <main className="min-h-screen virtus-theme-page px-6 py-12 text-zinc-100">
+    <main className="virtus-subpage-modern min-h-screen virtus-theme-page px-6 py-12 text-zinc-100">
       <section className="mx-auto max-w-4xl rounded-3xl border border-sky-900/25 bg-zinc-950/75 p-8 shadow-sm shadow-sky-950/20">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-300/70">
           Virtus AI
