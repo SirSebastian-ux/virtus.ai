@@ -1,4 +1,4 @@
-import VirtusInteriorHeader from "./components/VirtusInteriorHeader";
+import VirtusInteriorHeader from "../components/VirtusInteriorHeader";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import BillingPortalButton from "./BillingPortalButton";
