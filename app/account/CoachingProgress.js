@@ -17,6 +17,7 @@ export default function CoachingProgress() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Review unavailable");
       setResult(body);
+      if (body.status === "reviewed") window.dispatchEvent(new Event("virtus-coaching-review-saved"));
     } catch (err) {
       setError(err.message || "Review unavailable");
     } finally {
