@@ -5449,8 +5449,8 @@ return (
 )}
 
 {confirmDialog && (
-  <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-    <div className="w-full max-w-sm rounded-3xl border border-sky-900/35 bg-zinc-950/95 p-5 shadow-2xl shadow-sky-950/30">
+  <div className="virtus-luxury-confirm-overlay fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+    <div className="virtus-luxury-confirm-card w-full max-w-sm rounded-3xl border border-sky-900/35 bg-zinc-950/95 p-6 shadow-2xl shadow-sky-950/30">
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-sky-300/60">
         Virtus confirmation
       </p>
@@ -5465,7 +5465,7 @@ return (
             confirmDialog.resolve(false);
             setConfirmDialog(null);
           }}
-          className="rounded-full border border-zinc-800 bg-zinc-950/70 px-4 py-2 text-sm text-zinc-300 transition hover:border-sky-900/35 hover:bg-zinc-900"
+          className="virtus-luxury-confirm-no rounded-full px-5 py-2 text-sm transition"
         >
           No
         </button>
@@ -5476,7 +5476,7 @@ return (
             confirmDialog.resolve(true);
             setConfirmDialog(null);
           }}
-          className="rounded-full border border-sky-700/50 bg-sky-950/50 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-500/70 hover:bg-sky-900/60"
+          className="virtus-luxury-confirm-yes rounded-full px-5 py-2 text-sm font-semibold transition"
         >
           Yes
         </button>
