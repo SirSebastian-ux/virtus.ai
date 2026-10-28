@@ -62,12 +62,12 @@ export default function CustomizeAppearance() {
   }
 
   return (
-    <div className="rounded-3xl border border-sky-900/20 bg-zinc-950/35 p-5 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+    <div className="virtus-interior-panel rounded-3xl border border-sky-900/20 bg-zinc-950/35 p-5 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
       <div className="mb-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-sky-300/50">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#edc786]">
           Customize
         </p>
-        <h3 className="mt-2 text-lg font-semibold text-sky-100">
+        <h3 className="mt-2 text-lg font-semibold text-[#f8ebcd]">
           Appearance
         </h3>
         <p className="mt-1 text-sm virtus-theme-muted">
@@ -86,7 +86,7 @@ export default function CustomizeAppearance() {
           }`}
         >
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-            <div className="mb-3 h-3 w-20 rounded-full bg-sky-400/70" />
+            <div className="mb-3 h-3 w-20 rounded-full bg-[#e4bb72]" />
             <div className="space-y-2">
               <div className="h-2 rounded-full bg-zinc-100/90" />
               <div className="h-2 w-4/5 rounded-full bg-zinc-400/80" />
@@ -94,11 +94,11 @@ export default function CustomizeAppearance() {
             </div>
           </div>
 
-          <p className="mt-4 text-sm font-semibold text-sky-100">
-            Virtus Dark
+          <p className="mt-4 text-sm font-semibold text-[#f8ebcd]">
+            Virtus Emerald
           </p>
           <p className="mt-1 text-sm leading-6 virtus-theme-muted">
-            Premium dark grey, white writing, and sky-blue accents.
+            Deep emerald, ivory lettering, and polished gold accents.
           </p>
         </button>
 
@@ -112,7 +112,7 @@ export default function CustomizeAppearance() {
           }`}
         >
           <div className="rounded-xl border border-zinc-300 bg-zinc-100 p-4">
-            <div className="mb-3 h-3 w-20 rounded-full bg-sky-500/80" />
+            <div className="mb-3 h-3 w-20 rounded-full bg-[#ddb56e]" />
             <div className="space-y-2">
               <div className="h-2 rounded-full bg-zinc-900/90" />
               <div className="h-2 w-4/5 rounded-full bg-zinc-500/80" />
@@ -120,11 +120,11 @@ export default function CustomizeAppearance() {
             </div>
           </div>
 
-          <p className="mt-4 text-sm font-semibold text-sky-100">
-            Virtus Light
+          <p className="mt-4 text-sm font-semibold text-[#f8ebcd]">
+            Virtus Ivory
           </p>
           <p className="mt-1 text-sm leading-6 virtus-theme-muted">
-            Light clarity, dark readable writing, and soft sky-blue accents.
+            Ivory and sage tones with readable dark text and warm gold accents.
           </p>
         </button>
       </div>
