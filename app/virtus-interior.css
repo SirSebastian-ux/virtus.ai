@@ -1,0 +1,150 @@
+
+/* Virtus premium interior system — account, personalization, subscription, auth, help.
+   These classes do not change Operations or enterprise administration surfaces. */
+.virtus-interior {
+ --vi-gold:#edc477; --vi-bright:#fff0be; --vi-mist:#c6d6ce;
+ background:
+  radial-gradient(ellipse 70% 40% at 55% 9%,rgba(21,109,79,.31),transparent 78%),
+  radial-gradient(ellipse 45% 55% at 10% 90%,rgba(0,80,63,.23),transparent 80%),
+  linear-gradient(145deg,#061615 0%,#071113 46%,#091916 100%) !important;
+ color:#f7f4ea;
+ min-height:100vh;
+}
+.virtus-interior .virtus-interior-shell {width:min(100%,1240px);margin:0 auto;padding:32px 28px 64px}
+.virtus-interior .virtus-interior-shell.narrow{width:min(100%,1050px)}
+.virtus-interior .virtus-interior-hero{
+ position:relative;overflow:hidden;isolation:isolate;
+ border:1px solid rgba(235,191,101,.69);border-radius:27px;
+ background:linear-gradient(125deg,rgba(0,57,46,.95),rgba(1,34,30,.97) 62%,rgba(4,68,52,.88));
+ box-shadow:0 20px 70px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,243,193,.29),0 0 28px rgba(218,168,82,.09);
+ padding:24px 30px 29px;margin-bottom:26px;
+}
+.virtus-interior .virtus-interior-hero-decoration{
+ pointer-events:none;position:absolute;inset:0;z-index:-1;
+ background:radial-gradient(ellipse 55% 50% at 51% -12%,rgba(237,207,127,.2),transparent 95%),linear-gradient(155deg,transparent 45%,rgba(25,108,83,.13) 46%,transparent 73%);
+}
+.virtus-interior .virtus-interior-brand{display:inline-flex;align-items:center;gap:11px;max-width:100%;text-decoration:none;margin-bottom:18px}
+.virtus-interior .virtus-interior-brand-emblem{width:49px;height:56px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(241,193,95,.24))}
+.virtus-interior .virtus-interior-brand-copy{display:flex;flex-direction:column;gap:5px}
+.virtus-interior .virtus-interior-brand-name{font-family:Georgia,"Times New Roman",serif;font-size:24px;letter-spacing:.075em;font-weight:400;background:linear-gradient(180deg,#fff9d5 0%,#e5b86b 33%,#fff1bb 53%,#bd8035 82%,#fee3a1);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.virtus-interior .virtus-interior-brand-name span{background:linear-gradient(180deg,#f4ffff,#71cbeb 45%,#d7ffff 63%,#66b5d6);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.virtus-interior .virtus-interior-brand-caption{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#efcf92}
+.virtus-interior .virtus-interior-eyebrow{font-size:10px;letter-spacing:.25em;text-transform:uppercase;font-weight:700;color:#f3d392}
+.virtus-interior .virtus-interior-title{font:normal clamp(30px,3vw,43px)/1.17 Georgia,"Times New Roman",serif;margin:9px 0;color:#fff5de;letter-spacing:-.02em;background:linear-gradient(180deg,#fffef8 0%,#eed8aa 39%,#fffdf2 58%,#e6bd83 100%);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.virtus-interior .virtus-interior-lead{max-width:710px;color:#bed2cb;font-size:14px;line-height:1.7}
+.virtus-interior .virtus-interior-hero-extra{margin-top:18px}
+.virtus-interior .virtus-interior-hero-back{display:inline-flex;align-items:center;gap:8px;margin-top:14px;color:#f5d696;font-size:13px;text-decoration:none}
+.virtus-interior .virtus-interior-hero-back:hover{color:#fff3c8}
+.virtus-interior .virtus-theme-surface,.virtus-interior .virtus-interior-panel{
+ background:linear-gradient(142deg,rgba(0,48,40,.93),rgba(3,32,30,.97)) !important;
+ border:1px solid rgba(227,181,94,.4) !important;
+ box-shadow:inset 0 1px 0 rgba(245,218,153,.12),0 17px 43px rgba(0,0,0,.15) !important;
+ border-radius:22px;
+ color:#f7f3e8;
+}
+.virtus-interior .virtus-theme-card,.virtus-interior .virtus-interior-card{
+ background:linear-gradient(125deg,rgba(4,54,43,.82),rgba(3,36,32,.92)) !important;
+ border:1px solid rgba(225,183,101,.33) !important;
+ color:#f5f0e2;
+ box-shadow:inset 0 1px 0 rgba(243,215,149,.08);
+}
+.virtus-interior .virtus-theme-card-soft{background:rgba(3,33,30,.7) !important;border-color:rgba(225,179,93,.29) !important}
+.virtus-interior .virtus-theme-card:hover,.virtus-interior a .virtus-theme-card:hover,.virtus-interior button.virtus-theme-card:hover{border-color:rgba(255,214,131,.7) !important;background:rgba(9,69,52,.94) !important}
+.virtus-interior .virtus-theme-title,.virtus-interior .text-sky-100{color:#f9f4e7 !important}
+.virtus-interior .virtus-theme-muted{color:#b8cdc6 !important}
+.virtus-interior [class*="text-sky-300"],.virtus-interior [class*="text-sky-700"],.virtus-interior [class*="text-sky-200"],.virtus-interior [class*="text-sky-400"]{color:#eaca83 !important}
+.virtus-interior [class*="border-sky-"]{border-color:rgba(227,181,94,.36) !important}
+.virtus-interior [class*="bg-sky-950"],.virtus-interior [class*="bg-sky-900"],.virtus-interior [class*="bg-sky-500"]{background-color:rgba(7,71,54,.34) !important}
+.virtus-interior [class*="hover\\:bg-sky-"]:hover{background-color:rgba(20,93,68,.58) !important}
+.virtus-interior .virtus-theme-input,.virtus-interior input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),.virtus-interior textarea,.virtus-interior select{
+ background:#041e1b !important;color:#f9f5eb !important;border:1px solid rgba(221,183,103,.44) !important;outline:none;
+}
+.virtus-interior input::placeholder,.virtus-interior textarea::placeholder{color:#9cb4ac}
+.virtus-interior input:focus-visible,.virtus-interior textarea:focus-visible,.virtus-interior select:focus-visible{border-color:#f1d18b !important;box-shadow:0 0 0 3px rgba(232,188,96,.13)}
+.virtus-interior input[type="file"]{color:#e6d2aa;min-width:0;font-size:12px}
+.virtus-interior input[type="file"]::file-selector-button{background:#0b4637;color:#f6db9e;border:1px solid rgba(236,196,105,.5);border-radius:9px;padding:8px 12px;margin-right:12px;cursor:pointer}
+.virtus-interior input[type="file"]::file-selector-button:hover{background:#136048}
+.virtus-interior .virtus-gold-button,.virtus-interior button[type="submit"],.virtus-interior button[data-virtus-gold]{
+ display:inline-flex;align-items:center;justify-content:center;
+ border:1px solid rgba(255,237,182,.75) !important;border-radius:13px;
+ background:linear-gradient(180deg,#fff3c2 0%,#e7bd72 24%,#b5823d 46%,#f2d291 64%,#d9a65f 85%,#f9dfaa 100%) !important;
+ color:#082b25 !important;-webkit-text-fill-color:#082b25 !important;
+ font-weight:700;box-shadow:inset 0 1px 0 #fff8dd,0 3px 15px rgba(227,179,85,.18);
+ transition:filter .16s ease,transform .16s ease;
+}
+.virtus-interior .virtus-gold-button:hover,.virtus-interior button[type="submit"]:hover,.virtus-interior button[data-virtus-gold]:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.virtus-interior button:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.3);transform:none !important}
+.virtus-interior .virtus-outline-button,.virtus-interior .virtus-interior-back{
+ display:inline-flex;align-items:center;gap:8px;padding:11px 17px;
+ border:1px solid rgba(229,188,107,.57) !important;border-radius:14px;
+ background:rgba(3,47,40,.73) !important;color:#f5d99d !important;
+ text-decoration:none;transition:background .15s ease,border-color .15s ease
+}
+.virtus-interior .virtus-outline-button:hover,.virtus-interior .virtus-interior-back:hover{background:rgba(11,82,61,.83) !important;border-color:#ffe1a2 !important}
+.virtus-interior .virtus-interior-panel h2,.virtus-interior .virtus-theme-surface h2{color:#faf3e3}
+.virtus-interior .virtus-interior-panel h3{color:#f4e6c8}
+.virtus-interior .virtus-account-sidebar{
+ align-self:start;position:sticky;top:20px;
+ background:radial-gradient(ellipse at 30% 5%,rgba(14,96,71,.42),transparent 64%),linear-gradient(165deg,#043d32,#06221f 76%) !important;
+ border:1px solid rgba(229,183,91,.5) !important;box-shadow:inset 0 1px rgba(251,232,177,.19),0 18px 55px rgba(0,0,0,.24)
+}
+.virtus-interior .virtus-account-sidebar a,.virtus-interior .virtus-account-sidebar>div>div{transition:border-color .18s ease,background .18s ease}
+.virtus-interior .virtus-account-sidebar a:hover{border-color:rgba(249,216,146,.75) !important;background:rgba(12,84,62,.7) !important}
+.virtus-interior .virtus-account-grid{display:grid;grid-template-columns:minmax(230px,270px) minmax(0,1fr);gap:23px}
+.virtus-interior .virtus-settings-row{border-radius:13px}
+.virtus-interior .virtus-settings-row:hover{box-shadow:0 0 18px rgba(214,165,84,.1)}
+.virtus-interior .virtus-account-section{padding:22px}
+.virtus-interior .virtus-interior-subpage{max-width:1010px}
+.virtus-interior .virtus-interior-subpage .virtus-theme-surface{padding:20px}
+.virtus-interior .virtus-interior-subpage a:hover{text-decoration:none}
+.virtus-interior .virtus-style-selected,.virtus-interior .virtus-style-option:has([aria-current="true"]){border-color:rgba(255,216,131,.8) !important;background:rgba(9,79,60,.85) !important;box-shadow:inset 3px 0 0 #f9d189}
+.virtus-interior .virtus-personalization-list{display:grid;gap:12px}
+.virtus-interior .virtus-personalization-list>a{display:block;text-decoration:none}
+.virtus-interior .virtus-personalization-list>a>section{height:100%}
+.virtus-interior .virtus-personalization-list>a:hover section{border-color:rgba(253,210,127,.78) !important;background:rgba(8,74,57,.89) !important}
+.virtus-interior .virtus-account-avatar{border:1px solid rgba(241,201,119,.58);box-shadow:0 0 16px rgba(223,168,71,.13)}
+.virtus-interior .virtus-interior-toggle button:focus-visible{outline:2px solid #f5d594;outline-offset:3px}
+.virtus-interior .virtus-interior-toggle [class*="translate-x-5"]{background:#f6d390 !important}
+.virtus-interior .virtus-interior-toggle [class*="bg-sky-900"]{background:#15674e !important}
+.virtus-interior .virtus-plan-card{min-width:0;overflow-wrap:break-word;display:flex;flex-direction:column}
+.virtus-interior .virtus-plan-card .virtus-theme-card-soft{border-color:rgba(230,182,90,.47) !important}
+.virtus-interior .virtus-plan-card .virtus-plan-price{font-family:Georgia,serif;color:#f9e3af}
+.virtus-interior .virtus-billing-toggle{border:1px solid rgba(225,185,101,.51) !important;background:#052f28 !important}
+.virtus-interior .virtus-billing-toggle button{flex:1;color:#e8c994}
+.virtus-interior .virtus-billing-toggle .virtus-billing-active{background:linear-gradient(180deg,#fbe8b2,#cca05d) !important;color:#14332a !important}
+.virtus-interior .virtus-interior-danger{border-color:rgba(238,118,101,.51) !important;background:rgba(78,25,23,.53) !important}
+.virtus-interior .virtus-interior-danger *{color:#ffcccc !important}
+.virtus-chat-root.virtus-luxury .virtus-luxury-confirm-overlay{background:rgba(0,13,13,.78);backdrop-filter:blur(12px)}
+.virtus-chat-root.virtus-luxury .virtus-luxury-confirm-card{
+ border:1px solid rgba(237,194,112,.75);background:radial-gradient(ellipse at 50% 0,rgba(30,108,80,.34),transparent),linear-gradient(140deg,#06372e,#061b1b);
+ box-shadow:0 20px 75px rgba(0,0,0,.6),inset 0 1px 0 rgba(248,226,164,.23);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-confirm-card p:first-child{color:#f6d391;font-size:11px;letter-spacing:.2em}
+.virtus-chat-root.virtus-luxury .virtus-luxury-confirm-no{background:#082e29;color:#f5d596;border:1px solid rgba(238,196,110,.5)}
+.virtus-chat-root.virtus-luxury .virtus-luxury-confirm-yes{background:linear-gradient(180deg,#ffefbe,#d9a95a,#ffdda0);color:#16372e;border:1px solid #fbe4ac}
+@media(min-width:920px){.virtus-interior .virtus-interior-plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:850px){.virtus-interior .virtus-account-grid{grid-template-columns:1fr}.virtus-interior .virtus-account-sidebar{position:static}.virtus-interior .virtus-interior-shell{padding:20px 16px 40px}}
+@media(max-width:600px){.virtus-interior .virtus-interior-hero{padding:20px 18px;border-radius:20px}.virtus-interior .virtus-interior-title{font-size:30px}.virtus-interior .virtus-interior-brand-name{font-size:21px}.virtus-interior .virtus-interior-brand-emblem{width:43px;height:49px}.virtus-interior .virtus-account-section{padding:16px}.virtus-interior .virtus-interior-subpage .virtus-theme-surface{padding:15px}.virtus-interior .virtus-billing-toggle{width:100%}.virtus-interior .virtus-interior-shell{padding:12px 12px 32px}}
+:root[data-virtus-appearance="light"] .virtus-interior{
+ background:radial-gradient(ellipse at 50% 0%,rgba(203,225,213,.85),transparent 78%),linear-gradient(140deg,#d9e4df,#eff1e9) !important;color:#12352e
+}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-theme-surface,
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-interior-panel,
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-theme-card{
+ background:linear-gradient(130deg,#f1f7f1,#e0eee7) !important;color:#15352f !important;border-color:rgba(155,114,57,.5) !important
+}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-theme-title,
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-interior-panel h2,
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-theme-surface h2{color:#16372f !important}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-theme-muted{color:#3b5e55 !important}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-interior-hero,
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-account-sidebar{background:linear-gradient(145deg,#063c32,#115043) !important;color:#f9f4e8 !important}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-account-sidebar .virtus-theme-card{background:rgba(6,55,46,.8) !important;color:#f9f2df !important}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-account-sidebar .virtus-theme-title{color:#f8f1dd !important}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-account-sidebar .virtus-theme-muted{color:#cbded5 !important}
+:root[data-virtus-appearance="light"] .virtus-interior .virtus-theme-input,
+:root[data-virtus-appearance="light"] .virtus-interior input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:root[data-virtus-appearance="light"] .virtus-interior textarea,
+:root[data-virtus-appearance="light"] .virtus-interior select{background:#f7faf4 !important;color:#18392f !important;border-color:rgba(156,114,59,.59) !important}
+:root[data-virtus-appearance="light"] .virtus-interior input::placeholder,
+:root[data-virtus-appearance="light"] .virtus-interior textarea::placeholder{color:#5b746b}
