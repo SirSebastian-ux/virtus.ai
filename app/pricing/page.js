@@ -47,11 +47,11 @@ export default function PricingPage() {
               <ul className="mt-6 flex-1 space-y-3 border-t border-white/10 pt-6">
                 {plan.features.map((feature) => <li key={feature} className="flex gap-3 text-sm text-[#e1e8e2]"><span aria-hidden="true" className="text-[#d8bd85]">✓</span>{feature}</li>)}
               </ul>
-              <p className="mt-7 rounded-xl border border-[#d8bd85]/30 px-4 py-3 text-center text-sm text-[#e4d0a5]">Enrollment opening soon</p>
+              <p className="mt-7 rounded-xl border border-[#d8bd85]/30 px-4 py-3 text-center text-sm text-[#e4d0a5]">Checkout setup in progress</p>
             </article>
           ))}
         </div>
-        <p className="mt-7 text-center text-xs text-[#b9cbc5]">Indicative launch pricing. Paid enrollment will open after subscription and access verification.</p>
+        <p className="mt-7 text-center text-xs text-[#b9cbc5]">New monthly membership pricing. Checkout will open once the Stripe subscriptions and entitlements are verified.</p>
         <div className="mt-9 text-center"><Link href="/" className="inline-flex rounded-xl border border-[#d8bd85]/60 px-6 py-3 text-sm font-semibold text-[#f5f3ec] hover:bg-white/10">Return to Virtus AI</Link></div>
         <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-6 text-[#9fb4ad]">Virtus AI supports education, coaching, and self-development. It is not a replacement for licensed mental health care.</p>
       </section>
