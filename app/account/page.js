@@ -64,8 +64,8 @@ export default async function AccountPage() {
 
   const currentPlan = profile?.plan || "free";
   const currentPlanStatus = profile?.plan_status || "active";
-  const displayPlan = currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : "Life Coach — Free";
-  const dailyMessageLimit = getDailyMessageLimit(currentPlan);
+  const displayPlan = currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : currentPlan === "life_coach" ? "Life Coach" : "No active coaching membership";
+  const dailyMessageLimit = currentPlan === "free" ? 0 : getDailyMessageLimit(currentPlan);
 
   return (
  <main className="virtus-interior min-h-screen virtus-theme-page">
