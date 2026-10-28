@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import BillingPortalButton from "./BillingPortalButton";
 import LogoutButton from "./LogoutButton";
-import CustomizeAppearance from "./CustomizeAppearance";
 import ProfileNameEditor from "./ProfileNameEditor";
 import ProfilePhotoEditor from "./ProfilePhotoEditor";
 import ProfileAvatar from "./ProfileAvatar";
@@ -104,7 +103,7 @@ export default async function AccountPage() {
                     Explore Life Coach, Trainer, and Mentor
                   </p>
                 </div>
-<span className="text-sky-300/60">&rsaquo;</span>
+<span className="text-[#e9c78b]">&rsaquo;</span>
               </Link>
 
 <div className="flex items-center justify-between virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
@@ -114,7 +113,7 @@ export default async function AccountPage() {
                     Appearance and account preferences
                   </p>
                 </div>
-  <span className="text-sky-300/70">&#10003;</span>
+  <span className="text-[#e9c78b]">&#10003;</span>
               </div>
 
 <Link
@@ -123,12 +122,12 @@ export default async function AccountPage() {
 >
   <div>
     <p className="text-sm font-medium virtus-theme-title">Back to chat</p>
-    <p className="mt-1 text-xs text-sky-300/60">
+    <p className="mt-1 text-xs text-[#e9c78b]">
       Return to Virtus
     </p>
   </div>
 
-  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-300/70 transition group-hover:bg-sky-900/35 group-hover:text-sky-200">
+  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d8bd85]/50 bg-[#09382f] text-[#e9c78b] transition group-hover:bg-[#165840]">
     &rsaquo;
   </span>
 </Link>
@@ -148,8 +147,7 @@ export default async function AccountPage() {
 
             <div className="mt-6">
               <CoachingProgress />
-              <div className="mt-4"><CoachingHistory /></div>
-              <CustomizeAppearance />
+              <div className="mt-4"><CoachingHistory displayName={profile?.nickname || user?.email?.split("@")[0] || "The client"} /></div>
             </div>
 
             <div className="mt-6 space-y-3">
