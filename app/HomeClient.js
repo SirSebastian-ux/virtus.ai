@@ -90,6 +90,28 @@ const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
 const messageMenuRef = useRef(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
+const mobileMenuCloseRef = useRef(null);
+useEffect(() => {
+  if (!showMobileMenu) return undefined;
+  const previouslyFocused = document.activeElement;
+  const oldOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+  mobileMenuCloseRef.current?.focus();
+  const onEscape = (event) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      setShowMobileMenu(false);
+    }
+  };
+  document.addEventListener("keydown", onEscape);
+  return () => {
+    document.removeEventListener("keydown", onEscape);
+    document.body.style.overflow = oldOverflow;
+    if (previouslyFocused?.isConnected && typeof previouslyFocused.focus === "function") {
+      previouslyFocused.focus();
+    }
+  };
+}, [showMobileMenu]);
 const [practiceOpen, setPracticeOpen] = useState(false);
 const [searchOpen, setSearchOpen] = useState(false);
 const [recentOpen, setRecentOpen] = useState(false);
@@ -5609,8 +5631,8 @@ return (
                         id: projectId,
                         title: cleanTitle,
                         chatId: crypto.randomUUID(),
-                      };
                         chats: [],
+                      };
 
                       upsertProjectSpaceState(nextProject);
                       void saveProjectSpaceToApi(nextProject);
@@ -6186,8 +6208,10 @@ if (data.conversation) {
   <button
     type="button"
     onClick={() => setShowMobileMenu(true)}
-    className="virtus-theme-card flex items-center gap-2 rounded-2xl border border-sky-900/20 px-2 py-1.5 text-sky-700 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-sky-950/10"
+    className="virtus-mobile-menu-trigger inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition"
     aria-label="Open Virtus menu"
+    aria-expanded={showMobileMenu}
+    aria-controls="virtus-mobile-navigation"
   >
     <Image
       src="/virtus-aurum-emblem.svg"
@@ -6232,7 +6256,11 @@ if (data.conversation) {
         onClick={() => setShowMobileMenu(false)}
       >
         <div
-          className="virtus-mobile-panel h-full w-full p-5 text-sm"
+          className="virtus-mobile-panel virtus-scrollbar h-full overflow-y-auto overscroll-contain p-4 text-sm"
+          id="virtus-mobile-navigation"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Virtus AI mobile navigation"
           onClick={(e) => e.stopPropagation()}
           onTouchStart={(e) => {
             mobileMenuTouchStartXRef.current = e.touches[0].clientX;
@@ -6248,204 +6276,45 @@ if (data.conversation) {
             mobileMenuTouchStartXRef.current = null;
           }}
         >
-          <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
+          <div className="virtus-mobile-brand-header mb-4 flex items-center justify-between gap-3 border-b pb-4">
             <Image
               src="/virtus-aurum-emblem.svg"
               alt="Virtus AI"
               width={42}
               height={47}
-              className="h-10 w-auto object-contain"
+              className="virtus-mobile-brand-emblem h-12 w-auto object-contain"
             />
+            <div className="virtus-mobile-brand-copy min-w-0 flex-1">
+              <p className="virtus-mobile-brand-name">Virtus <span>AI</span></p>
+              <p className="virtus-mobile-brand-caption">By Enhanced Wellness Solutions</p>
+            </div>
 
             <button
               type="button"
               onClick={() => setShowMobileMenu(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200"
+              ref={mobileMenuCloseRef}
+              className="virtus-mobile-close-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-xl transition"
               aria-label="Close menu"
             >
-        x
+        ×
       </button>
           </div>
 
-          <div className="space-y-2 pt-3">
-            <button
-              type="button"
-              onClick={() => {
-                const newChatId = getGuestSidebarChatId(
-                  guestAccess?.plan,
-                  crypto.randomUUID()
-                );
-
-                localStorage.setItem("virtus_chat_id", newChatId);
-                setActiveChatId(newChatId);
-                setActiveProject(null);
-                setProjectHomeOpen(false);
-                setConversation([]);
+          <div className="virtus-mobile-menu-stack space-y-2 pt-2">
+            <LuxurySidebarNav
+              active={luxuryActiveNav}
+              recentOpen={recentOpen}
+              onHome={() => { openLuxuryHome(); setShowMobileMenu(false); }}
+              onNewChat={() => {
+                openLuxuryHome();
+                setLuxuryActiveNav("chat");
                 setShowMobileMenu(false);
+                requestAnimationFrame(() => textareaRef.current?.focus());
               }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              + New chat
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setProjectsOpen(!projectsOpen);
-                setPracticeOpen(false);
-                setSearchOpen(false);
-                setCaptureOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Projects
-            </button>
-
-            {projectsOpen && (
-              <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 no-scrollbar">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!canStartNewProject()) return;
-                    setShowProjectInput(true);
-                  }}
-                  className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
-                >
-                  + Project
-                </button>
-
-                {showProjectInput && (
-                  <input
-                    value={newProjectTitle}
-                    onChange={(event) => setNewProjectTitle(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter") return;
-
-                      const cleanTitle = newProjectTitle.trim();
-                      if (!cleanTitle) return;
-
-                      const projectId = `project-${cleanTitle
-                        .toLowerCase()
-                        .replace(/\s+/g, "-")
-                        .replace(/[^a-z0-9-]/g, "")
-                        .replace(/-+/g, "-")
-                        .replace(/^-|-$/g, "")}-${crypto.randomUUID().slice(0, 8)}`;
-
-                      const nextProject = {
-                        id: projectId,
-                        title: cleanTitle,
-                        chatId: crypto.randomUUID(),
-                      };
-                        chats: [],
-
-                      upsertProjectSpaceState(nextProject);
-                      void saveProjectSpaceToApi(nextProject);
-                      setActiveProject(nextProject);
-                      setProjectHomeOpen(true);
-                      setNewProjectTitle("");
-                      setShowProjectInput(false);
-                      setShowMobileMenu(false);
-                    }}
-                    placeholder="Project name..."
-                    className="mt-2 w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-700/50"
-                    autoFocus
-                  />
-                )}
-
-                {projectSpaces.map((project) => (
-                  <button
-                    key={project.id}
-                    type="button"
-                    onClick={() => {
-                      const projectChatId = project.chatId || crypto.randomUUID();
-                      const nextProject = { ...project, chatId: projectChatId };
-
-                      setActiveProject(nextProject);
-                      setProjectSpaces((prev) =>
-                        prev.map((savedProject) =>
-                          savedProject.id === project.id ? nextProject : savedProject
-                        )
-                      );
-                      void saveProjectSpaceToApi(nextProject);
-                      localStorage.setItem("virtus_chat_id", projectChatId);
-                      setActiveChatId(projectChatId);
-                      setConversation([]);
-                      setMessage("");
-                      setReply("");
-                      setStreamingReply("");
-                      setEditingIndex(null);
-                      setEditingText("");
-                      setIsPracticeMode(null);
-                      setShouldAutoScroll(true);
-                      setProjectHomeOpen(true);
-                      setShowMobileMenu(false);
-                    }}
-                    className="w-full rounded-xl border border-sky-900/15 bg-zinc-950/35 px-3 py-2 text-left text-sm text-zinc-300 transition hover:border-sky-800/35 hover:bg-zinc-950/55"
-                  >
-                    {project.title}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setCaptureOpen(!captureOpen);
-                setProjectsOpen(false);
-                setPracticeOpen(false);
-                setSearchOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Capture
-            </button>
-
-            {captureOpen && renderCapturePanel()}
-
-            <button
-              type="button"
-              onClick={() => {
-                setPracticeOpen(true);
-                setShowMobileMenu(false);
-                setLuxuryLibraryOpen(false);
-                setProjectsOpen(false);
-                setSearchOpen(false);
-                setCaptureOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Practice
-            </button>
-
-            <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Meetings
-            </Link>
-
-            <Link href="/operations" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Operations
-            </Link>
-
-            <Link href="/account" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Profile
-            </Link>
-
-
-
-            <button
-              type="button"
-              onClick={() => {
-                setRecentOpen(!recentOpen);
-                setProjectsOpen(false);
-                setPracticeOpen(false);
-                setSearchOpen(false);
-                setCaptureOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Recent Chats
-            </button>
-
+              onLibrary={() => { openLuxuryLibrary(); setShowMobileMenu(false); }}
+              onTools={openLuxuryTools}
+              onRecent={() => setRecentOpen((current) => !current)}
+            />
             {recentOpen && (
               <div className="max-h-[45vh] space-y-1 overflow-y-auto rounded-2xl border border-sky-900/20 p-3">
                 {recentConversations.length === 0 ? (
@@ -6528,6 +6397,166 @@ if (data.conversation) {
                 )}
               </div>
             )}
+
+
+
+
+
+            {luxuryToolsOpen && (
+              <div className="virtus-mobile-tools-section space-y-2 rounded-2xl p-3">
+            <button type="button" onClick={() => { setSearchOpen((current) => !current); setProjectsOpen(false); setCaptureOpen(false); }} className="virtus-mobile-menu-item w-full rounded-xl px-3 py-3 text-left transition">Search chats</button>
+            {searchOpen && (
+              <div className="virtus-mobile-subpanel rounded-xl p-3">
+                <label htmlFor="virtus-mobile-chat-search" className="mb-2 block text-xs font-semibold text-[#f3d08c]">Search recent conversations</label>
+                <input id="virtus-mobile-chat-search" value={chatSearchQuery} onChange={(event) => setChatSearchQuery(event.target.value)} placeholder="Search chats..." className="virtus-mobile-search-input w-full rounded-xl px-3 py-3 text-base" />
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setProjectsOpen(!projectsOpen);
+                setPracticeOpen(false);
+                setSearchOpen(false);
+                setCaptureOpen(false);
+              }}
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
+            >
+              Projects
+            </button>
+
+            {projectsOpen && (
+              <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!canStartNewProject()) return;
+                    setShowProjectInput(true);
+                  }}
+                  className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
+                >
+                  + Project
+                </button>
+
+                {showProjectInput && (
+                  <input
+                    value={newProjectTitle}
+                    onChange={(event) => setNewProjectTitle(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+
+                      const cleanTitle = newProjectTitle.trim();
+                      if (!cleanTitle) return;
+
+                      const projectId = `project-${cleanTitle
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")
+                        .replace(/[^a-z0-9-]/g, "")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "")}-${crypto.randomUUID().slice(0, 8)}`;
+
+                      const nextProject = {
+                        id: projectId,
+                        title: cleanTitle,
+                        chatId: crypto.randomUUID(),
+                        chats: [],
+                      };
+
+                      upsertProjectSpaceState(nextProject);
+                      void saveProjectSpaceToApi(nextProject);
+                      setActiveProject(nextProject);
+                      setProjectHomeOpen(true);
+                      setNewProjectTitle("");
+                      setShowProjectInput(false);
+                      setShowMobileMenu(false);
+                    }}
+                    placeholder="Project name..."
+                    className="mt-2 w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-700/50"
+                    autoFocus
+                  />
+                )}
+
+                {projectSpaces.map((project) => (
+                  <button
+                    key={project.id}
+                    type="button"
+                    onClick={() => {
+                      const projectChatId = project.chatId || crypto.randomUUID();
+                      const nextProject = { ...project, chatId: projectChatId };
+
+                      setActiveProject(nextProject);
+                      setProjectSpaces((prev) =>
+                        prev.map((savedProject) =>
+                          savedProject.id === project.id ? nextProject : savedProject
+                        )
+                      );
+                      void saveProjectSpaceToApi(nextProject);
+                      localStorage.setItem("virtus_chat_id", projectChatId);
+                      setActiveChatId(projectChatId);
+                      setConversation([]);
+                      setMessage("");
+                      setReply("");
+                      setStreamingReply("");
+                      setEditingIndex(null);
+                      setEditingText("");
+                      setIsPracticeMode(null);
+                      setShouldAutoScroll(true);
+                      setProjectHomeOpen(true);
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full rounded-xl border border-sky-900/15 bg-zinc-950/35 px-3 py-2 text-left text-sm text-zinc-300 transition hover:border-sky-800/35 hover:bg-zinc-950/55"
+                  >
+                    {project.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setCaptureOpen(!captureOpen);
+                setProjectsOpen(false);
+                setPracticeOpen(false);
+                setSearchOpen(false);
+              }}
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
+            >
+              Capture
+            </button>
+
+            {captureOpen && renderCapturePanel()}
+
+            <button
+              type="button"
+              onClick={() => {
+                setPracticeOpen(true);
+                setShowMobileMenu(false);
+                setLuxuryLibraryOpen(false);
+                setProjectsOpen(false);
+                setSearchOpen(false);
+                setCaptureOpen(false);
+              }}
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
+            >
+              Practice
+            </button>
+              </div>
+            )}
+
+            <p className="virtus-mobile-secondary-label px-3 pt-3 text-[11px] font-semibold uppercase tracking-[0.18em]">More from Virtus</p>
+            <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
+              Meetings
+            </Link>
+
+            <Link href="/operations" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
+              Operations
+            </Link>
+
+
+
+
+
+
 
             <div className="my-3 h-px bg-sky-900/20" />
 
