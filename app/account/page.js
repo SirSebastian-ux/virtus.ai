@@ -65,7 +65,7 @@ export default async function AccountPage() {
 
   const currentPlan = profile?.plan || "free";
   const currentPlanStatus = profile?.plan_status || "active";
-  const displayPlan = getPlanLabel(currentPlan);
+  const displayPlan = currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : "Life Coach — Free";
   const dailyMessageLimit = getDailyMessageLimit(currentPlan);
 
   return (
