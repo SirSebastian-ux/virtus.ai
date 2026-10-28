@@ -5,6 +5,8 @@ import {
   COACHING_SKILLS,
   DIRECTION_LABELS,
   getSkillObservations,
+  getTrendPoints,
+  formatCoachingEvidence,
   uniqueEvidencePeriods,
 } from "@/lib/virtus-coaching-history.mjs";
 
@@ -23,8 +25,9 @@ const dateLabel = (value) => {
     : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 };
 
-export default function CoachingHistory() {
+export default function CoachingHistory({ displayName = "The client" }) {
   const [reviews, setReviews] = useState([]);
+  const [selectedSkill, setSelectedSkill] = useState("Self-awareness");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -54,6 +57,18 @@ export default function CoachingHistory() {
   const periods = uniqueEvidencePeriods(reviews);
   const first = periods[0];
   const latest = periods.at(-1);
+  const timeline = getTrendPoints(reviews, selectedSkill);
+  const xCoordinate = (index) => timeline.length <= 1 ? 50 : 12 + (index * 77) / (timeline.length - 1);
+  const yCoordinate = (band) => 80 - band * 28;
+  const segments = [];
+  for (let index = 1; index < timeline.length; index++) {
+    const previous = timeline[index - 1];
+    const current = timeline[index];
+    if (previous.band !== null && current.band !== null) segments.push({
+      x1: xCoordinate(index - 1), y1: yCoordinate(previous.band),
+      x2: xCoordinate(index), y2: yCoordinate(current.band), key: index,
+    });
+  }
 
   return (
     <section className="virtus-coaching-history rounded-2xl border border-[#d8bd85]/35 bg-[#102b28] p-5 text-[#f5f3ec]">
@@ -95,6 +110,38 @@ export default function CoachingHistory() {
               Review periods reflect different conversation windows. AI interpretations may vary; compare the supporting evidence, not just the status labels.
             </p>
           )}
+          <div className="mt-6 rounded-2xl border border-[#d8bd85]/35 bg-[#061e1b] p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 className="font-serif text-xl text-[#f3e5c8]">Development trend</h4>
+                <p className="mt-1 text-xs text-[#b9ccc3]">Qualitative observations across distinct evidence periods, not ability scores.</p>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-[#e7d3aa]">Area
+                <select value={selectedSkill} onChange={(event) => setSelectedSkill(event.target.value)} className="min-h-11 rounded-xl border border-[#d8bd85]/45 bg-[#0b352c] px-3 py-2 text-[#f5eee0]">
+                  {COACHING_SKILLS.map((skill) => <option key={skill} value={skill}>{skill}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="mt-5 overflow-hidden rounded-xl bg-[#041b19] p-2">
+              <svg viewBox="0 0 100 100" role="img" aria-label={`Qualitative trend for ${selectedSkill}: ${timeline.length} review periods`} className="h-64 w-full" preserveAspectRatio="none">
+                {[24,52,80].map((y, i) => <g key={y}>
+                  <line x1="12" y1={y} x2="89" y2={y} stroke="#496b5b" strokeWidth=".4" strokeDasharray="1.2 1.2" />
+                  <text x="1" y={y + 1.5} fill="#cbd9cd" fontSize="2.5">{["Up", "Steady", "Down"][i]}</text>
+                </g>)}
+                {segments.map((line) => <line key={line.key} x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} stroke="#e9c17c" strokeWidth=".9" vectorEffect="non-scaling-stroke" />)}
+                {timeline.filter((point) => point.band !== null).map((point) => <circle key={point.index} cx={xCoordinate(point.index)} cy={yCoordinate(point.band)} r="1.4" fill="#f2d28e" stroke="#0a4034" strokeWidth=".4">
+                  <title>{dateLabel(point.date)}: {DIRECTION_LABELS[point.direction]} ({point.confidence} confidence)</title>
+                </circle>)}
+              </svg>
+            </div>
+            <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-[#b9ccc3]">
+              <span>{timeline.length ? dateLabel(timeline[0].date) : "No reviews"}</span>
+              <span>{timeline.length ? dateLabel(timeline.at(-1).date) : ""}</span>
+            </div>
+            {timeline.length < 2 && <p className="mt-3 text-sm text-[#ecd5a7]">Only one distinct evidence period is available. A direction cannot yet be established.</p>}
+            {timeline.length > 1 && segments.length === 0 && <p className="mt-3 text-sm text-[#ecd5a7]">Not enough comparable observations to draw a continuous line.</p>}
+            <p className="mt-3 text-xs leading-5 text-[#b9ccc3]">Up = signs of progress; Steady = consistent patterns; Down = areas needing attention. Gaps represent insufficient evidence. This line joins qualitative classifications, not measured performance.</p>
+          </div>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {COACHING_SKILLS.map((skill) => {
               const observations = getSkillObservations(reviews, skill);
@@ -108,7 +155,7 @@ export default function CoachingHistory() {
                         <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusTone[latestObservation.direction]}`}>{DIRECTION_LABELS[latestObservation.direction]}</span>
                         <span className="text-xs text-[#b9ccc3]">{latestObservation.confidence} confidence · {dateLabel(latestObservation.date)}</span>
                       </div>
-                      <p className="mt-3 text-sm leading-6 text-[#cfddd4]">{latestObservation.evidence || "No supporting explanation recorded."}</p>
+                      <p className="mt-3 text-sm leading-6 text-[#cfddd4]">{formatCoachingEvidence(latestObservation.evidence, displayName) || "No supporting explanation recorded."}</p>
                       {observations.length > 1 && <p className="mt-3 border-t border-[#d8bd85]/15 pt-3 text-xs text-[#b9ccc3]">{observations.length} reviews mention this area. Open the individual reviews for a detailed comparison of evidence.</p>}
                     </>
                   ) : <p className="mt-3 text-sm text-[#b9ccc3]">No sufficiently specific observation recorded.</p>}
