@@ -297,8 +297,8 @@ const speechRef = useRef(null);
 
 useEffect(() => {
   function syncVirtusAppearance() {
-    const savedAppearance = localStorage.getItem("virtus_appearance");
-    const nextAppearance = savedAppearance === "light" ? "light" : "dark";
+    const nextAppearance = "dark";
+    localStorage.setItem("virtus_appearance", "dark");
 
     document.documentElement.setAttribute(
       "data-virtus-appearance",
@@ -5597,7 +5597,7 @@ return (
               </div>
             )}
             {projectsOpen && (
-              <div className="mt-3 rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 shadow-sm shadow-sky-950/10">
+              <div className="virtus-projects-panel mt-3 rounded-2xl border border-[#d8bd85]/40 bg-[#092e29] p-3 shadow-sm">
                 <button
                   type="button"
                   onClick={() => {
@@ -6425,7 +6425,7 @@ if (data.conversation) {
             </button>
 
             {projectsOpen && (
-              <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 no-scrollbar">
+              <div className="virtus-projects-panel max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-[#d8bd85]/40 bg-[#092e29] p-3 no-scrollbar">
                 <button
                   type="button"
                   onClick={() => {
