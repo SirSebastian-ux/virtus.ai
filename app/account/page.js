@@ -56,7 +56,7 @@ export default async function AccountPage() {
   if (user) {
     const { data } = await supabase
       .from("profiles")
-      .select("plan, plan_status, trial_started_at, trial_ends_at, nickname")
+      .select("plan, plan_status, trial_started_at, trial_ends_at, nickname, stripe_customer_id")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -164,7 +164,7 @@ export default async function AccountPage() {
                 href="/upgrade"
               />
 
-              <BillingPortalButton />
+              <BillingPortalButton hasStripeCustomer={Boolean(profile?.stripe_customer_id)} currentPlan={displayPlan} />
 
               <SettingsRow
                 label="Plan status"
