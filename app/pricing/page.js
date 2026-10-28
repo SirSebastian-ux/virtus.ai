@@ -28,7 +28,7 @@ const plans = [
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-[#091b1c] px-5 py-14 text-[#f5f3ec]">
+    <main className="virtus-subpage-modern min-h-screen bg-[#091b1c] px-5 py-14 text-[#f5f3ec]">
       <section className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8bd85]">Virtus AI · Enhanced Wellness Solutions</p>
