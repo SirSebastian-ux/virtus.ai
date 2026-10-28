@@ -26,7 +26,7 @@ export default async function UpgradePage() {
     <main className="virtus-interior min-h-screen virtus-theme-page">
       <div className="virtus-interior-shell flex min-h-screen flex-col">
         <VirtusInteriorHeader title="Choose your coaching experience" description="Compare your coaching options and manage your membership. Existing subscriptions remain valid while new plans are introduced." eyebrow="Virtus coaching plans" backHref="/account" backLabel="Account settings">
-          <div className="inline-flex rounded-full border border-[#eac68a]/60 bg-[#073c32]/80 px-4 py-2 text-sm text-[#f7d494]">Your current plan: {getPlanLabel(currentPlan)}</div>
+          <div className="inline-flex rounded-full border border-[#eac68a]/60 bg-[#073c32]/80 px-4 py-2 text-sm text-[#f7d494]">Your current plan: {currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : currentPlan === "guest" ? "Trial Guest" : "Life Coach — Free"}</div>
         </VirtusInteriorHeader>
 
         <UpgradeCardsClient
