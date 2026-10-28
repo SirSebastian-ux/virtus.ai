@@ -93,7 +93,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   }, []);
 
   const isGuestSelection = !isAuthenticated;
-  const isYearly = false;
+  const isYearly = billingCycle === "yearly";
 
   const canChooseFree = currentPlan === "free";
   const canChoosePlus = currentPlan === "free" || currentPlan === "plus";
@@ -101,61 +101,16 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     currentPlan === "free" || currentPlan === "plus" || currentPlan === "premium";
 
   async function handlePlanChange(plan) {
+    if (!isAuthenticated) { router.push("/login"); return; }
+    if (plan === currentPlan) { setError("This is already your current plan."); return; }
+    if (isNativeIosApp) { setError("Manage paid plans at virtusaiworld.com in your browser."); return; }
+    setLoadingPlan(plan); setError("");
     try {
-      setLoadingPlan(plan);
-      setError("");
-      if (plan === "free") {
-        setError("Life Coach at $9.99/month is not yet connected to Stripe. No payment has been taken.");
-        setLoadingPlan(null);
-        return;
-      }
-
-      if (!isAuthenticated) {
-        router.push("/login");
-        return;
-      }
-
-      if (plan === currentPlan) {
-        setError("This is already your current plan.");
-        setLoadingPlan(null);
-        return;
-      }
-
-      if (isNativeIosApp) {
-        setError("For App Store safety, paid plan changes are managed on the Virtus AI website. Please sign in at virtusaiworld.com in your browser to upgrade or manage billing.");
-        setLoadingPlan(null);
-        return;
-      }
-
-      if (plan === "free") {
-        const res = await fetch("/api/stripe/portal", {
-          method: "POST",
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || !data.url) {
-          setError(data.error || "Could not open the billing portal.");
-          setLoadingPlan(null);
-          return;
-        }
-
-        window.location.href = data.url;
-        return;
-      }
-
-      if (plan === "plus" || plan === "premium") {
-        setError("Updated membership checkout is being configured. No payment has been taken.");
-        setLoadingPlan(null);
-        return;
-      }
-
-      setError("Invalid plan selected.");
-      setLoadingPlan(null);
-    } catch (err) {
-      setError("Something went wrong while managing your plan.");
-      setLoadingPlan(null);
-    }
+      const response = await fetch("/api/stripe/checkout", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan,billingCycle})});
+      const data = await response.json();
+      if (!response.ok || !data.url) throw new Error(data.error || "Unable to open checkout.");
+      window.location.assign(data.url);
+    } catch (e) { setError(e.message || "Checkout unavailable."); setLoadingPlan(null); }
   }
 
   const cardClass =
@@ -204,10 +159,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             Billing
           </p>
           <p className="mt-1 text-sm virtus-theme-muted">
-            New monthly membership prices.
+            Choose monthly or annual billing.
           </p>
           <p className="mt-3 max-w-2xl rounded-xl border border-[#ac956b]/30 bg-[#082a24] px-4 py-3 text-sm leading-6 text-[#c6d8cd]">
-            Updated prices are being connected to secure Stripe checkout. Existing memberships remain unchanged.
+            Secure Stripe checkout. Existing subscriptions keep their current billing until you choose to change plans.
           </p>
         </div>
 
@@ -222,7 +177,6 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
           <button
             type="button"
-            hidden
             onClick={() => setBillingCycle("yearly")}
             className={toggleButtonClass("yearly")}
           >
@@ -241,13 +195,13 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#d8bd85]/35 bg-[#092820]/70 px-4 py-4">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  $9.99{" "}
+                  {isYearly ? "$119.88" : "$9.99"}{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
-                    / month
+                    / {isYearly ? "year" : "month"}
                   </span>
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[#eac789]">
-                  Monthly membership · Checkout setup in progress
+                  {isYearly ? "Billed annually · $9.99/month equivalent" : "Billed monthly"}
                 </p>
               </div>
 
@@ -273,7 +227,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <p className={noteClass}>
                 Best for: trying Virtus, asking practical questions, and getting
-                light support without a paid plan.
+                guided personal development.
               </p>
             </div>
 
@@ -288,10 +242,11 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             ) : canChooseFree ? (
               <button
                 type="button"
-                disabled={true}
-                className={currentButtonClass}
+                disabled={loadingPlan === "life_coach"}
+                onClick={() => handlePlanChange("life_coach")}
+                className={activeButtonClass}
               >
-                Current plan
+                {loadingPlan === "life_coach" ? "Opening checkout…" : "Choose Life Coach"}
               </button>
             ) : null}
           </section>
@@ -306,15 +261,13 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#d8bd85]/35 bg-[#092820]/70 px-4 py-4">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  $19.99{" "}
+                  {isYearly ? "$239.88" : "$19.99"}{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
-                    / month
+                    / {isYearly ? "year" : "month"}
                   </span>
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[#eac789]">
-                  {isYearly
-                    ? "Monthly membership"
-                    : "Monthly membership"}
+                  {isYearly ? "Billed annually · no discount" : "Billed monthly"}
                 </p>
               </div>
 
@@ -355,7 +308,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             ) : canChoosePlus ? (
               <button
                 type="button"
-                disabled={currentPlan === "plus"}
+                disabled={currentPlan === "plus" || loadingPlan === "plus"}
                 onClick={() => handlePlanChange("plus")}
                 className={
                   currentPlan === "plus" ? currentButtonClass : activeButtonClass
@@ -388,15 +341,13 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
               <div className="virtus-theme-card-soft mt-4 rounded-2xl border border-[#e8c98d]/55 bg-[#0c3027]/80 px-4 py-4 shadow-sm shadow-black/20">
                 <p className="virtus-plan-price text-2xl font-semibold virtus-theme-title">
-                  $29.99{" "}
+                  {isYearly ? "$359.88" : "$29.99"}{" "}
                   <span className="text-sm font-normal virtus-theme-muted">
-                    / month
+                    / {isYearly ? "year" : "month"}
                   </span>
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[#eac789]">
-                  {isYearly
-                    ? "Monthly membership"
-                    : "Monthly membership"}
+                  {isYearly ? "Billed annually · no discount" : "Billed monthly"}
                 </p>
               </div>
 
@@ -437,7 +388,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             ) : canChoosePremium ? (
               <button
                 type="button"
-                disabled={currentPlan === "premium"}
+                disabled={currentPlan === "premium" || loadingPlan === "premium"}
                 onClick={() => handlePlanChange("premium")}
                 className={
                   currentPlan === "premium" ? currentButtonClass : "virtus-gold-button " + primaryButtonClass
