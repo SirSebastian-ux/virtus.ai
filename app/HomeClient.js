@@ -6511,20 +6511,6 @@ if (data.conversation) {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => {
-                setCaptureOpen(!captureOpen);
-                setProjectsOpen(false);
-                setPracticeOpen(false);
-                setSearchOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Capture
-            </button>
-
-            {captureOpen && renderCapturePanel()}
 
             <button
               type="button"
@@ -6542,21 +6528,6 @@ if (data.conversation) {
             </button>
               </div>
             )}
-
-            <p className="virtus-mobile-secondary-label px-3 pt-3 text-[11px] font-semibold uppercase tracking-[0.18em]">More from Virtus</p>
-            <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Meetings
-            </Link>
-
-            <Link href="/operations" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Operations
-            </Link>
-
-
-
-
-
-
 
             <div className="my-3 h-px bg-sky-900/20" />
 
