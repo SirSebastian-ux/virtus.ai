@@ -6,9 +6,18 @@ export default function ProfileAvatar({ fallback = "V" }) {
   const [url, setUrl] = useState("");
   useEffect(() => {
     let mounted = true;
-    fetch("/api/account/avatar", { cache: "no-store" })
-      .then(r => r.json()).then(data => { if (mounted) setUrl(data.url || ""); }).catch(() => {});
-    return () => { mounted = false; };
+    const refreshPhoto = () => {
+      fetch("/api/account/avatar", { cache: "no-store" })
+        .then(r => r.json())
+        .then(data => { if (mounted) setUrl(data.url || ""); })
+        .catch(() => {});
+    };
+    refreshPhoto();
+    window.addEventListener("virtus-avatar-updated", refreshPhoto);
+    return () => {
+      mounted = false;
+      window.removeEventListener("virtus-avatar-updated", refreshPhoto);
+    };
   }, []);
   return url
     ? <img src={url} alt="Your profile" className="h-12 w-12 rounded-full border border-[#d8bd85]/40 object-cover" />
