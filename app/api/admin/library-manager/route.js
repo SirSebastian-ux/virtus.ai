@@ -34,7 +34,7 @@ async function fetchAllRows(queryFactory, pageSize = 1000) {
 
 export async function GET() {
   try {
-    const { response: adminAuthResponse } = await requireAdminApi();
+    const { user: adminUser, response: adminAuthResponse } = await requireAdminApi();
 
     if (adminAuthResponse) {
       return adminAuthResponse;
@@ -45,6 +45,7 @@ export async function GET() {
     const { data: files, error: filesError } = await admin
       .from("user_files")
       .select("id, user_id, file_name, file_type, storage_path, extracted_text, created_at")
+      .eq("user_id", adminUser.id)
       .order("created_at", { ascending: false });
 
     if (filesError) {
