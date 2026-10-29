@@ -294,12 +294,12 @@ function chunkText(text = "", maxLength = 1800) {
 
   if (current.trim()) chunks.push(current.trim());
 
-  return chunks.filter((chunk) => chunk.length >= 80).slice(0, 80);
+  return chunks.filter((chunk) => chunk.length >= 80);
 }
 
 export async function POST(req) {
   try {
-    const { response: adminAuthResponse } = await requireAdminApi();
+    const { user: adminUser, response: adminAuthResponse } = await requireAdminApi();
 
     if (adminAuthResponse) {
       return adminAuthResponse;
@@ -308,7 +308,7 @@ export async function POST(req) {
     const admin = createAdminClient();
 
     const body = await req.json().catch(() => ({}));
-    const fileIds = Array.isArray(body.fileIds) ? body.fileIds : [];
+    const fileIds = Array.isArray(body.fileIds) ? [...new Set(body.fileIds)].slice(0, 20) : [];
 
     if (fileIds.length === 0) {
       return Response.json(
@@ -319,7 +319,8 @@ export async function POST(req) {
 
     let filesQuery = admin
       .from("user_files")
-      .select("id, file_name, file_type, extracted_text")
+      .select("id, user_id, file_name, file_type, extracted_text")
+      .eq("user_id", adminUser.id)
       .in("id", fileIds);
 
 
@@ -328,6 +329,8 @@ export async function POST(req) {
     if (filesError) {
       return Response.json({ error: filesError.message }, { status: 500 });
     }
+
+    if ((files || []).length !== fileIds.length) return Response.json({error:"One or more files are not owned by the administrator or do not exist."},{status:403});
 
     const validFiles = (files || []).filter((file) =>
       String(file.extracted_text || "").trim()
@@ -352,9 +355,17 @@ export async function POST(req) {
         ? MODULE_TITLES[moduleNumber]
         : getCategoryTitle(category);
 
-      const libraryKey = moduleNumber
-        ? `ews-leadership-module-${moduleNumber}`
-        : `ews-${category}-${file.id}`;
+      const libraryKey = `ews-admin-file-${file.id}`;
+      const chunks = chunkText(file.extracted_text);
+      if (chunks.length > 80) {
+        results.push({file_name:file.file_name,success:false,error:"Large book requires batch ingestion; no content was published."});
+        continue;
+      }
+      const {data: alreadyPublished} = await admin.from("virtus_library_sources").select("id").eq("library_key", libraryKey).maybeSingle();
+      if (alreadyPublished) {
+        results.push({file_name:file.file_name,success:false,error:"Already published. Replacement requires a versioned publication process."});
+        continue;
+      }
 
       const { data: source, error: sourceError } = await admin
         .from("virtus_library_sources")
@@ -367,6 +378,7 @@ export async function POST(req) {
             module_number: moduleNumber,
             module_title: moduleTitle,
             visibility: "system",
+            user_id: adminUser.id,
           },
           { onConflict: "library_key" }
         )
@@ -382,15 +394,9 @@ export async function POST(req) {
         continue;
       }
 
-      await admin
-        .from("virtus_library_chunks")
-        .delete()
-        .eq("source_id", source.id);
-
-      const chunks = chunkText(file.extracted_text);
-
       const rows = chunks.map((content, index) => ({
         source_id: source.id,
+        user_id: adminUser.id,
         category,
         module_number: moduleNumber,
         module_title: moduleTitle,
