@@ -27,29 +27,36 @@ export default function UpdatePasswordPage() {
 
     async function preparePasswordResetSession() {
       syncLoginAppearance();
-
+      const supabase = createClient();
       const params = new URLSearchParams(window.location.search);
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
       const code = params.get("code");
-
-      if (code) {
-        const supabase = createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error) {
-          setMessage(
-            "This reset link is invalid or has expired. Please request a new password reset link."
-          );
-          setReady(false);
-          return;
-        }
-
-        window.history.replaceState({}, document.title, "/update-password");
+      const tokenHash = params.get("token_hash");
+      const type = params.get("type");
+      let exchangeError = null;
+      if (tokenHash && type === "recovery") {
+        const result = await supabase.auth.verifyOtp({token_hash:tokenHash,type:"recovery"});
+        exchangeError = result.error;
+      } else if (code) {
+        const result = await supabase.auth.exchangeCodeForSession(code);
+        exchangeError = result.error;
+      } else if (fragment.get("access_token") && fragment.get("refresh_token")) {
+        const result = await supabase.auth.setSession({access_token:fragment.get("access_token"),refresh_token:fragment.get("refresh_token")});
+        exchangeError = result.error;
       }
-
-      setReady(true);
+      const {data:{session},error:sessionError}=await supabase.auth.getSession();
+      if(session && !sessionError && !params.get("error") && !fragment.get("error")) {
+        window.history.replaceState({},document.title,"/update-password");
+        setReady(true);
+      } else {
+        setReady(false);
+        setMessage(exchangeError || params.get("error") || fragment.get("error")
+          ? "This reset link cannot be verified. Please request a new link."
+          : "Please request a password reset email to securely update your password.");
+      }
     }
 
-    preparePasswordResetSession();
+    void preparePasswordResetSession().catch(() => {setReady(false);setMessage('Unable to verify reset link. Please request a new one.');});
 
     window.addEventListener("storage", syncLoginAppearance);
     window.addEventListener("focus", syncLoginAppearance);
