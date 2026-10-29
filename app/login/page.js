@@ -33,6 +33,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState("login");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [learningConsent, setLearningConsent] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -73,6 +74,7 @@ export default function LoginPage() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(rememberNextPath())}`,
+            data: { behavioral_learning_preference: learningConsent },
           },
         });
 
@@ -196,6 +198,7 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {mode === "signup" && <label className="mb-4 flex items-start gap-3 text-sm text-sky-100"><input type="checkbox" checked={learningConsent} onChange={e=>setLearningConsent(e.target.checked)} className="mt-1"/> <span>Optional: I agree to allow Virtus to use privacy-protected, generalized communication feedback to improve its coaching. This does not authorize sharing my personal or sensitive information. I can withdraw consent later. This feature is not active yet.</span></label>}
           <button
             type="submit"
             disabled={loading}
