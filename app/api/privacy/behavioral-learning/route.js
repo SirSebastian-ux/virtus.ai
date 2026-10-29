@@ -18,5 +18,6 @@ export async function POST(req){
  if(typeof body.optedIn!=="boolean")return Response.json({error:"Explicit choice required"},{status:400});
  const db=createAdminClient();const {error}=await db.from("virtus_behavioral_learning_consent").upsert({user_id:user.id,opted_in:body.optedIn,policy_version:"v1",updated_at:new Date().toISOString()},{onConflict:"user_id"});
  if(error)return Response.json({error:"Could not save consent"},{status:500});
+ if(body.optedIn===false){await db.from("virtus_behavioral_feedback").delete().eq("user_id",user.id);await db.auth.admin.updateUserById(user.id,{user_metadata:{...user.user_metadata,behavioral_learning_preference:false}}); }
  return Response.json({success:true,optedIn:body.optedIn});
 }
