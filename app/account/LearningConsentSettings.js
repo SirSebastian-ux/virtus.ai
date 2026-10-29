@@ -1,0 +1,8 @@
+"use client";
+import {useEffect,useState} from "react";
+export default function LearningConsentSettings(){
+ const [value,setValue]=useState(false),[loading,setLoading]=useState(true),[message,setMessage]=useState("");
+ useEffect(()=>{fetch("/api/privacy/behavioral-learning",{cache:"no-store"}).then(r=>r.json()).then(d=>{setValue(d.optedIn===true);setLoading(false)}).catch(()=>{setMessage("Unable to load preference");setLoading(false)})},[]);
+ async function update(next){setLoading(true);setMessage("");try{const r=await fetch("/api/privacy/behavioral-learning",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({optedIn:next})});if(!r.ok)throw Error("Unable to save preference");setValue(next);setMessage("Preference saved. Learning collection is not active yet.")}catch(e){setMessage(e.message)}finally{setLoading(false)}}
+ return <section className="virtus-theme-card rounded-2xl border border-sky-900/25 p-5"><h2 className="virtus-theme-title font-semibold">Help improve Virtus AI (optional)</h2><p className="virtus-theme-muted mt-2 text-sm">Opt in to future privacy-protected analysis of communication feedback for general coaching improvements. Personal or sensitive information is not intended for training. No conversation-learning collection is currently enabled.</p><label className="mt-3 flex items-center gap-3"><input type="checkbox" disabled={loading} checked={value} onChange={e=>update(e.target.checked)}/><span className="text-sm">Allow generalized behavioral learning</span></label><p role="status" className="virtus-theme-muted mt-2 text-sm">{message}</p></section>
+}
