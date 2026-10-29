@@ -14,7 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
 import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
-export default function HomeClient() {
+export default function HomeClient({ isAdmin = false }) {
 const [showSplash, setShowSplash] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -5534,6 +5534,7 @@ return (
               onRecent={() => setRecentOpen((previous) => !previous)}
               recentOpen={recentOpen}
             />
+            {isAdmin && <div className="mt-3 grid gap-2 border-t border-[#d8bd85]/30 pt-4"><p className="px-3 text-xs uppercase tracking-widest text-[#d8bd85]">Administrator</p><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/evaluation-lab">Evaluation Lab</Link><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/library-manager">Knowledge Library Manager</Link></div>}
             <div className={luxuryToolsOpen ? "grid grid-cols-3 gap-2 mt-3" : "hidden"}>
               <button
                 type="button"
