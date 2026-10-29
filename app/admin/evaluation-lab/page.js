@@ -1,3 +1,4 @@
+import AutomaticEvaluation from "./AutomaticEvaluation";
 import { evaluateRegression } from "@/lib/virtus-evaluation-regression.mjs";
 import EvaluationForm from "./EvaluationForm";
 import { requireAdminPage } from "@/lib/admin-auth";
@@ -25,6 +26,7 @@ export default async function EvaluationLab(){
  <section className="grid gap-4 md:grid-cols-3">{roles.map(([key,name])=>{const items=results.filter(x=>x.role===key);const average=items.length?items.reduce((n,x)=>n+x.score,0)/items.length:null;return <article key={key} className="rounded-2xl border border-[#967c4b]/50 bg-[#0b2a24] p-6"><h2 className="text-xl text-[#eed39b]">{name}</h2><p className="mt-5 text-3xl font-semibold">{average===null?"Not evaluated":(average/5*100).toFixed(1)+"%"}</p><p className="mt-2 text-sm text-[#b6c9be]">{items.length} scored dimensions · provisional rubric result, not a validated success rate</p></article>})}</section>
  <section className="rounded-2xl border border-[#967c4b]/40 bg-[#0b2923] p-6"><h2 className="text-xl text-[#eed39b]">Evaluation dimensions</h2><div className="mt-5 grid gap-3 md:grid-cols-2">{dimensions.map(x=><div key={x} className="rounded-lg bg-[#13372e] p-3">{x}</div>)}</div><p className="mt-5 text-sm text-[#c1d1c6]">Scores require controlled cases, an explicit rubric, human review, and safety-failure tracking before they represent a professional reliability estimate.</p></section>
  <section className="rounded-2xl border border-[#967c4b]/40 p-6"><h2 className="text-xl text-[#eed39b]">Behavioral learning controls</h2><p className="mt-3 text-[#c1d1c6]">Cross-user behavioral learning is disabled. No automatic extraction of personal information, no self-modifying instructions, and no unreviewed behavioral proposals are enabled. Future collection requires informed opt-in, aggregation, and administrator approval.</p><p className="mt-3 text-sm text-[#d9b66f]">Phase 1: evaluation foundation only.</p></section>
+ <AutomaticEvaluation cases={cases||[]}/>
  <EvaluationForm cases={cases||[]}/>
  <a className="inline-block text-[#eed39b] underline" href="/admin/library-manager">Knowledge Library Manager</a>
  </div></main>;
