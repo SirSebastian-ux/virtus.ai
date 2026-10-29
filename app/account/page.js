@@ -1,5 +1,6 @@
 import VirtusInteriorHeader from "../components/VirtusInteriorHeader";
 import Link from "next/link";
+import { isAdminUser } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
 import BillingPortalButton from "./BillingPortalButton";
 import LogoutButton from "./LogoutButton";
@@ -72,6 +73,7 @@ export default async function AccountPage() {
   <div className="virtus-interior-shell">
         <VirtusInteriorHeader title="Account Settings" description="Manage your account, coaching development, preferences, and membership." eyebrow="Your personal development space" />
 
+        {isAdminUser(user) && <div className="virtus-theme-card mb-6 rounded-2xl border border-[#d8bd85]/40 p-5"><p className="font-semibold virtus-theme-title">Administrator tools</p><p className="mt-1 text-sm virtus-theme-muted">Evaluate Life Coach, Trainer and Mentor performance.</p><Link className="mt-3 inline-block rounded-xl border border-[#d8bd85]/60 px-4 py-2 font-medium text-[#d8bd85]" href="/admin/evaluation-lab">Open Evaluation Lab</Link></div>}
         <div className="virtus-account-grid">
           <aside className="virtus-theme-surface virtus-account-sidebar rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
             <div className="flex items-center gap-3 virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10">
