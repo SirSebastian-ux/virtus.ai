@@ -377,7 +377,7 @@ export async function POST(req) {
           {
             library_key: libraryKey,
             title: file.file_name,
-            source_type: "uploaded_workbook",
+            source_type: "admin_approved_reference",
             category,
             module_number: moduleNumber,
             module_title: moduleTitle,
@@ -408,7 +408,7 @@ export async function POST(req) {
         title: `${moduleTitle} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Part ${index + 1}`,
         content,
         tags: buildTags(moduleNumber, category, content),
-        use_cases: ["chat", "practice", "docx", "pdf", "pptx"],
+        use_cases: ["chat", "practice"],
       }));
 
       if (rows.length > 0) {
