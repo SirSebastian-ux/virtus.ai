@@ -27,29 +27,44 @@ export default function UpdatePasswordPage() {
 
     async function preparePasswordResetSession() {
       syncLoginAppearance();
-
+      const supabase = createClient();
       const params = new URLSearchParams(window.location.search);
+      const hash = new URLSearchParams(window.location.hash.slice(1));
       const code = params.get("code");
+      const tokenHash = params.get("token_hash");
+      const type = params.get("type");
+      const errorDescription = params.get("error_description") || hash.get("error_description");
 
-      if (code) {
-        const supabase = createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error) {
-          setMessage(
-            "This reset link is invalid or has expired. Please request a new password reset link."
-          );
-          setReady(false);
-          return;
-        }
-
-        window.history.replaceState({}, document.title, "/update-password");
+      let recoveryError = null;
+      if (tokenHash && type === "recovery") {
+        const result = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" });
+        recoveryError = result.error;
+      } else if (code) {
+        const result = await supabase.auth.exchangeCodeForSession(code);
+        recoveryError = result.error;
+      } else if (hash.get("access_token") && hash.get("refresh_token")) {
+        const result = await supabase.auth.setSession({
+          access_token: hash.get("access_token"),
+          refresh_token: hash.get("refresh_token"),
+        });
+        recoveryError = result.error;
       }
 
-      setReady(true);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (session && !sessionError && !errorDescription) {
+        window.history.replaceState({}, document.title, "/update-password");
+        setReady(true);
+        return;
+      }
+      setReady(false);
+      setMessage(
+        errorDescription || recoveryError
+          ? "This reset link could not be verified. Request a new password reset email, then open its link once in the same browser."
+          : "Request a password reset email first to securely create a new password."
+      );
     }
 
-    preparePasswordResetSession();
+    void preparePasswordResetSession().catch(() => { setReady(false); setMessage("Unable to verify the reset link. Please request a new one."); });
 
     window.addEventListener("storage", syncLoginAppearance);
     window.addEventListener("focus", syncLoginAppearance);
