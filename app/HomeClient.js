@@ -3528,9 +3528,8 @@ function getPlanCapabilityCard(plan) {
     const existingGuestId = localStorage.getItem("virtus_guest_id");
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShowPlanOverlay(
-      !!existingGuestId && localStorage.getItem(planOverlayStorageKey) !== "true"
-    );
+    // Defer guest-only plans overlay until the server verifies authentication.
+    setShowPlanOverlay(false);
     setGuestAccess(existingGuestId ? normalizedGuestAccess : null);
 
     const savedChatId = getGuestSidebarChatId(
@@ -3559,6 +3558,8 @@ setIsAuthenticated(loggedIn);
 setCurrentUser(authData.user || null);
 setAccountAccess(authData.access || null);
         if (loggedIn) {
+          setShowPlanOverlay(false);
+          setGuestAccess(null);
                     const sessionsRes = await fetch("/api/chat-sessions", { cache: "no-store" });
           const sessionsData = await sessionsRes.json();
 
@@ -3571,8 +3572,10 @@ setAccountAccess(authData.access || null);
             }))
           );
                                        } else {
+          const existingGuestId = localStorage.getItem("virtus_guest_id");
+          setShowPlanOverlay(Boolean(existingGuestId) && localStorage.getItem(planOverlayStorageKey) !== "true");
           const guestId =
-            localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
+            existingGuestId || crypto.randomUUID();
 
           localStorage.setItem("virtus_guest_id", guestId);
 
