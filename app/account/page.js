@@ -1,3 +1,4 @@
+import LearningConsentSettings from "./LearningConsentSettings";
 import VirtusInteriorHeader from "../components/VirtusInteriorHeader";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -70,6 +71,7 @@ export default async function AccountPage() {
   return (
  <main className="virtus-interior min-h-screen virtus-theme-page">
   <div className="virtus-interior-shell">
+        <LearningConsentSettings />
         <VirtusInteriorHeader title="Account Settings" description="Manage your account, coaching development, preferences, and membership." eyebrow="Your personal development space" />
 
         <div className="virtus-account-grid">
