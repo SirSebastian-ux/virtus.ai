@@ -357,6 +357,10 @@ export async function POST(req) {
 
       const libraryKey = `ews-admin-file-${file.id}`;
       const chunks = chunkText(file.extracted_text);
+      if (chunks.length === 0) {
+        results.push({file_name:file.file_name,success:false,error:"No usable knowledge chunks extracted."});
+        continue;
+      }
       if (chunks.length > 80) {
         results.push({file_name:file.file_name,success:false,error:"Large book requires batch ingestion; no content was published."});
         continue;
@@ -413,6 +417,7 @@ export async function POST(req) {
           .insert(rows);
 
         if (chunksError) {
+          await admin.from("virtus_library_sources").delete().eq("id", source.id);
           results.push({
             file_name: file.file_name,
             success: false,
