@@ -7,7 +7,7 @@
     "build": "npm run test:intelligence && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:intelligence": "node --test tests/virtus-intelligence.test.mjs tests/virtus-coaching-knowledge.test.mjs tests/virtus-professional-dialogue.test.mjs"
+    "test:intelligence": "node --test tests/virtus-intelligence.test.mjs tests/virtus-coaching-knowledge.test.mjs tests/virtus-professional-dialogue.test.mjs tests/virtus-evaluation-safety.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
