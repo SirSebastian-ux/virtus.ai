@@ -3675,6 +3675,24 @@ setAccountAccess(authData.access || null);
     };
     }, [isAuthenticated]);
 
+  // EWS preview handoff: hydrate the chat without a mandatory account screen.
+  useEffect(() => {
+    const prefix = "#ews-continue=";
+    if (typeof window === "undefined" || !window.location.hash.startsWith(prefix)) return;
+    try {
+      const history = JSON.parse(decodeURIComponent(window.location.hash.slice(prefix.length)));
+      if (!Array.isArray(history)) return;
+      const imported = history.filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string").slice(-14).map((m) => ({role:m.role,text:m.content.slice(0,4000)}));
+      if (!imported.length) return;
+      setConversation(imported);
+      setShowPlanOverlay(false);
+      localStorage.setItem("virtus_ews_imported_chat", JSON.stringify(imported));
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    } catch {
+      // Malformed handoff must never block the normal application.
+    }
+  }, []);
+
   useEffect(() => {
   if (!shouldAutoScroll) return;
   if (!messagesEndRef.current) return;
