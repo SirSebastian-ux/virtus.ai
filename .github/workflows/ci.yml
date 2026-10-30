@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - release/evaluation-lab-20261029
   pull_request:
     branches:
       - main
