@@ -21,7 +21,8 @@ button{font-family:inherit;cursor:pointer}
 .brand{display:flex;flex-direction:column;gap:3px;flex:1}
 .subtitle{font-size:11px;font-weight:400;color:#d5c5a3;letter-spacing:.4px}
 .close{background:transparent;border:0;color:#f4d99c;font-size:25px;padding:2px 6px}
-.messages{flex:1;min-height:0;overflow-y:auto;padding:17px 15px;display:flex;flex-direction:column;gap:13px;background:linear-gradient(160deg,#062b24,#071c1a 70%)}
+.messages{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#a98b50 #08241f;padding:17px 15px;display:flex;flex-direction:column;gap:13px;background:linear-gradient(160deg,#062b24,#071c1a 70%)}
+.messages::-webkit-scrollbar{width:7px}.messages::-webkit-scrollbar-track{background:#08241f;border-radius:8px}.messages::-webkit-scrollbar-thumb{background:#a98b50;border:1px solid #15382f;border-radius:8px}.messages::-webkit-scrollbar-thumb:hover{background:#d2b678}
 .message{max-width:90%;padding:12px 14px;border-radius:16px;line-height:1.55;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ffffff17}
 .assistant{align-self:flex-start;background:#123e34;color:#f3f1e9;border-top-left-radius:5px}
 .user{align-self:flex-end;background:linear-gradient(125deg,#dfc18a,#b99555);color:#1a211c;border-top-right-radius:5px;border-color:#f0d7a2}
@@ -51,8 +52,8 @@ function persist(){try{localStorage.setItem(storageKey,JSON.stringify(state));}c
 function add(role,content){const el=document.createElement("div");el.className="message "+role;el.textContent=content;messages.append(el);messages.scrollTop=messages.scrollHeight;return el;}
 function handoff(){
  form.style.display="none";
- const info=document.createElement("div");info.className="note";info.textContent="Your seven-question website preview is complete. Continue with Virtus AI. New visitors can register for a trial; existing members can use their accounts.";footer.append(info);
- const link=document.createElement("a");link.className="continue";link.href="https://virtusaiworld.com/login?mode=signup&source=ews-widget";link.target="_blank";link.rel="noopener noreferrer";link.textContent="Continue with Virtus AI";footer.append(link);
+ const info=document.createElement("div");info.className="note";info.textContent="Your seven-question preview is complete. Continue your development journey with Virtus AI. Guest access is available where eligible; you can register when ready.";footer.append(info);
+ const link=document.createElement("a");link.className="continue";link.href="https://virtusaiworld.com/?source=ews-widget&mode=trial";link.target="_blank";link.rel="noopener noreferrer";link.textContent="Continue to Virtus AI";footer.append(link);
  const app=document.createElement("div");app.className="note";app.textContent="You can also install Virtus AI when the app is available.";footer.append(app);
 }
 if(state.history.length){state.history.forEach(m=>add(m.role,m.content));}else{add("assistant","Welcome. I'm Virtus AI. What would you like to explore today?");}
