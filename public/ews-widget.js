@@ -49,7 +49,8 @@ const send=document.createElement("button");send.className="send";send.type="sub
 form.append(input,send);footer.append(form);panel.append(header,messages,footer);sh.append(css,panel,launch);document.body.append(root);
 const storageKey="virtus_ews_preview_v1";let state={history:[],token:"",count:0};try{const saved=JSON.parse(localStorage.getItem(storageKey)||"null");if(saved&&Array.isArray(saved.history))state={history:saved.history.slice(-14),token:String(saved.token||""),count:Number(saved.count)||0};}catch{}
 function persist(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch{}}
-function add(role,content){const el=document.createElement("div");el.className="message "+role;el.textContent=content;messages.append(el);messages.scrollTop=messages.scrollHeight;return el;}
+function scrollToLatest(){requestAnimationFrame(()=>{messages.scrollTop=messages.scrollHeight;});}
+function add(role,content){const el=document.createElement("div");el.className="message "+role;el.textContent=content;messages.append(el);scrollToLatest();return el;}
 function handoff(){
  form.style.display="none";
  const info=document.createElement("div");info.className="note";info.textContent="Your seven-question preview is complete. Continue your development journey with Virtus AI. Guest access is available where eligible; you can register when ready.";footer.append(info);
@@ -58,7 +59,8 @@ function handoff(){
 }
 if(state.history.length){state.history.forEach(m=>add(m.role,m.content));}else{add("assistant","Welcome. I'm Virtus AI. What would you like to explore today?");}
 if(state.count>=7)handoff();
-launch.addEventListener("click",()=>{panel.classList.toggle("open");if(panel.classList.contains("open"))input.focus();});
+scrollToLatest();
+launch.addEventListener("click",()=>{panel.classList.toggle("open");if(panel.classList.contains("open")){scrollToLatest();input.focus({preventScroll:true});}});
 close.addEventListener("click",()=>{panel.classList.remove("open");launch.focus();});
 let busy=false;
 form.addEventListener("submit",async(e)=>{
@@ -69,10 +71,10 @@ form.addEventListener("submit",async(e)=>{
  const response=await fetch("https://virtusaiworld.com/api/ews-widget/chat",{method:"POST",mode:"cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:question,history:prior,token:state.token})});
  const data=await response.json();if(!response.ok)throw new Error(data.error||"Chat unavailable");
  if(data.limitReached&&!data.reply){waiting.textContent="Your website preview is complete.";state.count=7;persist();handoff();return;}
- waiting.textContent=data.reply||"Please try again.";
+ waiting.textContent=data.reply||"Please try again.";scrollToLatest();
  state.history.push({role:"user",content:question},{role:"assistant",content:waiting.textContent});state.history=state.history.slice(-14);state.token=data.token||state.token;state.count=data.count||state.count;persist();
- if(state.count>=7)handoff();
- }catch(err){waiting.textContent=err.message||"Please try again.";input.value=question;}
+ if(state.count>=7){handoff();scrollToLatest();}
+ }catch(err){waiting.textContent=err.message||"Please try again.";scrollToLatest();input.value=question;}
  finally{busy=false;send.disabled=false;input.disabled=false;}
 });
 }
