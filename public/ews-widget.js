@@ -8,31 +8,37 @@ const root=document.createElement("div");root.id="virtus-ews-root";
 const sh=root.attachShadow({mode:"open"});
 const css=document.createElement("style");
 css.textContent=`
-:host{all:initial;position:fixed;bottom:18px;right:18px;z-index:2147483000;font-family:Arial,Helvetica,sans-serif;color:#1b2723}
+:host{all:initial;position:fixed;bottom:18px;right:18px;z-index:2147483000;font-family:Inter,Arial,Helvetica,sans-serif;color:#f5ebd6}
 *{box-sizing:border-box}
 button{font-family:inherit;cursor:pointer}
-.launch{border:1px solid #d6b369;background:#12382e;color:#f3d594;border-radius:999px;padding:14px 20px;font-size:14px;font-weight:700;box-shadow:0 8px 25px #0003}
-.panel{display:none;position:absolute;bottom:65px;right:0;width:min(390px,calc(100vw - 28px));height:min(580px,calc(100dvh - 110px));border:1px solid #caa65d;border-radius:17px;background:#fff;box-shadow:0 14px 44px #0004;overflow:hidden;flex-direction:column}
+.launch{width:68px;height:68px;padding:7px;border:1px solid #d5b26a;border-radius:50%;background:radial-gradient(circle at 30% 20%,#0b5b47,#04221e 75%);box-shadow:0 0 0 3px #03261e,0 12px 30px #0008;display:grid;place-items:center;transition:transform .2s,box-shadow .2s}
+.launch:hover{transform:translateY(-2px);box-shadow:0 0 0 3px #03261e,0 15px 36px #0009}
+.launch img{width:49px;height:53px;object-fit:contain}
+.panel{display:none;position:absolute;bottom:85px;right:0;width:min(410px,calc(100vw - 24px));height:min(620px,calc(100dvh - 110px));border:1px solid #c6a25a;border-radius:19px;background:#061b18;box-shadow:0 22px 60px #0009;overflow:hidden;flex-direction:column}
 .panel.open{display:flex}
-.header{display:flex;align-items:center;justify-content:space-between;padding:17px 16px;background:#12382e;color:#f5d99d;font-size:16px;font-weight:700}
-.close{background:none;border:0;color:white;font-size:23px;padding:0 4px}
-.messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;background:#faf9f5}
-.message{max-width:88%;padding:11px 13px;border-radius:13px;line-height:1.5;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
-.assistant{align-self:flex-start;background:#e9eee9;color:#1a3027}
-.user{align-self:flex-end;background:#12382e;color:#fff}
-.footer{padding:12px;background:#fff;border-top:1px solid #e8e8e8}
+.header{display:flex;align-items:center;gap:11px;padding:15px;background:linear-gradient(120deg,#073e32,#061f1c 70%);color:#edcf8d;border-bottom:1px solid #9b793d;font-size:18px;font-weight:700}
+.header-logo{width:40px;height:44px;object-fit:contain}
+.brand{display:flex;flex-direction:column;gap:3px;flex:1}
+.subtitle{font-size:11px;font-weight:400;color:#d5c5a3;letter-spacing:.4px}
+.close{background:transparent;border:0;color:#f4d99c;font-size:25px;padding:2px 6px}
+.messages{flex:1;min-height:0;overflow-y:auto;padding:17px 15px;display:flex;flex-direction:column;gap:13px;background:linear-gradient(160deg,#062b24,#071c1a 70%)}
+.message{max-width:90%;padding:12px 14px;border-radius:16px;line-height:1.55;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #ffffff17}
+.assistant{align-self:flex-start;background:#123e34;color:#f3f1e9;border-top-left-radius:5px}
+.user{align-self:flex-end;background:linear-gradient(125deg,#dfc18a,#b99555);color:#1a211c;border-top-right-radius:5px;border-color:#f0d7a2}
+.footer{padding:13px 14px;background:#061c19;border-top:1px solid #8b713d}
 .form{display:flex;gap:8px}
-.input{flex:1;min-width:0;border:1px solid #c9c9c9;border-radius:9px;padding:11px;font-size:14px}
-.send{border:0;border-radius:9px;background:#12382e;color:#fff;padding:10px 13px;font-size:14px}
+.input{flex:1;min-width:0;border:1px solid #947c49;border-radius:11px;padding:12px;font-size:14px;background:#092e27;color:#fff;outline:0}
+.input::placeholder{color:#b7c3bd}
+.send{border:1px solid #d8b76f;border-radius:11px;background:linear-gradient(135deg,#e5c98e,#bb9650);color:#13221b;padding:10px 15px;font-size:14px;font-weight:700}
 .send:disabled{opacity:.55;cursor:default}
-.continue{display:block;text-align:center;text-decoration:none;background:#12382e;color:#f5d99d;border-radius:9px;padding:12px;margin-top:10px;font-weight:700;font-size:14px}
-.note{font-size:12px;color:#657169;margin-top:8px;text-align:center}
-button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #c9a65d;outline-offset:2px}
-@media(max-width:480px){:host{bottom:12px;right:12px}.panel{bottom:60px;height:min(570px,calc(100dvh - 88px))}}
+.continue{display:block;text-align:center;text-decoration:none;background:linear-gradient(130deg,#e6cb93,#b8944d);color:#11251d;border-radius:11px;padding:12px;margin-top:11px;font-weight:700;font-size:14px}
+.note{font-size:12px;color:#c7d0c9;margin-top:9px;text-align:center;line-height:1.5}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #f0ce84;outline-offset:2px}
+@media(max-width:480px){:host{bottom:12px;right:12px}.launch{width:59px;height:59px}.launch img{width:44px;height:46px}.panel{bottom:74px;height:min(620px,calc(100dvh - 95px))}}
 `;
-const launch=document.createElement("button");launch.className="launch";launch.textContent="✦ Ask Virtus AI";launch.setAttribute("aria-label","Open Virtus AI chat");
+const launch=document.createElement("button");launch.className="launch";launch.innerHTML="<img src=\"https://virtusaiworld.com/virtus-aurum-emblem.svg\" alt=\"Virtus AI\" />";launch.setAttribute("aria-label","Open Virtus AI chat");
 const panel=document.createElement("section");panel.className="panel";panel.setAttribute("role","dialog");panel.setAttribute("aria-label","Ask Virtus AI");
-const header=document.createElement("div");header.className="header";header.textContent="Ask Virtus AI";
+const header=document.createElement("div");header.className="header";header.innerHTML="<img class=\"header-logo\" src=\"https://virtusaiworld.com/virtus-aurum-emblem.svg\" alt=\"\" /><div class=\"brand\"><span>Virtus AI</span><span class=\"subtitle\">Life Coach · Trainer · Mentor</span></div>";
 const close=document.createElement("button");close.className="close";close.type="button";close.textContent="×";close.setAttribute("aria-label","Close chat");header.append(close);
 const messages=document.createElement("div");messages.className="messages";messages.setAttribute("aria-live","polite");
 const footer=document.createElement("div");footer.className="footer";
