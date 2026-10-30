@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 405" role="img" aria-labelledby="vt vd">
+<title id="vt">Virtus AI Aurum Emblem</title><desc id="vd">A premium polished gold and cyan shield, its central illuminated I surrounded by intricate neural branches and a luminous water reflection</desc>
+<defs>
+<linearGradient id="goldOuter" x1="0.05" y1="0" x2=".92" y2="1"><stop stop-color="#9c651e"/><stop offset=".15" stop-color="#fff1ae"/><stop offset=".3" stop-color="#d4923c"/><stop offset=".47" stop-color="#fff1b2"/><stop offset=".64" stop-color="#b57927"/><stop offset=".79" stop-color="#d5ab62"/><stop offset=".9" stop-color="#76dcff"/><stop offset="1" stop-color="#cbf6ff"/></linearGradient>
+<linearGradient id="goldInner" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#fff6d6"/><stop offset=".29" stop-color="#c58c3b"/><stop offset=".5" stop-color="#fff1c4"/><stop offset=".72" stop-color="#c58a34"/><stop offset="1" stop-color="#8ad7f7"/></linearGradient>
+<linearGradient id="crestFill" x1=".1" y1="0" x2=".8" y2="1"><stop stop-color="#01382f"/><stop offset=".53" stop-color="#031b1a"/><stop offset="1" stop-color="#030e17"/></linearGradient>
+<linearGradient id="neuron" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4cb"/><stop offset=".24" stop-color="#f2c16c"/><stop offset=".49" stop-color="#cb882b"/><stop offset=".75" stop-color="#ffe6a2"/><stop offset="1" stop-color="#c08b3f"/></linearGradient>
+<linearGradient id="monogram" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#bb7724"/><stop offset=".22" stop-color="#ffe8a1"/><stop offset=".46" stop-color="#fff8d7"/><stop offset=".62" stop-color="#f0b968"/><stop offset="1" stop-color="#73dcfb"/></linearGradient>
+<linearGradient id="pool" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff4cb" stop-opacity=".98"/><stop offset=".34" stop-color="#8be2fb" stop-opacity=".9"/><stop offset=".76" stop-color="#5ecdf3" stop-opacity=".46"/><stop offset="1" stop-color="#0c536b" stop-opacity="0"/></linearGradient>
+<radialGradient id="shine" cx=".52" cy=".28" r=".64"><stop stop-color="#12675d" stop-opacity=".63"/><stop offset=".52" stop-color="#062e2b" stop-opacity=".18"/><stop offset="1" stop-color="#020d11" stop-opacity="0"/></radialGradient>
+<radialGradient id="halo"><stop stop-color="#ffd579" stop-opacity=".46"/><stop offset=".47" stop-color="#eec06a" stop-opacity=".2"/><stop offset="1" stop-color="#f7c064" stop-opacity="0"/></radialGradient>
+<filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="smallGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+<clipPath id="shieldClip"><path d="M180 36 315 97v121c0 86-61 137-135 166C106 355 45 304 45 218V97Z"/></clipPath>
+</defs>
+<!-- Independent, transparent silhouette: no rectangular background -->
+<ellipse cx="180" cy="119" rx="160" ry="99" fill="url(#halo)" opacity=".45" filter="url(#softGlow)"/>
+<path d="M180 29 326 95v123c0 93-65 151-146 181C99 369 34 311 34 218V95Z" fill="#0a302b" opacity=".55" filter="url(#softGlow)"/>
+<path d="M180 25 327 93v125c0 94-64 151-147 180C97 369 33 312 33 218V93Z" fill="url(#goldOuter)"/>
+<path d="M180 37 315 97v121c0 86-61 137-135 166C106 355 45 304 45 218V97Z" fill="url(#crestFill)" stroke="#0a2928" stroke-width="1.6"/>
+<path d="M180 41 310 101v116c0 83-56 130-130 160C106 347 50 300 50 217V101Z" fill="url(#shine)" stroke="url(#goldInner)" stroke-width="2.3"/>
+<path d="M181 30 322 96" stroke="#ffedbc" stroke-width="3.8" stroke-linecap="round" opacity=".78"/>
+<path d="M39 99v117c0 89 60 140 141 173" fill="none" stroke="#fff6d9" stroke-width="2.4" opacity=".4"/>
+<path d="M322 104v113c0 82-56 135-142 172" fill="none" stroke="#a0eeff" stroke-width="2.6" opacity=".48"/>
+<g clip-path="url(#shieldClip)">
+ <ellipse cx="180" cy="252" rx="91" ry="104" fill="#c3eaff" opacity=".11" filter="url(#softGlow)"/>
+ <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7" stroke="#cb8530" filter="url(#smallGlow)" opacity=".7">
+ <path d="M173 128c-7-16-24-25-42-14-22-7-38 9-35 27-17 7-21 27-12 39-8 22 9 42 31 41 7 17 28 23 58 9M187 128c7-16 24-25 42-14 22-7 38 9 35 27 17 7 21 27 12 39 8 22-9 42-31 41-7 17-28 23-58 9"/></g>
+ <g fill="none" stroke="url(#neuron)" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M173 128c-7-16-24-25-42-14-22-7-38 9-35 27-17 7-21 27-12 39-8 22 9 42 31 41 7 17 28 23 58 9"/>
+ <path d="M187 128c7-16 24-25 42-14 22-7 38 9 35 27 17 7 21 27 12 39 8 22-9 42-31 41-7 17-28 23-58 9"/>
+ <path d="M132 114c-10 14 11 25-2 42-11 10-24 2-32-11m31 12c-19 2-19 22-36 26m55-54c-11 9-6 28-27 32m32 7c-19-7-28 20-53 24m43-2c-11 10-10 25-25 29m44-71c-16-11-28 8-30 20m30 18c-17-6-29 5-30 19"/>
+ <path d="M228 114c10 14-11 25 2 42 11 10 24 2 32-11m-31 12c19 2 19 22 36 26m-55-54c11 9 6 28 27 32m-32 7c19-7 28 20 53 24m-43-2c11 10 10 25 25 29m-44-71c16-11 28 8 30 20m-30 18c17-6 29 5 30 19"/>
+ </g>
+ <g fill="none" stroke="#fff0b6" stroke-width="1.3" stroke-linecap="round" opacity=".77">
+ <path d="M173 128c-7-16-24-25-42-14-22-7-38 9-35 27-17 7-21 27-12 39-8 22 9 42 31 41 7 17 28 23 58 9"/>
+ <path d="M187 128c7-16 24-25 42-14 22-7 38 9 35 27 17 7 21 27 12 39 8 22-9 42-31 41-7 17-28 23-58 9"/>
+ </g>
+ <path d="M164 120h32v12h-9v111h9v13h-32v-13h9V132h-9Z" fill="#ffdda0" opacity=".6" filter="url(#smallGlow)"/>
+ <path d="M164 120h32v12h-9v111h9v13h-32v-13h9V132h-9Z" fill="url(#monogram)" stroke="#f8d691" stroke-width="1"/>
+ <path d="M177 131v112" stroke="#fff9e5" stroke-width="2.5" opacity=".66" stroke-linecap="round"/>
+ <ellipse cx="180" cy="264" rx="60" ry="10" fill="#83edff" opacity=".35" filter="url(#softGlow)"/>
+ <path d="M180 262v105" stroke="url(#pool)" stroke-width="11" opacity=".47" filter="url(#smallGlow)"/>
+ <path d="M180 263v95" stroke="url(#pool)" stroke-width="4.5" opacity=".88"/>
+ <g fill="none" stroke="url(#pool)" stroke-linecap="round">
+ <path d="M145 270h71" stroke-width="2.2"/><path d="M119 280h122" stroke-width="2"/><path d="M143 292h75" stroke-width="3.3"/><path d="M104 305h152" stroke-width="2.1"/><path d="M136 317h88" stroke-width="3"/><path d="M120 327h120" stroke-width="1.8"/><path d="M150 341h61" stroke-width="2.3"/><path d="M163 354h38" stroke-width="1.8"/>
+ </g>
+</g>
+<!-- Jewel highlights / flares -->
+<ellipse cx="179" cy="27" rx="28" ry="25" fill="url(#halo)" filter="url(#softGlow)"/>
+<path d="M180 1v53M156 27h48" stroke="#fff7de" stroke-width="2.1" stroke-linecap="round"/>
+<path d="M180 8v38M164 27h32" stroke="#ffe7a3" stroke-width="3" stroke-linecap="round" opacity=".77"/>
+<circle cx="180" cy="27" r="5.6" fill="#fff9e6"/>
+<ellipse cx="326" cy="127" rx="16" ry="29" fill="#78e7ff" opacity=".18" filter="url(#smallGlow)"/>
+<path d="M322 101v41" stroke="#dffbff" stroke-width="2.4" opacity=".75"/>
+</svg>

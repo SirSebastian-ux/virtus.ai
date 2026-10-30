@@ -8,7 +8,6 @@ export const metadata = {
   description: "AI life coaching, structured training, and leadership mentoring powered by Enhanced Wellness Solutions.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
     apple: "/icons/icon-192.png",
   },
   appleWebApp: {
