@@ -45,8 +45,8 @@ function persist(){try{localStorage.setItem(storageKey,JSON.stringify(state));}c
 function add(role,content){const el=document.createElement("div");el.className="message "+role;el.textContent=content;messages.append(el);messages.scrollTop=messages.scrollHeight;return el;}
 function handoff(){
  form.style.display="none";
- const info=document.createElement("div");info.className="note";info.textContent="Your seven-question website preview is complete. Continue with Virtus AI for your 3-day trial.";footer.append(info);
- const link=document.createElement("a");link.className="continue";link.href="https://virtusaiworld.com/login?mode=signup";link.target="_blank";link.rel="noopener noreferrer";link.textContent="Register to continue with Virtus AI";footer.append(link);
+ const info=document.createElement("div");info.className="note";info.textContent="Your seven-question website preview is complete. Continue with Virtus AI. New visitors can register for a trial; existing members can use their accounts.";footer.append(info);
+ const link=document.createElement("a");link.className="continue";link.href="https://virtusaiworld.com/login?mode=signup&source=ews-widget";link.target="_blank";link.rel="noopener noreferrer";link.textContent="Continue with Virtus AI";footer.append(link);
  const app=document.createElement("div");app.className="note";app.textContent="You can also install Virtus AI when the app is available.";footer.append(app);
 }
 if(state.history.length){state.history.forEach(m=>add(m.role,m.content));}else{add("assistant","Welcome. I'm Virtus AI. What would you like to explore today?");}
