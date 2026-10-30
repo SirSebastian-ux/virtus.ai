@@ -53,9 +53,9 @@ function scrollToLatest(){requestAnimationFrame(()=>{messages.scrollTop=messages
 function add(role,content){const el=document.createElement("div");el.className="message "+role;el.textContent=content;messages.append(el);scrollToLatest();return el;}
 function handoff(){
  form.style.display="none";
- const info=document.createElement("div");info.className="note";info.textContent="Your seven-question preview is complete. Continue your development journey with Virtus AI. Guest access is available where eligible; you can register when ready.";footer.append(info);
- const link=document.createElement("a");link.className="continue";link.href="https://virtusaiworld.com/?source=ews-widget&mode=trial";link.target="_blank";link.rel="noopener noreferrer";link.textContent="Continue to Virtus AI";footer.append(link);
- const app=document.createElement("div");app.className="note";app.textContent="You can also install Virtus AI when the app is available.";footer.append(app);
+ const info=document.createElement("div");info.className="note";info.textContent="Your next chapter starts here. Let’s take this conversation further.";footer.append(info);
+ const link=document.createElement("a");link.className="continue";link.href="https://virtusaiworld.com/?source=ews-widget#ews-continue="+encodeURIComponent(JSON.stringify(state.history.slice(-14)));link.target="_blank";link.rel="noopener noreferrer";link.textContent="Continue our conversation";footer.append(link);
+ 
 }
 if(state.history.length){state.history.forEach(m=>add(m.role,m.content));}else{add("assistant","Welcome. I'm Virtus AI. What would you like to explore today?");}
 if(state.count>=7)handoff();
@@ -70,7 +70,7 @@ form.addEventListener("submit",async(e)=>{
  try{
  const response=await fetch("https://virtusaiworld.com/api/ews-widget/chat",{method:"POST",mode:"cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:question,history:prior,token:state.token})});
  const data=await response.json();if(!response.ok)throw new Error(data.error||"Chat unavailable");
- if(data.limitReached&&!data.reply){waiting.textContent="Your website preview is complete.";state.count=7;persist();handoff();return;}
+ if(data.limitReached&&!data.reply){waiting.textContent="Let’s continue this conversation in Virtus AI.";state.count=7;persist();handoff();return;}
  waiting.textContent=data.reply||"Please try again.";scrollToLatest();
  state.history.push({role:"user",content:question},{role:"assistant",content:waiting.textContent});state.history=state.history.slice(-14);state.token=data.token||state.token;state.count=data.count||state.count;persist();
  if(state.count>=7){handoff();scrollToLatest();}
