@@ -2090,7 +2090,9 @@ const handleCaptureMicrophoneClick = async () => {
   const practicePlanRank = {
     guest: 0,
     trial_guest: 1,
-    free: 1,
+    free: 0,
+    life_coach: 1,
+    "life-coach": 1,
     plus: 2,
     premium: 3,
   };
@@ -2109,6 +2111,10 @@ const handleCaptureMicrophoneClick = async () => {
 
   const canUsePracticeCategory = (category) => {
     if (isTrialGuestExpired) return false;
+
+    if (["stress-regulation", "mood-support", "self-awareness"].includes(category.id)) {
+      return isAuthenticated && ["life_coach", "life-coach", "plus", "premium", "trainer", "mentor"].includes(currentPlanKey) && !isTrialGuestExpired;
+    }
 
     if (isTrialGuestPracticeSample(category)) {
       return true;
@@ -2151,6 +2157,10 @@ const handleCaptureMicrophoneClick = async () => {
   const getPracticeCategoryAccessLabel = (category, canUseCategory) => {
     const requiredPlan = category.minimumPlan || "free";
 
+    if (["stress-regulation", "mood-support", "self-awareness"].includes(category.id)) {
+      return canUseCategory ? "Life Coach" : "Locked · Life Coach";
+    }
+
     if (isTrialGuestPracticeSample(category)) {
       return "Trial Sample";
     }
@@ -2169,6 +2179,9 @@ const handleCaptureMicrophoneClick = async () => {
     }
 
     const practiceName = category?.title || "This practice";
+    if (["stress-regulation", "mood-support", "self-awareness"].includes(category?.id)) {
+      return `${practiceName} requires registration and an active paid Life Coach subscription or higher. Choose Life Coach to unlock this practice.`;
+    }
 
     const categoryMessages = {
       "mind-discipline":
