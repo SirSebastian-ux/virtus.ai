@@ -1957,7 +1957,7 @@ ${filesWithText
 Document ${index + 1}: ${file.file_name}
 
 Content:
-${String(file.extracted_text || "").slice(0, 5000)}
+${String(file.extracted_text || "").slice(0, 16000)}
 `
   )
   .join("\n\n")}
