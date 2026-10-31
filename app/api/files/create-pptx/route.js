@@ -671,17 +671,11 @@ async function createPptxBuffer({ title, content }) {
       ? section.bullets.slice(0, 4)
       : ["Key idea to expand."];
 
+    // Preserve complete ideas: never silently replace the ending with ellipses.
+    // Long paragraphs are better treated as speaker notes than cut mid-sentence.
     const bulletText = bullets
-      .map((bullet) => {
-        const cleanBullet = cleanSlideText(bullet);
-
-        if (cleanBullet.length > 140) {
-          return `- ${cleanBullet.slice(0, 137)}...`;
-        }
-
-        return `- ${cleanBullet}`;
-      })
-      .join("\n\n");
+      .map((bullet) => `- ${cleanSlideText(bullet)}`)
+      .join("\\n\\n");
 
     const sectionImageData = sectionImageMap.get(index);
 
