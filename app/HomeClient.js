@@ -7080,17 +7080,17 @@ setRegenerating(true);
       return (
         <div
           key={file.id}
-          className={`inline-flex max-w-[280px] items-center gap-2 rounded-2xl border px-2 py-1.5 text-xs text-sky-100 shadow-[0_0_18px_rgba(14,165,233,0.06)] md:max-w-[380px] ${
+          className={`inline-flex max-w-[280px] items-center gap-2 rounded-2xl border px-2 py-1.5 text-xs text-amber-100 shadow-none md:max-w-[380px] ${
             isImageFile
-              ? "border-sky-700/40 bg-zinc-950/75"
-              : "border-sky-800/35 bg-sky-950/30"
+              ? "border-amber-500/40 bg-[#001d19]/90"
+              : "border-amber-500/35 bg-emerald-950/50"
           }`}
         >
           {isImageFile ? (
             <button
               type="button"
               onClick={() => setImagePreviewFile(file)}
-              className="h-9 w-12 shrink-0 overflow-hidden rounded-xl border border-sky-900/35 bg-black/50"
+              className="h-9 w-12 shrink-0 overflow-hidden rounded-xl border border-amber-500/30 bg-black/50"
               title="Preview image"
             >
               <Image
@@ -7103,7 +7103,7 @@ setRegenerating(true);
               />
             </button>
           ) : (
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-800/40 bg-sky-950/45 text-[10px] font-semibold text-sky-300">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/35 bg-emerald-950/55 text-[10px] font-semibold text-amber-300">
               FILE
             </span>
           )}
@@ -7123,7 +7123,7 @@ setRegenerating(true);
                 setActiveFile(null);
               }
             }}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-sky-900/30 text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-amber-500/30 text-amber-300 transition hover:bg-emerald-950/55 hover:text-amber-100"
             title="Remove attached file"
           >
             x
@@ -7139,7 +7139,7 @@ setRegenerating(true);
           setActiveFiles([]);
           setActiveFile(null);
         }}
-        className="rounded-full border border-sky-900/30 bg-zinc-950/45 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+        className="rounded-full border border-amber-500/30 bg-[#001d19]/90 px-3 py-1.5 text-xs text-amber-300 transition hover:bg-emerald-950/55 hover:text-amber-100"
       >
         Clear all
       </button>
@@ -7183,7 +7183,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
     listening
       ? "bg-sky-950/60 text-sky-200"
-      : "text-white/80 hover:bg-sky-950/30 hover:text-sky-200"
+      : "text-white/80 hover:bg-emerald-950/50 hover:text-sky-200"
   }`}
   aria-label={listening ? "Stop voice typing" : "Start voice typing"}
   aria-pressed={listening}
@@ -7204,7 +7204,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
                   </button>
 
                   <div className="group/send relative">
-                    <span className="pointer-events-none absolute bottom-full right-0 z-[99999] mb-2 whitespace-nowrap rounded-xl border border-sky-900/40 bg-zinc-950 px-3 py-1.5 text-[11px] font-medium text-sky-100 opacity-0 shadow-[0_12px_35px_rgba(2,132,199,0.25)] transition group-hover/send:opacity-100">
+                    <span className="pointer-events-none absolute bottom-full right-0 z-[99999] mb-2 whitespace-nowrap rounded-xl border border-sky-900/40 bg-zinc-950 px-3 py-1.5 text-[11px] font-medium text-amber-100 opacity-0 shadow-[0_12px_35px_rgba(2,132,199,0.25)] transition group-hover/send:opacity-100">
                       Enter
                     </span>
                   <button
@@ -7218,7 +7218,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 
     sendMessage();
   }}
-  className={`virtus-luxury-send group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
+  className={`virtus-luxury-send group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-emerald-950/50 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
     loading ? "rounded-xl" : "rounded-full"
   }`}
   aria-label={loading ? "Stop" : "Send"}
