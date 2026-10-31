@@ -958,105 +958,64 @@ const handleMicrophoneClick = () => {
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    alert("Voice input is not supported in this browser.");
+    alert("Voice typing is not available in this browser. Try Chrome or use your keyboard microphone.");
     return;
   }
 
-  const cleanSpeechText = (text) =>
-    String(text || "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  const removeRepeatedSpeechBuildUp = (text) => {
-    const clean = cleanSpeechText(text);
-    const words = clean.split(" ").filter(Boolean);
-
-    for (let size = Math.floor(words.length / 2); size >= 3; size -= 1) {
-      const first = words.slice(0, size).join(" ");
-      const last = words.slice(size, size * 2).join(" ");
-
-      if (first && first === last) {
-        return words.slice(size).join(" ");
-      }
-    }
-
-    return clean;
-  };
-
-  if (listening && recognitionRef.current) {
-    recognitionRef.current.stop();
-    recognitionRef.current = null;
-    setListening(false);
-    return;
-  }
-
+  // A second tap stops recording without discarding the spoken words.
   if (recognitionRef.current) {
     recognitionRef.current.stop();
-    recognitionRef.current = null;
+    return;
   }
 
-  const startingMessage = cleanSpeechText(message);
-  let committedTranscript = "";
-  let lastFinalTranscript = "";
-
+  const normalize = (value) => String(value || "").replace(/\\s+/g, " ").trim();
+  const startingMessage = normalize(message);
   const recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
+  let latestTranscript = "";
+  let ended = false;
+
+  recognition.lang = navigator.language || "en-US";
   recognition.interimResults = true;
   recognition.continuous = false;
+  recognition.maxAlternatives = 1;
 
-  recognition.onstart = () => {
-    setListening(true);
-  };
-
+  recognition.onstart = () => setListening(true);
   recognition.onresult = (event) => {
-    let interimTranscript = "";
-
-    for (let i = event.resultIndex; i < event.results.length; i += 1) {
-      const transcript = getBestSpeechTranscript(event.results[i]);
-
-      if (!transcript) continue;
-
-      if (event.results[i].isFinal) {
-        const cleanedFinal = removeRepeatedSpeechBuildUp(transcript);
-
-        if (
-          cleanedFinal &&
-          cleanedFinal !== lastFinalTranscript &&
-          !committedTranscript.endsWith(cleanedFinal)
-        ) {
-          committedTranscript = cleanSpeechText(
-            `${committedTranscript} ${cleanedFinal}`
-          );
-          lastFinalTranscript = cleanedFinal;
-        }
-      } else {
-        interimTranscript = removeRepeatedSpeechBuildUp(transcript);
-      }
+    // Rebuild from the full results array: resultIndex is not the full transcript.
+    const parts = [];
+    for (let i = 0; i < event.results.length; i += 1) {
+      const part = getBestSpeechTranscript(event.results[i]);
+      if (part) parts.push(part);
     }
-
-    const displayText = cleanSpeechText(
-      `${startingMessage} ${committedTranscript} ${interimTranscript}`
-    );
-
-    setMessage(displayText);
+    latestTranscript = normalize(parts.join(" "));
+    setMessage(normalize([startingMessage, latestTranscript].filter(Boolean).join(" ")));
   };
-
-  recognition.onerror = () => {
-    setListening(false);
-    recognitionRef.current = null;
+  recognition.onerror = (event) => {
+    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+      alert("Microphone access is blocked. Allow microphone permission in your browser and try again.");
+    } else if (event.error === "audio-capture") {
+      alert("No microphone was detected. Check your device microphone and try again.");
+    } else if (event.error === "network") {
+      alert("Voice typing could not connect. Check your connection and try again.");
+    }
+    // Preserve any interim transcript received before the error.
   };
-
   recognition.onend = () => {
+    if (ended) return;
+    ended = true;
+    if (recognitionRef.current === recognition) recognitionRef.current = null;
     setListening(false);
-    recognitionRef.current = null;
-
-    const finalText = cleanSpeechText(`${startingMessage} ${committedTranscript}`);
-
-    setMessage(finalText);
+    setMessage(normalize([startingMessage, latestTranscript].filter(Boolean).join(" ")));
   };
 
   recognitionRef.current = recognition;
-  recognition.start();
+  try {
+    recognition.start();
+  } catch {
+    recognitionRef.current = null;
+    setListening(false);
+    alert("Voice typing could not start. Check microphone permissions and try again.");
+  }
 };
 
 const formatCaptureRecordingTime = (totalSeconds) => {
