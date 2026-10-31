@@ -2009,7 +2009,7 @@ if (isGuest && typeof guestPastedImage === "string" && guestPastedImage.length <
     const valid = bytes.length >= 64 && bytes.length <= 4 * 1024 * 1024 &&
       ((type === "image/png" && bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) ||
        (type === "image/jpeg" && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) ||
-       (type === "image/webp" && bytes.toString("ascii",0,4) === "RIFF" && bytes.toString("ascii",8,12) === "WEBP");
+       (type === "image/webp" && bytes.toString("ascii",0,4) === "RIFF" && bytes.toString("ascii",8,12) === "WEBP"));
     if (valid) latestImageInputs.push({ type: "input_image", image_url: guestPastedImage, detail: "auto" });
   }
 }
