@@ -4472,7 +4472,7 @@ setLoading(true);
       if (shouldGenerateImageDirectly) {
         await handleCreateImageFile({
           title: getGeneratedDocumentTitle(messageToSend),
-          content: messageToSend,
+          content: `${conversation.slice(-12).map((item) => `${item.role}: ${String(item.text || "").slice(0, 1300)}`).join("\n")}\n\nCURRENT IMAGE REQUEST: ${messageToSend}`.slice(-9500),
           fileName: getGeneratedDocumentTitle(messageToSend),
         });
 
@@ -6710,9 +6710,9 @@ onClick={() => {
                      {item.role === "assistant" ? (
   item.generatedImage?.id ? (
     <div className="overflow-hidden rounded-2xl border border-sky-900/35 bg-zinc-950/70 shadow-[0_0_30px_rgba(14,165,233,0.08)]">
-      <div className="flex items-center justify-between gap-3 border-b border-sky-900/25 bg-zinc-950/80 px-3 py-2 sm:px-4">
+      <div className="flex items-center justify-between gap-3 border-b border-amber-500/20 bg-[#001d19] px-3 py-2 sm:px-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/80">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-amber-300/90">
             Generated image
           </p>
           <p className="truncate text-xs text-zinc-400">
@@ -6724,7 +6724,7 @@ onClick={() => {
           <button
             type="button"
             onClick={() => setImagePreviewFile(item.generatedImage)}
-            className="rounded-full border border-sky-700/45 bg-sky-950/30 px-3 py-1.5 text-[11px] font-medium text-sky-100 transition hover:border-sky-500/70 hover:bg-sky-900/45"
+            className="rounded-full border border-amber-500/50 bg-emerald-950/50 px-3 py-1.5 text-[11px] font-medium text-amber-100 transition hover:border-amber-400 hover:bg-emerald-900/70"
           >
             Open large
           </button>
@@ -6735,7 +6735,7 @@ onClick={() => {
                 item.generatedImage.id
               )}`;
             }}
-            className="rounded-full border border-zinc-700/70 bg-zinc-900/50 px-3 py-1.5 text-[11px] font-medium text-zinc-300 transition hover:border-sky-700/60 hover:bg-sky-950/35 hover:text-sky-100"
+            className="rounded-full border border-amber-500/35 bg-[#001d19] px-3 py-1.5 text-[11px] font-medium text-amber-100 transition hover:border-amber-400 hover:bg-emerald-900/70"
           >
             Download
           </button>
@@ -6745,7 +6745,7 @@ onClick={() => {
       <button
         type="button"
         onClick={() => setImagePreviewFile(item.generatedImage)}
-        className="block w-full bg-black/30 p-2 transition hover:bg-sky-950/10"
+        className="block w-full bg-[#00110f] p-2 transition hover:bg-emerald-950/40"
         aria-label="Open generated image preview"
       >
         <Image
