@@ -1,0 +1,39 @@
+name: Virtus AI Android Bundle
+
+on:
+  push:
+    branches:
+      - fix/android-native-interface-20261031
+    paths:
+      - 'android/**'
+      - 'capacitor.config.json'
+      - '.github/workflows/android-bundle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Build Android App Bundle (unsigned validation build)
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:bundleRelease --no-daemon
+      - name: Upload unsigned bundle for build verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: virtus-ai-unsigned-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+          retention-days: 7
