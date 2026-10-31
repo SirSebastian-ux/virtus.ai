@@ -24,6 +24,14 @@ jobs:
           java-version: '21'
       - name: Use runner Android SDK
         run: echo "ANDROID_HOME=${ANDROID_SDK_ROOT}" >> "${GITHUB_ENV}"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      - name: Synchronize Capacitor Android project
+        run: npx cap sync android
       - name: Install Android SDK 36
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
