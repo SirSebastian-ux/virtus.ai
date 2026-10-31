@@ -953,69 +953,98 @@ const cancelEdit = () => {
 };
 const handleMicrophoneClick = () => {
   if (typeof window === "undefined") return;
-
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     alert("Voice typing is not available in this browser. Try Chrome or use your keyboard microphone.");
     return;
   }
 
-  // A second tap stops recording without discarding the spoken words.
+  // Only the user's second tap ends dictation; silence alone must not end the session.
   if (recognitionRef.current) {
-    recognitionRef.current.stop();
+    const active = recognitionRef.current;
+    recognitionRef.current = null; // Also cancels a pending automatic restart.
+    try { active.stop(); } catch {}
+    setListening(false);
     return;
   }
 
   const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim();
   const startingMessage = normalize(message);
-  const recognition = new SpeechRecognition();
-  let latestTranscript = "";
-  let ended = false;
+  let committed = "";
+  let stopped = false;
+  let restartTimer = null;
 
-  recognition.lang = navigator.language || "en-US";
-  recognition.interimResults = true;
-  recognition.continuous = false;
-  recognition.maxAlternatives = 1;
+  const render = (interim = "") => {
+    setMessage(normalize([startingMessage, committed, interim].filter(Boolean).join(" ")));
+  };
 
-  recognition.onstart = () => setListening(true);
-  recognition.onresult = (event) => {
-    // Rebuild from the full results array: resultIndex is not the full transcript.
-    const parts = [];
-    for (let i = 0; i < event.results.length; i += 1) {
-      const part = getBestSpeechTranscript(event.results[i]);
-      if (part) parts.push(part);
+  const beginCycle = () => {
+    if (stopped) return;
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = navigator.language || "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    let cycleFinal = "";
+    let cycleInterim = "";
+    let fatalError = false;
+
+    recognition.onstart = () => setListening(true);
+    recognition.onresult = (event) => {
+      const finals = [];
+      const interims = [];
+      for (let i = 0; i < event.results.length; i += 1) {
+        const part = getBestSpeechTranscript(event.results[i]);
+        if (!part) continue;
+        if (event.results[i].isFinal) finals.push(part);
+        else interims.push(part);
+      }
+      cycleFinal = normalize(finals.join(" "));
+      cycleInterim = normalize(interims.join(" "));
+      render(normalize([cycleFinal, cycleInterim].filter(Boolean).join(" ")));
+    };
+    recognition.onerror = (event) => {
+      if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes(event.error)) {
+        fatalError = true;
+        stopped = true;
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          alert("Allow microphone access in your browser to use voice typing.");
+        } else if (event.error === "audio-capture") {
+          alert("No microphone was detected. Check your device microphone.");
+        } else {
+          alert("Voice typing lost its connection. Check your network and try again.");
+        }
+      }
+    };
+    recognition.onend = () => {
+      committed = normalize([committed, cycleFinal || cycleInterim].filter(Boolean).join(" "));
+      render();
+      if (stopped || fatalError || recognitionRef.current !== recognition) {
+        if (recognitionRef.current === recognition) recognitionRef.current = null;
+        setListening(false);
+        return;
+      }
+      // Browsers can end a recognition cycle after silence, even with continuous=true.
+      // Start another cycle while the microphone remains logically enabled.
+      restartTimer = window.setTimeout(() => {
+        restartTimer = null;
+        if (!stopped && recognitionRef.current === recognition) beginCycle();
+      }, 200);
+    };
+    try {
+      recognition.start();
+    } catch {
+      stopped = true;
+      if (restartTimer !== null) window.clearTimeout(restartTimer);
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
+      setListening(false);
+      alert("Voice typing could not start. Check microphone permissions and try again.");
     }
-    latestTranscript = normalize(parts.join(" "));
-    setMessage(normalize([startingMessage, latestTranscript].filter(Boolean).join(" ")));
-  };
-  recognition.onerror = (event) => {
-    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-      alert("Microphone access is blocked. Allow microphone permission in your browser and try again.");
-    } else if (event.error === "audio-capture") {
-      alert("No microphone was detected. Check your device microphone and try again.");
-    } else if (event.error === "network") {
-      alert("Voice typing could not connect. Check your connection and try again.");
-    }
-    // Preserve any interim transcript received before the error.
-  };
-  recognition.onend = () => {
-    if (ended) return;
-    ended = true;
-    if (recognitionRef.current === recognition) recognitionRef.current = null;
-    setListening(false);
-    setMessage(normalize([startingMessage, latestTranscript].filter(Boolean).join(" ")));
   };
 
-  recognitionRef.current = recognition;
-  try {
-    recognition.start();
-  } catch {
-    recognitionRef.current = null;
-    setListening(false);
-    alert("Voice typing could not start. Check microphone permissions and try again.");
-  }
+  beginCycle();
 };
 
 const formatCaptureRecordingTime = (totalSeconds) => {
