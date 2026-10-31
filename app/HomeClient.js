@@ -932,17 +932,17 @@ async function handlePastedLongText(text) {
 function handleGlobalChatPaste(event) {
     const pastedText = event.clipboardData?.getData("text/plain") || "";
 
-    if (String(pastedText || "").trim().length >= 1000 && isAuthenticated) {
-      event.preventDefault();
-      handlePastedLongText(pastedText);
-      return;
-    }
-
     const imageItem = Array.from(event.clipboardData?.items || []).find(
       (item) => item.type && item.type.startsWith("image/")
     );
 
-    if (!imageItem) return;
+    if (!imageItem) {
+      if (String(pastedText || "").trim().length >= 1000 && isAuthenticated) {
+        event.preventDefault();
+        handlePastedLongText(pastedText);
+      }
+      return;
+    }
 
     const file = imageItem.getAsFile();
     if (!file) return;
