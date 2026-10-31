@@ -7158,20 +7158,22 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       ? "bg-sky-950/60 text-sky-200"
       : "text-white/80 hover:bg-sky-950/30 hover:text-sky-200"
   }`}
-  aria-label={listening ? "Stop voice input" : "Start voice input"}
+  aria-label={listening ? "Stop voice typing" : "Start voice typing"}
+  aria-pressed={listening}
+  title={listening ? "Recording — tap square to stop" : "Start voice typing"}
 >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="h-4 w-4"
-                    >
-                      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                      <path d="M12 19v3" />
-                    </svg>
+  {listening ? (
+    <span className="relative flex h-5 w-5 items-center justify-center" aria-hidden="true">
+      <span className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
+      <span className="relative h-3.5 w-3.5 rounded-[3px] bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.7)]" />
+    </span>
+  ) : (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <path d="M12 19v3" />
+    </svg>
+  )}
                   </button>
 
                   <div className="group/send relative">
