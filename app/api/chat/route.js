@@ -464,7 +464,7 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
-    const { message, guestId, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle, hideFromSidebar, sessionTitle } = body;
+    const { message, guestId, guestPastedImage, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle, hideFromSidebar, sessionTitle } = body;
     const shouldHideFromSidebar = hideFromSidebar === true;
     const cleanSessionTitle = String(sessionTitle || "").trim().slice(0, 80);
     const resolvedSessionTitle =
@@ -1997,6 +1997,20 @@ if (imageFiles.length && !isGuest) {
     } catch (error) {
       console.warn("Image attachment skipped:", error?.message || "image read error");
     }
+  }
+}
+// Trial guests may submit one ephemeral clipboard image per message.
+// No guest document upload, persistent storage, or library access is granted.
+if (isGuest && typeof guestPastedImage === "string" && guestPastedImage.length <= 5_600_000) {
+  const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(guestPastedImage);
+  if (match) {
+    const bytes = Buffer.from(match[2], "base64");
+    const type = match[1];
+    const valid = bytes.length >= 64 && bytes.length <= 4 * 1024 * 1024 &&
+      ((type === "image/png" && bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) ||
+       (type === "image/jpeg" && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) ||
+       (type === "image/webp" && bytes.toString("ascii",0,4) === "RIFF" && bytes.toString("ascii",8,12) === "WEBP");
+    if (valid) latestImageInputs.push({ type: "input_image", image_url: guestPastedImage, detail: "auto" });
   }
 }
 // Latest recorded coaching observations supplement, but never override,
