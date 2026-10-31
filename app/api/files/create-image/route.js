@@ -5,7 +5,7 @@ import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/r
 
 export const runtime = "nodejs";
 
-const MAX_IMAGE_CONTENT_CHARS = 3000;
+const MAX_IMAGE_CONTENT_CHARS = 10000;
 const DAILY_IMAGE_GENERATION_LIMIT = 10;
 
 function makeSafeFileName(name) {
@@ -16,39 +16,28 @@ function makeSafeFileName(name) {
 }
 
 function buildImagePrompt({ title, content }) {
-  const cleanContent = String(content || "").trim();
+  const source = String(content || "").trim();
+  const request = source.split("CURRENT IMAGE REQUEST:").pop().trim();
+  const context = source.includes("CURRENT IMAGE REQUEST:")
+    ? source.slice(0, source.lastIndexOf("CURRENT IMAGE REQUEST:")).slice(-5000)
+    : "";
+  return `Create a polished, high-quality image that fulfills the user's actual request.
 
-  return `
-Create an image based only on this user request:
+CURRENT REQUEST (highest priority):
+${request}
 
-${cleanContent}
+RELEVANT CONVERSATION CONTEXT (use only to resolve the subject and intent):
+${context}
 
-Style rules:
-- premium and professional
-- clean dark background when appropriate
-- sky-blue and subtle gold accents when appropriate
-- modern Virtus AI visual style
-- no clutter
-- no childish style
-- no horror or gore
-- no distorted anatomy
-- pure symbolic visual only
-- no poster design
-- no infographic labels
-- no written headings
-- no readable text of any kind
-- no fake text
-- no words
-- no letters
-- no numbers
-- no titles
-- no captions
-- no logos
-- no typography
-- no labels inside the image
-- do not write "Virtus"
-- do not write "Virtus AI"
-`.trim();
+Art direction:
+- Translate the actual subject into a compelling, specific visual composition rather than a generic icon collage.
+- Use appropriate visual language for the subject: editorial photography, premium illustration, conceptual art, or diagram as the request requires.
+- Strong visual hierarchy, refined lighting, believable materials, precise anatomy, balanced negative space and coherent details.
+- Avoid stock-style clip art, generic lightbulbs, targets, arrows, brains, and charts unless explicitly relevant.
+- Use emerald, dark charcoal and restrained metallic gold only when the user requests Virtus branding; otherwise choose colors appropriate to the subject.
+- If the user requests text, a poster, an infographic, or labels, include only the necessary accurate text. Otherwise avoid extraneous text.
+- Do not add a logo or watermark unless explicitly requested.
+- Deliver the actual requested visual, not an illustration of an AI assistant generating it.`.trim();
 }
 
 export async function POST(req) {
@@ -153,10 +142,10 @@ export async function POST(req) {
     const prompt = buildImagePrompt({ title, content });
 
     const result = await openai.images.generate({
-      model: "gpt-image-1-mini",
+      model: "gpt-image-1",
       prompt,
       size: "1024x1024",
-      quality: "low",
+      quality: "high",
       output_format: "png",
       n: 1,
     });
