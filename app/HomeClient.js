@@ -24,6 +24,7 @@ const [uploadedFiles, setUploadedFiles] = useState([]);
 const [showFileMenu, setShowFileMenu] = useState(false);
 const [activeFile, setActiveFile] = useState(null);
 const [activeFiles, setActiveFiles] = useState([]);
+const [guestPastedImage, setGuestPastedImage] = useState(null);
 const [showDocumentLibrary, setShowDocumentLibrary] = useState(false);
 const [confirmDeleteFileId, setConfirmDeleteFileId] = useState(null);
 const [confirmDialog, setConfirmDialog] = useState(null);
@@ -802,7 +803,26 @@ useEffect(() => {
   searchOpen,
 ]);
 async function handlePastedImage(file) {
-  if (!file || !String(file.type || "").startsWith("image/")) return;
+  if (!file || !["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+    setFileNotice("Paste a PNG, JPEG, or WebP image.");
+    return;
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    setFileNotice("Pasted images must be smaller than 4 MB.");
+    return;
+  }
+  if (!isAuthenticated) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setGuestPastedImage(String(reader.result || ""));
+      setFileNotice("Image attached to this message; not saved to a library.");
+      setMessage((current) => current.trim() || "Please analyze this pasted image.");
+      textareaRef.current?.focus();
+    };
+    reader.onerror = () => setFileNotice("Could not read the pasted image.");
+    reader.readAsDataURL(file);
+    return;
+  }
 
   try {
     setUploadingFile(true);
@@ -910,11 +930,9 @@ async function handlePastedLongText(text) {
   }
 
 function handleGlobalChatPaste(event) {
-    if (activeProject?.id) return;
-
     const pastedText = event.clipboardData?.getData("text/plain") || "";
 
-    if (String(pastedText || "").trim().length >= 1000) {
+    if (String(pastedText || "").trim().length >= 1000 && isAuthenticated) {
       event.preventDefault();
       handlePastedLongText(pastedText);
       return;
@@ -4386,7 +4404,7 @@ async function sendMessage(overrideMessage = null, overridePracticeMode = null, 
       ? sendOptions.chatId.trim()
       : "";
 
-  if (!messageToSend.trim() && activeFiles.length === 0) return;
+  if (!messageToSend.trim() && activeFiles.length === 0 && !guestPastedImage) return;
   stopVirtusVoice();
 
   setEditingIndex(null);
@@ -4436,12 +4454,14 @@ const attachedFileText =
     : "";
 
 const userMessage = `${messageToSend}${attachedFileText}`;
+const imageForRequest = guestPastedImage;
 const shouldGenerateImageDirectly = isImageCreationRequest(messageToSend);
 
 setMessage("");
 setLastMessage(userMessage);
 setActiveFile(null);
 setActiveFiles([]);
+setGuestPastedImage(null);
 setLoading(true);
   setShouldAutoScroll(true);
   abortControllerRef.current = new AbortController();
@@ -4478,6 +4498,7 @@ const res = await fetch("/api/chat", {
     signal: abortControllerRef.current.signal,
 body: JSON.stringify({
   message: userMessage,
+  ...(imageForRequest && !isAuthenticated ? { guestPastedImage: imageForRequest } : {}),
   chatId: chatIdForRequest,
   practiceMode: practiceModeForRequest,
   activeProjectId: forceNoProject ? null : activeProject?.id || null,
@@ -7044,6 +7065,12 @@ setRegenerating(true);
   </div>
 )}
 
+{guestPastedImage && (
+  <div className="ml-16 mt-2 flex items-center gap-2 text-xs text-sky-200" role="status">
+    <span>Clipboard image attached (guest session)</span>
+    <button type="button" onClick={() => setGuestPastedImage(null)} className="underline">Remove</button>
+  </div>
+)}
 {activeFiles.length > 0 && (
   <div className="ml-16 mt-3 flex max-w-[70%] flex-wrap items-center gap-2 max-md:ml-2 max-md:max-w-[96%]">
     {activeFiles.map((file) => {
