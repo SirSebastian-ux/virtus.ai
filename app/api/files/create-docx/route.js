@@ -11,7 +11,7 @@ import {
 
 export const runtime = "nodejs";
 
-const MAX_GENERATED_CONTENT_CHARS = 60000;
+const MAX_GENERATED_CONTENT_CHARS = 500000;
 
 const BOARD_DOCUMENT_TITLE = "EWS Academy";
 const BOARD_DOCUMENT_SUBTITLE = "Board Summary Document";
@@ -460,7 +460,7 @@ export async function POST(req) {
 
     if (content.length > MAX_GENERATED_CONTENT_CHARS) {
       return Response.json(
-        { error: "Document content is too long. Please shorten it and try again." },
+        { error: "Document exceeds the 500,000-character export limit. Split it into volumes." },
         { status: 400 }
       );
     }
