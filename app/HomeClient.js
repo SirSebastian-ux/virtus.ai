@@ -968,7 +968,7 @@ const handleMicrophoneClick = () => {
     return;
   }
 
-  const normalize = (value) => String(value || "").replace(/\\s+/g, " ").trim();
+  const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim();
   const startingMessage = normalize(message);
   const recognition = new SpeechRecognition();
   let latestTranscript = "";
