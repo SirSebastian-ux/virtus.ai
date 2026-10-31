@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { createRequire } from "module";
 import mammoth from "mammoth";
+import JSZip from "jszip";
 import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -13,6 +14,7 @@ const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
 const EXTENSION_TO_MIME = {
   pdf: "application/pdf",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   txt: "text/plain",
   png: "image/png",
   jpg: "image/jpeg",
@@ -94,6 +96,31 @@ async function extractTextFromFile({ bytes, fileName, fileType }) {
     return docxResult.value || "";
   }
 
+  if (extension === "pptx") {
+    const zip = await JSZip.loadAsync(Buffer.from(bytes));
+    const slides = Object.keys(zip.files)
+      .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+      .sort((a, b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
+    const result = [];
+    for (const [index, slidePath] of slides.entries()) {
+      const xml = await zip.file(slidePath).async("string");
+      const text = [...xml.matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g)]
+        .map((match) => match[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'"))
+        .join(" ");
+      result.push(`Slide ${index + 1}: ${text || "[No extractable slide text]"}`);
+    }
+    const notes = Object.keys(zip.files)
+      .filter((name) => /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(name))
+      .sort((a, b) => Number(a.match(/notesSlide(\d+)/)[1]) - Number(b.match(/notesSlide(\d+)/)[1]));
+    for (const notePath of notes) {
+      const xml = await zip.file(notePath).async("string");
+      const text = [...xml.matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g)]
+        .map((match) => match[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").join(" "));
+      if (text.length) result.push(`Speaker notes ${notePath.match(/notesSlide(\d+)/)[1]}: ${text}`);
+    }
+    return result.join("\n\n");
+  }
+
   if (extension === "txt" || fileType === "text/plain") {
     return Buffer.from(bytes).toString("utf8");
   }
@@ -139,7 +166,7 @@ export async function POST(req) {
 
     if (!normalizedFileType) {
       return Response.json(
-        { error: "Only PDF, DOCX, TXT, PNG, JPG, JPEG, and WEBP files are allowed." },
+        { error: "Only PDF, DOCX, PPTX, TXT, PNG, JPG, JPEG, and WEBP files are allowed." },
         { status: 400 }
       );
     }
@@ -175,6 +202,15 @@ export async function POST(req) {
       fileName: originalFileName,
       fileType: normalizedFileType,
     });
+
+    if (["application/pdf", EXTENSION_TO_MIME.docx, EXTENSION_TO_MIME.pptx].includes(normalizedFileType) && !String(extractedText || "").trim()) {
+      return Response.json(
+        { error: normalizedFileType === "application/pdf"
+            ? "This PDF has no extractable text. Scanned PDFs require OCR and are not yet supported."
+            : "This document contains no extractable text." },
+        { status: 422 }
+      );
+    }
 
     const { error: uploadError } = await admin.storage
       .from("user-files")
