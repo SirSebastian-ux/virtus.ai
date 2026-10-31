@@ -3579,7 +3579,7 @@ setAccountAccess(authData.access || null);
           );
                                        } else {
           const existingGuestId = localStorage.getItem("virtus_guest_id");
-          setShowPlanOverlay(Boolean(existingGuestId) && localStorage.getItem(planOverlayStorageKey) !== "true" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && new URLSearchParams(window.location.search).get("source") !== "ews-widget" && !window.location.hash.startsWith("#ews-continue="));
+          setShowPlanOverlay(false);
           const guestId =
             existingGuestId || crypto.randomUUID();
 
@@ -5444,9 +5444,7 @@ const renderAssistantActions = (item, index) => {
 
 return (
 <>
-  {showSplash && (
-    <SplashScreen onFinish={() => setShowSplash(false)} />
-  )}
+  {/* Open directly into the chat; legacy splash is intentionally disabled. */}
 
 <main
   className="virtus-chat-root virtus-luxury h-[100dvh] md:h-screen overflow-hidden bg-[#091b1c] text-[#f5f3ec]"
@@ -6131,7 +6129,7 @@ if (data.conversation) {
   onDelete={handleDeleteFile}
   attachedIds={activeFiles.map((file) => file.id)}
 />
-            {showPlanOverlay && typeof window !== "undefined" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && new URLSearchParams(window.location.search).get("source") !== "ews-widget" && !window.location.hash.startsWith("#ews-continue=") && (
+            {false && showPlanOverlay && typeof window !== "undefined" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && new URLSearchParams(window.location.search).get("source") !== "ews-widget" && !window.location.hash.startsWith("#ews-continue=") && (
   <div
     className="absolute inset-0 z-20 flex items-start md:items-center justify-center overflow-y-auto md:overflow-hidden bg-black/70 px-3 py-4 md:px-6 md:py-0 no-scrollbar"
     onClick={() => {
