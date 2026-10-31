@@ -7016,7 +7016,7 @@ setRegenerating(true);
     id="virtus-file-upload"
     type="file"
     multiple
-    accept=".txt,.pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
+    accept=".txt,.pdf,.docx,.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
     className="hidden"
     onChange={handleFileUpload}
     disabled={uploadingFile || loading}
