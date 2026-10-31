@@ -11,7 +11,7 @@ public class MainActivity extends BridgeActivity {
         if (android.os.Build.VERSION.SDK_INT >= 29) {
             getWindow().getAttributes();
             getWindow().getDecorView().setSystemUiVisibility(0);
-            getWindow().getNavigationBarDividerColor(android.graphics.Color.rgb(6, 24, 22));
+            getWindow().setNavigationBarDividerColor(android.graphics.Color.rgb(6, 24, 22));
         }
     }
 }
