@@ -3532,7 +3532,7 @@ setAccountAccess(authData.access || null);
           );
                                        } else {
           const existingGuestId = localStorage.getItem("virtus_guest_id");
-          setShowPlanOverlay(Boolean(existingGuestId) && localStorage.getItem(planOverlayStorageKey) !== "true" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && !window.location.hash.startsWith("#ews-continue="));
+          setShowPlanOverlay(Boolean(existingGuestId) && localStorage.getItem(planOverlayStorageKey) !== "true" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && new URLSearchParams(window.location.search).get("source") !== "ews-widget" && !window.location.hash.startsWith("#ews-continue="));
           const guestId =
             existingGuestId || crypto.randomUUID();
 
@@ -6081,7 +6081,7 @@ if (data.conversation) {
   onDelete={handleDeleteFile}
   attachedIds={activeFiles.map((file) => file.id)}
 />
-            {showPlanOverlay && typeof window !== "undefined" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && !window.location.hash.startsWith("#ews-continue=") && (
+            {showPlanOverlay && typeof window !== "undefined" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && new URLSearchParams(window.location.search).get("source") !== "ews-widget" && !window.location.hash.startsWith("#ews-continue=") && (
   <div
     className="absolute inset-0 z-20 flex items-start md:items-center justify-center overflow-y-auto md:overflow-hidden bg-black/70 px-3 py-4 md:px-6 md:py-0 no-scrollbar"
     onClick={() => {
