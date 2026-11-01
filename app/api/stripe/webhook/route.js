@@ -144,22 +144,28 @@ export async function POST(req) {
         ? subscription.customer
         : subscription.customer?.id || null;
 
-    const { error: updateError } = await supabase
+    const { data: updatedProfile, error: updateError } = await supabase
       .from("profiles")
       .update({
         plan: nextPlan,
         plan_status: nextPlanStatus,
         stripe_customer_id: stripeCustomerId,
       })
-      .eq("id", userId);
+      .eq("id", userId)
+      .select("id")
+      .maybeSingle();
 
-    if (updateError) {
+    if (updateError || !updatedProfile) {
       console.error("PROFILE UPDATE ERROR:", {
+        eventId: event.id,
+        eventType: event.type,
+        subscriptionId: subscription.id,
         userId,
-        nextPlan,
-        nextPlanStatus,
-        updateError,
+        error: updateError?.message || "No matching profile updated",
       });
+      // A 2xx response would permanently acknowledge failed fulfillment.
+      // Throw so Stripe retries this event after the underlying issue is fixed.
+      throw new Error("Subscription entitlement update failed");
     }
 
     return NextResponse.json({ received: true });
