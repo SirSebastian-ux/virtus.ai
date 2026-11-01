@@ -121,6 +121,9 @@ export async function POST(req) {
     const virtusPlan =
       subscription.metadata?.virtus_plan || getPlanFromPriceId(priceId);
 
+    const isVirtusSubscription = Boolean(subscription.metadata?.virtus_plan) || Boolean(subscription.metadata?.user_id && subscription.metadata?.virtus_billing_cycle) || Boolean(getPlanFromPriceId(priceId));
+    if (!isVirtusSubscription) return NextResponse.json({ received: true, ignored: "non_virtus_subscription" });
+
     if (!userId || !virtusPlan) {
       console.error("STRIPE WEBHOOK MISSING USER OR PLAN:", {
         eventType: event.type,
@@ -130,7 +133,7 @@ export async function POST(req) {
         virtusPlan,
       });
 
-      return NextResponse.json({ received: true });
+      return NextResponse.json({ error: "Virtus subscription ownership or plan missing" }, { status: 500 });
     }
 
     const isDeletedOrCancelled =
