@@ -118,16 +118,32 @@ export async function POST(req) {
     const virtusPlan =
       subscription.metadata?.virtus_plan || getPlanFromPriceId(priceId);
 
+    // This Stripe account is shared by multiple EWS applications.
+    // Only Virtus-owned subscriptions should be handled here.
+    const isVirtusSubscription =
+      Boolean(subscription.metadata?.virtus_plan) ||
+      Boolean(subscription.metadata?.user_id && subscription.metadata?.virtus_billing_cycle) ||
+      Boolean(getPlanFromPriceId(priceId));
+
+    if (!isVirtusSubscription) {
+      console.info("Ignoring subscription belonging to another Stripe integration", {
+        eventId: event.id,
+        subscriptionId: subscription.id,
+      });
+      return NextResponse.json({ received: true, ignored: "non_virtus_subscription" });
+    }
+
     if (!userId || !virtusPlan) {
       console.error("STRIPE WEBHOOK MISSING USER OR PLAN:", {
+        eventId: event.id,
         eventType: event.type,
         subscriptionId: subscription.id,
         priceId,
         userId,
         virtusPlan,
       });
-
-      return NextResponse.json({ received: true });
+      // Do not acknowledge a Virtus subscription until entitlement can be reconciled.
+      return NextResponse.json({ error: "Virtus subscription ownership or plan missing" }, { status: 500 });
     }
 
     const isDeletedOrCancelled =
