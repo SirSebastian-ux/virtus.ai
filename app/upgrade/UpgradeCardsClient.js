@@ -37,11 +37,13 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [error, setError] = useState("");
-  const [isNativeIosApp] = useState(() => {
-    if (typeof window === "undefined") return false;
-
-    return Capacitor.getPlatform() === "ios";
+  // Native-store billing must not redirect Android purchases to web Stripe.
+  const [nativePlatform] = useState(() => {
+    if (typeof window === "undefined") return "web";
+    return Capacitor.getPlatform();
   });
+  const isNativeIosApp = nativePlatform === "ios";
+  const isNativeAndroidApp = nativePlatform === "android";
   const successMessage = getCheckoutSuccessMessage(searchParams);
 
   useEffect(() => {
@@ -97,9 +99,13 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
     currentPlan === "free" || currentPlan === "plus" || currentPlan === "premium";
 
   async function handlePlanChange(plan) {
+    if (isNativeAndroidApp) {
+      setError("Google Play purchases are not available in this Android build yet. No payment was taken.");
+      return;
+    }
     if (!isAuthenticated) { router.push("/login"); return; }
     if (plan === currentPlan) { setError("This is already your current plan."); return; }
-    if (isNativeIosApp) { setError("Manage paid plans at virtusaiworld.com in your browser."); return; }
+    if (isNativeIosApp) { setError("Subscriptions are not available in this iOS app."); return; }
     setLoadingPlan(plan); setError("");
     try {
       const response = await fetch("/api/stripe/checkout", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan,billingCycle})});
@@ -158,7 +164,11 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
             Choose monthly or annual billing.
           </p>
           <p className="mt-3 max-w-2xl rounded-xl border border-[#ac956b]/30 bg-[#082a24] px-4 py-3 text-sm leading-6 text-[#c6d8cd]">
-            Secure Stripe checkout. Existing subscriptions keep their current billing until you choose to change plans.
+            {isNativeAndroidApp
+              ? "Google Play subscriptions are being configured. Purchasing a plan is not available in this Android build. Existing membership access is unchanged."
+              : isNativeIosApp
+                ? "Subscriptions are not available for purchase in this iOS app. Existing membership access is unchanged."
+                : "Secure Stripe checkout. Existing subscriptions keep their current billing until you choose to change plans."}
           </p>
         </div>
 
@@ -227,7 +237,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </p>
             </div>
 
-            {isGuestSelection ? (
+            {isNativeAndroidApp ? null : isGuestSelection ? (
               <button
                 type="button"
                 onClick={() => router.push("/login")}
@@ -293,7 +303,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </p>
             </div>
 
-            {isGuestSelection ? (
+            {isNativeAndroidApp ? null : isGuestSelection ? (
               <button
                 type="button"
                 onClick={() => router.push("/login")}
@@ -373,7 +383,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </p>
             </div>
 
-            {isGuestSelection ? (
+            {isNativeAndroidApp ? null : isGuestSelection ? (
               <button
                 type="button"
                 onClick={() => router.push("/login")}
