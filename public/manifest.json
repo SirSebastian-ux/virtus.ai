@@ -1,12 +1,12 @@
 {
   "name": "Virtus AI",
   "short_name": "Virtus AI",
-  "description": "Premium executive AI for cognitive discipline, leadership, and self-mastery.",
+  "description": "Personal AI life coaching, structured training and mentoring by Enhanced Wellness Solutions.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#0ea5e9",
+  "background_color": "#091b1c",
+  "theme_color": "#091b1c",
   "orientation": "portrait",
   "icons": [
     {

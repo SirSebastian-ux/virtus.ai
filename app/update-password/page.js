@@ -27,29 +27,36 @@ export default function UpdatePasswordPage() {
 
     async function preparePasswordResetSession() {
       syncLoginAppearance();
-
+      const supabase = createClient();
       const params = new URLSearchParams(window.location.search);
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
       const code = params.get("code");
-
-      if (code) {
-        const supabase = createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error) {
-          setMessage(
-            "This reset link is invalid or has expired. Please request a new password reset link."
-          );
-          setReady(false);
-          return;
-        }
-
-        window.history.replaceState({}, document.title, "/update-password");
+      const tokenHash = params.get("token_hash");
+      const type = params.get("type");
+      let exchangeError = null;
+      if (tokenHash && type === "recovery") {
+        const result = await supabase.auth.verifyOtp({token_hash:tokenHash,type:"recovery"});
+        exchangeError = result.error;
+      } else if (code) {
+        const result = await supabase.auth.exchangeCodeForSession(code);
+        exchangeError = result.error;
+      } else if (fragment.get("access_token") && fragment.get("refresh_token")) {
+        const result = await supabase.auth.setSession({access_token:fragment.get("access_token"),refresh_token:fragment.get("refresh_token")});
+        exchangeError = result.error;
       }
-
-      setReady(true);
+      const {data:{session},error:sessionError}=await supabase.auth.getSession();
+      if(session && !sessionError && !params.get("error") && !fragment.get("error")) {
+        window.history.replaceState({},document.title,"/update-password");
+        setReady(true);
+      } else {
+        setReady(false);
+        setMessage(exchangeError || params.get("error") || fragment.get("error")
+          ? "This reset link cannot be verified. Please request a new link."
+          : "Please request a password reset email to securely update your password.");
+      }
     }
 
-    preparePasswordResetSession();
+    void preparePasswordResetSession().catch(() => {setReady(false);setMessage('Unable to verify reset link. Please request a new one.');});
 
     window.addEventListener("storage", syncLoginAppearance);
     window.addEventListener("focus", syncLoginAppearance);
@@ -99,11 +106,9 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <main className="min-h-screen virtus-theme-page flex items-center justify-center px-6">
-      <div className="virtus-theme-surface w-full max-w-md rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-        <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
-          Virtus AI
-        </p>
+    <main className="virtus-interior min-h-screen flex items-center justify-center px-5 py-12">
+      <div className="virtus-interior-panel w-full max-w-[480px] rounded-[2rem] p-7 sm:p-10">
+        <div className="mb-6 flex flex-col items-center gap-2 border-b border-[#d8bd85]/15 pb-6"><img src="/virtus-aurum-emblem.svg" alt="Virtus AI shield" width="78" height="78" className="h-[78px] w-[78px]" /><p className="virtus-interior-brand-name font-serif text-2xl tracking-wider text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p><p className="text-[10px] uppercase tracking-[0.2em] text-[#d8bd85]">By Enhanced Wellness Solutions</p></div>
 
         <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
           Create new password
@@ -115,8 +120,8 @@ export default function UpdatePasswordPage() {
 
         {ready && !success ? (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10">
-              <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
+            <div className="bg-[#0b211f]/65 rounded-2xl border border-[#d8bd85]/20 px-4 py-4 shadow-sm shadow-sky-950/10">
+              <label className="block text-xs uppercase tracking-[0.18em] text-[#d8bd85]">
                 New password
               </label>
 
@@ -125,7 +130,7 @@ export default function UpdatePasswordPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="virtus-theme-input w-full rounded-2xl border border-sky-900/25 px-4 py-3 pr-14 text-sm outline-none transition"
+                  className="bg-[#081b1a] text-[#f5f3ec] placeholder:text-[#8daba5] focus:border-[#d8bd85] w-full rounded-2xl border border-[#d8bd85]/30 px-4 py-3 pr-14 text-sm outline-none transition"
                   placeholder="Enter new password"
                   required
                   minLength={8}
@@ -134,7 +139,7 @@ export default function UpdatePasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
-                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-sky-300/70 transition hover:bg-sky-950/35 hover:text-sky-100"
+                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#d8bd85] transition hover:bg-sky-950/35 hover:text-sky-100"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -154,8 +159,8 @@ export default function UpdatePasswordPage() {
               </div>
             </div>
 
-            <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10">
-              <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
+            <div className="bg-[#0b211f]/65 rounded-2xl border border-[#d8bd85]/20 px-4 py-4 shadow-sm shadow-sky-950/10">
+              <label className="block text-xs uppercase tracking-[0.18em] text-[#d8bd85]">
                 Confirm new password
               </label>
 
@@ -163,7 +168,7 @@ export default function UpdatePasswordPage() {
                 type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="virtus-theme-input mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-sm outline-none transition"
+                className="bg-[#081b1a] text-[#f5f3ec] placeholder:text-[#8daba5] focus:border-[#d8bd85] mt-3 w-full rounded-2xl border border-[#d8bd85]/30 px-4 py-3 text-sm outline-none transition"
                 placeholder="Confirm new password"
                 required
                 minLength={8}
@@ -173,7 +178,7 @@ export default function UpdatePasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl border border-sky-900/30 bg-sky-950/30 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-800/40 hover:bg-sky-900/35 disabled:opacity-50"
+              className="virtus-gold-button w-full py-3 text-sm disabled:opacity-50"
             >
               {loading ? "Updating..." : "Update password"}
             </button>
@@ -181,14 +186,14 @@ export default function UpdatePasswordPage() {
         ) : null}
 
         {message ? (
-          <p className="virtus-theme-card mt-4 rounded-2xl border border-sky-900/20 px-4 py-3 text-sm virtus-theme-title">
+          <p className="virtus-theme-card mt-4 rounded-2xl border border-[#d8bd85]/20 px-4 py-3 text-sm virtus-theme-title">
             {message}
           </p>
         ) : null}
 
         <Link
           href="/login"
-          className="mt-6 inline-block text-sm text-sky-300/70 transition hover:text-sky-200"
+          className="mt-6 inline-block text-sm text-[#d8bd85] transition hover:text-[#f5e0aa]"
         >
           Return to sign in
         </Link>

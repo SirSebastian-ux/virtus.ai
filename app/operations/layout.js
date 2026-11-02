@@ -602,12 +602,13 @@ export default function OperationsLayout({ children }) {
     !isAccessResolved && !isInvitationAcceptancePage;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="virtus-operations-theme min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-900/80">
         <div className="mx-auto max-w-7xl px-6 py-5">
-          <p className="text-xs uppercase tracking-[0.25em] text-sky-300/60">
-            Virtus AI
-          </p>
+          <Link href="/" className="virtus-ops-brand" aria-label="Virtus AI Home">
+            <img src="/virtus-aurum-emblem.svg" alt="" width="44" height="50" />
+            <span><strong>Virtus AI</strong><small>By Enhanced Wellness Solutions</small></span>
+          </Link>
 
           <h1 className="mt-2 text-2xl font-semibold text-white">
             Operations Intelligence
@@ -642,6 +643,16 @@ export default function OperationsLayout({ children }) {
         </div>
       </header>
 
+      {activeWorkspaceId ? (
+        <nav className="virtus-ops-mobile-navigation mx-4 mt-4 grid grid-cols-2 gap-1 sm:grid-cols-3 xl:hidden" aria-label="Operations navigation">
+          {visibleNavigation.map((item) => (
+            <Link key={item.href} href={item.href} aria-current={pathname === item.href ? "page" : undefined}
+              className={`virtus-ops-nav-link ${pathname === item.href ? "is-current" : ""}`}>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+      ) : null}
       <div className="mx-auto flex max-w-7xl">
         {activeWorkspaceId ? (
         <aside className="hidden w-72 shrink-0 border-r border-zinc-800 xl:block">

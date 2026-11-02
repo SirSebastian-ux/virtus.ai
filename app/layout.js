@@ -1,8 +1,11 @@
 import "./globals.css";
+import "./virtus-luxury.css";
+import "./virtus-interior.css";
+import "./virtus-subpages.css";
 
 export const metadata = {
-  title: "Virtus AI",
-  description: "Premium executive AI for cognitive discipline and leadership.",
+  title: "Virtus AI | Life Coach · Trainer · Mentor",
+  description: "AI life coaching, structured training, and leadership mentoring powered by Enhanced Wellness Solutions.",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
@@ -20,7 +23,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#0ea5e9",
+  themeColor: "#091b1c",
 };
 
 export default function RootLayout({ children }) {

@@ -1,7 +1,14 @@
+import VirtusInteriorHeader from "../components/VirtusInteriorHeader";
 import Link from "next/link";
+import { isAdminUser } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
 import BillingPortalButton from "./BillingPortalButton";
 import LogoutButton from "./LogoutButton";
-import CustomizeAppearance from "./CustomizeAppearance";
+import ProfileNameEditor from "./ProfileNameEditor";
+import ProfilePhotoEditor from "./ProfilePhotoEditor";
+import ProfileAvatar from "./ProfileAvatar";
+import CoachingProgress from "./CoachingProgress";
+import CoachingHistory from "./CoachingHistory";
 import { createClient } from "@/lib/supabase-server";
 import {
   getPlanLabel,
@@ -11,7 +18,7 @@ import {
 function SettingsRow({ label, value, href = null, danger = false }) {
   const content = (
     <div
-      className={`flex items-center justify-between rounded-2xl border px-4 py-4 shadow-sm backdrop-blur-sm transition ${
+      className={`virtus-settings-row flex items-center justify-between rounded-2xl border px-4 py-4 shadow-sm backdrop-blur-sm transition ${
         danger
           ? "border-red-900/40 bg-red-950/20 text-red-200 hover:bg-red-950/30"
           : "virtus-theme-card border-sky-900/25 shadow-sky-950/10 hover:border-sky-800/40"
@@ -42,12 +49,14 @@ export default async function AccountPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) redirect("/login?next=/account");
+
   let profile = null;
 
   if (user) {
     const { data } = await supabase
       .from("profiles")
-      .select("plan, plan_status, trial_started_at, trial_ends_at")
+      .select("plan, plan_status, trial_started_at, trial_ends_at, nickname, stripe_customer_id")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -56,34 +65,23 @@ export default async function AccountPage() {
 
   const currentPlan = profile?.plan || "free";
   const currentPlanStatus = profile?.plan_status || "active";
-  const displayPlan = getPlanLabel(currentPlan);
-  const dailyMessageLimit = getDailyMessageLimit(currentPlan);
+  const displayPlan = currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : currentPlan === "life_coach" ? "Life Coach" : "No active coaching membership";
+  const dailyMessageLimit = currentPlan === "free" ? 0 : getDailyMessageLimit(currentPlan);
 
   return (
- <main className="min-h-screen virtus-theme-page">
-  <div className="mx-auto w-full max-w-6xl px-8 py-10">
-        <div className="mb-8">
-          <p className="text-xs uppercase tracking-[0.2em] text-sky-300/50">
-  Virtus AI
-</p>
-          <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
-            Account Settings
-          </h1>
-          <p className="mt-2 text-sm virtus-theme-muted">
-            Manage your account, plan, and product settings.
-          </p>
-        </div>
+ <main className="virtus-interior min-h-screen virtus-theme-page">
+  <div className="virtus-interior-shell">
+        <VirtusInteriorHeader title="Account Settings" description="Manage your account, coaching development, preferences, and membership." eyebrow="Your personal development space" />
 
-        <div className="grid gap-6 md:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="virtus-theme-surface rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+        {isAdminUser(user) && <div className="virtus-theme-card mb-6 rounded-2xl border border-[#d8bd85]/40 p-5"><p className="font-semibold virtus-theme-title">Administrator tools</p><p className="mt-1 text-sm virtus-theme-muted">Evaluate Life Coach, Trainer and Mentor performance.</p><Link className="mt-3 inline-block rounded-xl border border-[#d8bd85]/60 px-4 py-2 font-medium text-[#d8bd85]" href="/admin/evaluation-lab">Open Evaluation Lab</Link></div>}
+        <div className="virtus-account-grid">
+          <aside className="virtus-theme-surface virtus-account-sidebar rounded-3xl border border-sky-900/20 p-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
             <div className="flex items-center gap-3 virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10">
-<div className="flex h-12 w-12 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sm font-semibold text-sky-200 shadow-sm shadow-sky-950/20">
-  {user?.email?.[0]?.toUpperCase() || "V"}
-</div>
+<ProfileAvatar fallback={(profile?.nickname || user?.email || "V").charAt(0).toUpperCase()} />
 
               <div className="min-w-0">
  <p className="truncate text-sm font-medium virtus-theme-title">
-                  {user?.email?.split("@")[0] || "Virtus User"}
+                  {profile?.nickname || user?.email?.split("@")[0] || "Virtus User"}
                 </p>
                 <p className="truncate text-xs virtus-theme-muted">{displayPlan}</p>
               </div>
@@ -102,22 +100,22 @@ export default async function AccountPage() {
                className="flex items-center justify-between virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10"
               >
                 <div>
-                  <p className="text-sm font-medium virtus-theme-title">Upgrade plan</p>
+                  <p className="text-sm font-medium virtus-theme-title">Coaching plans</p>
                   <p className="mt-1 text-xs virtus-theme-muted">
-                    Manage your Virtus access
+                    Explore Life Coach, Trainer, and Mentor
                   </p>
                 </div>
-<span className="text-sky-300/60">&rsaquo;</span>
+<span className="text-[#e9c78b]">&rsaquo;</span>
               </Link>
 
 <div className="flex items-center justify-between virtus-theme-card rounded-2xl border border-sky-900/25 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
                 <div>
                   <p className="text-sm font-medium virtus-theme-title">Settings</p>
                   <p className="mt-1 text-xs virtus-theme-muted">
-                    Account foundation page
+                    Appearance and account preferences
                   </p>
                 </div>
-  <span className="text-sky-300/70">&#10003;</span>
+  <span className="text-[#e9c78b]">&#10003;</span>
               </div>
 
 <Link
@@ -126,26 +124,32 @@ export default async function AccountPage() {
 >
   <div>
     <p className="text-sm font-medium virtus-theme-title">Back to chat</p>
-    <p className="mt-1 text-xs text-sky-300/60">
+    <p className="mt-1 text-xs text-[#e9c78b]">
       Return to Virtus
     </p>
   </div>
 
-  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-300/70 transition group-hover:bg-sky-900/35 group-hover:text-sky-200">
+  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d8bd85]/50 bg-[#09382f] text-[#e9c78b] transition group-hover:bg-[#165840]">
     &rsaquo;
   </span>
 </Link>
             </div>
           </aside>
 
-<section className="virtus-theme-surface rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-<h2 className="text-xl font-semibold virtus-theme-title">Settings</h2>
+<section className="virtus-theme-surface virtus-interior-panel virtus-account-section rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+<h2 className="font-serif text-2xl font-normal virtus-theme-title">Settings</h2>
             <p className="mt-2 text-sm virtus-theme-muted">
-              A cleaner account structure, closer to the style you showed.
+              Manage your personal development experience, account preferences, and coaching access.
             </p>
 
             <div className="mt-6">
-              <CustomizeAppearance />
+              <ProfileNameEditor initialName={profile?.nickname || user?.email?.split("@")[0] || ""} />
+              <div className="mt-4"><ProfilePhotoEditor /></div>
+            </div>
+
+            <div className="mt-6">
+              <CoachingProgress />
+              <div className="mt-4"><CoachingHistory displayName={profile?.nickname || user?.email?.split("@")[0] || "The client"} /></div>
             </div>
 
             <div className="mt-6 space-y-3">
@@ -160,7 +164,7 @@ export default async function AccountPage() {
                 href="/upgrade"
               />
 
-              <BillingPortalButton />
+              <BillingPortalButton hasStripeCustomer={Boolean(profile?.stripe_customer_id)} currentPlan={displayPlan} />
 
               <SettingsRow
                 label="Plan status"
@@ -186,6 +190,7 @@ export default async function AccountPage() {
               <SettingsRow
                 label="Help"
                 value="Support and guidance area"
+                href="/support"
               />
 
                         <LogoutButton />

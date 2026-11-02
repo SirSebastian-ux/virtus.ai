@@ -108,7 +108,7 @@ export default function AuthCallback() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-zinc-100">
+    <main className="virtus-subpage-modern flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-zinc-100">
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 px-8 py-7 text-center shadow-2xl">
         <p className="text-sm text-zinc-400">
           Confirming your secure account session...

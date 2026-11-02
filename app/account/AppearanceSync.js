@@ -6,7 +6,8 @@ export default function AppearanceSync() {
   useEffect(() => {
     function syncAppearance() {
       const savedAppearance = localStorage.getItem("virtus_appearance");
-      const nextAppearance = savedAppearance === "light" ? "light" : "dark";
+      const nextAppearance = "dark";
+      if (savedAppearance !== "dark") localStorage.setItem("virtus_appearance", "dark");
 
       document.documentElement.setAttribute(
         "data-virtus-appearance",

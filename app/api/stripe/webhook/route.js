@@ -7,6 +7,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 function getPlanFromPriceId(priceId) {
+  if (["price_1UVVtFPwRngeNjDXC2Gny4A1","price_1UVVtLPwRngeNjDXrD0wCCMB"].includes(priceId)) return "life_coach";
+  if (["price_1UVVnjPwRngeNjDXK9oivXty","price_1UVVsoPwRngeNjDX4Fu5xMee"].includes(priceId)) return "plus";
+  if (["price_1UVVnvPwRngeNjDXa4nfp47N","price_1UVVsxPwRngeNjDXdBe0LbVk"].includes(priceId)) return "premium";
   if (
     priceId === process.env.STRIPE_PLUS_MONTHLY_PRICE_ID ||
     priceId === process.env.STRIPE_PLUS_YEARLY_PRICE_ID

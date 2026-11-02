@@ -35,6 +35,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "signup") setMode("signup");
+  }, []);
+
+  useEffect(() => {
     function syncLoginAppearance() {
       const savedAppearance = localStorage.getItem("virtus_appearance");
       const nextAppearance = savedAppearance === "light" ? "light" : "dark";
@@ -126,11 +131,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen virtus-theme-page flex items-center justify-center px-6">
-      <div className="virtus-theme-surface w-full max-w-md rounded-3xl border border-sky-900/20 p-6 shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-        <p className="text-xs uppercase tracking-[0.22em] text-sky-300/50">
-          Virtus AI
-        </p>
+    <main className="virtus-interior min-h-screen flex items-center justify-center px-5 py-12">
+      <div className="virtus-interior-panel w-full max-w-[480px] rounded-[2rem] p-7 sm:p-10">
+        <div className="mb-6 flex flex-col items-center gap-2 border-b border-[#d8bd85]/15 pb-6"><img src="/virtus-aurum-emblem.svg" alt="Virtus AI shield" width="78" height="78" className="h-[88px] w-auto object-contain" /><p className="virtus-interior-brand-name font-serif text-2xl tracking-wider text-[#e8c985]">Virtus <span className="text-[#8ad5e6]">AI</span></p><p className="text-[10px] uppercase tracking-[0.2em] text-[#d8bd85]">By Enhanced Wellness Solutions</p></div>
 
         <h1 className="mt-3 text-3xl font-semibold virtus-theme-title">
           {mode === "signup" ? "Create account" : "Sign in"}
@@ -141,8 +144,8 @@ export default function LoginPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10">
-            <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
+          <div className="bg-[#0b211f]/65 rounded-2xl border border-[#d8bd85]/20 px-4 py-4 shadow-sm shadow-sky-950/10">
+            <label className="block text-xs uppercase tracking-[0.18em] text-[#d8bd85]">
               Email
             </label>
 <input
@@ -150,14 +153,14 @@ export default function LoginPage() {
   pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="virtus-theme-input mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-sm outline-none transition"
+              className="bg-[#081b1a] text-[#f5f3ec] placeholder:text-[#8daba5] focus:border-[#d8bd85] mt-3 w-full rounded-2xl border border-[#d8bd85]/30 px-4 py-3 text-sm outline-none transition"
               placeholder="you@example.com"
               required
             />
           </div>
 
-          <div className="virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10">
-            <label className="block text-xs uppercase tracking-[0.18em] text-sky-300/50">
+          <div className="bg-[#0b211f]/65 rounded-2xl border border-[#d8bd85]/20 px-4 py-4 shadow-sm shadow-sky-950/10">
+            <label className="block text-xs uppercase tracking-[0.18em] text-[#d8bd85]">
               Password
             </label>
             <div className="relative mt-3">
@@ -165,7 +168,7 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="virtus-theme-input w-full rounded-2xl border border-sky-900/25 px-4 py-3 pr-14 text-sm outline-none transition"
+                className="bg-[#081b1a] text-[#f5f3ec] placeholder:text-[#8daba5] focus:border-[#d8bd85] w-full rounded-2xl border border-[#d8bd85]/30 px-4 py-3 pr-14 text-sm outline-none transition"
                 placeholder="Enter password"
                 required
               />
@@ -173,7 +176,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
-                className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-sky-300/70 transition hover:bg-sky-950/35 hover:text-sky-100"
+                className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-[#d8bd85] transition hover:bg-sky-950/35 hover:text-sky-100"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -196,7 +199,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-2xl border border-sky-900/30 bg-sky-950/30 py-3 text-sm font-semibold text-sky-100 transition hover:border-sky-800/40 hover:bg-sky-900/35 disabled:opacity-50"
+            className="virtus-gold-button w-full py-3 text-sm disabled:opacity-50"
           >
             {loading
               ? "Please wait..."
@@ -207,7 +210,7 @@ export default function LoginPage() {
         </form>
 
         {message ? (
-          <p className="virtus-theme-card mt-4 rounded-2xl border border-sky-900/20 px-4 py-3 text-sm virtus-theme-title">
+          <p className="virtus-theme-card mt-4 rounded-2xl border border-[#d8bd85]/20 px-4 py-3 text-sm virtus-theme-title">
             {message}
           </p>
         ) : null}
@@ -215,7 +218,7 @@ export default function LoginPage() {
         {mode === "login" ? (
           <a
             href="/forgot-password"
-            className="mt-4 inline-block text-sm text-sky-300/70 transition hover:text-sky-200"
+            className="mt-5 inline-block text-sm text-[#d8bd85] transition hover:text-[#f5e0aa]"
           >
             Forgot password?
           </a>
@@ -227,7 +230,7 @@ export default function LoginPage() {
             setMode(mode === "login" ? "signup" : "login");
             setMessage("");
           }}
-          className="mt-6 text-sm text-sky-300/70 transition hover:text-sky-200"
+          className="mt-6 block text-sm text-[#d8bd85] transition hover:text-[#f5e0aa]"
         >
           {mode === "login"
             ? "Need an account? Create one"

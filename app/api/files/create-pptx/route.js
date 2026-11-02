@@ -404,8 +404,8 @@ ${cleanContent}
 
 Visual style:
 - premium executive design
-- dark black/zinc background
-- sky-blue accents
+- deep emerald and charcoal background
+- refined emerald and warm gold accents
 - subtle gold accents only if appropriate
 - abstract, symbolic, intelligent
 - suitable for a leadership, psychology, mind discipline, or coaching presentation
@@ -488,15 +488,15 @@ async function createPptxBuffer({ title, content }) {
   });
 
   const titleSlide = pptx.addSlide();
-  titleSlide.background = { color: "09090B" };
+  titleSlide.background = { color: "071B18" };
 
   titleSlide.addShape(pptx.ShapeType.rect, {
     x: 0,
     y: 0,
     w: 13.33,
     h: 7.5,
-    fill: { color: "09090B" },
-    line: { color: "09090B", transparency: 100 },
+    fill: { color: "071B18" },
+    line: { color: "071B18", transparency: 100 },
   });
 
   titleSlide.addShape(pptx.ShapeType.rect, {
@@ -504,8 +504,8 @@ async function createPptxBuffer({ title, content }) {
     y: 0.55,
     w: 12.25,
     h: 6.4,
-    fill: { color: "18181B", transparency: 12 },
-    line: { color: "0EA5E9", transparency: 55, width: 1.1 },
+    fill: { color: "0B2823", transparency: 12 },
+    line: { color: "C9A65B", transparency: 55, width: 1.1 },
     radius: 0.2,
   });
 
@@ -514,8 +514,8 @@ async function createPptxBuffer({ title, content }) {
     y: 0.55,
     w: 0.08,
     h: 6.4,
-    fill: { color: "0EA5E9" },
-    line: { color: "0EA5E9" },
+    fill: { color: "C9A65B" },
+    line: { color: "C9A65B" },
   });
 
   titleSlide.addText("VIRTUS AI PRESENTATION", {
@@ -526,7 +526,7 @@ async function createPptxBuffer({ title, content }) {
     fontFace: "Aptos",
     fontSize: 9,
     bold: true,
-    color: "7DD3FC",
+    color: "E5C67B",
     charSpace: 1.8,
   });
 
@@ -538,20 +538,20 @@ async function createPptxBuffer({ title, content }) {
     fontFace: "Aptos Display",
     fontSize: 32,
     bold: true,
-    color: "E0F2FE",
+    color: "F4F0E5",
     breakLine: false,
     fit: "shrink",
     margin: 0,
   });
 
-  titleSlide.addText("Built for clarity, discipline, and executive communication.", {
+  titleSlide.addText("A focused executive presentation", {
     x: 0.92,
     y: 3.55,
     w: 7.0,
     h: 0.38,
     fontFace: "Aptos",
     fontSize: 15,
-    color: "BAE6FD",
+    color: "E6D9BB",
     fit: "shrink",
   });
 
@@ -560,7 +560,7 @@ async function createPptxBuffer({ title, content }) {
     y: 4.05,
     w: 3.4,
     h: 0,
-    line: { color: "0EA5E9", width: 2.2, transparency: 10 },
+    line: { color: "C9A65B", width: 2.2, transparency: 10 },
   });
 
   titleSlide.addText("Thought -> Awareness -> Emotion -> Behavior -> Communication", {
@@ -570,7 +570,7 @@ async function createPptxBuffer({ title, content }) {
     h: 0.3,
     fontFace: "Aptos",
     fontSize: 10,
-    color: "7DD3FC",
+    color: "E5C67B",
     fit: "shrink",
   });
 
@@ -588,8 +588,8 @@ async function createPptxBuffer({ title, content }) {
       y: 1.15,
       w: 3.35,
       h: 3.35,
-      fill: { color: "09090B", transparency: 100 },
-      line: { color: "0EA5E9", transparency: 45, width: 1.1 },
+      fill: { color: "071B18", transparency: 100 },
+      line: { color: "C9A65B", transparency: 45, width: 1.1 },
       radius: 0.18,
     });
   }
@@ -639,7 +639,7 @@ async function createPptxBuffer({ title, content }) {
 
   usableSections.forEach((section, index) => {
     const slide = pptx.addSlide();
-    slide.background = { color: "09090B" };
+    slide.background = { color: "071B18" };
 
     slide.addText(
       cleanSlideText(section.title || `Section ${index + 1}`).replace(
@@ -654,7 +654,7 @@ async function createPptxBuffer({ title, content }) {
       fontFace: "Aptos Display",
       fontSize: 24,
       bold: true,
-      color: "E0F2FE",
+      color: "F4F0E5",
       fit: "shrink",
     }
     );
@@ -664,7 +664,7 @@ async function createPptxBuffer({ title, content }) {
       y: 1.12,
       w: 11.9,
       h: 0,
-      line: { color: "0EA5E9", width: 1.3, transparency: 30 },
+      line: { color: "C9A65B", width: 1.3, transparency: 30 },
     });
 
     const bullets = section.bullets.length
@@ -713,8 +713,8 @@ async function createPptxBuffer({ title, content }) {
         y: 1.65,
         w: 3.7,
         h: 3.7,
-        fill: { color: "09090B", transparency: 100 },
-        line: { color: "0EA5E9", transparency: 45, width: 1.1 },
+        fill: { color: "071B18", transparency: 100 },
+        line: { color: "C9A65B", transparency: 45, width: 1.1 },
         radius: 0.18,
       });
     } else {
@@ -739,7 +739,7 @@ async function createPptxBuffer({ title, content }) {
       w: 1.8,
       h: 0.25,
       fontSize: 9,
-      color: "7DD3FC",
+      color: "E5C67B",
       align: "right",
     });
   });

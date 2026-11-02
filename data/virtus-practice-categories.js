@@ -23,8 +23,8 @@
       "Create a short Trial Guest stress reset that helps me regain control."
  ],
  practiceMode: "category:stress-regulation",
- minimumPlan: "free",
- trialGuestSample: true,
+ minimumPlan: "life_coach",
+ trialGuestSample: false,
  },
  {
  id: "mood-support",
@@ -45,8 +45,8 @@
  prompt:
  "Start a mood support practice. understand what thought may be affecting my mood and take me through one simple exercise.",
  practiceMode: "category:mood-support",
- minimumPlan: "free",
- trialGuestSample: true,
+ minimumPlan: "life_coach",
+ trialGuestSample: false,
  },
  {
  id: "self-awareness",
@@ -67,8 +67,8 @@
  prompt:
  "Start a self-awareness practice. observe what is happening inside me without judgment.",
  practiceMode: "category:self-awareness",
- minimumPlan: "free",
- trialGuestSample: true,
+ minimumPlan: "life_coach",
+ trialGuestSample: false,
  },
  {
  id: "mind-discipline",

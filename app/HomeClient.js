@@ -1,6 +1,10 @@
 "use client";
 
 import SplashScreen from "./components/SplashScreen";
+import LuxuryWelcome from "./components/LuxuryWelcome";
+import LuxurySidebarNav from "./components/LuxurySidebarNav";
+import LuxuryFileLibrary from "./components/LuxuryFileLibrary";
+import VirtusPracticeWorkspace from "./components/VirtusPracticeWorkspace";
 import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import { useMemo } from "react";
@@ -10,7 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
 import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
-export default function HomeClient() {
+export default function HomeClient({ isAdmin = false }) {
 const [showSplash, setShowSplash] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,6 +24,7 @@ const [uploadedFiles, setUploadedFiles] = useState([]);
 const [showFileMenu, setShowFileMenu] = useState(false);
 const [activeFile, setActiveFile] = useState(null);
 const [activeFiles, setActiveFiles] = useState([]);
+const [guestPastedImage, setGuestPastedImage] = useState(null);
 const [showDocumentLibrary, setShowDocumentLibrary] = useState(false);
 const [confirmDeleteFileId, setConfirmDeleteFileId] = useState(null);
 const [confirmDialog, setConfirmDialog] = useState(null);
@@ -86,9 +91,34 @@ const [selectedVoiceURI, setSelectedVoiceURI] = useState("");
 const [openMessageMenuIndex, setOpenMessageMenuIndex] = useState(null);
 const messageMenuRef = useRef(null);
 const [showMobileMenu, setShowMobileMenu] = useState(false);
+const mobileMenuCloseRef = useRef(null);
+useEffect(() => {
+  if (!showMobileMenu) return undefined;
+  const previouslyFocused = document.activeElement;
+  const oldOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+  mobileMenuCloseRef.current?.focus();
+  const onEscape = (event) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      setShowMobileMenu(false);
+    }
+  };
+  document.addEventListener("keydown", onEscape);
+  return () => {
+    document.removeEventListener("keydown", onEscape);
+    document.body.style.overflow = oldOverflow;
+    if (previouslyFocused?.isConnected && typeof previouslyFocused.focus === "function") {
+      previouslyFocused.focus();
+    }
+  };
+}, [showMobileMenu]);
 const [practiceOpen, setPracticeOpen] = useState(false);
 const [searchOpen, setSearchOpen] = useState(false);
 const [recentOpen, setRecentOpen] = useState(false);
+const [luxuryToolsOpen, setLuxuryToolsOpen] = useState(false);
+const [luxuryLibraryOpen, setLuxuryLibraryOpen] = useState(false);
+const [luxuryActiveNav, setLuxuryActiveNav] = useState("home");
 const [captureOpen, setCaptureOpen] = useState(false);
 const [captureNotes, setCaptureNotes] = useState([]);
 const [loadingCaptureNotes, setLoadingCaptureNotes] = useState(false);
@@ -268,8 +298,8 @@ const speechRef = useRef(null);
 
 useEffect(() => {
   function syncVirtusAppearance() {
-    const savedAppearance = localStorage.getItem("virtus_appearance");
-    const nextAppearance = savedAppearance === "light" ? "light" : "dark";
+    const nextAppearance = "dark";
+    localStorage.setItem("virtus_appearance", "dark");
 
     document.documentElement.setAttribute(
       "data-virtus-appearance",
@@ -773,7 +803,26 @@ useEffect(() => {
   searchOpen,
 ]);
 async function handlePastedImage(file) {
-  if (!file || !String(file.type || "").startsWith("image/")) return;
+  if (!file || !["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+    setFileNotice("Paste a PNG, JPEG, or WebP image.");
+    return;
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    setFileNotice("Pasted images must be smaller than 4 MB.");
+    return;
+  }
+  if (!isAuthenticated) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setGuestPastedImage(String(reader.result || ""));
+      setFileNotice("Image attached to this message; not saved to a library.");
+      setMessage((current) => current.trim() || "Please analyze this pasted image.");
+      textareaRef.current?.focus();
+    };
+    reader.onerror = () => setFileNotice("Could not read the pasted image.");
+    reader.readAsDataURL(file);
+    return;
+  }
 
   try {
     setUploadingFile(true);
@@ -881,21 +930,19 @@ async function handlePastedLongText(text) {
   }
 
 function handleGlobalChatPaste(event) {
-    if (activeProject?.id) return;
-
     const pastedText = event.clipboardData?.getData("text/plain") || "";
-
-    if (String(pastedText || "").trim().length >= 1000) {
-      event.preventDefault();
-      handlePastedLongText(pastedText);
-      return;
-    }
 
     const imageItem = Array.from(event.clipboardData?.items || []).find(
       (item) => item.type && item.type.startsWith("image/")
     );
 
-    if (!imageItem) return;
+    if (!imageItem) {
+      if (String(pastedText || "").trim().length >= 1000 && isAuthenticated) {
+        event.preventDefault();
+        handlePastedLongText(pastedText);
+      }
+      return;
+    }
 
     const file = imageItem.getAsFile();
     if (!file) return;
@@ -924,110 +971,98 @@ const cancelEdit = () => {
 };
 const handleMicrophoneClick = () => {
   if (typeof window === "undefined") return;
-
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Voice input is not supported in this browser.");
+    alert("Voice typing is not available in this browser. Try Chrome or use your keyboard microphone.");
     return;
   }
 
-  const cleanSpeechText = (text) =>
-    String(text || "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  const removeRepeatedSpeechBuildUp = (text) => {
-    const clean = cleanSpeechText(text);
-    const words = clean.split(" ").filter(Boolean);
-
-    for (let size = Math.floor(words.length / 2); size >= 3; size -= 1) {
-      const first = words.slice(0, size).join(" ");
-      const last = words.slice(size, size * 2).join(" ");
-
-      if (first && first === last) {
-        return words.slice(size).join(" ");
-      }
-    }
-
-    return clean;
-  };
-
-  if (listening && recognitionRef.current) {
-    recognitionRef.current.stop();
-    recognitionRef.current = null;
-    setListening(false);
-    return;
-  }
-
+  // Only the user's second tap ends dictation; silence alone must not end the session.
   if (recognitionRef.current) {
-    recognitionRef.current.stop();
-    recognitionRef.current = null;
+    const active = recognitionRef.current;
+    recognitionRef.current = null; // Also cancels a pending automatic restart.
+    try { active.stop(); } catch {}
+    setListening(false);
+    return;
   }
 
-  const startingMessage = cleanSpeechText(message);
-  let committedTranscript = "";
-  let lastFinalTranscript = "";
+  const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim();
+  const startingMessage = normalize(message);
+  let committed = "";
+  let stopped = false;
+  let restartTimer = null;
 
-  const recognition = new SpeechRecognition();
-  recognition.lang = "en-US";
-  recognition.interimResults = true;
-  recognition.continuous = false;
-
-  recognition.onstart = () => {
-    setListening(true);
+  const render = (interim = "") => {
+    setMessage(normalize([startingMessage, committed, interim].filter(Boolean).join(" ")));
   };
 
-  recognition.onresult = (event) => {
-    let interimTranscript = "";
+  const beginCycle = () => {
+    if (stopped) return;
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.lang = navigator.language || "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
 
-    for (let i = event.resultIndex; i < event.results.length; i += 1) {
-      const transcript = getBestSpeechTranscript(event.results[i]);
+    let cycleFinal = "";
+    let cycleInterim = "";
+    let fatalError = false;
 
-      if (!transcript) continue;
-
-      if (event.results[i].isFinal) {
-        const cleanedFinal = removeRepeatedSpeechBuildUp(transcript);
-
-        if (
-          cleanedFinal &&
-          cleanedFinal !== lastFinalTranscript &&
-          !committedTranscript.endsWith(cleanedFinal)
-        ) {
-          committedTranscript = cleanSpeechText(
-            `${committedTranscript} ${cleanedFinal}`
-          );
-          lastFinalTranscript = cleanedFinal;
-        }
-      } else {
-        interimTranscript = removeRepeatedSpeechBuildUp(transcript);
+    recognition.onstart = () => setListening(true);
+    recognition.onresult = (event) => {
+      const finals = [];
+      const interims = [];
+      for (let i = 0; i < event.results.length; i += 1) {
+        const part = getBestSpeechTranscript(event.results[i]);
+        if (!part) continue;
+        if (event.results[i].isFinal) finals.push(part);
+        else interims.push(part);
       }
+      cycleFinal = normalize(finals.join(" "));
+      cycleInterim = normalize(interims.join(" "));
+      render(normalize([cycleFinal, cycleInterim].filter(Boolean).join(" ")));
+    };
+    recognition.onerror = (event) => {
+      if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes(event.error)) {
+        fatalError = true;
+        stopped = true;
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          alert("Allow microphone access in your browser to use voice typing.");
+        } else if (event.error === "audio-capture") {
+          alert("No microphone was detected. Check your device microphone.");
+        } else {
+          alert("Voice typing lost its connection. Check your network and try again.");
+        }
+      }
+    };
+    recognition.onend = () => {
+      committed = normalize([committed, cycleFinal || cycleInterim].filter(Boolean).join(" "));
+      render();
+      if (stopped || fatalError || recognitionRef.current !== recognition) {
+        if (recognitionRef.current === recognition) recognitionRef.current = null;
+        setListening(false);
+        return;
+      }
+      // Browsers can end a recognition cycle after silence, even with continuous=true.
+      // Start another cycle while the microphone remains logically enabled.
+      restartTimer = window.setTimeout(() => {
+        restartTimer = null;
+        if (!stopped && recognitionRef.current === recognition) beginCycle();
+      }, 200);
+    };
+    try {
+      recognition.start();
+    } catch {
+      stopped = true;
+      if (restartTimer !== null) window.clearTimeout(restartTimer);
+      if (recognitionRef.current === recognition) recognitionRef.current = null;
+      setListening(false);
+      alert("Voice typing could not start. Check microphone permissions and try again.");
     }
-
-    const displayText = cleanSpeechText(
-      `${startingMessage} ${committedTranscript} ${interimTranscript}`
-    );
-
-    setMessage(displayText);
   };
 
-  recognition.onerror = () => {
-    setListening(false);
-    recognitionRef.current = null;
-  };
-
-  recognition.onend = () => {
-    setListening(false);
-    recognitionRef.current = null;
-
-    const finalText = cleanSpeechText(`${startingMessage} ${committedTranscript}`);
-
-    setMessage(finalText);
-  };
-
-  recognitionRef.current = recognition;
-  recognition.start();
+  beginCycle();
 };
 
 const formatCaptureRecordingTime = (totalSeconds) => {
@@ -2024,7 +2059,7 @@ const handleCaptureMicrophoneClick = async () => {
     }
 
     if (currentPlanKey === "free") {
-      return "Free includes up to 3 projects. Upgrade to Plus for 5 projects or Premium / Virtus Prime for unlimited projects.";
+      return "Choose Life Coach ($9.99/month), Trainer, or Mentor to continue using coaching features.";
     }
 
     if (currentPlanKey === "plus") {
@@ -2055,7 +2090,9 @@ const handleCaptureMicrophoneClick = async () => {
   const practicePlanRank = {
     guest: 0,
     trial_guest: 1,
-    free: 1,
+    free: 0,
+    life_coach: 1,
+    "life-coach": 1,
     plus: 2,
     premium: 3,
   };
@@ -2074,6 +2111,10 @@ const handleCaptureMicrophoneClick = async () => {
 
   const canUsePracticeCategory = (category) => {
     if (isTrialGuestExpired) return false;
+
+    if (["stress-regulation", "mood-support", "self-awareness"].includes(category.id)) {
+      return isAuthenticated && ["life_coach", "life-coach", "plus", "premium", "trainer", "mentor"].includes(currentPlanKey) && !isTrialGuestExpired;
+    }
 
     if (isTrialGuestPracticeSample(category)) {
       return true;
@@ -2116,6 +2157,10 @@ const handleCaptureMicrophoneClick = async () => {
   const getPracticeCategoryAccessLabel = (category, canUseCategory) => {
     const requiredPlan = category.minimumPlan || "free";
 
+    if (["stress-regulation", "mood-support", "self-awareness"].includes(category.id)) {
+      return canUseCategory ? "Life Coach" : "Locked · Life Coach";
+    }
+
     if (isTrialGuestPracticeSample(category)) {
       return "Trial Sample";
     }
@@ -2124,7 +2169,8 @@ const handleCaptureMicrophoneClick = async () => {
       return "";
     }
 
-    return canUseCategory ? requiredPlan : `Locked - ${requiredPlan}`;
+    const publicTier = requiredPlan === "premium" ? "Mentor" : requiredPlan === "plus" ? "Trainer" : requiredPlan;
+    return canUseCategory ? publicTier : `Locked · ${publicTier}`;
   };
 
   const getLockedPracticeCategoryMessage = (category, requiredPlan) => {
@@ -2133,6 +2179,9 @@ const handleCaptureMicrophoneClick = async () => {
     }
 
     const practiceName = category?.title || "This practice";
+    if (["stress-regulation", "mood-support", "self-awareness"].includes(category?.id)) {
+      return `${practiceName} requires registration and an active paid Life Coach subscription or higher. Choose Life Coach to unlock this practice.`;
+    }
 
     const categoryMessages = {
       "mind-discipline":
@@ -3025,7 +3074,7 @@ const handleCaptureMicrophoneClick = async () => {
       isReviewStep || isGuidedPracticeAnswerReady(question);
 
     return (
-      <div className="mb-3 rounded-2xl border border-sky-900/25 bg-zinc-950/45 p-3 shadow-sm shadow-sky-950/20">
+      <div className="virtus-guided-practice-card mb-3 rounded-2xl border p-3">
         {!showGuidedPractice ? (
           <div className="space-y-3">
             <div>
@@ -3047,12 +3096,12 @@ const handleCaptureMicrophoneClick = async () => {
                 setShowGuidedPractice(true);
                 setGuidedPracticeStep(0);
               }}
-              className="w-full rounded-xl border border-sky-800/35 bg-sky-950/35 px-3 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-600/50 hover:bg-sky-900/35"
+              className="virtus-guided-practice-primary w-full rounded-xl border px-3 py-3 text-sm font-semibold transition"
             >
               Start Guided Practice
             </button>
 
-            <div className="rounded-xl border border-sky-900/15 bg-black/20 p-2">
+            <div className="virtus-guided-practice-history rounded-xl border p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-300/55">
                   Old Guided Practices
@@ -3061,7 +3110,7 @@ const handleCaptureMicrophoneClick = async () => {
                 <button
                   type="button"
                   onClick={loadGuidedPracticeHistory}
-                  className="text-[11px] text-zinc-500 transition hover:text-sky-300"
+                  className="virtus-guided-practice-refresh text-[11px] font-semibold transition"
                 >
                   Refresh
                 </button>
@@ -3168,7 +3217,7 @@ const handleCaptureMicrophoneClick = async () => {
               <button
                 type="button"
                 onClick={handleCreateGuidedPractice}
-                className="flex-1 rounded-xl border border-sky-700/45 bg-sky-950/45 px-3 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-500/60 hover:bg-sky-900/45"
+                className="virtus-guided-practice-primary flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition"
               >
                 Create My Practice
               </button>
@@ -3193,7 +3242,7 @@ const handleCaptureMicrophoneClick = async () => {
 
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-900">
                 <div
-                  className="h-full rounded-full bg-sky-500/70 transition-all"
+                  className="virtus-guided-practice-progress h-full rounded-full transition-all"
                   style={{
                     width: `${((guidedPracticeStep + 1) / guidedPracticeTotalSteps) * 100}%`,
                   }}
@@ -3247,7 +3296,7 @@ const handleCaptureMicrophoneClick = async () => {
                           detail: currentDetail,
                         });
                       }}
-                      className={`rounded-xl border px-3 py-2 text-left text-xs transition ${
+                      className={`virtus-guided-practice-option rounded-xl border px-3 py-2 text-left text-xs transition ${
                         selected
                           ? "border-sky-500/60 bg-sky-950/55 text-sky-100"
                           : "border-zinc-800/80 bg-zinc-950/35 text-zinc-300 hover:border-sky-800/40 hover:bg-sky-950/20"
@@ -3295,7 +3344,7 @@ const handleCaptureMicrophoneClick = async () => {
                     ? setGuidedPracticeStep(guidedPracticeTotalSteps)
                     : setGuidedPracticeStep((prev) => prev + 1)
                 }
-                className="flex-1 rounded-xl border border-sky-700/45 bg-sky-950/45 px-3 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-500/60 hover:bg-sky-900/45 disabled:cursor-not-allowed disabled:opacity-40"
+                className="virtus-guided-practice-primary flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {guidedPracticeStep >= guidedPracticeTotalSteps - 1
                   ? "Review"
@@ -3308,7 +3357,12 @@ const handleCaptureMicrophoneClick = async () => {
     );
   }
    const fallbackPlanPolicy = getPlanPolicy(currentPlanKey);
+  // Presentation names only: keep existing billing and authorization keys unchanged.
   const displayPlanLabel =
+    !isAuthenticated ? "Trial Guest" :
+    currentPlanKey === "premium" ? "Mentor" :
+    currentPlanKey === "plus" ? "Trainer" :
+    currentPlanKey === "free" ? "Membership required" :
     currentAccess?.label ?? fallbackPlanPolicy.label;
   const displayUpgradeLabel =
     currentAccess?.upgradeLabel ?? fallbackPlanPolicy.upgradeLabel;
@@ -3493,9 +3547,8 @@ function getPlanCapabilityCard(plan) {
     const existingGuestId = localStorage.getItem("virtus_guest_id");
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setShowPlanOverlay(
-      !!existingGuestId && localStorage.getItem(planOverlayStorageKey) !== "true"
-    );
+    // Defer guest-only plans overlay until the server verifies authentication.
+    setShowPlanOverlay(false);
     setGuestAccess(existingGuestId ? normalizedGuestAccess : null);
 
     const savedChatId = getGuestSidebarChatId(
@@ -3524,6 +3577,8 @@ setIsAuthenticated(loggedIn);
 setCurrentUser(authData.user || null);
 setAccountAccess(authData.access || null);
         if (loggedIn) {
+          setShowPlanOverlay(false);
+          setGuestAccess(null);
                     const sessionsRes = await fetch("/api/chat-sessions", { cache: "no-store" });
           const sessionsData = await sessionsRes.json();
 
@@ -3536,8 +3591,10 @@ setAccountAccess(authData.access || null);
             }))
           );
                                        } else {
+          const existingGuestId = localStorage.getItem("virtus_guest_id");
+          setShowPlanOverlay(false);
           const guestId =
-            localStorage.getItem("virtus_guest_id") || crypto.randomUUID();
+            existingGuestId || crypto.randomUUID();
 
           localStorage.setItem("virtus_guest_id", guestId);
 
@@ -3636,6 +3693,25 @@ setAccountAccess(authData.access || null);
       mounted = false;
     };
     }, [isAuthenticated]);
+
+  // EWS preview handoff: hydrate the chat without a mandatory account screen.
+  useEffect(() => {
+    const prefix = "#ews-continue=";
+    if (typeof window === "undefined" || !window.location.hash.startsWith(prefix)) return;
+    try {
+      const history = JSON.parse(decodeURIComponent(window.location.hash.slice(prefix.length)));
+      if (!Array.isArray(history)) return;
+      const imported = history.filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string").slice(-14).map((m) => ({role:m.role,text:m.content.slice(0,4000)}));
+      if (!imported.length) return;
+      sessionStorage.setItem("virtus_ews_handoff", "true");
+      setConversation(imported);
+      setShowPlanOverlay(false);
+      localStorage.setItem("virtus_ews_imported_chat", JSON.stringify(imported));
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    } catch {
+      // Malformed handoff must never block the normal application.
+    }
+  }, []);
 
   useEffect(() => {
   if (!shouldAutoScroll) return;
@@ -4341,7 +4417,7 @@ async function sendMessage(overrideMessage = null, overridePracticeMode = null, 
       ? sendOptions.chatId.trim()
       : "";
 
-  if (!messageToSend.trim() && activeFiles.length === 0) return;
+  if (!messageToSend.trim() && activeFiles.length === 0 && !guestPastedImage) return;
   stopVirtusVoice();
 
   setEditingIndex(null);
@@ -4391,12 +4467,14 @@ const attachedFileText =
     : "";
 
 const userMessage = `${messageToSend}${attachedFileText}`;
+const imageForRequest = guestPastedImage;
 const shouldGenerateImageDirectly = isImageCreationRequest(messageToSend);
 
 setMessage("");
 setLastMessage(userMessage);
 setActiveFile(null);
 setActiveFiles([]);
+setGuestPastedImage(null);
 setLoading(true);
   setShouldAutoScroll(true);
   abortControllerRef.current = new AbortController();
@@ -4407,7 +4485,7 @@ setLoading(true);
       if (shouldGenerateImageDirectly) {
         await handleCreateImageFile({
           title: getGeneratedDocumentTitle(messageToSend),
-          content: messageToSend,
+          content: `${conversation.slice(-12).map((item) => `${item.role}: ${String(item.text || "").slice(0, 1300)}`).join("\n")}\n\nCURRENT IMAGE REQUEST: ${messageToSend}`.slice(-9500),
           fileName: getGeneratedDocumentTitle(messageToSend),
         });
 
@@ -4433,6 +4511,7 @@ const res = await fetch("/api/chat", {
     signal: abortControllerRef.current.signal,
 body: JSON.stringify({
   message: userMessage,
+  ...(imageForRequest && !isAuthenticated ? { guestPastedImage: imageForRequest } : {}),
   chatId: chatIdForRequest,
   practiceMode: practiceModeForRequest,
   activeProjectId: forceNoProject ? null : activeProject?.id || null,
@@ -4876,10 +4955,10 @@ const renderAssistantActions = (item, index) => {
     conversation[index - 1]?.role === "user";
 
   const iconClass =
-    "flex h-7 w-7 items-center justify-center rounded-md text-sky-300/70 transition hover:bg-sky-950/30 hover:text-sky-200";
+    "virtus-message-action flex h-8 min-w-8 px-1 items-center justify-center rounded-lg text-[#e7c786] transition hover:bg-[#135442] hover:text-[#fff2cb]";
 
   return (
-    <div className="relative flex items-center gap-3">
+    <div className="virtus-message-actions relative flex flex-wrap items-center gap-1.5">
       <button
         type="button"
         title="Copy"
@@ -5322,14 +5401,66 @@ const renderAssistantActions = (item, index) => {
   );
 };
 
+
+  function openLuxuryHome() {
+    setLuxuryLibraryOpen(false);
+    if (loading) {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+      setLoading(false);
+    }
+    stopVirtusVoice();
+    const newChatId = getGuestSidebarChatId(guestAccess?.plan, crypto.randomUUID());
+    localStorage.setItem("virtus_chat_id", newChatId);
+    setActiveChatId(newChatId);
+    setActiveProject(null);
+    setProjectHomeOpen(false);
+    setConversation([]);
+    setMessage("");
+    setReply("");
+    setStreamingReply("");
+    setRegenerating(false);
+    setEditingIndex(null);
+    setEditingText("");
+    setIsPracticeMode(null);
+    setShouldAutoScroll(true);
+    setShowMobileMenu(false);
+    setLuxuryActiveNav("home");
+  }
+  function openLuxuryTools() {
+    setLuxuryLibraryOpen(false);
+    setLuxuryToolsOpen((previous) => !previous);
+    setSearchOpen(false);
+    setProjectsOpen(false);
+    setPracticeOpen(false);
+    setCaptureOpen(false);
+    setLuxuryActiveNav("tools");
+  }
+  function openLuxuryLibrary() {
+    setPracticeOpen(false);
+    setLuxuryActiveNav("library");
+    setLuxuryToolsOpen(false);
+    setShowFileMenu(false);
+    setShowDocumentLibrary(false);
+    setLuxuryLibraryOpen(true);
+    loadUploadedFiles();
+  }
+  function useLuxuryPrompt(prompt) {
+    if (loading || isDailyLimitReached || isTrialGuestExpired) return;
+    setMessage(prompt);
+    setLuxuryActiveNav("chat");
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(prompt.length, prompt.length);
+    });
+  }
+
 return (
 <>
-  {showSplash && (
-    <SplashScreen onFinish={() => setShowSplash(false)} />
-  )}
+  {/* Open directly into the chat; legacy splash is intentionally disabled. */}
 
 <main
-  className="virtus-chat-root h-[100dvh] md:h-screen overflow-hidden bg-zinc-900 text-zinc-100"
+  className="virtus-chat-root virtus-luxury h-[100dvh] md:h-screen overflow-hidden bg-[#091b1c] text-[#f5f3ec]"
   onClick={() => {
     if (!showPlanOverlay) return;
     setShowPlanOverlay(false);
@@ -5385,8 +5516,8 @@ return (
 )}
 
 {confirmDialog && (
-  <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-    <div className="w-full max-w-sm rounded-3xl border border-sky-900/35 bg-zinc-950/95 p-5 shadow-2xl shadow-sky-950/30">
+  <div className="virtus-luxury-confirm-overlay fixed inset-0 z-[100000] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+    <div className="virtus-luxury-confirm-card w-full max-w-sm rounded-3xl border border-sky-900/35 bg-zinc-950/95 p-6 shadow-2xl shadow-sky-950/30">
       <p className="text-xs font-medium uppercase tracking-[0.18em] text-sky-300/60">
         Virtus confirmation
       </p>
@@ -5401,7 +5532,7 @@ return (
             confirmDialog.resolve(false);
             setConfirmDialog(null);
           }}
-          className="rounded-full border border-zinc-800 bg-zinc-950/70 px-4 py-2 text-sm text-zinc-300 transition hover:border-sky-900/35 hover:bg-zinc-900"
+          className="virtus-luxury-confirm-no rounded-full px-5 py-2 text-sm transition"
         >
           No
         </button>
@@ -5412,7 +5543,7 @@ return (
             confirmDialog.resolve(true);
             setConfirmDialog(null);
           }}
-          className="rounded-full border border-sky-700/50 bg-sky-950/50 px-4 py-2 text-sm font-medium text-sky-100 transition hover:border-sky-500/70 hover:bg-sky-900/60"
+          className="virtus-luxury-confirm-yes rounded-full px-5 py-2 text-sm font-semibold transition"
         >
           Yes
         </button>
@@ -5422,24 +5553,36 @@ return (
 )}
 
  <div className="flex h-full">
-        <aside className="hidden md:flex md:w-72 bg-gradient-to-b from-zinc-950 via-sky-950/10 to-black border-r border-sky-900/25 h-full flex-col shadow-[inset_-1px_0_0_rgba(14,165,233,0.12)]">
-          <div className="px-4 pt-4 pb-3 border-b border-sky-900/20 bg-black/20 flex justify-center">
+        <aside className="virtus-luxury-sidebar hidden md:flex h-full flex-col">
+          <div className="virtus-luxury-brand flex flex-col items-center gap-2">
   <Image
-    src="/virtus-logo.png"
+    src="/virtus-aurum-emblem.svg"
     alt="Virtus AI logo"
-    width={190}
-    height={80}
-    className="block h-auto w-[190px] object-contain"
+    width={180}
+    height={202}
+    className="block object-contain"
   />
+  <p className="virtus-luxury-brand-name">Virtus <span className="text-[#8ad5e6]">AI</span></p>
+  <p className="virtus-luxury-brand-caption">By Enhanced Wellness Solutions</p>
 </div>
 
                     <div className="virtus-scrollbar flex-1 overflow-y-auto overflow-x-hidden p-3">
-            <div className="grid grid-cols-6 gap-2">
+            <LuxurySidebarNav
+              active={luxuryActiveNav}
+              onHome={openLuxuryHome}
+              onNewChat={() => { openLuxuryHome(); textareaRef.current?.focus(); setLuxuryActiveNav("chat"); }}
+              onLibrary={openLuxuryLibrary}
+              onTools={openLuxuryTools}
+              onRecent={() => setRecentOpen((previous) => !previous)}
+              recentOpen={recentOpen}
+            />
+            {isAdmin && <div className="mt-3 grid gap-2 border-t border-[#d8bd85]/30 pt-4"><p className="px-3 text-xs uppercase tracking-widest text-[#d8bd85]">Administrator</p><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/evaluation-lab">Evaluation Lab</Link><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/library-manager">Knowledge Library Manager</Link></div>}
+            <div className={luxuryToolsOpen ? "grid grid-cols-3 gap-2 mt-3" : "hidden"}>
               <button
                 type="button"
                 aria-label="Search"
                 onClick={() => { setSearchOpen(!searchOpen); setProjectsOpen(false); setPracticeOpen(false); setCaptureOpen(false); }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Search</span>
@@ -5456,7 +5599,7 @@ return (
                   setCaptureOpen(false);
                   if (!nextState) { setProjectHomeOpen(false); setActiveProject(null); }
                 }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Projects</span>
@@ -5464,78 +5607,17 @@ return (
 
               <button
                 type="button"
-                aria-label="New Chat"
-                onClick={() => {
-                  if (loading) { abortControllerRef.current?.abort(); }
-                  stopVirtusVoice();
-                  abortControllerRef.current = null;
-                  const newChatId = getGuestSidebarChatId(guestAccess?.plan, crypto.randomUUID());
-                  localStorage.setItem("virtus_chat_id", newChatId);
-                  setActiveChatId(newChatId);
-                  setActiveProject(null);
-                  setProjectHomeOpen(false);
-                  setConversation([]);
-                  setMessage("");
-                  setReply("");
-                  setStreamingReply("");
-                  setLoading(false);
-                  setRegenerating(false);
-                  setEditingIndex(null);
-                  setEditingText("");
-                  setIsPracticeMode(null);
-                  setShouldAutoScroll(true);
-                }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">New Chat</span>
-              </button>
-
-              <button
-                type="button"
-                aria-label="Meetings"
-                onClick={() => router.push("/meetings")}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><rect x="3" y="5" width="14" height="14" rx="2" /><path d="m17 9 4-2v10l-4-2" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Meetings</span>
-              </button>
-
-              <button
-                type="button"
-                aria-label="Business"
-                onClick={() => router.push("/operations")}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 20V8" /><path d="M10 20V4" /><path d="M16 20v-7" /><path d="M22 20H2" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Business</span>
-              </button>
-
-              <button
-                type="button"
-                aria-label="Capture"
-                onClick={() => {
-                  setCaptureOpen(!captureOpen);
-                  setSearchOpen(false);
-                  setProjectsOpen(false);
-                  setPracticeOpen(false);
-                }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Capture</span>
-              </button>
-
-              <button
-                type="button"
                 aria-label="Practices"
                 onClick={() => {
-                  setPracticeOpen(!practiceOpen);
+                  setPracticeOpen(true);
+                  setLuxuryToolsOpen(false);
+                  setLuxuryLibraryOpen(false);
+                  setShowMobileMenu(false);
                   setSearchOpen(false);
                   setProjectsOpen(false);
                   setCaptureOpen(false);
                 }}
-                className="group relative flex h-11 items-center justify-center rounded-2xl border border-sky-900/30 bg-sky-950/10 text-sky-100 shadow-sm shadow-sky-950/20 backdrop-blur-sm transition hover:border-sky-700/50 hover:bg-sky-950/25 hover:shadow-sky-900/10"
+                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M2 12h3" /><path d="M19 12h3" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Practices</span>
@@ -5558,7 +5640,7 @@ return (
               </div>
             )}
             {projectsOpen && (
-              <div className="mt-3 rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 shadow-sm shadow-sky-950/10">
+              <div className="virtus-projects-panel mt-3 rounded-2xl border border-[#d8bd85]/40 bg-[#092e29] p-3 shadow-sm">
                 <button
                   type="button"
                   onClick={() => {
@@ -5592,8 +5674,8 @@ return (
                         id: projectId,
                         title: cleanTitle,
                         chatId: crypto.randomUUID(),
-                      };
                         chats: [],
+                      };
 
                       upsertProjectSpaceState(nextProject);
                       void saveProjectSpaceToApi(nextProject);
@@ -5681,65 +5763,8 @@ return (
               </div>
             )}
 
-            {practiceOpen && (
-              <div className="virtus-practice-panel mt-3 max-h-[420px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
-                <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
-                  Practice Categories
-                </p>
-
-                {renderGuidedPracticeAssessment()}
-
-                {virtusPracticeCategories.map((category) => {
-                  const canUseCategory = canUsePracticeCategory(category);
-                  const requiredPlan = category.minimumPlan || "free";
-                  const accessLabel = getPracticeCategoryAccessLabel(
-                    category,
-                    canUseCategory
-                  );
-                  const categoryPrompt = getPracticeCategoryPrompt(category);
-
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => {
-                        if (!canUseCategory) {
-                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
-                          setPracticeOpen(false);
-                          setIsPracticeMode(null);
-                          return;
-                        }
-
-                        setMessage(categoryPrompt);
-                        setPracticeOpen(false);
-                        setIsPracticeMode(category.practiceMode);
-                      }}
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
-                        canUseCategory
-                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
-                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
-                      }`}
-                    >
-                      <span className="block font-medium">
-                        {category.title}
-                      </span>
-
-                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
-                        {category.description}
-                      </span>
-
-                      {accessLabel && (
-                        <span className="virtus-practice-badge mt-1 inline-flex rounded-full border border-sky-900/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]">
-                          {accessLabel}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="mt-6">
+            {recentOpen && (
+            <div className="virtus-luxury-expanded mt-3">
 <div className="mb-2 flex items-center justify-between px-2">
   <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
     {chatSearchQuery.trim() ? "Search Results" : "Recent"}
@@ -5804,7 +5829,7 @@ return (
         );
   }).length === 0 ? (
     <div className="rounded-xl px-3 py-2 text-sm text-zinc-400 bg-zinc-900/60 border border-zinc-800">
-      Recent conversations will appear here
+      Your conversations will appear here
     </div>
   ) : (
     recentConversations
@@ -5974,25 +5999,26 @@ if (data.conversation) {
                 )}
               </div>
             </div>
+            )}
           </div>
 
-                    <div className="border-t border-zinc-800 p-3 space-y-3">
+                    <div className="virtus-luxury-sidebar-footer border-t border-zinc-800 p-3 space-y-3">
   {isAuthenticated ? (
     <>
-      <div className="flex items-center justify-between gap-2 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-2 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm">
+      <div className="virtus-account-footer-card flex items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 text-white backdrop-blur-sm">
         <button
           type="button"
           onClick={() => router.push("/account")}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-1 py-1 text-left transition hover:bg-sky-950/30"
+          className="virtus-account-footer-link flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-1 py-1 text-left transition"
           aria-label="Open account"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-xs font-semibold text-sky-200">
+          <span className="virtus-account-footer-avatar flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold">
             {(currentUser?.nickname || currentUser?.email || "S").charAt(0).toUpperCase()}
           </span>
 
           <span className="min-w-0">
-            <span className="block text-sm font-medium leading-4 text-sky-200">Account</span>
-            <span className="block truncate text-xs leading-4 text-zinc-400">
+            <span className="virtus-account-footer-title block text-sm font-medium leading-5">Account</span>
+            <span className="virtus-account-footer-subtitle block truncate text-xs leading-4">
               {currentUser?.nickname || currentUser?.email?.split("@")[0] || "You are signed in"}
             </span>
           </span>
@@ -6001,7 +6027,7 @@ if (data.conversation) {
         <button
           type="button"
           onClick={handleLogout}
-          className="shrink-0 rounded-xl border border-sky-900/40 bg-sky-950/20 px-3 py-2 text-xs text-sky-200 transition hover:bg-sky-900/35"
+          className="virtus-account-footer-logout shrink-0 rounded-xl border px-3 py-2 text-xs font-semibold transition"
         >
           Log out
         </button>
@@ -6010,7 +6036,8 @@ if (data.conversation) {
     </>
   ) : (
 <Link
-  href="/login"
+  href="/login?next=/"
+  aria-label="Log in to Virtus AI"
   className="flex items-center gap-3 rounded-2xl border border-sky-900/25 bg-zinc-950/35 px-3 py-3 text-white shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-zinc-950/55"
 >
   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-900/40 bg-sky-950/30 text-sm font-semibold text-sky-200 shadow-sm shadow-sky-950/20">
@@ -6027,14 +6054,95 @@ if (data.conversation) {
         </aside>
 
 <section
-  className="relative flex-1 min-w-0 flex justify-center bg-zinc-900"
+  className="virtus-luxury-content relative flex-1 min-w-0 flex justify-center bg-zinc-900"
   onWheel={(e) => {
     if (!scrollContainerRef.current) return;
     scrollContainerRef.current.scrollTop += e.deltaY;
   }}
 >
           <div className="w-full h-full flex flex-col">
-            {showPlanOverlay && (
+<VirtusPracticeWorkspace
+  open={practiceOpen}
+  onClose={() => setPracticeOpen(false)}
+  categoryCount={virtusPracticeCategories.length}
+  assessment={practiceOpen ? renderGuidedPracticeAssessment() : null}
+>
+                {virtusPracticeCategories.map((category) => {
+                  const canUseCategory = canUsePracticeCategory(category);
+                  const requiredPlan = category.minimumPlan || "free";
+                  const accessLabel = getPracticeCategoryAccessLabel(
+                    category,
+                    canUseCategory
+                  );
+                  const categoryPrompt = getPracticeCategoryPrompt(category);
+
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        if (!canUseCategory) {
+                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
+                          setPracticeOpen(false);
+                          setIsPracticeMode(null);
+                          return;
+                        }
+
+                        setMessage(categoryPrompt);
+                        setPracticeOpen(false);
+                        setIsPracticeMode(category.practiceMode);
+                      }}
+                      className={`virtus-practice-category w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
+                        canUseCategory
+                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
+                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
+                      }`}
+                    >
+                      <span className="virtus-practice-category-title block font-semibold">
+                        {category.title}
+                      </span>
+
+                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
+                        {category.description}
+                      </span>
+
+                      {accessLabel && (
+                        <span className="virtus-practice-badge mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
+                          {accessLabel}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+</VirtusPracticeWorkspace>
+<LuxuryFileLibrary
+  open={luxuryLibraryOpen}
+  onClose={() => {
+    setLuxuryLibraryOpen(false);
+    setLuxuryActiveNav(conversation.length ? "chat" : "home");
+  }}
+  isAuthenticated={isAuthenticated}
+  files={uploadedFiles}
+  uploading={uploadingFile}
+  notice={fileNotice}
+  onUpload={() => document.getElementById("virtus-file-upload")?.click()}
+  onRefresh={loadUploadedFiles}
+  onAttach={(file) => {
+    setActiveFile(file);
+    setActiveFiles((previous) => previous.some((item) => item.id === file.id) ? previous : [...previous, file]);
+    setMessage((current) => current || "Review this document.");
+    setLuxuryLibraryOpen(false);
+    setLuxuryActiveNav("chat");
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }}
+  onPreview={(file) => {
+    setImagePreviewFile(file);
+    setLuxuryLibraryOpen(false);
+  }}
+  onDelete={handleDeleteFile}
+  attachedIds={activeFiles.map((file) => file.id)}
+/>
+            {false && showPlanOverlay && typeof window !== "undefined" && sessionStorage.getItem("virtus_ews_handoff") !== "true" && new URLSearchParams(window.location.search).get("source") !== "ews-widget" && !window.location.hash.startsWith("#ews-continue=") && (
   <div
     className="absolute inset-0 z-20 flex items-start md:items-center justify-center overflow-y-auto md:overflow-hidden bg-black/70 px-3 py-4 md:px-6 md:py-0 no-scrollbar"
     onClick={() => {
@@ -6137,20 +6245,22 @@ if (data.conversation) {
     </div>
   </div>
 )}
-<div className="virtus-chat-clear-bar virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-4 md:py-3">
+<div className="virtus-luxury-header virtus-chat-clear-bar virtus-theme-card-soft relative z-[9999] border-b border-sky-900/20 px-3 py-3 backdrop-blur-sm md:px-4 md:py-3">
   <div className="flex min-h-[44px] items-center gap-4">
 <div className="md:hidden">
   <button
     type="button"
     onClick={() => setShowMobileMenu(true)}
-    className="virtus-theme-card flex items-center gap-2 rounded-2xl border border-sky-900/20 px-2 py-1.5 text-sky-700 shadow-sm shadow-sky-950/10 transition hover:border-sky-800/40 hover:bg-sky-950/10"
+    className="virtus-mobile-menu-trigger inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border transition"
     aria-label="Open Virtus menu"
+    aria-expanded={showMobileMenu}
+    aria-controls="virtus-mobile-navigation"
   >
     <Image
-      src="/virtus-logo.png"
+      src="/virtus-aurum-emblem.svg"
       alt="Virtus AI"
-      width={112}
-      height={48}
+      width={34}
+      height={38}
       className="h-7 w-auto object-contain"
     />
   </button>
@@ -6173,12 +6283,12 @@ if (data.conversation) {
 )}
 
 
-<div className="hidden min-w-0 flex-1 items-center justify-start md:flex">
+<div className="virtus-luxury-header-mark hidden min-w-0 flex-1 items-center justify-start md:flex">
   <Image
-    src="/virtus-logo.png"
+    src="/virtus-aurum-emblem.svg"
     alt="Virtus AI"
-    width={128}
-    height={54}
+    width={38}
+    height={42}
     className="h-8 w-auto object-contain"
   />
 </div>
@@ -6189,7 +6299,11 @@ if (data.conversation) {
         onClick={() => setShowMobileMenu(false)}
       >
         <div
-          className="virtus-mobile-panel h-full w-full p-5 text-sm"
+          className="virtus-mobile-panel virtus-scrollbar h-full overflow-y-auto overscroll-contain p-4 text-sm"
+          id="virtus-mobile-navigation"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Virtus AI mobile navigation"
           onClick={(e) => e.stopPropagation()}
           onTouchStart={(e) => {
             mobileMenuTouchStartXRef.current = e.touches[0].clientX;
@@ -6205,266 +6319,45 @@ if (data.conversation) {
             mobileMenuTouchStartXRef.current = null;
           }}
         >
-          <div className="mb-5 flex items-center justify-between border-b border-sky-900/20 pb-4">
+          <div className="virtus-mobile-brand-header mb-4 flex items-center justify-between gap-3 border-b pb-4">
             <Image
-              src="/virtus-logo.png"
+              src="/virtus-aurum-emblem.svg"
               alt="Virtus AI"
-              width={160}
-              height={68}
-              className="h-10 w-auto object-contain"
+              width={42}
+              height={47}
+              className="virtus-mobile-brand-emblem h-12 w-auto object-contain"
             />
+            <div className="virtus-mobile-brand-copy min-w-0 flex-1">
+              <p className="virtus-mobile-brand-name">Virtus <span>AI</span></p>
+              <p className="virtus-mobile-brand-caption">By Enhanced Wellness Solutions</p>
+            </div>
 
             <button
               type="button"
               onClick={() => setShowMobileMenu(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-sky-900/30 bg-sky-950/20 text-sky-200"
+              ref={mobileMenuCloseRef}
+              className="virtus-mobile-close-button flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-xl transition"
               aria-label="Close menu"
             >
-        x
+        ×
       </button>
           </div>
 
-          <div className="space-y-2 pt-3">
-            <button
-              type="button"
-              onClick={() => {
-                const newChatId = getGuestSidebarChatId(
-                  guestAccess?.plan,
-                  crypto.randomUUID()
-                );
-
-                localStorage.setItem("virtus_chat_id", newChatId);
-                setActiveChatId(newChatId);
-                setActiveProject(null);
-                setProjectHomeOpen(false);
-                setConversation([]);
+          <div className="virtus-mobile-menu-stack space-y-2 pt-2">
+            <LuxurySidebarNav
+              active={luxuryActiveNav}
+              recentOpen={recentOpen}
+              onHome={() => { openLuxuryHome(); setShowMobileMenu(false); }}
+              onNewChat={() => {
+                openLuxuryHome();
+                setLuxuryActiveNav("chat");
                 setShowMobileMenu(false);
+                requestAnimationFrame(() => textareaRef.current?.focus());
               }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              + New chat
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setProjectsOpen(!projectsOpen);
-                setPracticeOpen(false);
-                setSearchOpen(false);
-                setCaptureOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Projects
-            </button>
-
-            {projectsOpen && (
-              <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 bg-zinc-950/45 p-3 no-scrollbar">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!canStartNewProject()) return;
-                    setShowProjectInput(true);
-                  }}
-                  className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
-                >
-                  + Project
-                </button>
-
-                {showProjectInput && (
-                  <input
-                    value={newProjectTitle}
-                    onChange={(event) => setNewProjectTitle(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter") return;
-
-                      const cleanTitle = newProjectTitle.trim();
-                      if (!cleanTitle) return;
-
-                      const projectId = `project-${cleanTitle
-                        .toLowerCase()
-                        .replace(/\s+/g, "-")
-                        .replace(/[^a-z0-9-]/g, "")
-                        .replace(/-+/g, "-")
-                        .replace(/^-|-$/g, "")}-${crypto.randomUUID().slice(0, 8)}`;
-
-                      const nextProject = {
-                        id: projectId,
-                        title: cleanTitle,
-                        chatId: crypto.randomUUID(),
-                      };
-                        chats: [],
-
-                      upsertProjectSpaceState(nextProject);
-                      void saveProjectSpaceToApi(nextProject);
-                      setActiveProject(nextProject);
-                      setProjectHomeOpen(true);
-                      setNewProjectTitle("");
-                      setShowProjectInput(false);
-                      setShowMobileMenu(false);
-                    }}
-                    placeholder="Project name..."
-                    className="mt-2 w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-700/50"
-                    autoFocus
-                  />
-                )}
-
-                {projectSpaces.map((project) => (
-                  <button
-                    key={project.id}
-                    type="button"
-                    onClick={() => {
-                      const projectChatId = project.chatId || crypto.randomUUID();
-                      const nextProject = { ...project, chatId: projectChatId };
-
-                      setActiveProject(nextProject);
-                      setProjectSpaces((prev) =>
-                        prev.map((savedProject) =>
-                          savedProject.id === project.id ? nextProject : savedProject
-                        )
-                      );
-                      void saveProjectSpaceToApi(nextProject);
-                      localStorage.setItem("virtus_chat_id", projectChatId);
-                      setActiveChatId(projectChatId);
-                      setConversation([]);
-                      setMessage("");
-                      setReply("");
-                      setStreamingReply("");
-                      setEditingIndex(null);
-                      setEditingText("");
-                      setIsPracticeMode(null);
-                      setShouldAutoScroll(true);
-                      setProjectHomeOpen(true);
-                      setShowMobileMenu(false);
-                    }}
-                    className="w-full rounded-xl border border-sky-900/15 bg-zinc-950/35 px-3 py-2 text-left text-sm text-zinc-300 transition hover:border-sky-800/35 hover:bg-zinc-950/55"
-                  >
-                    {project.title}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setCaptureOpen(!captureOpen);
-                setProjectsOpen(false);
-                setPracticeOpen(false);
-                setSearchOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Capture
-            </button>
-
-            {captureOpen && renderCapturePanel()}
-
-            <button
-              type="button"
-              onClick={() => {
-                setPracticeOpen(!practiceOpen);
-                setProjectsOpen(false);
-                setSearchOpen(false);
-                setCaptureOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Practice
-            </button>
-
-            {practiceOpen && (
-              <div className="virtus-practice-panel max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-sky-900/20 p-2 no-scrollbar">
-                <p className="px-3 pt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/50">
-                  Practice Categories
-                </p>
-
-                {renderGuidedPracticeAssessment()}
-
-                {virtusPracticeCategories.map((category) => {
-                  const canUseCategory = canUsePracticeCategory(category);
-                  const requiredPlan = category.minimumPlan || "free";
-                  const accessLabel = getPracticeCategoryAccessLabel(
-                    category,
-                    canUseCategory
-                  );
-                  const categoryPrompt = getPracticeCategoryPrompt(category);
-
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => {
-                        if (!canUseCategory) {
-                          setMessage(getLockedPracticeCategoryMessage(category, requiredPlan));
-                          setPracticeOpen(false);
-                          setShowMobileMenu(false);
-                          setIsPracticeMode(null);
-                          return;
-                        }
-
-                        setMessage(categoryPrompt);
-                        setPracticeOpen(false);
-                        setShowMobileMenu(false);
-                        setIsPracticeMode(category.practiceMode);
-                      }}
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
-                        canUseCategory
-                          ? "virtus-practice-item border-sky-900/10 hover:border-sky-800/30"
-                          : "virtus-practice-item-locked border-zinc-800/70 opacity-75 hover:border-sky-900/20"
-                      }`}
-                    >
-                      <span className="block font-medium">
-                        {category.title}
-                      </span>
-
-                      <span className="mt-0.5 block text-sm leading-6 virtus-practice-description">
-                        {category.description}
-                      </span>
-
-                      {accessLabel && (
-                        <span className="virtus-practice-badge mt-1 inline-flex rounded-full border border-sky-900/25 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em]">
-                          {accessLabel}
-                        </span>
-                      )}
-                    </button>
-                  );
-            <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Meetings
-            </Link>
-
-                })}
-              </div>
-            )}
-
-            <Link href="/meetings" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Meetings
-            </Link>
-
-            <Link href="/operations" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Operations
-            </Link>
-
-            <Link href="/account" onClick={() => setShowMobileMenu(false)} className="virtus-mobile-menu-item block rounded-2xl px-3 py-3 transition">
-              Profile
-            </Link>
-
-
-
-            <button
-              type="button"
-              onClick={() => {
-                setRecentOpen(!recentOpen);
-                setProjectsOpen(false);
-                setPracticeOpen(false);
-                setSearchOpen(false);
-                setCaptureOpen(false);
-              }}
-              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
-            >
-              Recent Chats
-            </button>
-
+              onLibrary={() => { openLuxuryLibrary(); setShowMobileMenu(false); }}
+              onTools={openLuxuryTools}
+              onRecent={() => setRecentOpen((current) => !current)}
+            />
             {recentOpen && (
               <div className="max-h-[45vh] space-y-1 overflow-y-auto rounded-2xl border border-sky-900/20 p-3">
                 {recentConversations.length === 0 ? (
@@ -6548,6 +6441,137 @@ if (data.conversation) {
               </div>
             )}
 
+
+
+
+
+            {luxuryToolsOpen && (
+              <div className="virtus-mobile-tools-section space-y-2 rounded-2xl p-3">
+            <button type="button" onClick={() => { setSearchOpen((current) => !current); setProjectsOpen(false); setCaptureOpen(false); }} className="virtus-mobile-menu-item w-full rounded-xl px-3 py-3 text-left transition">Search chats</button>
+            {searchOpen && (
+              <div className="virtus-mobile-subpanel rounded-xl p-3">
+                <label htmlFor="virtus-mobile-chat-search" className="mb-2 block text-xs font-semibold text-[#f3d08c]">Search recent conversations</label>
+                <input id="virtus-mobile-chat-search" value={chatSearchQuery} onChange={(event) => setChatSearchQuery(event.target.value)} placeholder="Search chats..." className="virtus-mobile-search-input w-full rounded-xl px-3 py-3 text-base" />
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setProjectsOpen(!projectsOpen);
+                setPracticeOpen(false);
+                setSearchOpen(false);
+                setCaptureOpen(false);
+              }}
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
+            >
+              Projects
+            </button>
+
+            {projectsOpen && (
+              <div className="virtus-projects-panel max-h-[360px] space-y-2 overflow-y-auto rounded-2xl border border-[#d8bd85]/40 bg-[#092e29] p-3 no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!canStartNewProject()) return;
+                    setShowProjectInput(true);
+                  }}
+                  className="w-full rounded-xl border border-sky-900/25 bg-sky-950/20 px-3 py-2 text-left text-sm text-sky-100 transition hover:border-sky-700/40 hover:bg-sky-950/35"
+                >
+                  + Project
+                </button>
+
+                {showProjectInput && (
+                  <input
+                    value={newProjectTitle}
+                    onChange={(event) => setNewProjectTitle(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+
+                      const cleanTitle = newProjectTitle.trim();
+                      if (!cleanTitle) return;
+
+                      const projectId = `project-${cleanTitle
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")
+                        .replace(/[^a-z0-9-]/g, "")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "")}-${crypto.randomUUID().slice(0, 8)}`;
+
+                      const nextProject = {
+                        id: projectId,
+                        title: cleanTitle,
+                        chatId: crypto.randomUUID(),
+                        chats: [],
+                      };
+
+                      upsertProjectSpaceState(nextProject);
+                      void saveProjectSpaceToApi(nextProject);
+                      setActiveProject(nextProject);
+                      setProjectHomeOpen(true);
+                      setNewProjectTitle("");
+                      setShowProjectInput(false);
+                      setShowMobileMenu(false);
+                    }}
+                    placeholder="Project name..."
+                    className="mt-2 w-full rounded-xl border border-sky-900/25 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-sky-700/50"
+                    autoFocus
+                  />
+                )}
+
+                {projectSpaces.map((project) => (
+                  <button
+                    key={project.id}
+                    type="button"
+                    onClick={() => {
+                      const projectChatId = project.chatId || crypto.randomUUID();
+                      const nextProject = { ...project, chatId: projectChatId };
+
+                      setActiveProject(nextProject);
+                      setProjectSpaces((prev) =>
+                        prev.map((savedProject) =>
+                          savedProject.id === project.id ? nextProject : savedProject
+                        )
+                      );
+                      void saveProjectSpaceToApi(nextProject);
+                      localStorage.setItem("virtus_chat_id", projectChatId);
+                      setActiveChatId(projectChatId);
+                      setConversation([]);
+                      setMessage("");
+                      setReply("");
+                      setStreamingReply("");
+                      setEditingIndex(null);
+                      setEditingText("");
+                      setIsPracticeMode(null);
+                      setShouldAutoScroll(true);
+                      setProjectHomeOpen(true);
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full rounded-xl border border-sky-900/15 bg-zinc-950/35 px-3 py-2 text-left text-sm text-zinc-300 transition hover:border-sky-800/35 hover:bg-zinc-950/55"
+                  >
+                    {project.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
+
+            <button
+              type="button"
+              onClick={() => {
+                setPracticeOpen(true);
+                setShowMobileMenu(false);
+                setLuxuryLibraryOpen(false);
+                setProjectsOpen(false);
+                setSearchOpen(false);
+                setCaptureOpen(false);
+              }}
+              className="virtus-mobile-menu-item w-full rounded-2xl px-3 py-3 text-left transition"
+            >
+              Practice
+            </button>
+              </div>
+            )}
+
             <div className="my-3 h-px bg-sky-900/20" />
 
             {isAuthenticated ? (
@@ -6571,12 +6595,12 @@ if (data.conversation) {
       </div>
     )}
 
-    <div className="ml-auto shrink-0 text-right">
+    <div className="virtus-luxury-plan-actions ml-auto flex flex-wrap shrink-0 items-center justify-end">
       <Link
         href="/upgrade"
-        className="select-text inline-flex items-center rounded-full border border-sky-900/25 bg-sky-950/20 px-3 py-1 text-xs text-sky-200 transition hover:border-sky-800/40 hover:bg-sky-950/35"
+        className="virtus-luxury-plan-pill select-text"
       >
-        Plan: {displayPlanLabel}
+        <span aria-hidden="true" className="virtus-luxury-plan-sparkle">✦</span><span className="virtus-luxury-plan-label">{currentPlanKey === "free" ? "Free access ended — Choose membership" : `Your plan: ${displayPlanLabel}`}</span>
       </Link>
 
       {isTrialGuestExpired && (
@@ -6585,22 +6609,17 @@ if (data.conversation) {
         </p>
       )}
 
-      {shouldShowUpgradePrompt && (
-        <Link
-          href={
-            isTrialGuestExpired
-              ? "/upgrade"
-              : isAuthenticated
-              ? "/upgrade"
-              : "/login"
-          }
-          className="inline-block text-xs text-sky-300/70 mt-2 hover:text-sky-200 transition"
-        >
-          {isTrialGuestExpired
-            ? "Continue with account or plan"
-            : !isAuthenticated && currentAccess?.plan === "trial_guest"
-            ? "Continue"
-            : displayUpgradeLabel}
+      {!isAuthenticated && (
+        <Link href="/login?mode=signup" className="virtus-luxury-register-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="7" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2H4Z" />
+          </svg>
+          Register to continue
+        </Link>
+      )}
+      {shouldShowUpgradePrompt && isAuthenticated && (
+        <Link href="/upgrade" className="virtus-luxury-register-pill">
+          {displayUpgradeLabel || "Explore plans"}
         </Link>
       )}
     </div>
@@ -6608,7 +6627,7 @@ if (data.conversation) {
 </div>
 <div
   ref={scrollContainerRef}
-  className={`virtus-scrollbar flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 ${
+  className={`virtus-scrollbar virtus-luxury-scroll flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-6 min-h-0 ${
     showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
@@ -6618,7 +6637,7 @@ if (data.conversation) {
                   {conversation.map((item, index) => (
                     <div
                       key={index}
-className={`relative select-text max-w-[92%] md:max-w-[75%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
+className={`virtus-message-bubble ${item.role === "user" ? "virtus-message-bubble--user" : "virtus-message-bubble--assistant"} relative select-text max-w-[95%] md:max-w-[82%] rounded-2xl px-4 py-3 text-[15px] md:text-base break-words ${
 item.role === "user" && !loading
   ? "mb-12"
   : ""
@@ -6628,12 +6647,12 @@ item.role === "user"
   : "mr-auto bg-zinc-950/35 border border-zinc-800/60 text-gray-300 shadow-sm shadow-sky-950/5 transition hover:border-sky-900/30 hover:bg-zinc-950/50"
 }`}
                     >
-                      <div className="mb-1 flex items-center justify-between gap-3">
+                      <div className="virtus-message-heading mb-2 flex flex-wrap items-start justify-between gap-2">
   <p className={`text-xs ${item.role === "user" ? "text-zinc-400" : "text-sky-300"}`}>
   {item.role === "user" ? "You" : "Virtus"}
 </p>
 
-  <div className="flex items-center gap-3">
+  <div className="virtus-message-toolbar flex flex-wrap items-center justify-end gap-1.5">
 {item.role === "user" &&
   !loading &&
   editingIndex !== index && (
@@ -6702,9 +6721,9 @@ onClick={() => {
                      {item.role === "assistant" ? (
   item.generatedImage?.id ? (
     <div className="overflow-hidden rounded-2xl border border-sky-900/35 bg-zinc-950/70 shadow-[0_0_30px_rgba(14,165,233,0.08)]">
-      <div className="flex items-center justify-between gap-3 border-b border-sky-900/25 bg-zinc-950/80 px-3 py-2 sm:px-4">
+      <div className="flex items-center justify-between gap-3 border-b border-amber-500/20 bg-[#001d19] px-3 py-2 sm:px-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/80">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-amber-300/90">
             Generated image
           </p>
           <p className="truncate text-xs text-zinc-400">
@@ -6716,7 +6735,7 @@ onClick={() => {
           <button
             type="button"
             onClick={() => setImagePreviewFile(item.generatedImage)}
-            className="rounded-full border border-sky-700/45 bg-sky-950/30 px-3 py-1.5 text-[11px] font-medium text-sky-100 transition hover:border-sky-500/70 hover:bg-sky-900/45"
+            className="rounded-full border border-amber-500/50 bg-emerald-950/50 px-3 py-1.5 text-[11px] font-medium text-amber-100 transition hover:border-amber-400 hover:bg-emerald-900/70"
           >
             Open large
           </button>
@@ -6727,7 +6746,7 @@ onClick={() => {
                 item.generatedImage.id
               )}`;
             }}
-            className="rounded-full border border-zinc-700/70 bg-zinc-900/50 px-3 py-1.5 text-[11px] font-medium text-zinc-300 transition hover:border-sky-700/60 hover:bg-sky-950/35 hover:text-sky-100"
+            className="rounded-full border border-amber-500/35 bg-[#001d19] px-3 py-1.5 text-[11px] font-medium text-amber-100 transition hover:border-amber-400 hover:bg-emerald-900/70"
           >
             Download
           </button>
@@ -6737,7 +6756,7 @@ onClick={() => {
       <button
         type="button"
         onClick={() => setImagePreviewFile(item.generatedImage)}
-        className="block w-full bg-black/30 p-2 transition hover:bg-sky-950/10"
+        className="block w-full bg-[#00110f] p-2 transition hover:bg-emerald-950/40"
         aria-label="Open generated image preview"
       >
         <Image
@@ -6869,7 +6888,7 @@ setRegenerating(true);
                   <div ref={messagesEndRef} />
                 </div>
                             ) : (
-<div className="h-full flex items-start justify-center px-6 py-10">
+<div className="virtus-luxury-empty h-full flex items-start justify-center px-3 md:px-6">
   {activeProject?.title ? (
     <div className="w-full max-w-4xl">
       <div className="mb-8">
@@ -7002,31 +7021,23 @@ setRegenerating(true);
       </div>
     </div>
   ) : (
-    <div className="rounded-3xl border border-sky-900/20 bg-zinc-950/25 px-8 py-6 text-center shadow-sm shadow-sky-950/10 backdrop-blur-sm">
-      <p className="text-sm font-medium text-sky-200">Ask Virtus anything.</p>
-      <p className="mt-2 text-xs virtus-theme-muted">
-        Think clearly. Act deliberately. Build with discipline.
-      </p>
-    </div>
+    <LuxuryWelcome onSelectPrompt={useLuxuryPrompt} disabled={loading || isDailyLimitReached || isTrialGuestExpired} />
   )}
 </div>
               )}
             </div>
 
 <div
-  className={`virtus-chat-clear-bar virtus-theme-card-soft border-t border-sky-900/20 px-3 py-3 md:px-8 md:py-5 ${
+  className={`virtus-chat-clear-bar virtus-luxury-composer-wrap virtus-theme-card-soft border-t border-sky-900/20 px-3 py-3 md:px-8 md:py-5 ${
     showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
-  <div className="virtus-theme-card relative rounded-[30px] border border-sky-900/25 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10">
+  <div className="virtus-theme-card virtus-luxury-composer relative rounded-[30px] border border-sky-900/25 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10">
 
 <div className="absolute left-3 top-1/2 -translate-y-1/2">
   <button
     type="button"
-    onClick={() => {
-      setShowFileMenu((value) => !value);
-      loadUploadedFiles();
-    }}
+    onClick={openLuxuryLibrary}
     disabled={uploadingFile || loading}
     className="virtus-file-action flex h-10 w-10 items-center justify-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-50"
   >
@@ -7037,206 +7048,12 @@ setRegenerating(true);
     id="virtus-file-upload"
     type="file"
     multiple
-    accept=".txt,.pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,image/*"
+    accept=".txt,.pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
     className="hidden"
     onChange={handleFileUpload}
     disabled={uploadingFile || loading}
   />
 </div>
-{showFileMenu && (
-  <div
-    onMouseLeave={() => {
-      setShowFileMenu(false);
-      setShowDocumentLibrary(false);
-    }}
-    onWheel={(event) => {
-      event.stopPropagation();
-    }}
-    className="virtus-file-menu absolute bottom-14 left-0 z-40 max-h-[62vh] w-72 overflow-y-auto overscroll-contain rounded-2xl border border-sky-900/55 bg-zinc-950/95 p-3 text-sm shadow-2xl shadow-black/70 backdrop-blur-xl no-scrollbar"
-  >
-    <div className="virtus-file-soft mb-3 rounded-2xl border border-sky-900/20 px-3 py-2">
-      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-300/60">
-        Executive File Studio
-      </p>
-
-      <p className="mt-1 text-xs leading-5 virtus-file-muted">
-        Upload, select, and use documents inside Virtus.
-      </p>
-
-
-    </div>
-
-    <button
-      type="button"
-      onClick={() => document.getElementById("virtus-file-upload")?.click()}
-      className="virtus-file-action flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition"
-    >
-      <span className="text-sky-300">+</span>
-      <span>Upload file</span>
-    </button>
-
-    <div className="my-3 h-px bg-sky-900/20" />
-
-    <button
-      type="button"
-      onClick={() => {
-        if (showDocumentLibrary) {
-          setShowDocumentLibrary(false);
-          setShowFileMenu(false);
-        } else {
-          setShowDocumentLibrary(true);
-        }
-      }}
-      className="virtus-file-action mb-2 flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition"
-    >
-      <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-sky-300/60">
-        Document Library
-      </span>
-      <span className="text-xs text-sky-300/70">
-        {showDocumentLibrary ? "Close" : "Open"}
-      </span>
-    </button>
-
-    {showDocumentLibrary && (() => {
-      const cleanUploadedFiles = Array.from(
-        new Map(
-          (uploadedFiles || [])
-            .filter((file) => file?.id && file?.file_name)
-            .map((file) => [file.file_name.toLowerCase(), file])
-        ).values()
-      );
-
-      return cleanUploadedFiles.length === 0 ? (
-        <p className="virtus-file-card rounded-xl border px-3 py-2 text-xs virtus-file-muted">
-          No uploaded files yet
-        </p>
-      ) : (
-        cleanUploadedFiles.map((file) => {
-          const isImageFile = String(file.file_type || "").startsWith("image/");
-          const previewUrl = `/api/files/download?fileId=${encodeURIComponent(file.id)}&preview=1`;
-
-          return (
-          <div
-            key={file.id}
-            className={`w-full rounded-xl border px-3 py-2 transition ${
-              activeFile?.id === file.id
-                ? "border-sky-500/50 bg-sky-950/45"
-                : "border-transparent hover:border-sky-900/25 hover:bg-sky-950/35"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setActiveFile(file);
-                setActiveFiles((currentFiles) => {
-                  const alreadyAttached = currentFiles.some(
-                    (item) => item.id === file.id
-                  );
-
-                  if (alreadyAttached) {
-                    return currentFiles;
-                  }
-
-                  return [...currentFiles, file];
-                });
-              }}
-              className="w-full text-left"
-            >
-              <span className="block truncate text-sky-700">
-                {file.file_name}
-              </span>
-              <span className="block text-[11px] virtus-file-muted">
-                Click to open this document for Virtus
-              </span>
-            </button>
-
-            {isImageFile && (
-              <div className="virtus-file-soft mt-2 overflow-hidden rounded-lg border border-sky-900/30">
-                <button
-                  type="button"
-                  onClick={() => setImagePreviewFile(file)}
-                  className="block w-full"
-                >
-                  <Image
-                    src={previewUrl}
-                    alt={file.file_name}
-                    width={320}
-                    height={180}
-                    unoptimized
-                    className="h-28 w-full object-cover"
-                  />
-                </button>
-              </div>
-            )}
-
-            {activeFile?.id === file.id && (
-              <div className="virtus-file-soft mt-3 rounded-xl border border-sky-900/25 px-3 py-2">
-                <p className="text-[11px] text-sky-200">
-                  File attached to the message box.
-                </p>
-
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMessage("Review this document.");
-                      setShowFileMenu(false);
-                      textareaRef.current?.focus();
-                    }}
-                    className="virtus-file-action rounded-lg border px-3 py-1.5 text-xs transition"
-                  >
-                    Open file
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.href = `/api/files/download?fileId=${encodeURIComponent(
-                        file.id
-                      )}`;
-                    }}
-                    className="virtus-file-action rounded-lg border px-3 py-1.5 text-xs transition"
-                  >
-                    Download
-                  </button>
-
-                  {confirmDeleteFileId === file.id ? (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteFile(file)}
-                        className="rounded-lg border border-red-700/40 bg-red-950/30 px-3 py-1.5 text-xs text-red-100 transition hover:bg-red-900/40"
-                      >
-                        Confirm
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDeleteFileId(null)}
-                        className="virtus-file-action rounded-lg border px-3 py-1.5 text-xs transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDeleteFileId(file.id)}
-                      className="rounded-lg border border-red-900/30 px-3 py-1.5 text-xs text-red-300 transition hover:bg-red-950/30 hover:text-red-100"
-                    >
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-          );
-        })
-      );
-    })()}
-</div>
-)}
 
 {fileNotice && (
   <div className="virtus-file-menu ml-16 mt-3 max-w-[70%] rounded-2xl border border-sky-900/30 px-4 py-3 text-sm shadow-lg shadow-black/20">
@@ -7259,6 +7076,12 @@ setRegenerating(true);
   </div>
 )}
 
+{guestPastedImage && (
+  <div className="ml-16 mt-2 flex items-center gap-2 text-xs text-sky-200" role="status">
+    <span>Clipboard image attached (guest session)</span>
+    <button type="button" onClick={() => setGuestPastedImage(null)} className="underline">Remove</button>
+  </div>
+)}
 {activeFiles.length > 0 && (
   <div className="ml-16 mt-3 flex max-w-[70%] flex-wrap items-center gap-2 max-md:ml-2 max-md:max-w-[96%]">
     {activeFiles.map((file) => {
@@ -7268,17 +7091,17 @@ setRegenerating(true);
       return (
         <div
           key={file.id}
-          className={`inline-flex max-w-[280px] items-center gap-2 rounded-2xl border px-2 py-1.5 text-xs text-sky-100 shadow-[0_0_18px_rgba(14,165,233,0.06)] md:max-w-[380px] ${
+          className={`inline-flex max-w-[280px] items-center gap-2 rounded-2xl border px-2 py-1.5 text-xs text-amber-100 shadow-none md:max-w-[380px] ${
             isImageFile
-              ? "border-sky-700/40 bg-zinc-950/75"
-              : "border-sky-800/35 bg-sky-950/30"
+              ? "border-amber-700/40 bg-[#001d19]/90"
+              : "border-amber-800/35 bg-emerald-950/30"
           }`}
         >
           {isImageFile ? (
             <button
               type="button"
               onClick={() => setImagePreviewFile(file)}
-              className="h-9 w-12 shrink-0 overflow-hidden rounded-xl border border-sky-900/35 bg-black/50"
+              className="h-9 w-12 shrink-0 overflow-hidden rounded-xl border border-amber-900/35 bg-black/50"
               title="Preview image"
             >
               <Image
@@ -7291,7 +7114,7 @@ setRegenerating(true);
               />
             </button>
           ) : (
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-800/40 bg-sky-950/45 text-[10px] font-semibold text-sky-300">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-800/40 bg-emerald-950/45 text-[10px] font-semibold text-amber-300">
               FILE
             </span>
           )}
@@ -7311,7 +7134,7 @@ setRegenerating(true);
                 setActiveFile(null);
               }
             }}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-sky-900/30 text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-amber-900/30 text-amber-300 transition hover:bg-emerald-950/45 hover:text-amber-100"
             title="Remove attached file"
           >
             x
@@ -7327,7 +7150,7 @@ setRegenerating(true);
           setActiveFiles([]);
           setActiveFile(null);
         }}
-        className="rounded-full border border-sky-900/30 bg-zinc-950/45 px-3 py-1.5 text-xs text-sky-300 transition hover:bg-sky-950/45 hover:text-sky-100"
+        className="rounded-full border border-amber-900/30 bg-[#001d19]/90 px-3 py-1.5 text-xs text-amber-300 transition hover:bg-emerald-950/45 hover:text-amber-100"
       >
         Clear all
       </button>
@@ -7348,7 +7171,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       : currentPlanKey === "plus"
       ? "Plus daily limit reached. Premium / Virtus Prime unlocks unlimited daily use."
       : "Daily limit reached for your current plan"
-      : activeProject?.title ? `New chat in ${activeProject.title}...` : "Message Virtus..."
+      : activeProject?.title ? `New chat in ${activeProject.title}...` : "Ask Virtus anything..."
   }
   value={message}
   disabled={loading || isDailyLimitReached || isTrialGuestExpired}
@@ -7363,7 +7186,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 }}
 />
 
-<div className="absolute bottom-3 right-3 flex items-center gap-3">
+<div className="virtus-luxury-composer-actions absolute bottom-3 right-3 flex items-center gap-3">
 
                  <button
   type="button"
@@ -7373,20 +7196,22 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       ? "bg-sky-950/60 text-sky-200"
       : "text-white/80 hover:bg-sky-950/30 hover:text-sky-200"
   }`}
-  aria-label={listening ? "Stop voice input" : "Start voice input"}
+  aria-label={listening ? "Stop voice typing" : "Start voice typing"}
+  aria-pressed={listening}
+  title={listening ? "Recording — tap square to stop" : "Start voice typing"}
 >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="h-4 w-4"
-                    >
-                      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                      <path d="M12 19v3" />
-                    </svg>
+  {listening ? (
+    <span className="relative flex h-5 w-5 items-center justify-center" aria-hidden="true">
+      <span className="absolute inset-0 rounded-full bg-red-500/20 animate-pulse" />
+      <span className="relative h-3.5 w-3.5 rounded-[3px] bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.7)]" />
+    </span>
+  ) : (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
+      <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+      <path d="M12 19v3" />
+    </svg>
+  )}
                   </button>
 
                   <div className="group/send relative">
@@ -7404,7 +7229,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 
     sendMessage();
   }}
-  className={`group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
+  className={`virtus-luxury-send group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
     loading ? "rounded-xl" : "rounded-full"
   }`}
   aria-label={loading ? "Stop" : "Send"}
@@ -7420,8 +7245,8 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       strokeWidth="2.5"
       className="h-5 w-5"
     >
-      <path d="M12 19V5" />
-      <path d="m5 12 7-7 7 7" />
+      <path d="M21.8 2.8 10.7 13.9" />
+      <path d="m21.8 2.8-6.6 19-4.5-7.9-7.9-4.5 19-6.6Z" />
     </svg>
   )}
 </button>

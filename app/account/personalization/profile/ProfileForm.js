@@ -48,7 +48,7 @@ export default function ProfileForm({
     "virtus-theme-card rounded-2xl border border-sky-900/20 px-4 py-4 shadow-sm shadow-sky-950/10 backdrop-blur-sm";
 
   const labelClass =
-    "text-xs uppercase tracking-[0.18em] text-sky-300/50";
+    "text-xs uppercase tracking-[0.18em] text-[#edc786]";
 
   const inputClass =
     "virtus-theme-input mt-3 w-full rounded-2xl border border-sky-900/25 px-4 py-3 text-sm outline-none transition";
@@ -107,12 +107,12 @@ export default function ProfileForm({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded-2xl border border-sky-900/30 bg-sky-950/10 px-4 py-2 text-sm text-sky-700 transition hover:border-sky-800/40 hover:bg-sky-950/15 disabled:opacity-50"
+          className="virtus-gold-button px-5 py-3 text-sm disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save profile"}
         </button>
 
-        {status ? <p className="text-sm text-sky-300/70">{status}</p> : null}
+        {status ? <p className="text-sm text-[#edc786]">{status}</p> : null}
       </div>
     </div>
   );

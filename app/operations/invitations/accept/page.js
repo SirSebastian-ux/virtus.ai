@@ -222,7 +222,7 @@ export default function AcceptOperationsInvitationPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-zinc-950 px-6 py-16 text-zinc-100">
+      <main className="virtus-subpage-modern min-h-screen bg-zinc-950 px-6 py-16 text-zinc-100">
         <div className="mx-auto max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 p-8">
           <p className="text-sm text-zinc-400">Loading invitation...</p>
         </div>

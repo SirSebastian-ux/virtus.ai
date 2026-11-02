@@ -1,0 +1,198 @@
+/* Shared Virtus AI visual language for legacy product pages and Operations.
+   Scoped to explicit page roots to preserve chat, account, RBAC and recording logic. */
+.virtus-subpage-modern,
+.virtus-operations-theme,
+.virtus-admin-theme {
+  --virtus-gold: #edc477;
+  --virtus-mist: #c5d7ce;
+  --virtus-emerald: #073e33;
+  color: #f7f2e5;
+  color-scheme: dark;
+  background:
+    radial-gradient(ellipse 65% 40% at 48% 0, rgba(14,105,76,.34), transparent 78%),
+    radial-gradient(ellipse 45% 60% at 0 95%, rgba(4,85,67,.22), transparent 80%),
+    linear-gradient(145deg,#061816 0%,#061311 57%,#091d19 100%) !important;
+  min-height: 100vh;
+}
+.virtus-subpage-modern *,
+.virtus-operations-theme *,
+.virtus-admin-theme * { box-sizing: border-box; }
+.virtus-subpage-modern [class*="bg-zinc-900"],
+.virtus-subpage-modern [class*="bg-slate-900"],
+.virtus-subpage-modern [class*="bg-white/5"],
+.virtus-operations-theme [class*="bg-zinc-900"],
+.virtus-operations-theme [class*="bg-slate-900"],
+.virtus-operations-theme [class*="bg-white/5"],
+.virtus-admin-theme [class*="bg-zinc-900"],
+.virtus-admin-theme [class*="bg-slate-900"],
+.virtus-admin-theme [class*="bg-white/5"] {
+  background-color: #0a342c !important;
+}
+.virtus-subpage-modern [class*="bg-zinc-950"],
+.virtus-subpage-modern [class*="bg-slate-950"],
+.virtus-operations-theme [class*="bg-zinc-950"],
+.virtus-operations-theme [class*="bg-slate-950"],
+.virtus-admin-theme [class*="bg-zinc-950"],
+.virtus-admin-theme [class*="bg-slate-950"] {
+  background-color: #061f1c !important;
+}
+.virtus-subpage-modern [class*="bg-sky-"],
+.virtus-subpage-modern [class*="bg-cyan-"],
+.virtus-operations-theme [class*="bg-sky-"],
+.virtus-operations-theme [class*="bg-cyan-"],
+.virtus-admin-theme [class*="bg-sky-"],
+.virtus-admin-theme [class*="bg-cyan-"] {
+  background-color: #12543f !important;
+}
+.virtus-subpage-modern [class*="text-sky-"],
+.virtus-subpage-modern [class*="text-cyan-"],
+.virtus-operations-theme [class*="text-sky-"],
+.virtus-operations-theme [class*="text-cyan-"],
+.virtus-admin-theme [class*="text-sky-"],
+.virtus-admin-theme [class*="text-cyan-"] {
+  color: #ebcb8f !important;
+}
+.virtus-subpage-modern [class*="border-sky-"],
+.virtus-subpage-modern [class*="border-cyan-"],
+.virtus-subpage-modern [class*="border-zinc-"],
+.virtus-subpage-modern [class*="border-slate-"],
+.virtus-operations-theme [class*="border-sky-"],
+.virtus-operations-theme [class*="border-cyan-"],
+.virtus-operations-theme [class*="border-zinc-"],
+.virtus-operations-theme [class*="border-slate-"],
+.virtus-admin-theme [class*="border-sky-"],
+.virtus-admin-theme [class*="border-cyan-"],
+.virtus-admin-theme [class*="border-zinc-"],
+.virtus-admin-theme [class*="border-slate-"] {
+  border-color: rgba(233,189,107,.36) !important;
+}
+.virtus-subpage-modern [class*="text-zinc-400"],
+.virtus-subpage-modern [class*="text-zinc-500"],
+.virtus-subpage-modern [class*="text-slate-300"],
+.virtus-subpage-modern [class*="text-slate-400"],
+.virtus-operations-theme [class*="text-zinc-400"],
+.virtus-operations-theme [class*="text-zinc-500"],
+.virtus-operations-theme [class*="text-slate-300"],
+.virtus-operations-theme [class*="text-slate-400"],
+.virtus-admin-theme [class*="text-zinc-400"],
+.virtus-admin-theme [class*="text-zinc-500"],
+.virtus-admin-theme [class*="text-slate-300"],
+.virtus-admin-theme [class*="text-slate-400"] {
+  color: #b8cbc3 !important;
+}
+.virtus-subpage-modern a:focus-visible,
+.virtus-subpage-modern button:focus-visible,
+.virtus-subpage-modern input:focus-visible,
+.virtus-operations-theme a:focus-visible,
+.virtus-operations-theme button:focus-visible,
+.virtus-operations-theme input:focus-visible,
+.virtus-admin-theme a:focus-visible,
+.virtus-admin-theme button:focus-visible {
+  outline: 2px solid #f5d58d;
+  outline-offset: 3px;
+}
+.virtus-subpage-modern input:not([type="checkbox"]):not([type="radio"]),
+.virtus-subpage-modern textarea,
+.virtus-subpage-modern select,
+.virtus-operations-theme input:not([type="checkbox"]):not([type="radio"]),
+.virtus-operations-theme textarea,
+.virtus-operations-theme select,
+.virtus-admin-theme input:not([type="checkbox"]):not([type="radio"]),
+.virtus-admin-theme textarea,
+.virtus-admin-theme select {
+  border-color: rgba(232,191,108,.42);
+  color: #f8f3e9;
+}
+.virtus-subpage-modern input::placeholder,
+.virtus-subpage-modern textarea::placeholder,
+.virtus-operations-theme input::placeholder,
+.virtus-operations-theme textarea::placeholder,
+.virtus-admin-theme input::placeholder,
+.virtus-admin-theme textarea::placeholder { color: #a0b9ad; }
+.virtus-operations-theme,
+.virtus-admin-theme { overflow-x: clip; }
+.virtus-operations-theme > header {
+  border-bottom: 1px solid rgba(235,191,105,.47) !important;
+  background: radial-gradient(ellipse at 35% 0, rgba(16,106,78,.32), transparent 70%), linear-gradient(135deg,#063b31,#05231f) !important;
+  box-shadow: inset 0 1px 0 rgba(255,227,160,.12);
+}
+.virtus-operations-theme > header > div { padding-top: 23px; padding-bottom: 23px; }
+.virtus-ops-brand, .virtus-admin-brand {
+  display: inline-flex; align-items: center; gap: 12px;
+  color: #f5d69c; text-decoration: none;
+}
+.virtus-ops-brand img, .virtus-admin-brand img { width: 44px; height: 50px; object-fit: contain; filter: drop-shadow(0 0 9px rgba(235,189,103,.18)); }
+.virtus-ops-brand strong, .virtus-admin-brand strong {
+  display: block; font: normal 25px/1.15 Georgia,"Times New Roman",serif;
+  letter-spacing: .055em;
+  background: linear-gradient(#fff5cf,#d7a85d 52%,#fff0bd);
+  background-clip: text; -webkit-background-clip: text; color: transparent;
+}
+.virtus-ops-brand small, .virtus-admin-brand small {
+  display: block; margin-top: 4px; font-size: 9px; font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: #e8ca8b;
+}
+.virtus-ops-mobile-navigation {
+  border: 1px solid rgba(231,189,103,.4);
+  background: rgba(4,39,32,.9);
+  border-radius: 17px; padding: 10px;
+}
+.virtus-ops-nav-link {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 45px; padding: 10px 13px; border-radius: 11px;
+  border: 1px solid transparent; color: #e6e9dd; font-size: 13px;
+  transition: background .16s ease, border-color .16s ease;
+}
+.virtus-ops-nav-link:hover, .virtus-ops-nav-link:focus-visible {
+  background: rgba(11,85,63,.7); border-color: rgba(236,192,105,.45); color: #fff2d0;
+}
+.virtus-ops-nav-link.is-current {
+  color: #f9d48d; background: linear-gradient(90deg,rgba(16,90,66,.82),rgba(3,57,45,.7));
+  border-color: rgba(236,193,112,.57);
+}
+.virtus-operations-theme > div > main { min-width: 0; overflow-x: auto; }
+.virtus-operations-theme [class*="rounded-2xl"][class*="border"],
+.virtus-operations-theme [class*="rounded-3xl"][class*="border"],
+.virtus-admin-theme [class*="rounded-2xl"][class*="border"],
+.virtus-admin-theme [class*="rounded-3xl"][class*="border"] {
+  box-shadow: inset 0 1px 0 rgba(244,215,149,.06);
+}
+.virtus-admin-header {
+  border-bottom: 1px solid rgba(233,188,107,.43);
+  padding: 16px clamp(16px,4vw,40px);
+  background: linear-gradient(120deg,#063e32,#05261f);
+}
+.virtus-admin-body { min-width:0; }
+.virtus-subpage-modern .virtus-legacy-card {
+  background: linear-gradient(140deg,rgba(4,57,46,.94),rgba(3,32,29,.96)) !important;
+  border: 1px solid rgba(229,181,95,.46) !important;
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 rgba(250,230,172,.08), 0 18px 54px rgba(0,0,0,.19);
+}
+.virtus-subpage-modern .virtus-legacy-hero {
+  background: linear-gradient(130deg,#074235,#052b26 70%,#0d4838) !important;
+  border: 1px solid rgba(237,191,101,.61) !important;
+  border-radius: 24px;
+  box-shadow: inset 0 1px 0 rgba(255,238,195,.15), 0 18px 50px rgba(0,0,0,.22);
+}
+.virtus-subpage-modern .virtus-legacy-title {
+  font: normal clamp(30px,5vw,48px)/1.15 Georgia,"Times New Roman",serif;
+  letter-spacing: -.01em;
+  color: #f8e9c9;
+}
+.virtus-subpage-modern .virtus-legacy-back { color: #f3d28f; }
+.virtus-subpage-modern .virtus-legacy-back:hover { color: #fff0ba; }
+.virtus-meeting-room [class*="bg-black"] { background-color: #000 !important; }
+@media (max-width: 767px) {
+  .virtus-operations-theme > header > div { padding: 16px 14px 18px; }
+  .virtus-operations-theme > div { min-width: 0; }
+  .virtus-operations-theme > div > main { width: 100%; }
+  .virtus-operations-theme main [class*="px-6"] { padding-left: 14px; padding-right: 14px; }
+  .virtus-subpage-modern, .virtus-admin-theme { max-width: 100%; overflow-x: clip; }
+  .virtus-subpage-modern input, .virtus-subpage-modern select,
+  .virtus-operations-theme input, .virtus-operations-theme select { max-width: 100%; font-size: 16px; }
+  .virtus-subpage-modern .virtus-legacy-card, .virtus-subpage-modern .virtus-legacy-hero { border-radius: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .virtus-ops-nav-link { transition: none; }
+}

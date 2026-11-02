@@ -5,7 +5,15 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: "/embed/ews",
+        headers: [
+          { key: "Content-Security-Policy", value: "frame-ancestors https://ewellnessolutions.com https://www.ewellnessolutions.com" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+      {
+        source: "/((?!embed/ews$).*)",
         headers: [
           {
             key: "X-Content-Type-Options",

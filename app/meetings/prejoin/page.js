@@ -57,7 +57,7 @@ export default function MeetingsPrejoinPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100">
+    <main className="virtus-subpage-modern min-h-screen bg-zinc-950 px-5 py-8 text-zinc-100">
       <div className="mx-auto max-w-6xl">
         <Link
           href="/meetings"

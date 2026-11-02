@@ -85,7 +85,7 @@ export default async function GlobalLearningReportPage() {
   const topPatterns = report.slice(0, 3);
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="virtus-admin-theme min-h-screen bg-black text-white">
       <div className="mx-auto max-w-7xl px-6 py-8 md:px-8 lg:px-10">
         <div className="mb-8 rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-950 via-black to-zinc-900 p-8 shadow-[0_0_60px_rgba(255,255,255,0.04)]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">

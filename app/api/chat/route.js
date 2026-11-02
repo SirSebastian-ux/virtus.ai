@@ -36,6 +36,9 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
 import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
+import { rankVirtusMemories, selectVirtusConversation, chooseVirtusIntelligence, VIRTUS_INTELLIGENCE_QUALITY_LAYER } from "@/lib/virtus-intelligence.mjs";
+import { buildVirtusCoachingKnowledgeLayer } from "@/lib/virtus-coaching-knowledge.mjs";
+import { classifyVirtusMemoryIntent, getVirtusPublicPlanName, VIRTUS_PROFESSIONAL_CONVERSATION_STANDARD } from "@/lib/virtus-professional-dialogue.mjs";
 import Tesseract from 'tesseract.js';
 
 
@@ -87,8 +90,6 @@ async function createMeaningfulChatTitle({ message, reply }) {
   const fallback = cleanChatSessionTitle(message) || "New chat";
 
   try {
-    console.log("VISION DEBUG latestImageInputs count before main response:", latestImageInputs.length);
-
 const response = await client.responses.create({
       model: "gpt-4.1-mini",
       input: `Create one short, meaningful chat title based on the real discussion.
@@ -463,7 +464,7 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
-    const { message, guestId, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle, hideFromSidebar, sessionTitle } = body;
+    const { message, guestId, guestPastedImage, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle, hideFromSidebar, sessionTitle } = body;
     const shouldHideFromSidebar = hideFromSidebar === true;
     const cleanSessionTitle = String(sessionTitle || "").trim().slice(0, 80);
     const resolvedSessionTitle =
@@ -1750,7 +1751,8 @@ const { data: supabaseMemories } = memoryQuery
       .select("role, content, created_at")
       .eq("user_id", userId)
       .eq("chat_id", effectiveChatId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
+      .limit(480)
   : { data: [] };
  const mergedFacts = hasCrossChatMemory
   ? (supabaseMemories || [])
@@ -1955,7 +1957,7 @@ ${filesWithText
 Document ${index + 1}: ${file.file_name}
 
 Content:
-${String(file.extracted_text || "").slice(0, 5000)}
+${String(file.extracted_text || "").slice(0, 16000)}
 `
   )
   .join("\n\n")}
@@ -1964,79 +1966,91 @@ ${String(file.extracted_text || "").slice(0, 5000)}
 
 
 const imageFiles = latestFiles.filter((file) =>
-  String(file?.file_type || "").startsWith("image/") && file?.storage_path
+  ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+    String(file?.file_type || "").toLowerCase()
+  ) && file?.storage_path
 );
 
-console.log("VISION DEBUG uploadedFileIds:", uploadedFileIds);
-console.log("VISION DEBUG latestFiles:", latestFiles.map((f) => ({
-  id: f.id,
-  file_name: f.file_name,
-  file_type: f.file_type,
-  storage_path: f.storage_path,
-})));
-console.log("VISION DEBUG imageFiles:", imageFiles.map((f) => ({
-  id: f.id,
-  file_name: f.file_name,
-  file_type: f.file_type,
-  storage_path: f.storage_path,
-})));
-
-if (imageFiles.length > 0 && !userId.startsWith("guest-")) {
-  // Process each image with OCR.space with logging
+// Read only files that have already passed the authenticated user_id filter.
+// Pass images directly to the multimodal model; external OCR is neither needed
+// nor adequate for charts, screenshots, layouts, illustrations, or photographs.
+if (imageFiles.length && !isGuest) {
   for (const file of imageFiles.slice(0, 4)) {
     try {
-      if (file.extracted_text) {
-        console.log(`OCR already extracted for file ${file.id}`);
-        continue;
-      }
-
-      console.log(`Downloading image ${file.id}...`);
-      const { data: imageBlob, error: imageDownloadError } = await supabase.storage
-        .from("user-files")
-        .download(file.storage_path);
-
-      if (imageDownloadError || !imageBlob) {
-        console.error(`Download failed: ${imageDownloadError}`);
-        continue;
-      }
-
-      const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
-      const base64Image = imageBuffer.toString('base64');
-
-      console.log(`Sending to OCR.space for ${file.id}...`);
-      const ocrResponse = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          base64Image: `data:image/png;base64,${base64Image}`,
-          language: 'eng',
-          isOverlayRequired: 'false',
-          isTable: 'false',
-        })
+      const { data: imageBlob, error: downloadError } = await supabase.storage
+        .from("user-files").download(file.storage_path);
+      if (downloadError || !imageBlob) continue;
+      // Limit decoding and request payload size to protect chat latency/cost.
+      if (imageBlob.size < 64 || imageBlob.size > 6 * 1024 * 1024) continue;
+      const bytes = Buffer.from(await imageBlob.arrayBuffer());
+      const declaredType = String(file.file_type || "").toLowerCase();
+      const jpeg = declaredType === "image/jpeg" && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
+      const png = declaredType === "image/png" && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+      const webp = declaredType === "image/webp" && bytes.toString("ascii",0,4) === "RIFF" && bytes.toString("ascii",8,12) === "WEBP";
+      const gif = declaredType === "image/gif" && ["GIF87a", "GIF89a"].includes(bytes.toString("ascii",0,6));
+      if (!(jpeg || png || webp || gif)) continue;
+      latestImageInputs.push({
+        type: "input_image",
+        image_url: `data:${declaredType};base64,${bytes.toString("base64")}`,
+        detail: "auto",
       });
-
-      const ocrData = await ocrResponse.json();
-      console.log(`OCR.space response status: ${ocrResponse.status}, error: ${ocrData?.ErrorMessage || 'none'}`);
-      const extractedText = ocrData?.ParsedResults?.[0]?.ParsedText || '';
-      if (!extractedText) {
-        console.warn(`No text extracted from ${file.id}`);
-        continue;
-      }
-
-      console.log(`Extracted text length: ${extractedText.length} for ${file.id}`);
-      await supabase
-        .from("user_files")
-        .update({ extracted_text: extractedText.trim() })
-        .eq("id", file.id)
-        .eq("user_id", userId);
-
-      file.extracted_text = extractedText.trim();
-      console.log(`Updated file ${file.id} with extracted text.`);
-    } catch (err) {
-      console.error('OCR processing error:', err);
+    } catch (error) {
+      console.warn("Image attachment skipped:", error?.message || "image read error");
     }
   }
-  latestImageInputs = [];
+}
+// Trial guests may submit one ephemeral clipboard image per message.
+// No guest document upload, persistent storage, or library access is granted.
+if (isGuest && typeof guestPastedImage === "string" && guestPastedImage.length <= 5_600_000) {
+  const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(guestPastedImage);
+  if (match) {
+    const bytes = Buffer.from(match[2], "base64");
+    const type = match[1];
+    const valid = bytes.length >= 64 && bytes.length <= 4 * 1024 * 1024 &&
+      ((type === "image/png" && bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) ||
+       (type === "image/jpeg" && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) ||
+       (type === "image/webp" && bytes.toString("ascii",0,4) === "RIFF" && bytes.toString("ascii",8,12) === "WEBP"));
+    if (valid) latestImageInputs.push({ type: "input_image", image_url: guestPastedImage, detail: "auto" });
+  }
+}
+// Latest recorded coaching observations supplement, but never override,
+// the current conversation or a client's own self-correction.
+let coachingReviewContext = "";
+if (!isGuest && memoryEnabled && chatHistoryEnabled && ["premium", "plus"].includes(plan)) {
+  try {
+    const { data: review } = await supabase
+      .from("coaching_progress_reviews")
+      .select("created_at,observations")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (review && Array.isArray(review.observations)) {
+      const observations = review.observations
+        .filter(item => item && typeof item === "object")
+        .slice(0, 8)
+        .map(item => ({
+          skill: String(item.skill || "").slice(0, 70),
+          direction: ["improving", "declining", "stable", "unclear"].includes(item.direction)
+            ? item.direction : "unclear",
+          confidence: ["low", "medium", "high"].includes(item.confidence)
+            ? item.confidence : "low",
+          evidence: String(item.evidence || "").slice(0, 300),
+        }));
+      coachingReviewContext = `
+# PREVIOUS COACHING OBSERVATIONS (TENTATIVE, USER-OWNED)
+Recorded: ${review.created_at}
+These are historical model-generated interpretations, not diagnoses, trait scores,
+or proof of growth/regression. Use only if directly relevant to the current
+coaching discussion. Verify against current statements; do not assume they
+remain true. Never cite a review as evidence of an inherent psychological trait.
+${JSON.stringify(observations)}
+`;
+    }
+  } catch (error) {
+    console.warn("Historical coaching context unavailable", error?.message || "");
+  }
 }
 
 const isContinuationOnlyMessage =
@@ -2051,12 +2065,11 @@ const virtusLibraryContext = isContinuationOnlyMessage
       message,
       limit: 6,
     });
-const runtimeFacts =
-  runtimeFactsLimit === null
-    ? prioritizedRuntimeFacts
-    : runtimeFactsLimit > 0
-    ? prioritizedRuntimeFacts.slice(0, runtimeFactsLimit)
-    : [];
+const runtimeFacts = rankVirtusMemories(
+  prioritizedRuntimeFacts,
+  message,
+  { limit: runtimeFactsLimit === null ? 48 : runtimeFactsLimit }
+);
 
 const personalRuntimeFacts = runtimeFacts.filter(
   (fact) =>
@@ -2071,13 +2084,20 @@ const projectRuntimeFacts = runtimeFacts.filter(
 );
 
 const allCurrentChatRows = hasSingleChatConversationMemory
-  ? supabaseConversations || []
+  ? [...(supabaseConversations || [])].reverse()
   : [];
 
-const conversationRows =
-  singleChatConversationLimit === null
-    ? allCurrentChatRows
-    : allCurrentChatRows.slice(-singleChatConversationLimit);
+const conversationRows = selectVirtusConversation(
+  allCurrentChatRows,
+  message,
+  {
+    recentLimit: singleChatConversationLimit === null
+      ? 48
+      : Math.max(4, singleChatConversationLimit),
+    relevantLimit: hasPremiumAccess ? 10 : hasPlusAccess ? 5 : 2,
+    maxChars: 5200,
+  }
+);
 
 const shouldUseSameChatAnchor =
   plan === "premium" || plan === "trial_guest";
@@ -2107,7 +2127,7 @@ const importantSameChatRows = shouldUseSameChatAnchor
 
         return (isLongUserContent && looksLikeCaseOrSession) || looksLikeRoleCorrection;
       })
-      .slice(-8)
+      .slice(-4)
   : [];
 
 const sameChatAnchorContext =
@@ -2120,7 +2140,7 @@ These are important earlier messages from the same active chat. Treat them as ac
 ${importantSameChatRows
   .map((item, index) => {
     const text = String(item?.content || "").trim();
-    const snippetLimit = plan === "premium" ? 12000 : 4000;
+    const snippetLimit = plan === "premium" ? 5000 : 2500;
 
     return `Anchor ${index + 1}
 Role: ${item.role}
@@ -2159,6 +2179,14 @@ const { count: todayUserMessageCount } = await supabase
   .lt("created_at", tomorrowStart.toISOString());
   const dailyMessagesUsed = todayUserMessageCount ?? 0;
   const planPolicy = getPlanPolicy(plan);
+// Legacy registered free accounts retain their data but no longer receive paid coaching.
+if (!isGuest && (plan === "free" || !["active", "trialing"].includes(planStatus))) {
+  return Response.json({
+    reply: "Your account and saved conversations are preserved. Choose Life Coach, Trainer, or Mentor to continue coaching.",
+    access: { ...planPolicy, plan, planStatus, trialStartedAt, trialEndsAt, dailyMessageLimit: 0, dailyMessagesUsed },
+    membershipRequired: true,
+  }, { status: 403 });
+}
 if (isGuest && isTrialGuestPlan(plan) && isExpiredPlanStatus(planStatus)) {
   const expiredReply =
     "Your 3-day Trial Guest access has ended. Please register or sign in to continue using Virtus.";
@@ -2308,11 +2336,8 @@ if (canWriteProjectMemory && activeProjectId && immediateProjectFact) {
 
 const normalizedMessageControl = String(message || "").toLowerCase();
 
-const isForgetCommand =
-  normalizedMessageControl.startsWith("forget ") ||
-  normalizedMessageControl.startsWith("forget this") ||
-  normalizedMessageControl.startsWith("remove memory ") ||
-  normalizedMessageControl.startsWith("delete memory ");
+const memoryIntent = classifyVirtusMemoryIntent(message);
+const isForgetCommand = memoryIntent.kind === "delete";
 
 const isThisProjectRecallCommand =
   /\bwhat do you know about this project\b/i.test(normalizedMessageControl) ||
@@ -2337,12 +2362,7 @@ const isMemoryCommand =
   isForgetCommand || isMemoryRecallCommand || isMemoryUpdateCommand;
 
 if (isForgetCommand) {
-  const factToRemove = String(message || "")
-    .replace(/^forget this\s*/i, "")
-    .replace(/^forget\s+/i, "")
-    .replace(/^remove memory\s+/i, "")
-    .replace(/^delete memory\s+/i, "")
-    .trim();
+  const factToRemove = memoryIntent.target;
 
      await insertGlobalLearningEvent(supabase, {
     sourceUserId: userId,
@@ -3301,9 +3321,22 @@ Say clearly: "I tried to search, but the web search service failed. I can still 
   }
 }
 
-const response = await client.responses.create({
-  model: "gpt-5.4",
+const coachingKnowledge = buildVirtusCoachingKnowledgeLayer({
+  message,
+  practiceMode,
+});
+const intelligence = chooseVirtusIntelligence({
+  plan,
+  message,
+  practiceMode,
+  hasImages: latestImageInputs.length > 0,
+});
+const virtusRequest = {
+  model: process.env.VIRTUS_MAIN_MODEL || intelligence.model,
+  reasoning: { effort: intelligence.effort },
+  max_output_tokens: intelligence.maxOutputTokens,
   stream: true,
+  store: false,
   instructions: `# SECURITY AND DATA BOUNDARY
 # NUMBERING PRESERVATION
 
@@ -4943,6 +4976,15 @@ Before you respond, check the signal: is this repeated behavior, a delay, or a c
 
 If a Trial Guest response contains visible teaching labels, rewrite it before answering.
 
+${VIRTUS_INTELLIGENCE_QUALITY_LAYER}
+
+${VIRTUS_PROFESSIONAL_CONVERSATION_STANDARD}
+
+# VERIFIED CUSTOMER PLAN
+Your actual customer-facing plan is: ${getVirtusPublicPlanName(plan)}.
+Do not confuse historic internal billing identifiers with the product name.
+
+${coachingKnowledge.instructions}
 `,
   metadata: {
     virtus_plan: plan,
@@ -4959,7 +5001,7 @@ If a Trial Guest response contains visible teaching labels, rewrite it before an
 
 ` : ""}${latestFileText ? `${latestFileText}
 
-` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
+` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
 
 ` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
@@ -4972,7 +5014,23 @@ ${message}`,
       ],
     },
   ],
-});
+};
+let response;
+try {
+  response = await client.responses.create(virtusRequest);
+} catch (error) {
+  const code = error?.status || error?.code;
+  const reason = String(error?.message || "").toLowerCase();
+  const canFallback = code === 400 || code === 403 || code === 404 ||
+    /model.*(not found|not available|access|unsupported|not enabled)/.test(reason);
+  if (!canFallback || virtusRequest.model === "gpt-5.4") throw error;
+  console.warn("VIRTUS MODEL FALLBACK: selected model unavailable. Reverting to stable model.");
+  response = await client.responses.create({
+    ...virtusRequest,
+    model: "gpt-5.4",
+    reasoning: { effort: "medium" },
+  });
+}
 
 let memoryWriteReply = null;
 let fullReply = "";
