@@ -1,0 +1,135 @@
+name: Verify Virtus AI billing release readiness
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/verify-billing-readiness.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  web-build:
+    name: Next.js application build and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy_supabase_anon_key
+      SUPABASE_SERVICE_ROLE_KEY: dummy_supabase_service_role_key
+      OPENAI_API_KEY: sk-dummy_openai_key
+      TAVILY_API_KEY: dummy_tavily_key
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_dummy
+      STRIPE_SECRET_KEY: sk_test_dummy
+      STRIPE_WEBHOOK_SECRET: whsec_dummy
+      STRIPE_PLUS_MONTHLY_PRICE_ID: price_plus_monthly_dummy
+      STRIPE_PLUS_YEARLY_PRICE_ID: price_plus_yearly_dummy
+      STRIPE_PREMIUM_MONTHLY_PRICE_ID: price_premium_monthly_dummy
+      STRIPE_PREMIUM_YEARLY_PRICE_ID: price_premium_yearly_dummy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Test billing states and RTDN parser
+        run: node --test tests/google-play-billing.test.mjs
+      - name: Test Virtus AI coaching and intelligence
+        run: npm run test:intelligence
+      - name: Compile Next.js application
+        run: npx next build
+
+  android-debug:
+    name: Capacitor native Android compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+      - name: Compile unsigned debug APK
+        run: bash android/gradlew -p android assembleDebug --no-daemon
+
+  play-catalog:
+    name: Verify Google Play catalog is safely in draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Authorize with keyless GitHub OIDC
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: melodic-nature-513606-u2
+          workload_identity_provider: projects/481064087365/locations/global/workloadIdentityPools/-virtus-play-github/providers/-github-actions
+          service_account: virtus-play-api@melodic-nature-513606-u2.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+          create_credentials_file: false
+          export_environment_variables: false
+      - name: Assert three subscription products and draft monthly plans
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/play-catalog.json"
+          code="$(curl --silent --show-error --output "$output" --write-out '%{http_code}' \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" -H 'Accept: application/json' \
+            'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.virtusaiworld.app/subscriptions?pageSize=100')"
+          if [ "$code" != '200' ]; then
+            echo "::error::Google Play catalog unavailable: HTTP ${code}"
+            exit 1
+          fi
+          for product in virtus_life_coach virtus_trainer virtus_mentor; do
+            jq -e --arg product "$product" \
+              '.subscriptions[] | select(.productId==$product) | .basePlans[] | select(.basePlanId=="monthly" and .state=="DRAFT" and .autoRenewingBasePlanType.billingPeriodDuration=="P1M")' \
+              "$output" >/dev/null || { echo "::error::${product} monthly draft plan missing"; exit 1; }
+            echo "Verified: ${product}/monthly (DRAFT)"
+          done
+
+  production-smoke:
+    name: Confirm production web and payment safety gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Check public site and fail-closed payment endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://virtusaiworld.com'
+          for path in / /upgrade /privacy; do
+            status="$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 20 "${base}${path}")"
+            [ "$status" = '200' ] || { echo "::error::${path} returned HTTP ${status}"; exit 1; }
+            echo "Site ${path}: HTTP ${status}"
+          done
+          verify="$(curl --fail --silent --show-error --max-time 20 "${base}/api/google-play/verify")"
+          jq -e '.enabled == false and .checkoutEnabled == false' <<< "$verify" >/dev/null || {
+            echo '::error::Google Play checkout readiness did not fail closed'; exit 1;
+          }
+          echo 'Google Play checkout gate: disabled as intended'
+          status="$(curl --silent --show-error -X POST --output /dev/null --write-out '%{http_code}' --max-time 20 "${base}/api/google-play/rtdn")"
+          [ "$status" = '503' ] || { echo "::error::RTDN gate HTTP ${status}, expected 503"; exit 1; }
+          echo 'Unauthenticated Pub/Sub ingestion: blocked'
+          status="$(curl --silent --show-error -X POST --output /dev/null --write-out '%{http_code}' --max-time 20 "${base}/api/stripe/webhook")"
+          [ "$status" = '400' ] || { echo "::error::Unsigned Stripe webhook HTTP ${status}, expected 400"; exit 1; }
+          echo 'Unsigned Stripe webhooks: blocked'
