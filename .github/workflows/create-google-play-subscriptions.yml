@@ -1,0 +1,40 @@
+name: Create draft Google Play subscriptions
+
+# Manually triggered by repository administrator, never runs on a code push.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: google-play-draft-subscription-catalog
+  cancel-in-progress: false
+
+jobs:
+  catalog:
+    name: Create missing draft Virtus AI subscription products
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Play without stored keys
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: melodic-nature-513606-u2
+          workload_identity_provider: projects/481064087365/locations/global/workloadIdentityPools/-virtus-play-github/providers/-github-actions
+          service_account: virtus-play-api@melodic-nature-513606-u2.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Create missing monthly draft subscriptions, then verify
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          ANDROID_PACKAGE: com.virtusaiworld.app
+        run: node scripts/google-play/create-draft-subscriptions.mjs
