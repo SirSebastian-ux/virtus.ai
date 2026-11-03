@@ -32,6 +32,7 @@ export default async function UpgradePage() {
         <UpgradeCardsClient
           currentPlan={currentPlan}
           isAuthenticated={!!user?.id}
+          userId={user?.id || null}
           key={currentPlan}
         />
       </div>
