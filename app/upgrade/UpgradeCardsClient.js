@@ -1,6 +1,7 @@
 "use client";
 
 import { Capacitor } from "@capacitor/core";
+import { beginVirtusPlayPurchase, observeVirtusPlayPurchases, isVirtusPlayNativeAvailable } from "@/lib/google-play-native";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -31,12 +32,13 @@ function getCheckoutSuccessMessage(searchParams) {
     : `${planLabel} checkout completed. Membership activation is being confirmed.`;
 }
 
-export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
+export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userId }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [error, setError] = useState("");
+  const [androidCheckoutReady, setAndroidCheckoutReady] = useState(false);
   // Native-store billing must not redirect Android purchases to web Stripe.
   const [nativePlatform] = useState(() => {
     if (typeof window === "undefined") return "web";
@@ -45,6 +47,57 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
   const isNativeIosApp = nativePlatform === "ios";
   const isNativeAndroidApp = nativePlatform === "android";
   const successMessage = getCheckoutSuccessMessage(searchParams);
+
+  useEffect(() => {
+    if (!isNativeAndroidApp) return;
+    let active = true;
+    fetch("/api/google-play/verify", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((settings) => {
+        if (active && settings?.checkoutEnabled === true &&
+            settings?.enabled === true && isVirtusPlayNativeAvailable()) {
+          setAndroidCheckoutReady(true);
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [isNativeAndroidApp]);
+
+  useEffect(() => {
+    if (!androidCheckoutReady || !userId) return;
+    let disposed = false;
+    let subscription;
+    observeVirtusPlayPurchases(async (event) => {
+      if (disposed) return;
+      for (const purchase of (event?.purchases || [])) {
+        if (purchase.purchaseState !== 1 || !purchase.purchaseToken) continue;
+        const productId = purchase.products?.find((id) =>
+          ["virtus_life_coach", "virtus_trainer", "virtus_mentor"].includes(id));
+        if (!productId) continue;
+        try {
+          const response = await fetch("/api/google-play/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId, purchaseToken: purchase.purchaseToken }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result?.error || "Could not verify Google Play purchase.");
+          if (!disposed) {
+            setError(result.membershipActivated
+              ? ""
+              : "Google Play purchase verified. Membership activation is being confirmed.");
+            router.refresh();
+          }
+        } catch (error) {
+          if (!disposed) setError(error.message || "Please restore your Google Play purchase.");
+        } finally {
+          if (!disposed) setLoadingPlan(null);
+        }
+      }
+    }).then((handle) => { subscription = handle; if (disposed) handle?.remove?.(); })
+      .catch(() => { if (!disposed) setError("The Google Play billing service is unavailable."); });
+    return () => { disposed = true; subscription?.remove?.(); };
+  }, [androidCheckoutReady, userId, router]);
 
   useEffect(() => {
     function syncUpgradeAppearance() {
@@ -100,7 +153,23 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
 
   async function handlePlanChange(plan) {
     if (isNativeAndroidApp) {
-      setError("Google Play purchases are not available in this Android build yet. No payment was taken.");
+      if (!isAuthenticated || !userId) { router.push("/login"); return; }
+      if (plan === currentPlan) { setError("This is already your current plan."); return; }
+      if (!androidCheckoutReady) {
+        setError("Google Play purchases are not available in this Android build yet. No payment was taken.");
+        return;
+      }
+      if (billingCycle !== "monthly") {
+        setError("Only monthly Google Play subscriptions are currently supported.");
+        return;
+      }
+      setLoadingPlan(plan); setError("");
+      try {
+        await beginVirtusPlayPurchase(plan, userId);
+      } catch (err) {
+        setError(err?.message || "Unable to open Google Play checkout.");
+        setLoadingPlan(null);
+      }
       return;
     }
     if (!isAuthenticated) { router.push("/login"); return; }
@@ -165,14 +234,14 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
           </p>
           <p className="mt-3 max-w-2xl rounded-xl border border-[#ac956b]/30 bg-[#082a24] px-4 py-3 text-sm leading-6 text-[#c6d8cd]">
             {isNativeAndroidApp
-              ? "Google Play subscriptions are being configured. Purchasing a plan is not available in this Android build. Existing membership access is unchanged."
+              ? (androidCheckoutReady ? "Payments are processed securely by Google Play." : "Google Play subscriptions are being configured. Purchasing a plan is not available in this Android build. Existing membership access is unchanged.")
               : isNativeIosApp
                 ? "Subscriptions are not available for purchase in this iOS app. Existing membership access is unchanged."
                 : "Secure Stripe checkout. Existing subscriptions keep their current billing until you choose to change plans."}
           </p>
         </div>
 
-        <div className="inline-flex w-full rounded-full border border-[#d4b57d]/40 bg-[#051e1b] p-1 sm:w-auto">
+        {!isNativeAndroidApp ? <div className="inline-flex w-full rounded-full border border-[#d4b57d]/40 bg-[#051e1b] p-1 sm:w-auto">
           <button
             type="button"
             onClick={() => setBillingCycle("monthly")}
@@ -188,7 +257,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
           >
             Yearly
           </button>
-        </div>
+        </div> : null}
       </div>
 
       <div className="virtus-interior-plan-grid grid items-stretch gap-6">
@@ -237,7 +306,16 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </p>
             </div>
 
-            {isNativeAndroidApp ? null : isGuestSelection ? (
+            {isNativeAndroidApp ? (androidCheckoutReady && isAuthenticated && currentPlan !== "life_coach" ? (
+              <button
+                type="button"
+                className={activeButtonClass}
+                disabled={loadingPlan !== null}
+                onClick={() => handlePlanChange("life_coach")}
+              >
+                {loadingPlan === "life_coach" ? "Opening Google Play…" : "Choose Life Coach"}
+              </button>
+            ) : null) : isGuestSelection ? (
               <button
                 type="button"
                 onClick={() => router.push("/login")}
@@ -303,7 +381,16 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </p>
             </div>
 
-            {isNativeAndroidApp ? null : isGuestSelection ? (
+            {isNativeAndroidApp ? (androidCheckoutReady && isAuthenticated && currentPlan !== "plus" ? (
+              <button
+                type="button"
+                className={activeButtonClass}
+                disabled={loadingPlan !== null}
+                onClick={() => handlePlanChange("plus")}
+              >
+                {loadingPlan === "plus" ? "Opening Google Play…" : "Choose Trainer"}
+              </button>
+            ) : null) : isGuestSelection ? (
               <button
                 type="button"
                 onClick={() => router.push("/login")}
@@ -383,7 +470,16 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated }) {
               </p>
             </div>
 
-            {isNativeAndroidApp ? null : isGuestSelection ? (
+            {isNativeAndroidApp ? (androidCheckoutReady && isAuthenticated && currentPlan !== "premium" ? (
+              <button
+                type="button"
+                className={primaryButtonClass}
+                disabled={loadingPlan !== null}
+                onClick={() => handlePlanChange("premium")}
+              >
+                {loadingPlan === "premium" ? "Opening Google Play…" : "Choose Mentor"}
+              </button>
+            ) : null) : isGuestSelection ? (
               <button
                 type="button"
                 onClick={() => router.push("/login")}
