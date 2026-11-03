@@ -1,3 +1,4 @@
+import { decodePlayRtdnData } from "../lib/google-play-pubsub.js";
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { classifyGoogleSubscription, isGooglePlayBillingConfigured, purchaseTokenHash, sha256 } from "../lib/google-play-billing.js";
@@ -63,4 +64,27 @@ test("Google Play server feature is disabled without explicit production configu
     if (provider !== undefined) process.env.GOOGLE_PLAY_WIF_PROVIDER = provider;
     if (email !== undefined) process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL = email;
   }
+});
+
+test("Pub/Sub parser accepts Virtus monthly subscription RTDN", () => {
+  const data = {
+    version: "1.0", packageName: "com.virtusaiworld.app",
+    subscriptionNotification: { notificationType: 2, purchaseToken: "purchase-token-value" }
+  };
+  const parsed = decodePlayRtdnData(Buffer.from(JSON.stringify(data)).toString("base64"));
+  assert.equal(parsed.test, false);
+  assert.equal(parsed.purchaseToken, "purchase-token-value");
+});
+
+test("Pub/Sub parser denies another app's purchase notification", () => {
+  const data = {
+    packageName: "com.other.app",
+    subscriptionNotification: { notificationType: 2, purchaseToken: "purchase-token-value" }
+  };
+  assert.throws(() => decodePlayRtdnData(Buffer.from(JSON.stringify(data)).toString("base64")));
+});
+
+test("Pub/Sub parser accepts Google test notifications without purchase tokens", () => {
+  const data = { packageName: "com.virtusaiworld.app", testNotification: { version: "1.0" } };
+  assert.equal(decodePlayRtdnData(Buffer.from(JSON.stringify(data)).toString("base64")).test, true);
 });
