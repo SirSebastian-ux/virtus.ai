@@ -1,0 +1,64 @@
+name: Verify Google Play Developer API
+
+# Read-only connectivity check. Runs once when this workflow reaches main,
+# then only when manually requested from GitHub Actions.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/verify-google-play-api.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: google-play-api-connectivity
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Check authorized Google Play subscription catalog access
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate without a service-account key
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: melodic-nature-513606-u2
+          workload_identity_provider: projects/481064087365/locations/global/workloadIdentityPools/-virtus-play-github/providers/-github-actions
+          service_account: virtus-play-api@melodic-nature-513606-u2.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Verify read-only access to Virtus AI subscriptions
+        shell: bash
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          ANDROID_PACKAGE: com.virtusaiworld.app
+        run: |
+          set -euo pipefail
+          response_file="${RUNNER_TEMP}/google-play-api-response.json"
+          status="$(curl --silent --show-error --location \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${GOOGLE_ACCESS_TOKEN}" \
+            --header 'Accept: application/json' \
+            "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${ANDROID_PACKAGE}/subscriptions?pageSize=1")"
+
+          if [ "$status" != "200" ]; then
+            message="$(jq -r '.error.message // "Google returned an unstructured error"' "$response_file" 2>/dev/null || echo 'Response parsing failed')"
+            echo "::error::Google Play read-only API check failed (HTTP ${status}): ${message}"
+            exit 1
+          fi
+
+          count="$(jq -r '(.subscriptions // []) | length' "$response_file")"
+          echo "Google Play API authentication and subscription-list permission verified."
+          echo "Products returned on first page: ${count}"
