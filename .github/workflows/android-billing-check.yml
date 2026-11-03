@@ -36,6 +36,8 @@ jobs:
       - name: Verify JavaScript syntax
         run: |
           node --check lib/google-play-billing.js
+          node --check lib/google-play-pubsub.js
+          node --check app/api/google-play/rtdn/route.js
           node --check lib/google-play-native.js
           node --check app/api/google-play/verify/route.js
       - name: Synchronize native project
