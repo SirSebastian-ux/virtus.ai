@@ -53,12 +53,26 @@ jobs:
             --header 'Accept: application/json' \
             "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${ANDROID_PACKAGE}/subscriptions?pageSize=1")"
 
-          if [ "$status" != "200" ]; then
-            message="$(jq -r '.error.message // "Google returned an unstructured error"' "$response_file" 2>/dev/null || echo 'Response parsing failed')"
-            echo "::error::Google Play read-only API check failed (HTTP ${status}): ${message}"
-            exit 1
-          fi
-
-          count="$(jq -r '(.subscriptions // []) | length' "$response_file")"
-          echo "Google Play API authentication and subscription-list permission verified."
-          echo "Products returned on first page: ${count}"
+          case "$status" in
+            200)
+              # The subscription list endpoint returns a JSON object when it has a body.
+              if ! jq -e 'type == "object" and ((.subscriptions // []) | type == "array")' "$response_file" >/dev/null; then
+                echo "::error::Google Play returned HTTP 200 but not a valid subscriptions list response."
+                exit 1
+              fi
+              count="$(jq -r '(.subscriptions // []) | length' "$response_file")"
+              echo "Google Play API authentication and read-only subscription-list access verified."
+              echo "Products returned on first page: ${count}"
+              ;;
+            204)
+              # A 204 is successful, but its empty body cannot enumerate subscriptions.
+              echo "Google Play API responded HTTP 204 (No Content). Authentication and the read-only request succeeded."
+              echo "No subscription catalog data was returned; no product count is asserted."
+              ;;
+            *)
+              message="$(jq -r '.error.message // empty' "$response_file" 2>/dev/null || true)"
+              if [ -z "$message" ]; then message="No structured error detail in response"; fi
+              echo "::error::Google Play read-only API check failed (HTTP ${status}): ${message}"
+              exit 1
+              ;;
+          esac
