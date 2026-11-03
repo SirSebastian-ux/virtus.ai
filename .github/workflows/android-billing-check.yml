@@ -1,0 +1,44 @@
+name: Validate Android Google Play Billing integration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'lib/google-play*'
+      - 'app/api/google-play/**'
+      - 'tests/google-play-billing.test.mjs'
+      - '.github/workflows/android-billing-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-billing-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Test billing state machine
+        run: node --test tests/google-play-billing.test.mjs
+      - name: Verify JavaScript syntax
+        run: |
+          node --check lib/google-play-billing.js
+          node --check lib/google-play-native.js
+          node --check app/api/google-play/verify/route.js
+      - name: Synchronize native project
+        run: npx cap sync android
+      - name: Compile Android debug bundle without signing keys
+        run: bash android/gradlew -p android assembleDebug --no-daemon
