@@ -1,0 +1,92 @@
+name: Check Google Cloud bootstrap permissions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/check-gcp-bootstrap-permissions.yml
+
+permissions:
+  contents: read
+  id-token: write
+  statuses: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Authenticate existing keyless Google Play identity
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: melodic-nature-513606-u2
+          workload_identity_provider: projects/481064087365/locations/global/workloadIdentityPools/-virtus-play-github/providers/-github-actions
+          service_account: virtus-play-api@melodic-nature-513606-u2.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+      - name: Read Google Cloud project IAM permissions (no mutations)
+        id: probe
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body='{"permissions":["iam.workloadIdentityPools.create","iam.workloadIdentityPoolProviders.create","iam.serviceAccounts.setIamPolicy","pubsub.topics.create","pubsub.subscriptions.create","serviceusage.services.enable","resourcemanager.projects.get"]}'
+          output="${RUNNER_TEMP}/iam-permissions.json"
+          code="$(curl --silent --show-error --output "$output" --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${ACCESS_TOKEN}" \
+            --header 'Content-Type: application/json' --data "$body" \
+            'https://cloudresourcemanager.googleapis.com/v1/projects/melodic-nature-513606-u2:testIamPermissions')"
+          echo "IAM test HTTP code: ${code}"
+          if [ "$code" != '200' ]; then
+            msg="$(jq -r '.error.message // "No structured error"' "$output")"
+            echo "Read-only IAM test unavailable: ${msg}"
+            echo "capability=unknown" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo 'Granted permissions to existing GitHub service account:'
+          jq -r '.permissions[]? // empty' "$output"
+          required=(iam.workloadIdentityPools.create iam.workloadIdentityPoolProviders.create iam.serviceAccounts.setIamPolicy pubsub.topics.create pubsub.subscriptions.create)
+          missing=()
+          for permission in "${required[@]}"; do
+            if ! jq -e --arg permission "$permission" '.permissions // [] | index($permission) != null' "$output" >/dev/null; then
+              missing+=("$permission")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            printf 'Missing permissions: %s\n' "${missing[*]}"
+            echo 'capability=requires_google_cloud_admin' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Existing keyless identity can bootstrap cloud integration.'
+            echo 'capability=authorized' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish read-only capability to commit status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          CAPABILITY: ${{ steps.probe.outputs.capability }}
+          JOB_STATE: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=success
+          case "$CAPABILITY" in
+            authorized) desc='Authorized to bootstrap Google Cloud WIF and Pub/Sub' ;;
+            requires_google_cloud_admin) desc='Requires Google Cloud admin approval for WIF/PubSub' ;;
+            *) desc='Google Cloud IAM capability could not be verified'; state=failure ;;
+          esac
+          if [ "$JOB_STATE" != success ]; then state=failure; desc='Google Cloud IAM preflight failed'; fi
+          payload="$(jq -nc --arg state "$state" --arg context 'Google Cloud WIF bootstrap readiness' \
+             --arg description "$desc" --arg target_url "https://github.com/${REPO}/actions/runs/${RUN_ID}" \
+             '{state:$state,context:$context,description:$description,target_url:$target_url}')"
+          curl --silent --show-error --fail-with-body -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' \
+            -H 'Content-Type: application/json' --data "$payload" \
+            "https://api.github.com/repos/${REPO}/statuses/${SHA}" >/dev/null
