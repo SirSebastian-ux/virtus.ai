@@ -163,6 +163,35 @@ export async function POST(req) {
         ? subscription.customer
         : subscription.customer?.id || null;
 
+    // New provider-aware billing is opt-in until Google and Stripe regression
+    // checks have passed. Do not let a Stripe event erase valid Play access.
+    if (process.env.VIRTUS_MULTI_PROVIDER_BILLING_ENABLED === "true") {
+      const stripeState = isDeletedOrCancelled ? "expired" : nextPlanStatus;
+      const expirySeconds = subscription.current_period_end;
+      const expiry = Number.isFinite(expirySeconds) && expirySeconds > 0
+        ? new Date(expirySeconds * 1000).toISOString()
+        : null;
+      const { data: result, error: recordError } = await supabase.rpc(
+        "virtus_record_billing_entitlement", {
+          p_user_id: userId,
+          p_provider: "stripe",
+          p_provider_subscription_id: subscription.id,
+          p_plan: virtusPlan,
+          p_status: stripeState,
+          p_expires_at: expiry,
+        }
+      );
+      if (recordError || !Array.isArray(result) || result.length !== 1) {
+        throw new Error("Stripe provider entitlement reconciliation failed");
+      }
+      if (stripeCustomerId) {
+        const { error: customerError } = await supabase.from("profiles")
+          .update({ stripe_customer_id: stripeCustomerId }).eq("id", userId);
+        if (customerError) throw new Error("Stripe customer association failed");
+      }
+      return NextResponse.json({ received: true, reconciled: true });
+    }
+
     const { data: updatedProfile, error: updateError } = await supabase
       .from("profiles")
       .update({

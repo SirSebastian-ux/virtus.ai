@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import {
   classifyGoogleSubscription,
   getGooglePlayPurchase,
+  acknowledgeGooglePlaySubscription,
   isGooglePlayBillingConfigured,
   purchaseTokenHash,
   sha256,
@@ -89,16 +90,53 @@ export async function POST(request) {
       }
     }
 
-    // No paid entitlement is granted before server acknowledgement,
-    // source-of-truth arbitration with Stripe, and RTDN lifecycle handling.
+    // Entitlements are reconciled atomically with other payment sources.
+    // Preserve the recorded, verified purchase even when it is pending/expired.
+    if (process.env.VIRTUS_MULTI_PROVIDER_BILLING_ENABLED !== "true") {
+      return json({ verified: true, membershipActivated: false,
+        message: "Purchase verified. Membership reconciliation is not enabled." });
+    }
+
+    const canonicalStatus = details.accessible
+      ? (details.state === "SUBSCRIPTION_STATE_CANCELED" ? "cancelled"
+          : details.state === "SUBSCRIPTION_STATE_IN_GRACE_PERIOD" ? "grace" : "active")
+      : "inactive";
+
+    const { data: entitlementRows, error: entitlementError } = await admin.rpc(
+      "virtus_record_billing_entitlement", {
+        p_user_id: user.id,
+        p_provider: "google_play",
+        p_provider_subscription_id: tokenHash,
+        p_plan: details.appPlan,
+        p_status: canonicalStatus,
+        p_expires_at: details.expiresAt,
+      }
+    );
+    if (entitlementError || !Array.isArray(entitlementRows) || entitlementRows.length !== 1) {
+      throw new Error("Verified Google Play entitlement could not be reconciled.");
+    }
+
+    // Google must be acknowledged only after successful entitlement fulfillment.
+    if (details.accessible && details.acknowledgementState === "ACKNOWLEDGEMENT_STATE_PENDING") {
+      await acknowledgeGooglePlaySubscription(
+        details.productId, input.purchaseToken, request.headers.get("x-vercel-oidc-token")
+      );
+      const { error: ackUpdateError } = await admin.from("google_play_subscriptions")
+        .update({ acknowledgement_state: "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED", updated_at: new Date().toISOString() })
+        .eq("purchase_token_hash", tokenHash).eq("user_id", user.id);
+      if (ackUpdateError) console.error("GOOGLE_PLAY_ACK_RECORD_UPDATE_ERROR", ackUpdateError.message);
+    }
+
     return json({
       verified: true,
       productId: details.productId,
       subscriptionState: details.state,
       expiresAt: details.expiresAt,
-      eligibleForEntitlement: details.accessible,
-      membershipActivated: false,
-      message: "Purchase verified. Membership activation is pending billing integration.",
+      membershipActivated: Boolean(details.accessible),
+      effectivePlan: entitlementRows[0].effective_plan,
+      message: details.accessible
+        ? "Google Play membership verified and synchronized."
+        : "Google Play purchase has no current active entitlement.",
     });
   } catch (error) {
     console.error("GOOGLE_PLAY_VERIFICATION_ERROR", {
