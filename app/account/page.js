@@ -8,6 +8,7 @@ import ProfileNameEditor from "./ProfileNameEditor";
 import ProfilePhotoEditor from "./ProfilePhotoEditor";
 import ProfileAvatar from "./ProfileAvatar";
 import CoachingProgress from "./CoachingProgress";
+import DevelopmentWorkspace from "./DevelopmentWorkspace";
 import CoachingHistory from "./CoachingHistory";
 import { createClient } from "@/lib/supabase-server";
 import {
@@ -148,7 +149,8 @@ export default async function AccountPage() {
             </div>
 
             <div className="mt-6">
-              <CoachingProgress />
+              <div id="my-development" className="scroll-mt-8"><DevelopmentWorkspace /></div>
+              <div className="mt-5"><CoachingProgress /></div>
               <div className="mt-4"><CoachingHistory displayName={profile?.nickname || user?.email?.split("@")[0] || "The client"} /></div>
             </div>
 

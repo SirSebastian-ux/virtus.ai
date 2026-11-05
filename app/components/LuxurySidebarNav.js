@@ -42,6 +42,12 @@ export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools
           </svg>
           <span>Install App</span>
         </Link>
+        <Link className="virtus-luxury-nav-link" href="/account#my-development">
+          <svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3v12m-5 0h10M5 19h14M7 15l5-5 5 5" />
+          </svg>
+          <span>My Development</span>
+        </Link>
         <Link className="virtus-luxury-nav-link" href="/account">
           <NavIcon name="settings" />
           <span>Settings</span>
