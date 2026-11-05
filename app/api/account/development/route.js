@@ -47,6 +47,7 @@ export async function GET() {
   const allowed = new Set(goals.map((goal) => goal.id));
   return respond({
     membership: membershipCapabilities(plan),
+    serverTime: new Date().toISOString(),
     goals,
     checkins: (checkinsResult.data || []).filter((item) => allowed.has(item.goal_id)),
     note: "Development ratings and reflections are client-authored self-reports, not diagnoses or validated clinical outcomes.",
