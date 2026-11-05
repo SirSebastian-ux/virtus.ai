@@ -53,5 +53,8 @@ jobs:
       - name: Test microphone transcript merging
         run: node --test tests/virtus-voice-transcript.test.mjs
 
+      - name: Test cognitive development validators
+        run: node --test tests/virtus-development.test.mjs
+
       - name: Build app
         run: npm run build
