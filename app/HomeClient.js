@@ -3844,7 +3844,7 @@ async function loadUploadedFiles() {
 }
 
 async function handleDeleteAllLibraryFiles() {
-  if (!isAuthenticated || !uploadedFiles.length) return;
+  if (!isAuthenticated || !uploadedFiles.length) return false;
   setFileNotice("Deleting your documents...");
   try {
     const response = await fetch("/api/files/delete-all", {
@@ -3856,15 +3856,17 @@ async function handleDeleteAllLibraryFiles() {
     if (!response.ok) {
       setFileNotice(data.error || "Could not delete all files. Refresh and try again.");
       await loadUploadedFiles();
-      return;
+      return false;
     }
     setUploadedFiles([]);
     setActiveFiles([]);
     setActiveFile(null);
     setFileNotice("All saved library documents were deleted.");
+    return true;
   } catch {
     setFileNotice("Could not delete all files. Refresh and try again.");
     await loadUploadedFiles();
+    return false;
   }
 }
 
@@ -6086,7 +6088,7 @@ if (data.conversation) {
 
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={() => handleLogout()}
           className="virtus-account-footer-logout shrink-0 rounded-xl border px-3 py-2 text-xs font-semibold transition"
         >
           Log out
