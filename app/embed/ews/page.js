@@ -25,7 +25,10 @@ export default function EwsEmbedPage() {
     identity.current = getIdentity();
     try {
       const saved = JSON.parse(localStorage.getItem("virtus_ews_embed_messages") || "[]");
-      if (Array.isArray(saved)) setMessages(saved.filter(m => ["user", "assistant"].includes(m.role)).slice(-30));
+      if (Array.isArray(saved)) {
+        const restored = saved.filter(m => ["user", "assistant"].includes(m.role)).slice(-30);
+        queueMicrotask(() => setMessages(restored));
+      }
     } catch {}
   }, []);
 
@@ -97,7 +100,7 @@ export default function EwsEmbedPage() {
         <span className="status" title="Embedded trial">Trial Guest</span>
       </header>
       <div className="thread" aria-label="Virtus AI trial conversation" aria-live="polite">
-        <div className="bubble bot">Welcome. I'm Virtus AI. What would you like to explore today — your thinking, emotions, relationships, or personal growth?</div>
+        <div className="bubble bot">Welcome. I&apos;m Virtus AI. What would you like to explore today — your thinking, emotions, relationships, or personal growth?</div>
         {messages.map((m,i) => <div className={"bubble " + (m.role === "user" ? "visitor" : "bot")} key={i}>{m.text}</div>)}
         {busy && <div className="bubble bot" role="status">Virtus is thinking…</div>}
         {notice && <p className="notice" role="alert">{notice}</p>}
