@@ -14,7 +14,8 @@ export default function LoginPage() {
     const nextFromStorage = localStorage.getItem("virtus_login_next") || "";
     const next = nextFromUrl || nextFromStorage || "/";
 
-    if (!next.startsWith("/") || next.startsWith("//")) return "/";
+    if (!next.startsWith("/") || next.startsWith("//") ||
+        next === "/login" || next.startsWith("/login?") || next.startsWith("/login#")) return "/";
 
     return next;
   }
