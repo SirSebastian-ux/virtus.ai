@@ -24,6 +24,7 @@ async function send(body) {
 export default function DevelopmentWorkspace() {
   const [goals, setGoals] = useState([]);
   const [membership, setMembership] = useState(membershipCapabilities("free"));
+  const [serverTimestamp, setServerTimestamp] = useState(0);
   const [checkins, setCheckins] = useState([]);
   const [goalForm, setGoalForm] = useState(initialGoal);
   const [activeGoal, setActiveGoal] = useState(null);
@@ -42,6 +43,7 @@ export default function DevelopmentWorkspace() {
     if (!response.ok) throw new Error(payload.error || "Unable to load your development.");
     setGoals(payload.goals || []);
     setMembership(payload.membership || membershipCapabilities("free"));
+    setServerTimestamp(Date.parse(payload.serverTime || "") || 0);
     setCheckins(payload.checkins || []);
   }, []);
 
@@ -49,7 +51,7 @@ export default function DevelopmentWorkspace() {
     let active = true;
     fetch("/api/account/development", { cache: "no-store" })
       .then(async (r) => { const body = await r.json(); if (!r.ok) throw new Error(body.error || "Unable to load."); return body; })
-      .then((body) => { if (!active) return; setGoals(body.goals || []); setCheckins(body.checkins || []); setMembership(body.membership || membershipCapabilities("free")); })
+      .then((body) => { if (!active) return; setGoals(body.goals || []); setCheckins(body.checkins || []); setMembership(body.membership || membershipCapabilities("free")); setServerTimestamp(Date.parse(body.serverTime || "") || 0); })
       .catch((e) => { if (active) setError(e.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -145,7 +147,7 @@ export default function DevelopmentWorkspace() {
           const exercise = developmentExercise(goal, records.length);
           const programAccessible = membership.programDays.includes(Number(goal.program_days));
           const canCheckinToday = !records[0] ||
-            Date.now() - Date.parse(records[0].created_at) >= 16 * 60 * 60 * 1000;
+            serverTimestamp - Date.parse(records[0].created_at) >= 16 * 60 * 60 * 1000;
           return (
             <article key={goal.id} className="rounded-2xl border border-[#cfb576]/30 bg-[#082621] p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
