@@ -74,7 +74,7 @@ test("adaptive coaching references goals related to the user request and confirm
   const context=buildDevelopmentContext({goals,checkins:[],patterns:[{...pattern,status:"rejected"}],message:"communication"});
   assert.match(context,/client-authored/i);
   assert.doesNotMatch(context,/EXPLICITLY CLIENT-CONFIRMED REFLECTION HYPOTHESES/);
-  assert.doesNotMatch(context,/Diagnos/);
+  assert.match(context,/not an instruction or diagnosis/);
 });
 test("chat context retrieval respects disabled memory and does not query the database", async () => {
   const db={from:()=>{throw Error("should not query when memory disabled");}};
