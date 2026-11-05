@@ -62,5 +62,8 @@ jobs:
       - name: Test cognitive intelligence, curriculum and longitudinal development
         run: node --test tests/virtus-cognitive-development.test.mjs
 
+      - name: Test account-owned project and development review
+        run: node --test tests/virtus-coaching-portfolio.test.mjs
+
       - name: Build app
         run: npm run build
