@@ -1,5 +1,5 @@
 export default function robots() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://virtusaiworld.com";
+  const baseUrl = "https://virtusaiworld.com";
 
   return {
     rules: {
