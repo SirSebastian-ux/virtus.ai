@@ -14,7 +14,8 @@ export default function LoginPage() {
     const nextFromStorage = localStorage.getItem("virtus_login_next") || "";
     const next = nextFromUrl || nextFromStorage || "/";
 
-    if (!next.startsWith("/") || next.startsWith("//")) return "/";
+    if (!next.startsWith("/") || next.startsWith("//") ||
+        next === "/login" || next.startsWith("/login?") || next.startsWith("/login#")) return "/";
 
     return next;
   }
@@ -33,6 +34,19 @@ export default function LoginPage() {
   const [mode, setMode] = useState("login");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Authentication remains valid when Android Back restores an older login URL.
+  // Never show the sign-in form to an already signed-in user.
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!active || error || !data?.user) return;
+      window.location.replace(getSafeNextPath());
+    }).catch(() => {});
+    return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -120,7 +134,8 @@ export default function LoginPage() {
 
           setMessage("Signed in successfully.");
           localStorage.removeItem("virtus_login_next");
-          window.location.href = nextPath;
+          // Replace the login history entry so Android Back cannot reopen a stale sign-in form.
+          window.location.replace(nextPath);
         }
       }
     } catch (error) {

@@ -30,11 +30,33 @@ export default function LuxuryFileLibrary({
   onAttach,
   onPreview,
   onDelete,
+  onDeleteAll,
   attachedIds = [],
   notice = "",
 }) {
   const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deleteAllPhrase, setDeleteAllPhrase] = useState("");
+  const [deletingAll, setDeletingAll] = useState(false);
+  const closeBulkConfirmation = () => {
+    if (deletingAll) return;
+    setConfirmDeleteAll(false);
+    setDeleteAllPhrase("");
+  };
+  const deleteAll = async () => {
+    if (deleteAllPhrase !== "DELETE ALL" || deletingAll) return;
+    setDeletingAll(true);
+    try {
+      const success = await onDeleteAll?.();
+      if (success) {
+        setConfirmDeleteAll(false);
+        setDeleteAllPhrase("");
+      }
+    } finally {
+      setDeletingAll(false);
+    }
+  };
   const displayed = useMemo(() => {
     const unique = new Map();
     for (const file of files || []) {
@@ -109,7 +131,43 @@ export default function LuxuryFileLibrary({
                 <button type="button" onClick={onRefresh} className="virtus-luxury-library-outline-btn inline-flex items-center gap-2">
                   <Icon name="refresh" size={17} /> Refresh
                 </button>
+                {files.length > 0 && (
+                  <button type="button" onClick={() => { setConfirmDeleteAll(true); setDeleteAllPhrase(""); }}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-500 bg-red-950/90 px-4 py-2.5 text-sm font-bold text-red-100 shadow-lg shadow-red-950/40 hover:bg-red-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+                    aria-label="Delete all documents in library permanently" title="Permanently delete every library document">
+                    <Icon name="trash" size={18} /> Delete entire library
+                  </button>
+                )}
               </div>
+              {confirmDeleteAll && (
+                <div role="alertdialog" aria-modal="true" aria-labelledby="virtus-delete-all-title" aria-describedby="virtus-delete-all-description"
+                  className="mt-4 rounded-2xl border-2 border-red-500 bg-[#2b0d10] p-5 text-red-100 shadow-xl shadow-black/30">
+                  <div className="flex items-center gap-3">
+                    <span className="text-red-300"><Icon name="trash" size={25} /></span>
+                    <h3 id="virtus-delete-all-title" className="text-lg font-bold">Permanently delete all documents?</h3>
+                  </div>
+                  <p id="virtus-delete-all-description" className="mt-3 text-sm leading-6 text-red-100">
+                    Do you really want to delete all {files.length} document{files.length === 1 ? "" : "s"} in your library?
+                    This removes the original files and saved records, not just the current search results.
+                    It cannot be undone. Your chats and coaching history are not included.
+                  </p>
+                  <label className="mt-4 block text-sm font-semibold text-red-100" htmlFor="virtus-delete-all-confirm">
+                    Type DELETE ALL to confirm
+                  </label>
+                  <input id="virtus-delete-all-confirm" value={deleteAllPhrase} disabled={deletingAll}
+                    onChange={(event) => setDeleteAllPhrase(event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-red-400 bg-[#12090a] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-red-400"
+                    autoComplete="off" placeholder="DELETE ALL" />
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <button type="button" onClick={deleteAll} disabled={deleteAllPhrase !== "DELETE ALL" || deletingAll}
+                      className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40">
+                      {deletingAll ? "Deleting..." : "Yes, permanently delete all"}
+                    </button>
+                    <button type="button" onClick={closeBulkConfirmation} disabled={deletingAll}
+                      className="rounded-xl border border-[#d8bd85]/50 px-5 py-3 text-sm font-semibold text-[#f9dfa7] disabled:opacity-50">Cancel — keep documents</button>
+                  </div>
+                </div>
+              )}
               {notice && <p role="status" className="mt-3 rounded-xl border border-[#d8bd85]/30 bg-[#092a26] p-3 text-sm text-[#f7dc9b]">{notice}</p>}
 
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
