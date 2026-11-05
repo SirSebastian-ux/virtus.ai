@@ -1,26 +1,49 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeSpeechText, mergeSpeechCycles } from "../lib/virtus-voice-transcript.mjs";
+import { normalizeSpeechText, mergeSpeechCycles, combineRecognitionResults } from "../lib/virtus-voice-transcript.mjs";
 
-test("normalize transcript spacing", () => {
-  assert.equal(normalizeSpeechText("  Hello   there \n friends  "), "Hello there friends");
+test("normalize whitespace", () => {
+  assert.equal(normalizeSpeechText("  hello   Virtus  "), "hello Virtus");
 });
-test("append non-overlapping speech cycles", () => {
-  assert.equal(mergeSpeechCycles("I want to", "open the app"), "I want to open the app");
+test("merge unrelated cycles", () => {
+  assert.equal(mergeSpeechCycles("Hi Virtus", "how are you"), "Hi Virtus how are you");
 });
-test("remove overlap created when mobile recognizer restarts", () => {
-  assert.equal(mergeSpeechCycles("I want you to show", "you to show me the app"), "I want you to show me the app");
+test("repeated evolving hypotheses replace previous text", () => {
+  let text = "";
+  for (const result of ["Hi Virtus", "Hi Virtus how", "Hi Virtus how are you",
+    "Hi Virtus how are you I think", "Hi Virtus how are you I think your recording is not good"]) {
+    text = mergeSpeechCycles(text, result);
+  }
+  assert.equal(text, "Hi Virtus how are you I think your recording is not good");
 });
-test("remove repeated whole segment", () => {
-  assert.equal(mergeSpeechCycles("Tell me the next step", "Tell me the next step"), "Tell me the next step");
+test("exact user's repeated cumulative microphone fragments collapse", () => {
+  let text = "";
+  for (const result of [
+    "hi Richard", "hi Richard how", "hi Richard how are you",
+    "I think", "I think your", "I think your recording",
+    "I think your recording is", "I think your recording is not",
+    "I think your recording is not very good",
+  ]) text = mergeSpeechCycles(text, result);
+  assert.equal(text, "hi Richard how are you I think your recording is not very good");
 });
-test("preserve intentional repetition inside an utterance", () => {
-  assert.equal(mergeSpeechCycles("okay okay okay", "let us begin"), "okay okay okay let us begin");
+test("within an event incremental final and interim results are not duplicated", () => {
+  assert.equal(combineRecognitionResults(
+    ["I think", "I think your recording"],
+    ["I think your recording is not good"]
+  ), "I think your recording is not good");
 });
-test("keep single word repetitions across speech cycles", () => {
+test("overlapping restart results only once", () => {
+  assert.equal(mergeSpeechCycles("I think your recording", "your recording is not good"),
+    "I think your recording is not good");
+});
+test("intentional repeated single word is preserved", () => {
   assert.equal(mergeSpeechCycles("okay", "okay"), "okay okay");
 });
-test("handle empty previous or next", () => {
-  assert.equal(mergeSpeechCycles("", "Start here"), "Start here");
-  assert.equal(mergeSpeechCycles("Start here", ""), "Start here");
+test("non-cumulative distinct sentences remain intact", () => {
+  assert.equal(mergeSpeechCycles("I agree with you.", "I agree with you."),
+    "I agree with you.");
+});
+test("empty cases", () => {
+  assert.equal(mergeSpeechCycles("", "hello"), "hello");
+  assert.equal(mergeSpeechCycles("hello", ""), "hello");
 });
