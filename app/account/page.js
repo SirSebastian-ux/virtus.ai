@@ -149,7 +149,7 @@ export default async function AccountPage() {
             </div>
 
             <div className="mt-6">
-              <DevelopmentWorkspace />
+              <div id="my-development" className="scroll-mt-8"><DevelopmentWorkspace /></div>
               <div className="mt-5"><CoachingProgress /></div>
               <div className="mt-4"><CoachingHistory displayName={profile?.nickname || user?.email?.split("@")[0] || "The client"} /></div>
             </div>
