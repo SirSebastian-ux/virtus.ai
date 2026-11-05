@@ -22,8 +22,9 @@ create index if not exists virtus_cognitive_patterns_owner_recent
 create index if not exists virtus_cognitive_patterns_confirmed
   on public.virtus_cognitive_patterns(user_id,status,updated_at desc);
 alter table public.virtus_cognitive_patterns enable row level security;
-revoke all on public.virtus_cognitive_patterns from anon;
+revoke all on public.virtus_cognitive_patterns from anon, authenticated;
 grant select,insert,update,delete on public.virtus_cognitive_patterns to authenticated;
+-- TRUNCATE, REFERENCES and TRIGGER must not be accessible to authenticated users.
 create policy virtus_patterns_select_own on public.virtus_cognitive_patterns
   for select to authenticated using ((select auth.uid())=user_id);
 create policy virtus_patterns_insert_own on public.virtus_cognitive_patterns
