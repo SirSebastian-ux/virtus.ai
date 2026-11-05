@@ -1677,3 +1677,38 @@
 .virtus-chat-root.virtus-luxury .virtus-projects-panel [class*="text-zinc"] {
   color:#f0dbb5 !important;
 }
+
+
+/* Mobile dictation: grow the editor, preserve scrolling and keep actions visible. */
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-growing-composer-input {
+  min-height: 72px;
+  height: auto;
+  max-height: min(44dvh, 440px);
+  padding: 17px 72px 79px 65px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(239,200,123,.65) rgba(0,45,38,.45);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-growing-composer-input::-webkit-scrollbar { width: 5px; }
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-growing-composer-input::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  background: rgba(239,200,123,.55);
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-luxury-composer-actions {
+  z-index: 2;
+}
+@media(max-width:767px) {
+  .virtus-chat-root.virtus-luxury .virtus-luxury-composer {
+    border-radius: 28px;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-growing-composer-input {
+    font-size: 16px;
+    line-height: 1.55;
+    padding: 16px 62px 74px 61px;
+    min-height: 72px;
+    max-height: min(44dvh, 440px);
+  }
+}
