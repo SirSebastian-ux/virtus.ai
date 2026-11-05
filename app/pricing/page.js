@@ -1,28 +1,38 @@
 import Link from "next/link";
+import { membershipCapabilities } from "@/lib/virtus-membership.mjs";
 
 export const metadata = {
-  title: "Coaching Plans | Virtus AI",
-  description: "Explore Virtus AI Life Coach, Trainer, and Mentor, powered by Enhanced Wellness Solutions.",
+  title: "Life Coach, Trainer and Mentor | Virtus AI",
+  description: "Compare Virtus AI coaching memberships, personal development pathways and practice levels.",
 };
 
 const plans = [
-  {
-    name: "Life Coach",
-    price: "$9.99",
-    description: "Personal reflection, self-awareness, emotional discipline, and everyday growth.",
-    features: ["Guided AI coaching conversations", "Personal goals and reflection", "Saved conversations and continuity"],
+  { key: "life_coach", price: "$9.99", heading: "Understand yourself",
+    description: "Build awareness of your thoughts, interpretations, emotions and responses.",
+    features: [
+      "Guided coaching and saved personal reflections",
+      "Personal development goals and client-authored progress",
+      "Foundational self-awareness and emotion regulation practices",
+      "Up to 3 project spaces and 40 messages per day",
+    ],
   },
-  {
-    name: "Trainer",
-    price: "$19.99",
-    description: "Structured learning and practical development using the EWS workbook library.",
-    features: ["Everything in Life Coach", "Guided workbook exercises", "Learning pathways and progress reviews"],
+  { key: "plus", price: "$19.99", heading: "Develop your capabilities",
+    description: "Train communication, disciplined responses and practical skills through guided rehearsal.",
+    features: [
+      "Everything in Life Coach",
+      "Structured skills practice and guided role-play",
+      "Cross-conversation personal continuity",
+      "Up to 5 project spaces and 120 messages per day",
+    ],
   },
-  {
-    name: "Mentor",
-    price: "$29.99",
-    description: "Advanced leadership, decision-making, accountability, and long-term development.",
-    features: ["Everything in Trainer", "Leadership and strategic reflection", "Long-term mentoring objectives"],
+  { key: "premium", price: "$29.99", heading: "Master your direction",
+    description: "Integrate your learning into leadership, complex decisions and sustained development.",
+    features: [
+      "Everything in Trainer",
+      "Advanced decision and leadership simulations",
+      "Extended personal and project continuity",
+      "Higher-capacity conversations under fair-use and provider limits",
+    ],
   },
 ];
 
@@ -30,30 +40,49 @@ export default function PricingPage() {
   return (
     <main className="virtus-subpage-modern min-h-screen bg-[#091b1c] px-5 py-14 text-[#f5f3ec]">
       <section className="mx-auto max-w-6xl">
-        <div className="mb-12 text-center">
+        <div className="mb-10 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8bd85]">Virtus AI · Enhanced Wellness Solutions</p>
-          <h1 className="mt-5 text-4xl font-semibold tracking-tight md:text-5xl">Your growth. Your pace. Your guide.</h1>
+          <h1 className="mt-5 font-serif text-3xl tracking-tight md:text-5xl">Understand. Practice. Master.</h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#b9cbc5]">
-            Choose your level of personal development. Every higher plan includes the experiences below it.
+            Every membership offers truthful and psychologically responsible guidance.
+            Higher tiers add structured training, stronger continuity and advanced mentoring workflows.
           </p>
         </div>
         <div className="grid gap-5 md:grid-cols-3">
-          {plans.map((plan, index) => (
-            <article key={plan.name} className={`flex flex-col rounded-3xl border p-7 shadow-2xl ${index === 2 ? "border-[#d8bd85]/70 bg-[#173632]" : "border-[#42615a] bg-[#112b2a]"}`}>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#d8bd85]">Virtus {plan.name}</p>
-              <h2 className="mt-4 text-2xl font-semibold">{plan.name}</h2>
-              <p className="mt-4 text-4xl font-semibold">{plan.price}<span className="ml-1 text-sm font-normal text-[#b9cbc5]">/ month</span></p>
-              <p className="mt-5 min-h-20 text-sm leading-6 text-[#c5d3cd]">{plan.description}</p>
-              <ul className="mt-6 flex-1 space-y-3 border-t border-white/10 pt-6">
-                {plan.features.map((feature) => <li key={feature} className="flex gap-3 text-sm text-[#e1e8e2]"><span aria-hidden="true" className="text-[#d8bd85]">✓</span>{feature}</li>)}
-              </ul>
-              <p className="mt-7 rounded-xl border border-[#d8bd85]/30 px-4 py-3 text-center text-sm text-[#e4d0a5]">Checkout setup in progress</p>
-            </article>
-          ))}
+          {plans.map((plan, index) => {
+            const capabilities = membershipCapabilities(plan.key);
+            return (
+              <article key={plan.key} className={`flex flex-col rounded-3xl border p-6 shadow-2xl ${index === 2 ? "border-[#d8bd85]/75 bg-[#173632]" : "border-[#42615a] bg-[#112b2a]"}`}>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#d8bd85]">Virtus {capabilities.publicName}</p>
+                <h2 className="mt-4 font-serif text-2xl text-[#fff0c1]">{plan.heading}</h2>
+                <p className="mt-4 text-4xl font-semibold">{plan.price}<span className="ml-1 text-sm font-normal text-[#b9cbc5]">/ month</span></p>
+                <p className="mt-4 min-h-20 text-sm leading-6 text-[#c5d3cd]">{plan.description}</p>
+                <div className="mt-4 rounded-xl border border-[#d8bd85]/35 bg-[#0a2925] px-4 py-3 text-sm text-[#f8dc9b]">
+                  <strong>{capabilities.maxActiveGoals} active goals</strong>
+                  <span className="mt-1 block text-xs text-[#c8d5cc]">{capabilities.programDays.join(" / ")}-day development pathways</span>
+                </div>
+                <ul className="mt-5 flex-1 space-y-3 border-t border-white/10 pt-5">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex gap-3 text-sm text-[#e1e8e2]">
+                      <span aria-hidden="true" className="text-[#d8bd85]">✓</span>{feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/upgrade" className={`mt-7 rounded-xl px-4 py-3 text-center text-sm font-semibold ${index === 2 ? "bg-[#e3c481] text-[#09291f]" : "border border-[#d8bd85]/65 text-[#f7dfab] hover:bg-[#1a4b3c]"}`}>
+                  Compare billing and choose a membership
+                </Link>
+              </article>
+            );
+          })}
         </div>
-        <p className="mt-7 text-center text-xs text-[#b9cbc5]">New monthly membership pricing. Checkout will open once the Stripe subscriptions and entitlements are verified.</p>
-        <div className="mt-9 text-center"><Link href="/" className="inline-flex rounded-xl border border-[#d8bd85]/60 px-6 py-3 text-sm font-semibold text-[#f5f3ec] hover:bg-white/10">Return to Virtus AI</Link></div>
-        <p className="mx-auto mt-10 max-w-2xl text-center text-xs leading-6 text-[#9fb4ad]">Virtus AI supports education, coaching, and self-development. It is not a replacement for licensed mental health care.</p>
+        <p className="mx-auto mt-7 max-w-3xl text-center text-xs leading-6 text-[#b9cbc5]">
+          A development day advances only after a completed self-reflection. Voice add-ons and professional-led
+          sessions are not included unless separately offered. Memberships support coaching, learning and
+          personal development, not independent clinical diagnosis or psychotherapy.
+        </p>
+        <div className="mt-9 text-center">
+          <Link href="/" className="inline-flex rounded-xl border border-[#d8bd85]/60 px-6 py-3 text-sm font-semibold text-[#f5f3ec]">Return to Virtus AI</Link>
+        </div>
       </section>
     </main>
   );
