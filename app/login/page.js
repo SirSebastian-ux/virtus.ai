@@ -36,7 +36,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("mode") === "signup") setMode("signup");
+    if (params.get("mode") === "signup") queueMicrotask(() => setMode("signup"));
   }, []);
 
   useEffect(() => {
