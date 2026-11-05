@@ -37,6 +37,16 @@ export default function InstallClient() {
     };
   }, []);
 
+  async function copyInstallLink() {
+    const link = "https://virtusaiworld.com/install";
+    try {
+      await navigator.clipboard.writeText(link);
+      setNotice("Official installation link copied. Share it in WhatsApp or any messaging app.");
+    } catch {
+      setNotice("Copy this address to share: https://virtusaiworld.com/install");
+    }
+  }
+
   async function install() {
     if (!promptEvent) return;
     try {
@@ -72,12 +82,19 @@ export default function InstallClient() {
             <a href="#instructions" className="rounded-xl bg-[#e7c883] px-6 py-3 font-semibold text-[#09241e] hover:bg-[#f7dfa4]">Show installation steps</a>
           )}
           <Link href="/" className="rounded-xl border border-[#d8bd85]/60 px-6 py-3 font-semibold text-[#f8e7b9] hover:bg-white/10">Use in browser</Link>
+          <button type="button" onClick={copyInstallLink} className="rounded-xl border border-[#d8bd85]/60 px-6 py-3 font-semibold text-[#f8e7b9] hover:bg-white/10">Copy installation link</button>
         </div>
         {installed && <p role="status" className="mt-4 text-sm text-[#e7c883]">This browser reports that Virtus AI is already installed.</p>}
         {notice && <p role="status" className="mt-4 text-sm text-[#e7c883]">{notice}</p>}
       </section>
       <section id="instructions" className="scroll-mt-8">
         <h2 className="font-serif text-2xl text-[#f6dfa7]">How to install</h2>
+        <p className="mt-3 rounded-xl border border-[#d8bd85]/40 bg-[#0b2924] p-4 text-sm leading-6 text-[#f8e7b9]">
+          <strong>Opening a link from WhatsApp, Facebook, or Instagram?</strong> If the link does not open correctly,
+          choose <strong>Open in browser</strong> from that app's menu, or copy
+          <span className="break-all"> https://virtusaiworld.com/install </span>
+          into Chrome (Android) or Safari (iPhone). Do not use an unofficial APK link.
+        </p>
         <p className="mt-2 text-sm leading-6 text-[#c0d1ca]">Choose the instructions for your device. Browser menu labels can vary by version.</p>
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <article className={`rounded-2xl border p-6 ${platform === "android" ? "border-[#efcf8a] bg-[#123a31]" : "border-[#45675b] bg-[#0c2825]"}`}>
