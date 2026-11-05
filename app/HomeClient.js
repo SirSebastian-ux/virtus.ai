@@ -63,6 +63,10 @@ const [captureRecordingSeconds, setCaptureRecordingSeconds] = useState(0);
 const [captureVoiceLanguage, setCaptureVoiceLanguage] = useState("en-US");
 const recognitionRef = useRef(null);
 const dictationSessionRef = useRef(null);
+const chatRecordingRef = useRef(null);
+const chatRecordingPendingRef = useRef(false);
+const [voiceTranscribing, setVoiceTranscribing] = useState(false);
+
 const [dictationNotice, setDictationNotice] = useState("");
 const captureRecognitionRef = useRef(null);
 const captureVoiceShouldContinueRef = useRef(false);
@@ -997,8 +1001,113 @@ const cancelEdit = () => {
   setEditingIndex(null);
   setMessage("");
 };
+const handleRecordedChatDictation = async () => {
+  if (typeof window === "undefined" || chatRecordingPendingRef.current) return;
+  const active = chatRecordingRef.current;
+  if (active) {
+    // A second tap stops the one continuous recording; no speech-recognition
+    // restart and no browser start/stop sound on every pause.
+    chatRecordingRef.current = null;
+    try {
+      if (active.recorder.state !== "inactive") active.recorder.stop();
+    } catch {
+      active.stream.getTracks().forEach((track) => track.stop());
+      setListening(false);
+      setDictationNotice("Unable to stop the recording. Try again.");
+    }
+    return;
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+    setDictationNotice("Continuous recording is unavailable in this browser.");
+    return;
+  }
+  chatRecordingPendingRef.current = true;
+  setDictationNotice("");
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+    const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"]
+      .find((type) => MediaRecorder.isTypeSupported(type));
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    const chunks = [];
+    const base = normalizeSpeechText(message);
+    const recording = { stream, recorder, chunks, base, startedAt: Date.now() };
+    chatRecordingRef.current = recording;
+    recorder.ondataavailable = (event) => { if (event.data?.size) chunks.push(event.data); };
+    recorder.onerror = () => {
+      chatRecordingRef.current = null;
+      stream.getTracks().forEach((track) => track.stop());
+      setListening(false);
+      setDictationNotice("Recording failed. Please try again.");
+    };
+    recorder.onstop = async () => {
+      stream.getTracks().forEach((track) => track.stop());
+      if (chatRecordingRef.current === recording) chatRecordingRef.current = null;
+      setListening(false);
+      if (!chunks.length) {
+        setDictationNotice("No audio was recorded. Please try again.");
+        return;
+      }
+      const type = recorder.mimeType || mimeType || "audio/webm";
+      const blob = new Blob(chunks, { type });
+      if (blob.size > 25 * 1024 * 1024) {
+        setDictationNotice("Recording is too large. Please record a shorter message.");
+        return;
+      }
+      setVoiceTranscribing(true);
+      setDictationNotice("");
+      try {
+        const data = new FormData();
+        data.append("audio", blob, type.includes("mp4") ? "voice.mp4" : "voice.webm");
+        data.append("language", (navigator.language || "en").split("-")[0]);
+        const response = await fetch("/api/capture/transcribe", { method: "POST", body: data });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(response.status === 401
+            ? "Sign in to use continuous voice recording."
+            : payload.error || "Unable to transcribe the recording.");
+        }
+        const transcript = normalizeSpeechText(payload.text);
+        if (!transcript) {
+          setDictationNotice("No clear words were detected. Please try again.");
+        } else {
+          setMessage((current) => {
+            const text = normalizeSpeechText(current);
+            return normalizeSpeechText([text || base, transcript].filter(Boolean).join(" "));
+          });
+          setDictationNotice("");
+        }
+      } catch (error) {
+        setDictationNotice(error?.message || "Could not transcribe the recording.");
+      } finally {
+        setVoiceTranscribing(false);
+      }
+    };
+    recorder.start(1000);
+    setListening(true);
+  } catch (error) {
+    stream?.getTracks().forEach((track) => track.stop());
+    const reason = error?.name === "NotAllowedError"
+      ? "Allow Virtus AI microphone permission in your phone settings."
+      : "Could not start the microphone. Please try again.";
+    setDictationNotice(reason);
+    setListening(false);
+  } finally {
+    chatRecordingPendingRef.current = false;
+  }
+};
+
 const handleMicrophoneClick = () => {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || voiceTranscribing) return;
+  // Signed-in coaching uses one continuous MediaRecorder session, not repeated
+  // Android Web Speech start/stop cycles. Guest speech recognition is fallback.
+  if (isAuthenticated && navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined") {
+    void handleRecordedChatDictation();
+    return;
+  }
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
     setDictationNotice("Voice typing is not supported in this browser. Open Virtus AI in Chrome or use the keyboard microphone.");
@@ -1099,11 +1208,11 @@ const handleMicrophoneClick = () => {
         return;
       }
       session.restarts += 1;
-      if (session.restarts > 8) {
+      if (session.restarts > 0) {
         session.stopped = true;
         recognitionRef.current = null;
         setListening(false);
-        setDictationNotice("Speech recognition stopped unexpectedly several times. Tap the microphone to try again.");
+        setDictationNotice("Voice recognition paused. Tap the microphone to continue, or sign in for continuous recording.");
         return;
       }
       // Some Android browsers end a cycle at silence. Keep the session armed,
@@ -7285,12 +7394,15 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 }}
 />
 
-{(listening || dictationNotice) && (
-  <div role="status" aria-live="polite" className={`absolute bottom-[4.25rem] left-4 right-4 z-10 rounded-xl border px-3 py-2 text-xs shadow-lg ${listening ? "border-amber-400/50 bg-[#07352c] text-amber-100" : "border-red-400/40 bg-[#311518] text-red-100"}`}>
-    {listening ? "Listening — tap the red square to stop. Nothing is sent until you press Send." : dictationNotice}
-  </div>
-)}
 <div className="virtus-luxury-composer-actions absolute bottom-3 right-3 flex items-center gap-3">
+{(listening || voiceTranscribing || dictationNotice) && (
+  <span role="status" aria-live="polite"
+    title={dictationNotice || (voiceTranscribing ? "Transcribing your recording" : "Recording — tap square to stop")}
+    className={`max-w-[115px] truncate text-[10px] sm:max-w-[170px] ${dictationNotice ? "text-amber-200" : "text-emerald-100"}`}>
+    {voiceTranscribing ? "Transcribing..." : listening ? "Recording" : dictationNotice}
+  </span>
+)}
+
 
                  <button
   type="button"
@@ -7300,9 +7412,10 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
       ? "bg-sky-950/60 text-sky-200"
       : "text-white/80 hover:bg-sky-950/30 hover:text-sky-200"
   }`}
-  aria-label={listening ? "Stop voice typing" : "Start voice typing"}
+  aria-label={voiceTranscribing ? "Transcribing voice recording" : listening ? "Stop voice recording" : "Start voice recording"}
+  disabled={voiceTranscribing}
   aria-pressed={listening}
-  title={listening ? "Recording — tap square to stop" : "Start voice typing"}
+  title={voiceTranscribing ? "Transcribing..." : listening ? "Recording — tap square to stop" : "Start voice recording"}
 >
   {listening ? (
     <span className="relative flex h-5 w-5 items-center justify-center" aria-hidden="true">
