@@ -3,6 +3,7 @@ export default function sitemap() {
 
   return [
     "",
+    "/install",
     "/pricing",
     "/privacy",
     "/terms",
