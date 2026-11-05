@@ -48,10 +48,11 @@ export default function LuxuryFileLibrary({
     if (deleteAllPhrase !== "DELETE ALL" || deletingAll) return;
     setDeletingAll(true);
     try {
-      await onDeleteAll?.();
-      closeBulkConfirmation();
-      setConfirmDeleteAll(false);
-      setDeleteAllPhrase("");
+      const success = await onDeleteAll?.();
+      if (success) {
+        setConfirmDeleteAll(false);
+        setDeleteAllPhrase("");
+      }
     } finally {
       setDeletingAll(false);
     }
