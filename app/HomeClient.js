@@ -3546,10 +3546,11 @@ function getPlanCapabilityCard(plan) {
 
     const existingGuestId = localStorage.getItem("virtus_guest_id");
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    // Defer guest-only plans overlay until the server verifies authentication.
-    setShowPlanOverlay(false);
-    setGuestAccess(existingGuestId ? normalizedGuestAccess : null);
+    // Browser storage hydration runs after mount, outside the effect body.
+    queueMicrotask(() => {
+      setShowPlanOverlay(false);
+      setGuestAccess(existingGuestId ? normalizedGuestAccess : null);
+    });
 
     const savedChatId = getGuestSidebarChatId(
       existingGuestId ? normalizedGuestAccess?.plan : null,
@@ -3557,8 +3558,7 @@ function getPlanCapabilityCard(plan) {
     );
 
     localStorage.setItem("virtus_chat_id", savedChatId);
-    setActiveChatId(savedChatId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    queueMicrotask(() => setActiveChatId(savedChatId));
   }, []);
 
   useEffect(() => {
@@ -3704,8 +3704,10 @@ setAccountAccess(authData.access || null);
       const imported = history.filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string").slice(-14).map((m) => ({role:m.role,text:m.content.slice(0,4000)}));
       if (!imported.length) return;
       sessionStorage.setItem("virtus_ews_handoff", "true");
-      setConversation(imported);
-      setShowPlanOverlay(false);
+      queueMicrotask(() => {
+        setConversation(imported);
+        setShowPlanOverlay(false);
+      });
       localStorage.setItem("virtus_ews_imported_chat", JSON.stringify(imported));
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     } catch {
