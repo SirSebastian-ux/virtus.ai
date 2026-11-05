@@ -32,7 +32,7 @@ import {
   DEFAULT_VIRTUS_PLAN_STATUS,
 } from "@/data/virtus-plan-policy";
 import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
-import { membershipConversationGuidance } from "@/lib/virtus-membership.mjs";
+import { membershipConversationGuidance, canAccessPractice } from "@/lib/virtus-membership.mjs";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
@@ -687,19 +687,6 @@ const hasPlusAccess = plan === "plus";
 const hasTrialGuestAccess = isTrialGuestPlan(plan);
 const globalLearningContext = await buildGlobalLearningContext(supabase);
 
-const practicePlanRank = {
-  guest: 0,
-  trial_guest: 0,
-  free: 0,
-  life_coach: 1,
-  plus: 2,
-  premium: 3,
-};
-
-const getPracticePlanRank = (planName) => {
-  return practicePlanRank[planName] ?? 0;
-};
-
 const getPracticeCategoryIdFromMode = (mode) => {
   return String(mode || "").replace(/^category:/, "").trim();
 };
@@ -719,11 +706,8 @@ const canUsePracticeCategory = (category) => {
     return true;
   }
 
-  const requiredPlan = category.minimumPlan || "free";
-  const currentRank = getPracticePlanRank(plan);
-  const requiredRank = getPracticePlanRank(requiredPlan);
-
-  return currentRank >= requiredRank;
+  const requiredPlan = category.minimumPlan || "life_coach";
+  return canAccessPractice(plan, requiredPlan);
 };
 
 const practiceCategory =
