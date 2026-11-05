@@ -26,9 +26,10 @@ export async function POST(req) {
     const admin = createAdminClient();
     // Read owner-scoped records only; no client-provided user or file identifiers.
     const { data: files, error: readError } = await admin.from("user_files")
-      .select("id, storage_path").eq("user_id", user.id).limit(10000);
+      .select("id, storage_path").eq("user_id", user.id).limit(10001);
     if (readError) return Response.json({ error: readError.message }, { status: 500 });
     if (!files?.length) return Response.json({ success: true, deleted: 0 });
+    if (files.length > 10000) return Response.json({ error: "Library exceeds the bulk deletion limit. Please contact support." }, { status: 413 });
 
     if (files.some((file) => !safePath(user.id, file.storage_path))) {
       return Response.json({ error: "Library contains an invalid storage path. Nothing was deleted." }, { status: 409 });
