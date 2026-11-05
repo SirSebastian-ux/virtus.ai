@@ -56,5 +56,8 @@ jobs:
       - name: Test cognitive development validators
         run: node --test tests/virtus-development.test.mjs
 
+      - name: Test membership and programme entitlements
+        run: node --test tests/virtus-membership.test.mjs
+
       - name: Build app
         run: npm run build
