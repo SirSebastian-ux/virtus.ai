@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DEVELOPMENT_DOMAINS, selfRatedTrajectory } from "@/lib/virtus-development.mjs";
+import { membershipCapabilities } from "@/lib/virtus-membership.mjs";
+import { developmentExercise } from "@/lib/virtus-development-pathways.mjs";
+import Link from "next/link";
 
 const initialGoal = {
   title: "", focus_domain: "self_awareness", observed_behavior: "",
-  desired_behavior: "", baseline_rating: 3,
+  desired_behavior: "", baseline_rating: 3, program_days: 7,
 };
 
 async function send(body) {
@@ -20,6 +23,7 @@ async function send(body) {
 
 export default function DevelopmentWorkspace() {
   const [goals, setGoals] = useState([]);
+  const [membership, setMembership] = useState(membershipCapabilities("free"));
   const [checkins, setCheckins] = useState([]);
   const [goalForm, setGoalForm] = useState(initialGoal);
   const [activeGoal, setActiveGoal] = useState(null);
@@ -37,6 +41,7 @@ export default function DevelopmentWorkspace() {
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || "Unable to load your development.");
     setGoals(payload.goals || []);
+    setMembership(payload.membership || membershipCapabilities("free"));
     setCheckins(payload.checkins || []);
   }, []);
 
@@ -44,7 +49,7 @@ export default function DevelopmentWorkspace() {
     let active = true;
     fetch("/api/account/development", { cache: "no-store" })
       .then(async (r) => { const body = await r.json(); if (!r.ok) throw new Error(body.error || "Unable to load."); return body; })
-      .then((body) => { if (!active) return; setGoals(body.goals || []); setCheckins(body.checkins || []); })
+      .then((body) => { if (!active) return; setGoals(body.goals || []); setCheckins(body.checkins || []); setMembership(body.membership || membershipCapabilities("free")); })
       .catch((e) => { if (active) setError(e.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -65,6 +70,9 @@ export default function DevelopmentWorkspace() {
     } finally { setBusy(false); }
   }
 
+  const activeGoalsCount = goals.filter((goal) => goal.status === "active").length;
+  const canAddGoal = !loading && membership.canCreateDevelopmentGoals &&
+    activeGoalsCount < membership.maxActiveGoals;
   return (
     <section className="mt-6 rounded-3xl border border-[#d8bd85]/50 bg-gradient-to-br from-[#06392e] to-[#071d1c] p-5 text-[#f6f1e4] sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -73,17 +81,32 @@ export default function DevelopmentWorkspace() {
           <h2 className="mt-2 font-serif text-2xl text-[#f7e4b1]">My Development</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#d1dfd5]">Define an observable behavior, choose how you want to respond, and review what actually happens. Your goals and ratings are authored by you—not inferred diagnoses.</p>
         </div>
-        <button type="button" onClick={() => setCreating((v) => !v)}
-          className="rounded-xl bg-[#e8ca87] px-4 py-3 text-sm font-bold text-[#082820]">
+        <button type="button" disabled={!canAddGoal && !creating} onClick={() => setCreating((v) => !v)}
+          className="rounded-xl bg-[#e8ca87] px-4 py-3 text-sm font-bold text-[#082820] disabled:cursor-not-allowed disabled:opacity-45">
           {creating ? "Close goal form" : "+ Define a goal"}
         </button>
       </div>
+      {!loading && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#d8bd85]/35 bg-[#092d27]/80 px-4 py-3">
+          <p className="text-sm text-[#e9dfc1]"><strong>{membership.publicName}</strong> ·
+            {activeGoalsCount}/{membership.maxActiveGoals} active development goals ·
+            {membership.programDays.length ? ` ${membership.programDays.join("/")} day pathways` : " Upgrade to start a pathway"}
+          </p>
+          {!canAddGoal && <Link href="/upgrade" className="text-sm font-semibold text-[#f5d99e] underline underline-offset-4">View membership options</Link>}
+        </div>
+      )}
       {loading && <p className="mt-4 text-sm">Loading development records...</p>}
       {error && <p role="alert" className="mt-4 rounded-lg border border-red-400/60 bg-red-950/30 p-3 text-sm text-red-100">{error}</p>}
       {notice && <p role="status" className="mt-4 text-sm text-emerald-200">{notice}</p>}
       {creating && (
         <form className="mt-6 grid gap-3 rounded-2xl border border-[#bca16d]/40 bg-[#082621] p-4"
           onSubmit={(e) => { e.preventDefault(); void act({ type: "goal", ...goalForm }, () => { setGoalForm(initialGoal); setCreating(false); }); }}>
+          <label className="text-sm">Development programme
+            <select value={goalForm.program_days} onChange={(e) => setGoalForm({...goalForm, program_days:Number(e.target.value)})}
+              className="mt-2 block w-full rounded-lg border border-[#9e9165] bg-[#0d3730] p-3 text-white">
+              {membership.programDays.map((days) => <option key={days} value={days}>{days}-day guided pathway</option>)}
+            </select>
+          </label>
           <label className="text-sm">Goal title
             <input required minLength={4} maxLength={120} value={goalForm.title} onChange={(e) => setGoalForm({...goalForm,title:e.target.value})}
               className="mt-2 w-full rounded-lg border border-[#9e9165] bg-[#0d3730] p-3 text-white" placeholder="e.g. Respond calmly to disagreement" />
@@ -119,6 +142,10 @@ export default function DevelopmentWorkspace() {
           const records = checkins.filter((item) => item.goal_id === goal.id);
           const points = selfRatedTrajectory(goal, records);
           const latest = points[points.length - 1];
+          const exercise = developmentExercise(goal, records.length);
+          const programAccessible = membership.programDays.includes(Number(goal.program_days));
+          const canCheckinToday = !records[0] ||
+            Date.now() - Date.parse(records[0].created_at) >= 16 * 60 * 60 * 1000;
           return (
             <article key={goal.id} className="rounded-2xl border border-[#cfb576]/30 bg-[#082621] p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
@@ -130,6 +157,16 @@ export default function DevelopmentWorkspace() {
               </div>
               <p className="mt-3 text-sm leading-6"><strong>Current pattern:</strong> {goal.observed_behavior}</p>
               <p className="mt-2 text-sm leading-6"><strong>Chosen response:</strong> {goal.desired_behavior}</p>
+              {exercise && <div className="mt-4 rounded-xl border border-[#dabf8b]/35 bg-[#0e3730] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.13em] text-[#e6c582]">
+                  {exercise.completed ? "Pathway completed" : `Day ${exercise.day} of ${exercise.duration} · ${exercise.phase}`}
+                </p>
+                <p className="mt-2 font-semibold text-[#f8edd0]">{exercise.title}</p>
+                <p className="mt-1 text-sm leading-6 text-[#d3ded6]">{exercise.instruction}</p>
+                {!exercise.completed && <p className="mt-2 text-sm italic leading-6 text-[#dfd4b4]">{exercise.question}</p>}
+                {!programAccessible && <p className="mt-2 text-xs text-amber-200">This saved programme requires a higher plan to continue. All previous entries remain available.</p>}
+                {!canCheckinToday && !exercise.completed && <p className="mt-2 text-xs text-[#e8c98c]">Your next daily check-in becomes available after the reflection interval.</p>}
+              </div>}
               <p className="mt-3 text-sm text-[#d0e0d5]">Self-rated progress: {goal.baseline_rating}/5 baseline → {latest.rating}/5 latest · {records.length} check-ins</p>
               <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-[#184b40]" aria-label={`Latest self-rating ${latest.rating} of 5`}>
                 <div className="rounded-full bg-[#dec184]" style={{width:`${Number(latest.rating)*20}%`}} />
@@ -140,13 +177,13 @@ export default function DevelopmentWorkspace() {
                 </p>
               )}
               <div className="mt-4 flex flex-wrap gap-2">
-                {goal.status === "active" && (
+                {goal.status === "active" && programAccessible && !exercise?.completed && canCheckinToday && (
                   <button type="button" onClick={() => { setActiveGoal(activeGoal === goal.id ? null : goal.id); setRating(latest.rating); setEvidence(""); setNextAction(""); }}
                     className="rounded-lg border border-[#d8bd85] px-4 py-2 text-sm text-[#f8e6b7]">
                     {activeGoal === goal.id ? "Close reflection" : "+ Record a check-in"}
                   </button>
                 )}
-                <button type="button" disabled={busy}
+                <button type="button" disabled={busy || (goal.status!=="active" && !programAccessible)}
                   onClick={() => void act({type:"status",goal_id:goal.id,status:goal.status==="active"?"paused":"active"})}
                   className="rounded-lg border border-white/25 px-4 py-2 text-sm text-[#d3e1d7] disabled:opacity-40">
                   {goal.status==="active" ? "Pause" : "Resume"}
@@ -155,7 +192,7 @@ export default function DevelopmentWorkspace() {
                   onClick={() => void act({type:"status",goal_id:goal.id,status:"completed"})}
                   className="rounded-lg border border-white/25 px-4 py-2 text-sm text-[#d3e1d7] disabled:opacity-40">Mark complete</button>}
               </div>
-              {activeGoal === goal.id && goal.status === "active" && (
+              {activeGoal === goal.id && goal.status === "active" && programAccessible && canCheckinToday && !exercise?.completed && (
                 <form className="mt-4 space-y-3 rounded-xl border border-[#a88b57]/40 p-4"
                   onSubmit={(e) => { e.preventDefault(); void act({type:"checkin",goal_id:goal.id,rating,evidence,next_action:nextAction}, () => {setActiveGoal(null); setEvidence(""); setNextAction("");}); }}>
                   <label className="block text-sm">How often did you demonstrate the chosen response?
@@ -179,7 +216,7 @@ export default function DevelopmentWorkspace() {
           );
         })}
       </div>
-      <p className="mt-5 text-xs leading-5 text-[#c0d4c9]">This workspace contains client-authored goals and self-reported observations. A change in self-rating does not establish clinical improvement or a validated psychological result. Records remain private to your account.</p>
+      <p className="mt-5 text-xs leading-5 text-[#c0d4c9]">One check-in advances one programme day. Each new check-in is available after a reflection interval. These exercises are educational coaching practices, not clinical treatment. This workspace contains client-authored goals and self-reported observations. A change in self-rating does not establish clinical improvement or a validated psychological result. Records remain private to your account.</p>
     </section>
   );
 }
