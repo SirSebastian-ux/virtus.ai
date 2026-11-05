@@ -12,6 +12,13 @@ export const metadata = {
     url: "https://virtusaiworld.com/install",
     siteName: "Virtus AI",
     type: "website",
+    images: [{ url: "/og/virtus-ai-official-20261105.png", width: 1200, height: 630, alt: "Virtus AI - Life Coach, Trainer, Mentor" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Install Virtus AI directly",
+    description: "Your AI life coach, trainer and mentor. Install directly from the official website.",
+    images: ["/og/virtus-ai-official-20261105.png"],
   },
 };
 
