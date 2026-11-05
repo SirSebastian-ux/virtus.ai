@@ -1,4 +1,5 @@
 
+import { membershipCapabilities } from "../lib/virtus-membership.mjs";
 
 export const DEFAULT_VIRTUS_PLAN = "trial_guest";
 
@@ -21,7 +22,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
 
   life_coach: {
     plan: "life_coach", label: "Life Coach", status: "active", isGuest: false, isPaid: true, isTrial: false, inheritsPremiumExperience: false,
-    description: "Paid Life Coach membership for guided self-reflection and personal development.",
+    description: "Self-awareness, guided reflection, and 7-day personal development."
     projectScope: { canUseProjects: true, maxProjects: 3 },
   },
   free: {
@@ -41,13 +42,13 @@ export const VIRTUS_PLAN_DEFINITIONS = {
 
   plus: {
     plan: "plus",
-    label: "Plus",
+    label: "Trainer",
     status: "active",
     isGuest: false,
     isPaid: true,
     isTrial: false,
     inheritsPremiumExperience: false,
-    description: "Life-coach layer with stronger continuity, better memory, and more personal support.",
+    description: "Structured skills training, scenario rehearsal, and 7/30-day development pathways."
     projectScope: {
       canUseProjects: true,
       maxProjects: 5,
@@ -56,13 +57,13 @@ export const VIRTUS_PLAN_DEFINITIONS = {
 
   premium: {
     plan: "premium",
-    label: "Premium / Virtus Prime",
+    label: "Mentor",
     status: "active",
     isGuest: false,
     isPaid: true,
     isTrial: false,
     inheritsPremiumExperience: true,
-    description: "Highest strategic layer with deeper continuity, stronger personalization, and advanced project support.",
+    description: "Advanced strategic mentoring, leadership reflection, and 7/30/60/90-day development pathways."
     projectScope: {
       canUseProjects: true,
       maxProjects: null,
@@ -165,6 +166,7 @@ export function getPlanPolicy(plan) {
     supportLayer: getSupportLayer(plan),
     isPremiumLike: isPremiumLikePlan(plan),
     isPaid: isPaidPlan(plan),
+    development: membershipCapabilities(plan),
   };
 }
 
@@ -243,6 +245,7 @@ export function allowsProjectMemoryWrites(plan) {
 export function getNextPlan(plan) {
   if (isTrialGuestPlan(plan)) return "life_coach";
   if (isFreePlan(plan)) return "life_coach";
+  if (getPlanKey(plan) === "life_coach") return "plus";
   if (isPlusPlan(plan)) return "premium";
   return null;
 }
@@ -251,8 +254,8 @@ export function getUpgradeLabel(plan) {
   const nextPlan = getNextPlan(plan);
 
   if (nextPlan === "life_coach") return "Choose Life Coach";
-  if (nextPlan === "plus") return "Upgrade to Plus";
-  if (nextPlan === "premium") return "Upgrade to Premium / Virtus Prime";
+  if (nextPlan === "plus") return "Upgrade to Trainer";
+  if (nextPlan === "premium") return "Upgrade to Mentor";
 
   return null;
 }
