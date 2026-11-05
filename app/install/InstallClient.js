@@ -13,9 +13,13 @@ export default function InstallClient() {
     const ua = navigator.userAgent || "";
     const isIos = /iPad|iPhone|iPod/i.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    setPlatform(isIos ? "ios" : /Android/i.test(ua) ? "android" : "other");
-    setInstalled(window.matchMedia("(display-mode: standalone)").matches ||
-      window.navigator.standalone === true);
+    const detectedPlatform = isIos ? "ios" : /Android/i.test(ua) ? "android" : "other";
+    const detectedInstalled = window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+    queueMicrotask(() => {
+      setPlatform(detectedPlatform);
+      setInstalled(detectedInstalled);
+    });
     const onPrompt = (event) => {
       event.preventDefault();
       setPromptEvent(event);
