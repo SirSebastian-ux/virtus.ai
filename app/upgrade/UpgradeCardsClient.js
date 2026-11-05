@@ -146,10 +146,10 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userI
   const isGuestSelection = !isAuthenticated;
   const isYearly = billingCycle === "yearly";
 
-  const canChooseFree = currentPlan === "free";
-  const canChoosePlus = currentPlan === "free" || currentPlan === "plus";
+  const canChooseFree = currentPlan === "free" || currentPlan === "life_coach";
+  const canChoosePlus = ["free", "life_coach", "plus"].includes(currentPlan);
   const canChoosePremium =
-    currentPlan === "free" || currentPlan === "plus" || currentPlan === "premium";
+    ["free", "life_coach", "plus", "premium"].includes(currentPlan);
 
   async function handlePlanChange(plan) {
     if (isNativeAndroidApp) {
@@ -261,7 +261,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userI
       </div>
 
       <div className="virtus-interior-plan-grid grid items-stretch gap-6">
-        {isGuestSelection || currentPlan === "free" ? (
+        {isGuestSelection || ["free","life_coach","plus","premium"].includes(currentPlan) ? (
           <section className={cardClass}>
             <div className="flex-1">
               <p className={planLabelClass}>Life Coach</p>
@@ -281,28 +281,27 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userI
               </div>
 
               <p className={descriptionClass}>
-                A Life Coach experience for people who want guided reflection, saved
-                chats, and an introduction to conscious personal development.
+                Understand your thinking through guided reflection, emotional awareness,
+                and a personal development plan that keeps your goals visible.
               </p>
 
               <ul className={featureListClass}>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Saved chats so your conversations are not lost.</span>
+                  <span>Guided conversations and saved reflections.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Standard daily use for light guidance and reflection.</span>
+                  <span>Up to 3 active development goals and 7-day pathways.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Basic continuity for one active project space.</span>
+                  <span>40 daily messages and up to 3 project spaces.</span>
                 </li>
               </ul>
 
               <p className={noteClass}>
-                Best for: structured reflection, personal development, and getting
-                guided personal development.
+                Best for: self-awareness, emotional discipline, and conscious daily responses.
               </p>
             </div>
 
@@ -326,17 +325,17 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userI
             ) : canChooseFree ? (
               <button
                 type="button"
-                disabled={loadingPlan === "life_coach"}
+                disabled={currentPlan === "life_coach" || loadingPlan !== null}
                 onClick={() => handlePlanChange("life_coach")}
-                className={activeButtonClass}
+                className={currentPlan === "life_coach" ? currentButtonClass : activeButtonClass}
               >
-                {loadingPlan === "life_coach" ? "Opening checkout…" : "Choose Life Coach"}
+                {currentPlan === "life_coach" ? "Current plan" : loadingPlan === "life_coach" ? "Opening checkout…" : "Choose Life Coach"}
               </button>
             ) : null}
           </section>
         ) : null}
 
-        {isGuestSelection || currentPlan === "free" || currentPlan === "plus" ? (
+        {isGuestSelection || ["free","life_coach","plus","premium"].includes(currentPlan) ? (
           <section className={cardClass}>
             <div className="flex-1">
               <p className={planLabelClass}>Trainer</p>
@@ -356,28 +355,27 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userI
               </div>
 
               <p className={descriptionClass}>
-                A structured training experience with better continuity,
-                deeper reflection, and more support across chats.
+                Develop new capabilities through guided practice, role-play,
+                structured training, and consistent follow-through.
               </p>
 
               <ul className={featureListClass}>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Stronger memory and personal continuity across chats.</span>
+                  <span>Cross-conversation memory and guided skills rehearsal.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>More guided coaching for decisions, emotions, and habits.</span>
+                  <span>Up to 10 active development goals; 7- and 30-day pathways.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Support for up to 3 project spaces.</span>
+                  <span>120 daily messages and up to 5 project spaces.</span>
                 </li>
               </ul>
 
               <p className={noteClass}>
-                Best for: structured learning, personal growth, emotional discipline,
-                and regular support.
+                Best for: disciplined practice, communication training, and behavioral skill development.
               </p>
             </div>
 
@@ -418,9 +416,7 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userI
         ) : null}
 
         {isGuestSelection ||
-        currentPlan === "free" ||
-        currentPlan === "plus" ||
-        currentPlan === "premium" ? (
+        ["free","life_coach","plus","premium"].includes(currentPlan) ? (
           <section className={premiumCardClass}>
             <div className="flex-1">
               <div className="flex items-center justify-between gap-3">
@@ -445,28 +441,27 @@ export default function UpgradeCardsClient({ currentPlan, isAuthenticated, userI
               </div>
 
               <p className={descriptionClass}>
-                The most advanced Virtus experience for strategic thinking, project
-                continuity, leadership, and advanced personal discipline.
+                Long-term mentorship for judgment, leadership, complex decisions,
+                and evidence-informed personal growth.
               </p>
 
               <ul className={featureListClass}>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Advanced personalization and structured reasoning.</span>
+                  <span>Strategic mentoring, decision reviews and leadership simulations.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Personal and project continuity for serious work.</span>
+                  <span>Up to 30 active development goals; 7/30/60/90-day pathways.</span>
                 </li>
                 <li className="flex gap-3">
                   <span className={featureDotClass} />
-                  <span>Advanced support for up to 50 project spaces.</span>
+                  <span>Extended project continuity and advanced coaching memory.</span>
                 </li>
               </ul>
 
               <p className={noteClass}>
-                Best for: leaders, creators, coaches, founders, deep strategy,
-                and long-term transformation.
+                Best for: leaders, founders, high-stakes judgment, and sustained development.
               </p>
             </div>
 
