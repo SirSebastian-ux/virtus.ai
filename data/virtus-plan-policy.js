@@ -22,7 +22,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
 
   life_coach: {
     plan: "life_coach", label: "Life Coach", status: "active", isGuest: false, isPaid: true, isTrial: false, inheritsPremiumExperience: false,
-    description: "Self-awareness, guided reflection, and 7-day personal development."
+    description: "Self-awareness, guided reflection, and 7-day personal development.",
     projectScope: { canUseProjects: true, maxProjects: 3 },
   },
   free: {
@@ -48,7 +48,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
     isPaid: true,
     isTrial: false,
     inheritsPremiumExperience: false,
-    description: "Structured skills training, scenario rehearsal, and 7/30-day development pathways."
+    description: "Structured skills training, scenario rehearsal, and 7/30-day development pathways.",
     projectScope: {
       canUseProjects: true,
       maxProjects: 5,
@@ -63,7 +63,7 @@ export const VIRTUS_PLAN_DEFINITIONS = {
     isPaid: true,
     isTrial: false,
     inheritsPremiumExperience: true,
-    description: "Advanced strategic mentoring, leadership reflection, and 7/30/60/90-day development pathways."
+    description: "Advanced strategic mentoring, leadership reflection, and 7/30/60/90-day development pathways.",
     projectScope: {
       canUseProjects: true,
       maxProjects: null,
