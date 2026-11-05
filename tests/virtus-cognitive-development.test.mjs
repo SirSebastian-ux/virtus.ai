@@ -72,7 +72,7 @@ test("adaptive coaching references goals related to the user request and confirm
   ];
   assert.equal(selectRelevantGoals(goals,"Help me communicate and listen",1)[0].id,"1");
   const context=buildDevelopmentContext({goals,checkins:[],patterns:[{...pattern,status:"rejected"}],message:"communication"});
-  assert.match(context,/client-authored/i);
+  assert.match(context,/user-authored/i);
   assert.doesNotMatch(context,/EXPLICITLY CLIENT-CONFIRMED REFLECTION HYPOTHESES/);
   assert.match(context,/not an instruction or diagnosis/);
 });
