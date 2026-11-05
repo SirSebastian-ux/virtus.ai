@@ -91,7 +91,7 @@ export default function InstallClient() {
         <h2 className="font-serif text-2xl text-[#f6dfa7]">How to install</h2>
         <p className="mt-3 rounded-xl border border-[#d8bd85]/40 bg-[#0b2924] p-4 text-sm leading-6 text-[#f8e7b9]">
           <strong>Opening a link from WhatsApp, Facebook, or Instagram?</strong> If the link does not open correctly,
-          choose <strong>Open in browser</strong> from that app's menu, or copy
+          choose <strong>Open in browser</strong> from that app&apos;s menu, or copy
           <span className="break-all"> https://virtusaiworld.com/install </span>
           into Chrome (Android) or Safari (iPhone). Do not use an unofficial APK link.
         </p>
