@@ -5,6 +5,7 @@ import { DEVELOPMENT_DOMAINS, selfRatedTrajectory } from "@/lib/virtus-developme
 import { membershipCapabilities } from "@/lib/virtus-membership.mjs";
 import { developmentExercise } from "@/lib/virtus-development-pathways.mjs";
 import Link from "next/link";
+import DevelopmentInsights from "./DevelopmentInsights";
 
 const initialGoal = {
   title: "", focus_domain: "self_awareness", observed_behavior: "",
@@ -165,7 +166,13 @@ export default function DevelopmentWorkspace() {
                 </p>
                 <p className="mt-2 font-semibold text-[#f8edd0]">{exercise.title}</p>
                 <p className="mt-1 text-sm leading-6 text-[#d3ded6]">{exercise.instruction}</p>
-                {!exercise.completed && <p className="mt-2 text-sm italic leading-6 text-[#dfd4b4]">{exercise.question}</p>}
+                {!exercise.completed && (
+                  <>
+                    <p className="mt-2 text-xs leading-5 text-[#a5d2c0]">{exercise.lens}</p>
+                    <p className="mt-2 text-sm italic leading-6 text-[#dfd4b4]">{exercise.question}</p>
+                    <p className="mt-2 text-sm leading-6 text-[#e9d7b2]">Practice: {exercise.action}</p>
+                  </>
+                )}
                 {!programAccessible && <p className="mt-2 text-xs text-amber-200">This saved programme requires a higher plan to continue. All previous entries remain available.</p>}
                 {!canCheckinToday && !exercise.completed && <p className="mt-2 text-xs text-[#e8c98c]">Your next daily check-in becomes available after the reflection interval.</p>}
               </div>}
@@ -218,6 +225,7 @@ export default function DevelopmentWorkspace() {
           );
         })}
       </div>
+      <DevelopmentInsights goals={goals} checkins={checkins} />
       <p className="mt-5 text-xs leading-5 text-[#c0d4c9]">One check-in advances one programme day. Each new check-in is available after a reflection interval. These exercises are educational coaching practices, not clinical treatment. This workspace contains client-authored goals and self-reported observations. A change in self-rating does not establish clinical improvement or a validated psychological result. Records remain private to your account.</p>
     </section>
   );
