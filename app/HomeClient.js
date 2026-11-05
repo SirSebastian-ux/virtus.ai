@@ -1090,7 +1090,7 @@ const handleMicrophoneClick = () => {
     };
     recognition.onend = () => {
       if (dictationSessionRef.current !== session) return;
-      const lastCycle = session.cycleFinal || session.cycleInterim;
+      const lastCycle = combineRecognitionResults([session.cycleFinal], [session.cycleInterim]);
       if (lastCycle) session.committed = mergeSpeechCycles(session.committed, lastCycle);
       renderSpeech();
       if (session.stopped || session.recognition !== recognition) {
