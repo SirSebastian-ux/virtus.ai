@@ -33,6 +33,7 @@ import {
 } from "@/data/virtus-plan-policy";
 import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
 import { membershipConversationGuidance, canAccessPractice } from "@/lib/virtus-membership.mjs";
+import { loadDevelopmentContext } from "@/lib/virtus-development-context.mjs";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
@@ -3307,6 +3308,12 @@ Say clearly: "I tried to search, but the web search service failed. I can still 
   }
 }
 
+const virtusDevelopmentContext = (!isGuest && memoryEnabled && chatHistoryEnabled)
+  ? await loadDevelopmentContext({
+      db: supabase, userId, message, memoryEnabled: true,
+    })
+  : "";
+
 const coachingKnowledge = buildVirtusCoachingKnowledgeLayer({
   message,
   practiceMode,
@@ -4991,7 +4998,7 @@ ${coachingKnowledge.instructions}
 
 ` : ""}${latestFileText ? `${latestFileText}
 
-` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
+` : ""}${virtusDevelopmentContext ? `${virtusDevelopmentContext}\n\n` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
 
 ` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
