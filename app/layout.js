@@ -1,3 +1,4 @@
+import PwaBootstrap from "./components/PwaBootstrap";
 import "./globals.css";
 import "./virtus-luxury.css";
 import "./virtus-interior.css";
@@ -29,7 +30,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans"><PwaBootstrap />{children}</body>
     </html>
   );
 }
