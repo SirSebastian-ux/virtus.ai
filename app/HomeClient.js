@@ -12,7 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
-import { mergeSpeechCycles, normalizeSpeechText } from "@/lib/virtus-voice-transcript.mjs";
+import { combineRecognitionResults, mergeSpeechCycles, normalizeSpeechText } from "@/lib/virtus-voice-transcript.mjs";
 import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
 export default function HomeClient({ isAdmin = false }) {
@@ -1064,10 +1064,11 @@ const handleMicrophoneClick = () => {
         if (event.results[i].isFinal) finals.push(transcript);
         else interims.push(transcript);
       }
-      session.cycleFinal = normalizeSpeechText(finals.join(" "));
-      session.cycleInterim = normalizeSpeechText(interims.join(" "));
-      // Final and interim results are distinct within a browser recognition cycle.
-      renderSpeech(normalizeSpeechText([session.cycleFinal, session.cycleInterim].filter(Boolean).join(" ")));
+      session.cycleFinal = combineRecognitionResults(finals);
+      session.cycleInterim = combineRecognitionResults(interims);
+      // Speech recognition can re-send cumulative hypotheses: render by replacing
+      // the current cycle, rather than appending partial text on every callback.
+      renderSpeech(combineRecognitionResults([session.cycleFinal], [session.cycleInterim]));
     };
     recognition.onerror = (event) => {
       if (dictationSessionRef.current !== session) return;
@@ -1089,7 +1090,7 @@ const handleMicrophoneClick = () => {
     };
     recognition.onend = () => {
       if (dictationSessionRef.current !== session) return;
-      const lastCycle = session.cycleFinal || session.cycleInterim;
+      const lastCycle = combineRecognitionResults([session.cycleFinal], [session.cycleInterim]);
       if (lastCycle) session.committed = mergeSpeechCycles(session.committed, lastCycle);
       renderSpeech();
       if (session.stopped || session.recognition !== recognition) {
