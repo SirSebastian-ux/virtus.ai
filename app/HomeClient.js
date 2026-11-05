@@ -12,6 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
+import { canAccessPractice } from "@/lib/virtus-membership.mjs";
 import { combineRecognitionResults, mergeSpeechCycles, normalizeSpeechText } from "@/lib/virtus-voice-transcript.mjs";
 import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
@@ -2294,20 +2295,6 @@ const handleCaptureMicrophoneClick = async () => {
     !isTrialGuestExpired &&
     ["trial_guest", "plus", "premium"].includes(currentPlanKey);
 
-  const practicePlanRank = {
-    guest: 0,
-    trial_guest: 1,
-    free: 0,
-    life_coach: 1,
-    "life-coach": 1,
-    plus: 2,
-    premium: 3,
-  };
-
-  const getPracticePlanRank = (plan) => {
-    return practicePlanRank[plan] ?? 0;
-  };
-
   const isTrialGuestPracticeSample = (category) => {
     return (
       currentPlanKey === "trial_guest" &&
@@ -2327,11 +2314,8 @@ const handleCaptureMicrophoneClick = async () => {
       return true;
     }
 
-    const requiredPlan = category.minimumPlan || "free";
-    const currentRank = getPracticePlanRank(currentPlanKey);
-    const requiredRank = getPracticePlanRank(requiredPlan);
-
-    return currentRank >= requiredRank;
+    const requiredPlan = category.minimumPlan || "life_coach";
+    return canAccessPractice(currentPlanKey, requiredPlan);
   };
 
   const getPracticeCategoryPrompt = (category) => {
