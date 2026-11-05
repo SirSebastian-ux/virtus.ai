@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  membershipCapabilities, canChooseProgram, canCreateGoal, canResumeGoal, membershipConversationGuidance
+  membershipCapabilities, canChooseProgram, canCreateGoal, canResumeGoal, canAccessPractice, membershipConversationGuidance
 } from "../lib/virtus-membership.mjs";
 import { developmentExercise } from "../lib/virtus-development-pathways.mjs";
 
@@ -43,4 +43,14 @@ test("pathways advance only with recorded check-ins", () => {
   assert.equal(second.day,2);
   assert.equal(first.duration,30);
   assert.equal(developmentExercise(goal,30).completed,true);
+});
+
+test("practice access does not confuse Life Coach with guest or free", () => {
+  assert.equal(canAccessPractice("life_coach", "life_coach"), true);
+  assert.equal(canAccessPractice("free", "life_coach"), false);
+  assert.equal(canAccessPractice("trial_guest", "life_coach"), false);
+  assert.equal(canAccessPractice("life_coach", "plus"), false);
+  assert.equal(canAccessPractice("plus", "life_coach"), true);
+  assert.equal(canAccessPractice("premium", "plus"), true);
+  assert.equal(canAccessPractice("premium", "premium"), true);
 });
