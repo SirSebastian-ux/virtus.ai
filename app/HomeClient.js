@@ -66,6 +66,8 @@ const dictationSessionRef = useRef(null);
 const chatRecordingRef = useRef(null);
 const chatRecordingPendingRef = useRef(false);
 const [voiceTranscribing, setVoiceTranscribing] = useState(false);
+const [chatRecordingSeconds, setChatRecordingSeconds] = useState(0);
+const MAX_CHAT_AUDIO_UPLOAD_BYTES = 3_800_000; // Vercel request body limit is 4.5 MB.
 
 const [dictationNotice, setDictationNotice] = useState("");
 const captureRecognitionRef = useRef(null);
@@ -1034,16 +1036,27 @@ const handleRecordedChatDictation = async () => {
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     const chunks = [];
     const base = normalizeSpeechText(message);
-    const recording = { stream, recorder, chunks, base, startedAt: Date.now() };
+    const recording = { stream, recorder, chunks, base, startedAt: Date.now(), bytes: 0, timer: null, sizeLimitReached: false };
     chatRecordingRef.current = recording;
-    recorder.ondataavailable = (event) => { if (event.data?.size) chunks.push(event.data); };
+    recorder.ondataavailable = (event) => {
+      if (!event.data?.size) return;
+      chunks.push(event.data);
+      recording.bytes += event.data.size;
+      if (recording.bytes >= MAX_CHAT_AUDIO_UPLOAD_BYTES && recorder.state === "recording") {
+        recording.sizeLimitReached = true;
+        try { recorder.stop(); } catch {}
+      }
+    };
     recorder.onerror = () => {
+      if (recording.timer) window.clearInterval(recording.timer);
       chatRecordingRef.current = null;
       stream.getTracks().forEach((track) => track.stop());
       setListening(false);
       setDictationNotice("Recording failed. Please try again.");
     };
     recorder.onstop = async () => {
+      if (recording.timer) window.clearInterval(recording.timer);
+      setChatRecordingSeconds(Math.floor((Date.now() - recording.startedAt) / 1000));
       stream.getTracks().forEach((track) => track.stop());
       if (chatRecordingRef.current === recording) chatRecordingRef.current = null;
       setListening(false);
@@ -1053,8 +1066,8 @@ const handleRecordedChatDictation = async () => {
       }
       const type = recorder.mimeType || mimeType || "audio/webm";
       const blob = new Blob(chunks, { type });
-      if (blob.size > 25 * 1024 * 1024) {
-        setDictationNotice("Recording is too large. Please record a shorter message.");
+      if (blob.size > 4_000_000) {
+        setDictationNotice("Recording exceeded the current audio upload limit. Please use a shorter recording.");
         return;
       }
       setVoiceTranscribing(true);
@@ -1078,7 +1091,9 @@ const handleRecordedChatDictation = async () => {
             const text = normalizeSpeechText(current);
             return normalizeSpeechText([text || base, transcript].filter(Boolean).join(" "));
           });
-          setDictationNotice("");
+          setDictationNotice(recording.sizeLimitReached ? "The audio upload limit was reached. The captured section was transcribed; start another recording to continue." : "");
+          const element = textareaRef.current;
+          if (element) window.requestAnimationFrame(() => { element.scrollTop = element.scrollHeight; });
         }
       } catch (error) {
         setDictationNotice(error?.message || "Could not transcribe the recording.");
@@ -1087,6 +1102,8 @@ const handleRecordedChatDictation = async () => {
       }
     };
     recorder.start(1000);
+    setChatRecordingSeconds(0);
+    recording.timer = window.setInterval(() => setChatRecordingSeconds(Math.floor((Date.now() - recording.startedAt) / 1000)), 1000);
     setListening(true);
   } catch (error) {
     stream?.getTracks().forEach((track) => track.stop());
@@ -2194,6 +2211,26 @@ const handleCaptureMicrophoneClick = async () => {
 };
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  useEffect(() => {
+    const element = textareaRef.current;
+    if (!element || typeof window === "undefined") return;
+    const adjustHeight = () => {
+      const viewport = window.visualViewport?.height || window.innerHeight;
+      const maximum = Math.min(440, Math.max(150, viewport * 0.44));
+      const nearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 40;
+      element.style.height = "auto";
+      element.style.height = `${Math.min(maximum, Math.max(72, element.scrollHeight))}px`;
+      element.style.overflowY = element.scrollHeight > maximum ? "auto" : "hidden";
+      if (nearBottom) element.scrollTop = element.scrollHeight;
+    };
+    adjustHeight();
+    window.visualViewport?.addEventListener("resize", adjustHeight);
+    window.addEventListener("resize", adjustHeight);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", adjustHeight);
+      window.removeEventListener("resize", adjustHeight);
+    };
+  }, [message]);
   const scrollContainerRef = useRef(null);
   const currentAccess = isAuthenticated ? accountAccess : guestAccess;
    const currentDailyMessageLimit = currentAccess?.dailyMessageLimit;
@@ -7367,7 +7404,8 @@ setRegenerating(true);
 )}
 <textarea
   ref={textareaRef}
-className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar rounded-[30px] bg-transparent px-14 py-4 pr-28 md:px-16 md:py-5 md:pr-36 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+  aria-label="Chat message — scroll within this box to review longer dictation"
+className="virtus-growing-composer-input w-full min-h-[72px] resize-none overflow-y-auto rounded-[30px] bg-transparent px-14 py-4 pb-20 pr-16 md:px-16 md:py-5 md:pb-20 md:pr-20 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
     placeholder={
     isTrialGuestExpired
       ? "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue."
@@ -7399,7 +7437,7 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
   <span role="status" aria-live="polite"
     title={dictationNotice || (voiceTranscribing ? "Transcribing your recording" : "Recording — tap square to stop")}
     className={`max-w-[115px] truncate text-[10px] sm:max-w-[170px] ${dictationNotice ? "text-amber-200" : "text-emerald-100"}`}>
-    {voiceTranscribing ? "Transcribing..." : listening ? "Recording" : dictationNotice}
+    {voiceTranscribing ? "Transcribing..." : listening ? `Recording ${String(Math.floor(chatRecordingSeconds / 60)).padStart(2, "0")}:${String(chatRecordingSeconds % 60).padStart(2, "0")}` : dictationNotice}
   </span>
 )}
 
