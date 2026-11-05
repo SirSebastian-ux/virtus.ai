@@ -34,6 +34,7 @@ import {
 import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
 import { membershipConversationGuidance, canAccessPractice } from "@/lib/virtus-membership.mjs";
 import { loadDevelopmentContext } from "@/lib/virtus-development-context.mjs";
+import { loadPortfolioReview } from "@/lib/virtus-coaching-portfolio.mjs";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
@@ -3314,6 +3315,17 @@ const virtusDevelopmentContext = (!isGuest && memoryEnabled && chatHistoryEnable
     })
   : "";
 
+const virtusPortfolioReview = (!isGuest && memoryEnabled && chatHistoryEnabled)
+  ? await loadPortfolioReview({
+      db: supabase,
+      userId,
+      plan,
+      message,
+      memoryEnabled: true,
+      selectedProjectId,
+    })
+  : "";
+
 const coachingKnowledge = buildVirtusCoachingKnowledgeLayer({
   message,
   practiceMode,
@@ -4998,7 +5010,7 @@ ${coachingKnowledge.instructions}
 
 ` : ""}${latestFileText ? `${latestFileText}
 
-` : ""}${virtusDevelopmentContext ? `${virtusDevelopmentContext}\n\n` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
+` : ""}${virtusDevelopmentContext ? `${virtusDevelopmentContext}\n\n` : ""}${virtusPortfolioReview ? `${virtusPortfolioReview}\n\n` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
 
 ` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
