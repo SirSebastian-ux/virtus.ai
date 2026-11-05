@@ -12,6 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
+import { mergeSpeechCycles, normalizeSpeechText } from "@/lib/virtus-voice-transcript.mjs";
 import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
 export default function HomeClient({ isAdmin = false }) {
@@ -61,6 +62,8 @@ const [captureTranscribing, setCaptureTranscribing] = useState(false);
 const [captureRecordingSeconds, setCaptureRecordingSeconds] = useState(0);
 const [captureVoiceLanguage, setCaptureVoiceLanguage] = useState("en-US");
 const recognitionRef = useRef(null);
+const dictationSessionRef = useRef(null);
+const [dictationNotice, setDictationNotice] = useState("");
 const captureRecognitionRef = useRef(null);
 const captureVoiceShouldContinueRef = useRef(false);
 const captureVoiceBaseRef = useRef("");
@@ -998,96 +1001,128 @@ const handleMicrophoneClick = () => {
   if (typeof window === "undefined") return;
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    alert("Voice typing is not available in this browser. Try Chrome or use your keyboard microphone.");
+    setDictationNotice("Voice typing is not supported in this browser. Open Virtus AI in Chrome or use the keyboard microphone.");
     return;
   }
 
-  // Only the user's second tap ends dictation; silence alone must not end the session.
-  if (recognitionRef.current) {
-    const active = recognitionRef.current;
-    recognitionRef.current = null; // Also cancels a pending automatic restart.
-    try { active.stop(); } catch {}
+  // A second tap explicitly stops the active dictation session. Never send automatically.
+  const prior = dictationSessionRef.current;
+  if (prior && !prior.stopped) {
+    prior.stopped = true;
+    if (prior.restartTimer != null) window.clearTimeout(prior.restartTimer);
+    prior.restartTimer = null;
+    try { prior.recognition?.stop(); } catch {}
+    // onend may still deliver a final transcript after stop.
     setListening(false);
+    setDictationNotice("");
     return;
   }
 
-  const normalize = (value) => String(value || "").replace(/\s+/g, " ").trim();
-  const startingMessage = normalize(message);
-  let committed = "";
-  let stopped = false;
-  let restartTimer = null;
+  const session = {
+    base: normalizeSpeechText(message),
+    committed: "",
+    recognition: null,
+    restartTimer: null,
+    stopped: false,
+    cycleFinal: "",
+    cycleInterim: "",
+    restarts: 0,
+  };
+  dictationSessionRef.current = session;
+  setDictationNotice("");
 
-  const render = (interim = "") => {
-    setMessage(normalize([startingMessage, committed, interim].filter(Boolean).join(" ")));
+  const renderSpeech = (interim = "") => {
+    if (dictationSessionRef.current !== session) return;
+    const spoken = mergeSpeechCycles(session.committed, interim);
+    setMessage(normalizeSpeechText([session.base, spoken].filter(Boolean).join(" ")));
   };
 
-  const beginCycle = () => {
-    if (stopped) return;
+  const startCycle = () => {
+    if (session.stopped || dictationSessionRef.current !== session) return;
     const recognition = new SpeechRecognition();
+    session.recognition = recognition;
     recognitionRef.current = recognition;
     recognition.lang = navigator.language || "en-US";
     recognition.interimResults = true;
     recognition.continuous = true;
     recognition.maxAlternatives = 1;
+    session.cycleFinal = "";
+    session.cycleInterim = "";
 
-    let cycleFinal = "";
-    let cycleInterim = "";
-    let fatalError = false;
-
-    recognition.onstart = () => setListening(true);
+    recognition.onstart = () => {
+      if (dictationSessionRef.current !== session || session.stopped) return;
+      session.restarts = 0;
+      setListening(true);
+    };
     recognition.onresult = (event) => {
+      if (dictationSessionRef.current !== session) return;
       const finals = [];
       const interims = [];
       for (let i = 0; i < event.results.length; i += 1) {
-        const part = getBestSpeechTranscript(event.results[i]);
-        if (!part) continue;
-        if (event.results[i].isFinal) finals.push(part);
-        else interims.push(part);
+        const transcript = normalizeSpeechText(getBestSpeechTranscript(event.results[i]));
+        if (!transcript) continue;
+        if (event.results[i].isFinal) finals.push(transcript);
+        else interims.push(transcript);
       }
-      cycleFinal = normalize(finals.join(" "));
-      cycleInterim = normalize(interims.join(" "));
-      render(normalize([cycleFinal, cycleInterim].filter(Boolean).join(" ")));
+      session.cycleFinal = normalizeSpeechText(finals.join(" "));
+      session.cycleInterim = normalizeSpeechText(interims.join(" "));
+      // Final and interim results are distinct within a browser recognition cycle.
+      renderSpeech(normalizeSpeechText([session.cycleFinal, session.cycleInterim].filter(Boolean).join(" ")));
     };
     recognition.onerror = (event) => {
-      if (["not-allowed", "service-not-allowed", "audio-capture", "network"].includes(event.error)) {
-        fatalError = true;
-        stopped = true;
-        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          alert("Allow microphone access in your browser to use voice typing.");
-        } else if (event.error === "audio-capture") {
-          alert("No microphone was detected. Check your device microphone.");
-        } else {
-          alert("Voice typing lost its connection. Check your network and try again.");
-        }
+      if (dictationSessionRef.current !== session) return;
+      const problem = event.error || "unknown";
+      if (["not-allowed", "service-not-allowed", "audio-capture", "network", "language-not-supported"].includes(problem)) {
+        session.stopped = true;
+        if (session.restartTimer != null) window.clearTimeout(session.restartTimer);
+        setListening(false);
+        const explanation = (problem === "not-allowed" || problem === "service-not-allowed")
+          ? "Microphone access was denied. Allow microphone permission in your browser settings."
+          : problem === "audio-capture"
+            ? "Microphone unavailable. Check your phone's microphone settings."
+            : problem === "network"
+              ? "Voice recognition lost its connection. Check the internet and tap the microphone to retry."
+              : "This speech recognition language is not supported on this device.";
+        setDictationNotice(explanation);
       }
+      // no-speech and aborted are ordinary browser events; the user controls stopping.
     };
     recognition.onend = () => {
-      committed = normalize([committed, cycleFinal || cycleInterim].filter(Boolean).join(" "));
-      render();
-      if (stopped || fatalError || recognitionRef.current !== recognition) {
+      if (dictationSessionRef.current !== session) return;
+      const lastCycle = session.cycleFinal || session.cycleInterim;
+      if (lastCycle) session.committed = mergeSpeechCycles(session.committed, lastCycle);
+      renderSpeech();
+      if (session.stopped || session.recognition !== recognition) {
         if (recognitionRef.current === recognition) recognitionRef.current = null;
         setListening(false);
         return;
       }
-      // Browsers can end a recognition cycle after silence, even with continuous=true.
-      // Start another cycle while the microphone remains logically enabled.
-      restartTimer = window.setTimeout(() => {
-        restartTimer = null;
-        if (!stopped && recognitionRef.current === recognition) beginCycle();
-      }, 200);
+      session.restarts += 1;
+      if (session.restarts > 8) {
+        session.stopped = true;
+        recognitionRef.current = null;
+        setListening(false);
+        setDictationNotice("Speech recognition stopped unexpectedly several times. Tap the microphone to try again.");
+        return;
+      }
+      // Some Android browsers end a cycle at silence. Keep the session armed,
+      // without appending the previous cycle again or requiring continuous speech.
+      session.restartTimer = window.setTimeout(() => {
+        session.restartTimer = null;
+        if (!session.stopped && dictationSessionRef.current === session &&
+            session.recognition === recognition) startCycle();
+      }, 450);
     };
     try {
       recognition.start();
     } catch {
-      stopped = true;
-      if (restartTimer !== null) window.clearTimeout(restartTimer);
-      if (recognitionRef.current === recognition) recognitionRef.current = null;
+      session.stopped = true;
+      recognitionRef.current = null;
       setListening(false);
-      alert("Voice typing could not start. Check microphone permissions and try again.");
+      setDictationNotice("Voice typing could not start. Check microphone permissions and try again.");
     }
   };
-
-  beginCycle();
+  startCycle();
 };
 
 const formatCaptureRecordingTime = (totalSeconds) => {
@@ -7249,6 +7284,11 @@ className="w-full min-h-[64px] max-h-72 resize-none overflow-y-auto no-scrollbar
 }}
 />
 
+{(listening || dictationNotice) && (
+  <div role="status" aria-live="polite" className={`absolute bottom-[4.25rem] left-4 right-4 z-10 rounded-xl border px-3 py-2 text-xs shadow-lg ${listening ? "border-amber-400/50 bg-[#07352c] text-amber-100" : "border-red-400/40 bg-[#311518] text-red-100"}`}>
+    {listening ? "Listening — tap the red square to stop. Nothing is sent until you press Send." : dictationNotice}
+  </div>
+)}
 <div className="virtus-luxury-composer-actions absolute bottom-3 right-3 flex items-center gap-3">
 
                  <button
