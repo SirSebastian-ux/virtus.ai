@@ -11,6 +11,7 @@ export default function OrganizationDashboard(){
  const [seats,setSeats]=useState(5);
  const [message,setMessage]=useState("");
  const [busy,setBusy]=useState(false);
+ const [report,setReport]=useState(null);
  async function api(path,method="GET",payload){
   const response=await fetch(path,{method,headers:{"Content-Type":"application/json"},body:payload?JSON.stringify(payload):undefined,cache:"no-store"});
   const data=await response.json().catch(()=>({}));
@@ -54,6 +55,14 @@ export default function OrganizationDashboard(){
     <p>$10 USD per licensed employee per month. Checkout is unavailable until live billing has been configured and verified.</p>
     <input style={input} type="number" min={1} max={10000} value={seats} onChange={e=>setSeats(Number(e.target.value))}/>
     <button disabled={busy||!owner} style={button} onClick={()=>run(async()=>{const r=await api("/api/organizations/billing/checkout","POST",{organizationId:active,seats});if(r.url&&new URL(r.url).hostname.endsWith("stripe.com"))window.location.assign(r.url);})}>Proceed to Stripe Checkout</button>
+   </section>
+   <section style={panel}><h2>Aggregate learning report</h2>
+    <p>Only groups with at least five participating employees are reported. Private conversations and reflections are excluded.</p>
+    <button disabled={busy||!owner} style={button} onClick={()=>run(async()=>{
+      const result=await api("/api/organizations/reporting?organizationId="+encodeURIComponent(active));
+      setReport(result.learning||[]);
+    })}>View participation report</button>
+    {report&&<div style={{marginTop:16}}>{report.length===0?<p>No eligible group results available.</p>:report.map((item,i)=><p key={i}>{item.curriculum_type}, module {item.module_number}: {item.participants} participants, {item.completed_exercises} completed exercises</p>)}</div>}
    </section>
    <section style={panel}><h2>Private mentorship</h2><p>Employee conversations are private. Administrators cannot view personal mentoring exchanges.</p>
     <Link href={"/organizations/mentor?organizationId="+encodeURIComponent(active)} style={{color:"#d5b16a"}}>Open private mentor</Link>
