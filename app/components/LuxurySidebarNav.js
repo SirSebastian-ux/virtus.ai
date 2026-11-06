@@ -36,7 +36,7 @@ export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools
             <span>{link.title}</span>
           </button>
         ))}
-        <Link className="virtus-luxury-nav-link" href="/organizations/dashboard">
+        <Link className="virtus-luxury-nav-link" href="/organizations">
           <NavIcon name="library" />
           <span>Organizations</span>
         </Link>
