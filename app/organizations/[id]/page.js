@@ -62,7 +62,7 @@ export default function OrganizationAdminPage() {
     finally{setBusy(false)}
   }
   const org=data?.organization;
-  const ready=org?.status==="active"&&org?.billing_status==="active"&&Number(org.seat_limit)>0&&Date.parse(org.paid_through||"")>Date.now();
+  const ready=org?.status==="active"&&org?.billing_status==="active"&&Number(org.seat_limit)>0&&Date.parse(org.paid_through||"")>Date.parse(data?.serverNow||"");
   return <main className="min-h-screen bg-[#0a1110] px-5 py-10 text-[#f7f1e4]">
     <div className="mx-auto max-w-6xl">
       <Link className="text-sm text-[#dcc58c] underline underline-offset-4" href="/organizations">All organizations</Link>
