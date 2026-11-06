@@ -4,7 +4,7 @@ import {useSearchParams} from "next/navigation";
 import {Suspense} from "react";
 import Link from "next/link";
 import {virtusModules} from "@/data/virtus-modules";
-const workbookNames=["Foundations of Conscious Awareness","The Conscious Decision-Maker","Critical Thinking","Metacognitive Awareness","Disciplined Overthinking","Emotional Responsibility","The Psychology of Cadence","Integration and Conscious Living"];
+const workbookNames=["Volume 1 — Source pending","The Conscious Decision-Maker","Volume 3 — Source pending","Volume 4 — Source pending","Volume 5 — Source pending","Volume 6 — Source pending","The Psychology of Cadence","Volume 8 — Source pending"];
 function Learning(){
  const organizationId=useSearchParams().get("organizationId")||"";
  const [progress,setProgress]=useState([]);
