@@ -12,7 +12,7 @@ export default function OrganizationDashboard(){
  const [message,setMessage]=useState("");
  const [busy,setBusy]=useState(false);
  const [report,setReport]=useState(null);
- const [showRegistration,setShowRegistration]=useState(false);
+ const [showRegistration,setShowRegistration]=useState(false); const [employeeLookup,setEmployeeLookup]=useState(""); const [employeeResult,setEmployeeResult]=useState(null);
  async function api(path,method="GET",payload){
   const response=await fetch(path,{method,headers:{"Content-Type":"application/json"},body:payload?JSON.stringify(payload):undefined,cache:"no-store"});
   const data=await response.json().catch(()=>({}));
@@ -54,12 +54,13 @@ export default function OrganizationDashboard(){
     <input style={input} type="email" placeholder="employee@company.com" value={email} onChange={e=>setEmail(e.target.value)}/>
     <button disabled={busy||!owner} className="virtus-org-action" style={button} onClick={()=>run(async()=>{await api("/api/organizations/invitations","POST",{organizationId:active,email});setMessage("Invitation submitted for delivery.");})}>Send secure invitation</button>
    </section>
-   <section style={panel}><span className="virtus-org-section-label">04 · SUBSCRIPTION MANAGEMENT</span><h2>Employee mentorship licenses</h2>
+   <section style={panel}><span className="virtus-org-section-label">04 · EMPLOYEE DIRECTORY</span><h2>Find an employee</h2><p>Search by verified corporate email to review enrollment status. Private mentoring conversations and reflections are never visible to organization administrators.</p><label htmlFor="org-employee-search">Corporate email</label><input id="org-employee-search" type="email" style={input} value={employeeLookup} placeholder="name@company.com" onChange={e=>{setEmployeeLookup(e.target.value);setEmployeeResult(null);}}/><button disabled={busy||!owner||!employeeLookup.includes("@")} className="virtus-org-action" style={button} onClick={()=>run(async()=>{const result=await api("/api/organizations/employees/lookup?organizationId="+encodeURIComponent(active)+"&email="+encodeURIComponent(employeeLookup));setEmployeeResult(result);})}>Find employee</button>{employeeResult&&<div className="virtus-org-employee-result" role="status"><strong>{employeeResult.email}</strong><p>{!employeeResult.enrollment?"No invitation found for this email.":employeeResult.enrollment.accepted?"Invitation accepted":employeeResult.enrollment.revoked?"Invitation revoked":"Invitation pending"}</p><small>Private mentorship content is not accessible from this directory.</small></div>}</section>
+   <section style={panel}><span className="virtus-org-section-label">05 · SUBSCRIPTION MANAGEMENT</span><h2>Employee mentorship licenses</h2>
     <p>Equip your team with confidential AI mentorship, structured leadership development and guided exercises.</p><div className="virtus-org-price"><strong>$10</strong><span>USD / employee / month</span></div><p style={{color:"#d2b880"}}>Billing activation is pending. No payment will be collected during setup.</p>
     <input style={input} type="number" min={1} max={10000} value={seats} onChange={e=>setSeats(Number(e.target.value))}/>
     <button disabled={busy||!owner} className="virtus-org-action" style={button} onClick={()=>run(async()=>{const r=await api("/api/organizations/billing/checkout","POST",{organizationId:active,seats});if(r.url&&new URL(r.url).hostname.endsWith("stripe.com"))window.location.assign(r.url);})}>Proceed to Stripe Checkout</button>
    </section>
-   <section style={panel}><span className="virtus-org-section-label">05 · ORGANIZATIONAL INSIGHTS</span><h2>Aggregate learning report</h2>
+   <section style={panel}><span className="virtus-org-section-label">06 · ORGANIZATIONAL INSIGHTS</span><h2>Aggregate learning report</h2>
     <p>Only groups with at least five participating employees are reported. Private conversations and reflections are excluded.</p>
     <button disabled={busy||!owner} className="virtus-org-action" style={button} onClick={()=>run(async()=>{
       const result=await api("/api/organizations/reporting?organizationId="+encodeURIComponent(active));
@@ -67,7 +68,7 @@ export default function OrganizationDashboard(){
     })}>View participation report</button>
     {report&&<div style={{marginTop:16}}>{report.length===0?<p>No eligible group results available.</p>:report.map((item,i)=><p key={i}>{item.curriculum_type}, module {item.module_number}: {item.participants} participants, {item.completed_exercises} completed exercises</p>)}</div>}
    </section>
-   <section style={panel}><span className="virtus-org-section-label">06 · PERSONAL DEVELOPMENT</span><h2>Private mentorship</h2><p>Employee conversations are private. Administrators cannot view personal mentoring exchanges.</p>
+   <section style={panel}><span className="virtus-org-section-label">07 · PERSONAL DEVELOPMENT</span><h2>Private mentorship</h2><p>Employee conversations are private. Administrators cannot view personal mentoring exchanges.</p>
     <Link href={"/organizations/mentor?organizationId="+encodeURIComponent(active)} style={{color:"#d5b16a"}}>Open private mentor</Link>
    </section></>}
    {message&&<p role="status" className="virtus-org-status">{message}</p>}
