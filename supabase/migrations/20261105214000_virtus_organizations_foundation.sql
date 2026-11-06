@@ -102,7 +102,7 @@ alter table public.virtus_org_audit_events enable row level security;
 alter table public.virtus_ews_curriculum_registry enable row level security;
 revoke all on public.virtus_organizations,public.virtus_org_memberships,
  public.virtus_org_invitations,public.virtus_org_audit_events,
- public.virtus_ews_curriculum_registry from anon,authenticated;
+ public.virtus_ews_curriculum_registry from public,anon,authenticated;
 grant select on public.virtus_organizations,public.virtus_org_memberships to authenticated;
 create policy virtus_org_self_select on public.virtus_organizations for select to authenticated
  using (owner_user_id=(select auth.uid()) or exists
