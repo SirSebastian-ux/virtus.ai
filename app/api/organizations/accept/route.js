@@ -19,7 +19,7 @@ export async function POST(request) {
   const email=normalizeInviteEmail(user.email);
   if(email!==invite.invited_email) return orgResponse({error:"Sign in with the exact invited email address."},403);
   const {data:org,error:orgError}=await admin.from("virtus_organizations")
-    .select("id,name,status,billing_status,seat_limit")
+    .select("id,name,status,billing_status,paid_through,seat_limit")
     .eq("id",invite.organization_id).maybeSingle();
   if(orgError||!isBillableOrganization(org))
     return orgResponse({error:"This organization's sponsored access is not currently active."},403);
