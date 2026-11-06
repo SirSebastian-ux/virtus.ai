@@ -35,6 +35,7 @@ import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
 import { membershipConversationGuidance, canAccessPractice } from "@/lib/virtus-membership.mjs";
 import { loadDevelopmentContext } from "@/lib/virtus-development-context.mjs";
 import { loadPortfolioReview } from "@/lib/virtus-coaching-portfolio.mjs";
+import { coachingOrchestrationGuidance } from "@/lib/virtus-coaching-orchestration.mjs";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
@@ -4987,6 +4988,8 @@ ${VIRTUS_PROFESSIONAL_CONVERSATION_STANDARD}
 
 # MEMBERSHIP COACHING WORKFLOW
 ${membershipConversationGuidance(plan)}
+# ADAPTIVE COACHING ORCHESTRATION
+${coachingOrchestrationGuidance({message,plan,hasDevelopmentContext:Boolean(virtusDevelopmentContext||virtusPortfolioReview)})}
 This is a workflow distinction, never a reason to withhold basic truth, safe guidance, or respect.
 
 # VERIFIED CUSTOMER PLAN
