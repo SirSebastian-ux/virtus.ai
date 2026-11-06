@@ -1,38 +1,48 @@
 import Link from "next/link";
 import { ORGANIZATION_PLAN } from "@/lib/organizational-mentorship";
 
-const features = [
-  ["Private AI mentorship", "Each employee receives a personal coaching space. Employers cannot read individual conversations."],
-  ["Leadership Architecture", "Ten leadership modules with practical reflection and application exercises."],
-  ["Architecture of the Conscious Mind", "Eight workbook volumes integrated into guided learning journeys."],
-  ["Organization administration", "Corporate invitations, seat allocation and aggregate progress reporting are being prepared."],
-];
-
 export const metadata = {
-  title: "Virtus AI for Organizations",
-  description: "Private AI mentorship and structured leadership development for organizations.",
+ title:"Virtus AI Organizations | Leadership Development & Private Mentorship",
+ description:"Confidential employee mentorship and leadership development, with organizational administration and privacy-safe reporting."
 };
-
-export default function OrganizationsPage() {
-  return (
-    <main style={{minHeight:"100vh",background:"#090a09",color:"#f6eedb",padding:"min(9vw,90px) 6vw",fontFamily:"inherit"}}>
-      <div style={{maxWidth:1100,margin:"auto"}}>
-        <Link href="/" style={{color:"#d9b777",textDecoration:"none"}}>← Virtus AI</Link>
-        <p style={{marginTop:72,letterSpacing:4,color:"#d9b777",fontSize:12,textTransform:"uppercase"}}>Virtus AI · Organizations</p>
-        <h1 style={{fontSize:"clamp(38px,6vw,78px)",lineHeight:1.07,letterSpacing:"-0.045em",maxWidth:850,margin:"20px 0"}}>Develop the individual.<br/>Strengthen the organization.</h1>
-        <p style={{maxWidth:690,color:"#bdb9af",fontSize:19,lineHeight:1.7}}>Confidential AI mentorship, conscious leadership development, and practical learning programs for teams.</p>
-        <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:18,marginTop:58}}>
-          {features.map(([title,description])=><article key={title} style={{border:"1px solid #4b3d25",borderRadius:18,padding:27,background:"#141411"}}>
-            <h2 style={{fontSize:20,color:"#e5c484"}}>{title}</h2>
-            <p style={{lineHeight:1.65,color:"#bdb9af"}}>{description}</p>
-          </article>)}
-        </section>
-        <section style={{borderTop:"1px solid #4b3d25",marginTop:65,paddingTop:35}}>
-          <p style={{color:"#d9b777",fontSize:13,letterSpacing:2,textTransform:"uppercase"}}>Planned organizational membership</p>
-          <p style={{fontSize:38,margin:"12px 0"}}>${(ORGANIZATION_PLAN.monthlySeatPriceCents/100).toFixed(2)} <span style={{fontSize:16,color:"#bdb9af"}}>/ active member / month</span></p>
-          <p style={{color:"#bdb9af",maxWidth:650}}>Enrollment and payments are not yet open. No payment will be collected from this page until secure organizational billing and access controls are verified.</p>
-        </section>
-      </div>
-    </main>
-  );
+const benefits=[
+ {number:"01",title:"A private mentor for every employee",copy:"A confidential space to examine decisions, develop self-awareness, practice communication and strengthen personal responsibility."},
+ {number:"02",title:"Leadership that becomes practice",copy:"Ten Leadership Architecture modules and eight Conscious Mind workbook volumes form the learning framework. Exercises and progress tracking are being integrated."},
+ {number:"03",title:"Organizational clarity without intrusion",copy:"Manage invitations and licensed seats. Aggregate participation reporting is designed to protect individual conversations and reflections."}
+];
+const steps=[
+ ["Register","Create your organization and verify ownership of its corporate email domain."],
+ ["Invite","Allocate licensed seats and send secure invitations to eligible employees."],
+ ["Develop","Employees enter their own private mentorship and guided leadership learning environment."],
+ ["Understand","Review eligible aggregate engagement information without accessing private mentoring content."]
+];
+export default function OrganizationsPage(){
+ const price=(ORGANIZATION_PLAN.monthlySeatPriceCents/100).toFixed(2);
+ return <main className="org-landing">
+ <div className="org-shell">
+ <header className="org-header"><Link href="/" className="org-brand"><span className="org-brand-mark">✦</span><span><strong>Virtus AI</strong><small>BY ENHANCED WELLNESS SOLUTIONS</small></span></Link><Link href="/organizations/dashboard" className="org-header-link">Organization workspace <span aria-hidden="true">↗</span></Link></header>
+ <section className="org-hero">
+  <p className="org-kicker">VIRTUS AI <span>FOR ORGANIZATIONS</span></p>
+  <div className="org-ornament" aria-hidden="true">✦</div>
+  <h1>Develop the individual.<br/><em>Strengthen the organization.</em></h1>
+  <p className="org-intro">Your people carry the decisions, conversations and pressures that shape your organization every day. Give them a confidential space to build awareness, emotional discipline and leadership capability.</p>
+  <div className="org-hero-actions"><Link className="org-gold-button" href="/organizations/dashboard">Enter organization workspace <span aria-hidden="true">→</span></Link><a className="org-outline-button" href="#how-it-works">Explore how it works</a></div>
+  <p className="org-trust">Private employee mentorship · Structured leadership learning · Employer reporting without private conversations</p>
+ </section>
+ <section className="org-section" aria-labelledby="org-benefits"><p className="org-kicker">THE DEVELOPMENT MODEL</p><h2 id="org-benefits">Invest in the people behind the performance.</h2><p className="org-section-lead">A development environment designed around conscious decisions, practical exercises and sustainable professional growth.</p>
+  <div className="org-card-grid">{benefits.map(b=><article className="org-card" key={b.number}><span className="org-card-number">{b.number}</span><h3>{b.title}</h3><p>{b.copy}</p></article>)}</div>
+ </section>
+ <section className="org-section org-process" id="how-it-works"><p className="org-kicker">A CLEAR PATH TO ENROLLMENT</p><h2>From enrollment to meaningful development.</h2><div className="org-step-grid">{steps.map(([title,copy],i)=><div className="org-step" key={title}><span>{String(i+1).padStart(2,"0")}</span><h3>{title}</h3><p>{copy}</p></div>)}</div></section>
+ <section className="org-price-panel"><div><p className="org-kicker">SIMPLE PER-EMPLOYEE PRICING</p><h2>Development at organizational scale.</h2><p>Plan your investment around the number of employees you choose to enroll. Organizational billing is not yet activated; no payment is collected from this introduction page.</p></div><div className="org-price-block"><div><strong>${price}</strong><span>USD / employee / month</span></div><p>Licensed seat-based monthly subscription</p><Link href="/organizations/dashboard" className="org-gold-button">Set up your organization <span aria-hidden="true">→</span></Link></div></section>
+ <section className="org-privacy"><span aria-hidden="true">✧</span><div><h2>Trust begins with confidentiality.</h2><p>Employees' private mentorship conversations and personal reflections are not employer reports. Administrators manage enrollment and receive only privacy-safe aggregate participation information when reporting thresholds are met.</p></div></section>
+ <footer className="org-footer"><span>Virtus AI · Enhanced Wellness Solutions</span><Link href="/organizations/dashboard">Organization workspace →</Link></footer>
+ </div>
+ <style>{`
+ .org-landing{min-height:100vh;color:#f6edd6;background:radial-gradient(ellipse at 52% 8%,#0c4d3c 0%,#082c26 33%,#041713 70%,#030c0b 100%);font-family:inherit}
+ .org-shell{max-width:1240px;margin:auto;padding:0 30px}.org-header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:25px 0;border-bottom:1px solid #c5a26165}.org-brand{display:flex;align-items:center;gap:14px;color:#f8dd9b;text-decoration:none}.org-brand-mark{display:grid;place-items:center;width:54px;height:54px;border:1px solid #e4c17c;border-radius:15px;background:linear-gradient(145deg,#0a4939,#05211d);font-size:27px;box-shadow:0 0 20px #c9a25835}.org-brand strong{font:30px Georgia,serif;letter-spacing:.08em}.org-brand small{display:block;font-size:9px;letter-spacing:.15em;color:#ddc28b;margin-top:5px}.org-header-link,.org-footer a{color:#e9ca87;text-decoration:none;font-weight:650}.org-header-link:hover,.org-footer a:hover{text-decoration:underline}.org-hero{text-align:center;padding:105px 0 100px}.org-kicker{color:#e9c27c;letter-spacing:.23em;font-size:12px;font-weight:800}.org-kicker span{color:#fff1ce}.org-ornament{font-size:26px;color:#f5d28a;margin:20px}.org-hero h1{font:normal clamp(42px,6vw,82px)/1.12 Georgia,serif;letter-spacing:-.035em;margin:18px auto 26px;max-width:1050px;text-shadow:0 4px 28px #d8af4633}.org-hero h1 em{font-style:normal;background:linear-gradient(105deg,#fff4ce,#d8a74e,#ffe8a3,#b9863a);background-clip:text;-webkit-background-clip:text;color:transparent}.org-intro{font-size:clamp(17px,2vw,21px);line-height:1.75;color:#d1d6ca;max-width:790px;margin:auto}.org-hero-actions{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:36px 0 28px}.org-gold-button,.org-outline-button{display:inline-flex;justify-content:center;align-items:center;gap:16px;border-radius:13px;padding:17px 25px;text-decoration:none;font-weight:800;min-height:55px;transition:transform .22s,box-shadow .22s,filter .22s}.org-gold-button{position:relative;overflow:hidden;color:#1a160c;background:linear-gradient(125deg,#f8e3a3 0%,#d5a957 42%,#ffe4a0 65%,#b78a3f 100%);border:1px solid #ffdf9a;box-shadow:inset 0 2px 1px #fff7d6,0 7px 25px #0006,0 0 20px #d5a24a33}.org-gold-button:before{content:"";position:absolute;top:-60%;bottom:-60%;left:-65%;width:30%;transform:skewX(-25deg);background:linear-gradient(90deg,transparent,#fff9d8b0,transparent);transition:left .65s;pointer-events:none}.org-gold-button:hover:before{left:140%}.org-gold-button:hover,.org-outline-button:hover{transform:translateY(-3px);box-shadow:0 8px 35px #e4b66077;filter:brightness(1.07)}.org-outline-button{color:#f6dda3;border:1px solid #b99b5f;background:#0b3028}.org-trust{font-size:13px;color:#b7c6b7;line-height:1.7}.org-section{padding:76px 0;border-top:1px solid #bb9b5a50}.org-section h2,.org-price-panel h2,.org-privacy h2{font:normal clamp(30px,4vw,48px)/1.2 Georgia,serif;margin:12px 0 20px;color:#f7e8c7}.org-section-lead{color:#c4cfc2;max-width:710px;line-height:1.75}.org-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:32px}.org-card,.org-step{border:1px solid #c7a36287;border-radius:20px;background:linear-gradient(145deg,#0d4536,#06231e);padding:30px;box-shadow:inset 0 1px 0 #f9dfaa22,0 16px 36px #0004}.org-card-number{font:28px Georgia,serif;color:#eac780}.org-card h3,.org-step h3{font:normal 25px Georgia,serif;color:#f5dcaa;margin:22px 0 12px}.org-card p,.org-step p,.org-price-panel p,.org-privacy p{color:#c9d0c4;line-height:1.75}.org-step-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:30px}.org-step{padding:22px}.org-step>span{color:#e5c27d;font-weight:800;letter-spacing:.1em}.org-step h3{margin:15px 0 8px}.org-price-panel{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center;margin:45px 0;padding:45px;border:1px solid #e4bc72;border-radius:24px;background:linear-gradient(120deg,#0d4637,#05231e);box-shadow:0 15px 55px #0006,inset 0 1px 0 #f7d99950}.org-price-block{padding:30px;border-radius:18px;border:1px solid #c2a067;background:#082d26}.org-price-block>div{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.org-price-block strong{font:58px Georgia,serif;color:#f7d58e}.org-price-block span{color:#d2c4a8}.org-price-block .org-gold-button{margin-top:12px}.org-privacy{display:flex;gap:28px;align-items:flex-start;max-width:900px;margin:85px auto}.org-privacy>span{font-size:48px;color:#e3bd73}.org-footer{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid #bfa26370;padding:30px 0 45px;color:#b9c6b7}.org-landing a:focus-visible{outline:3px solid #ffe4a5;outline-offset:4px}
+ @media(max-width:800px){.org-card-grid,.org-step-grid{grid-template-columns:1fr 1fr}.org-price-panel{grid-template-columns:1fr}.org-hero{padding:75px 0}.org-shell{padding:0 20px}}
+ @media(max-width:540px){.org-card-grid,.org-step-grid{grid-template-columns:1fr}.org-header-link{font-size:12px}.org-brand strong{font-size:23px}.org-brand-mark{width:43px;height:43px}.org-hero{padding:62px 0}.org-price-panel{padding:23px}.org-privacy{margin:55px 0}.org-hero-actions>*{width:100%}}
+ @media(prefers-reduced-motion:reduce){.org-gold-button,.org-gold-button:before,.org-outline-button{transition:none}}
+ `}</style>
+ </main>;
 }
