@@ -23,13 +23,13 @@ export default function OrganizationDashboard(){
  async function run(action){setBusy(true);setMessage("");try{await action();}catch(e){setMessage(e.message);}finally{setBusy(false);}}
  const active=selected||memberships[0]?.organization_id;
  const owner=memberships.find(m=>m.organization_id===active&&m.role==="owner");
- const panel={border:"1px solid #544429",borderRadius:16,padding:24,background:"#13120f",marginTop:18};
- const input={display:"block",width:"100%",maxWidth:460,background:"#242019",color:"#f4e6c9",border:"1px solid #6e5935",borderRadius:8,padding:12,margin:"12px 0"};
- const button={background:"#d5b16a",color:"#19150d",border:0,borderRadius:8,padding:"12px 20px",fontWeight:700,cursor:"pointer"};
- return <main style={{minHeight:"100vh",background:"#090909",color:"#f4e6c9",padding:"6vh 5vw"}}>
+ const panel={border:"1px solid #b79a57",borderRadius:16,padding:24,background:"linear-gradient(145deg,#063b30 0%,#05251f 65%,#071a17 100%)",marginTop:18};
+ const input={display:"block",width:"100%",maxWidth:460,background:"#0a3029",color:"#f4e6c9",border:"1px solid #6e5935",borderRadius:8,padding:12,margin:"12px 0"};
+ const button={background:"linear-gradient(135deg,#f0d48c,#b99143)",color:"#19150d",border:0,borderRadius:8,padding:"12px 20px",fontWeight:700,cursor:"pointer"};
+ return <main style={{minHeight:"100vh",background:"radial-gradient(ellipse at 50% 0%,#0c4436 0%,#071c19 40%,#050a09 100%)",color:"#f4e6c9",padding:"6vh 5vw"}}>
   <div style={{maxWidth:900,margin:"auto"}}>
    <Link href="/organizations" style={{color:"#d5b16a"}}>Virtus AI Organizations</Link>
-   <h1 style={{fontSize:36}}>Organization workspace</h1>
+   <h1 style={{fontSize:"clamp(30px,5vw,42px)",fontFamily:"Georgia,serif"}}>Organization workspace</h1>
    <p style={{color:"#bbb2a4"}}>Manage corporate identity, employee invitations, subscriptions, and confidential mentorship.</p>
    <section style={panel}><h2>Your organizations</h2>
     <select style={input} value={active||""} onChange={e=>setSelected(e.target.value)}>
