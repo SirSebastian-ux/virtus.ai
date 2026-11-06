@@ -12,7 +12,7 @@ create table if not exists public.virtus_ews_curriculum_units (
   unique(curriculum_id,source_id)
 );
 alter table public.virtus_ews_curriculum_units enable row level security;
-revoke all on public.virtus_ews_curriculum_units from anon,authenticated;
+revoke all on public.virtus_ews_curriculum_units from public,anon,authenticated;
 -- This mapping is only managed by the existing EWS/Virtus admin API.
 -- Employees and company admins cannot publish EWS works or view unapproved sources.
 
@@ -26,6 +26,6 @@ create table if not exists public.virtus_org_programme_assignments (
   unique(organization_id,curriculum_id)
 );
 alter table public.virtus_org_programme_assignments enable row level security;
-revoke all on public.virtus_org_programme_assignments from anon,authenticated;
+revoke all on public.virtus_org_programme_assignments from public,anon,authenticated;
 -- Company admins can request assignments through a permission-checked server route.
 -- Individual employee progress remains private in user-owned tables.
