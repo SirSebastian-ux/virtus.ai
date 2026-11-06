@@ -75,6 +75,16 @@ export default function PricingPage() {
             );
           })}
         </div>
+        <section className="mt-9 rounded-3xl border border-[#d8bd85]/55 bg-[#152e2a] p-7 sm:p-9">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#d8bd85]">Virtus for Organizations</p>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-5">
+            <div className="max-w-2xl">
+              <h2 className="font-serif text-2xl text-[#f2ddb0]">Private coaching for your people. Responsible development for your organization.</h2>
+              <p className="mt-3 text-sm leading-6 text-[#c5d3cc]">Corporate subscriptions, seat invitations and EWS leadership development are being prepared. Organizations manage subscriptions, not private employee conversations.</p>
+            </div>
+            <Link href="/organizations" className="rounded-xl border border-[#d8bd85] px-5 py-3 text-sm font-semibold text-[#f3dda7]">Explore Organizations</Link>
+          </div>
+        </section>
         <p className="mx-auto mt-7 max-w-3xl text-center text-xs leading-6 text-[#b9cbc5]">
           A development day advances only after a completed self-reflection. Voice add-ons and professional-led
           sessions are not included unless separately offered. Memberships support coaching, learning and
