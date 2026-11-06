@@ -29,7 +29,7 @@ export async function GET(_request,{params}) {
     programmeCatalogue:library.data||[],
     reporting:privacySafeOrganizationReport(members.data||[],activeSeatCount),
     privacyNotice:"Organization administrators cannot view members' private coaching, psychological reflections, goals, projects or development records.",
-    billingNotice:access.org.billing_status==="active" ? null :
+    billingNotice:access.org.billing_status==="active" && Date.parse(access.org.paid_through||"")>Date.now() ? null :
       "Company access is not yet activated. Seat invitations and employee sponsorship will become available after corporate billing is configured.",
   });
 }
