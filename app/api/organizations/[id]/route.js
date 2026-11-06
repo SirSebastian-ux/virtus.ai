@@ -22,6 +22,7 @@ export async function GET(_request,{params}) {
   const activeSeatCount=(members.data||[]).filter(m=>m.role==="member"&&m.status==="active").length;
   return orgResponse({
     organization:access.org,
+    serverNow:new Date().toISOString(),
     myRole:access.role,
     seats:{allocated:activeSeatCount,capacity:access.org.seat_limit,
       available:Math.max(0,access.org.seat_limit-activeSeatCount)},
