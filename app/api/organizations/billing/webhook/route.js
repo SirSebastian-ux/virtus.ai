@@ -38,13 +38,10 @@ export async function POST(request){
   const status=["active","trialing","past_due","unpaid","canceled"].includes(subscription.status)?subscription.status:"pending";
   const customer=typeof subscription.customer==="string"?subscription.customer:subscription.customer?.id;
   if(!customer) return NextResponse.json({error:"Customer missing"},{status:409});
-  const {error:updateError}=await admin.from("virtus_organizations").update({
-    stripe_customer_id:customer,stripe_subscription_id:subscription.id,billing_status:status,seat_limit:seats
-  }).eq("id",id).is("stripe_subscription_id",org.stripe_subscription_id);
-  if(updateError) return NextResponse.json({error:"Billing reconciliation failed"},{status:500});
-  const {error:logError}=await admin.from("virtus_organization_billing_events").upsert({
-    stripe_event_id:event.id,organization_id:id,event_type:event.type
-  },{onConflict:"stripe_event_id",ignoreDuplicates:true});
-  if(logError) return NextResponse.json({error:"Billing event recording failed"},{status:500});
-  return ok({organization:true});
+  const {data:outcome,error:reconcileError}=await admin.rpc("virtus_reconcile_org_subscription",{
+    p_org:id,p_event:event.id,p_created:event.created,p_subscription:subscription.id,
+    p_customer:customer,p_status:status,p_seats:seats,p_event_type:event.type
+  });
+  if(reconcileError) return NextResponse.json({error:"Billing reconciliation failed"},{status:500});
+  return ok({organization:true,reconciliation:outcome});
 }
