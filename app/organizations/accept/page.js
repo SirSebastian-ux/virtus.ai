@@ -10,7 +10,7 @@ export default function AcceptOrganizationInvitation() {
   useEffect(()=>{
     const current=new URLSearchParams(window.location.hash.replace(/^#/,""));
     const value=current.get("token")||"";
-    if(/^[0-9a-f]{64}$/.test(value))setToken(value);
+    if(/^[0-9a-f]{64}$/.test(value))queueMicrotask(() => setToken(value));
     // Remove the token from the address bar after it has been read.
     window.history.replaceState(null,"",window.location.pathname);
   },[]);
