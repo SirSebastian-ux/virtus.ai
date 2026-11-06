@@ -467,6 +467,11 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
+    // Organizational coaching must never silently fall back to consumer/guest entitlements.
+    // Until the isolated organizational conversation store is deployed, reject this mode.
+    if (body?.organizationId != null || body?.organization_id != null || body?.billingMode === "organization") {
+      return Response.json({ error: "Organizational mentorship conversations are not enabled yet." }, { status: 503 });
+    }
     const { message, guestId, guestPastedImage, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle, hideFromSidebar, sessionTitle } = body;
     const shouldHideFromSidebar = hideFromSidebar === true;
     const cleanSessionTitle = String(sessionTitle || "").trim().slice(0, 80);
