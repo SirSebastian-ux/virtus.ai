@@ -29,18 +29,8 @@ export async function POST(request) {
   const payload = await request.json().catch(() => null);
   const name = typeof payload?.name === "string" ? payload.name.trim() : "";
   if (name.length < 2 || name.length > 160) return NextResponse.json({ error: "Organization name must be 2–160 characters" }, { status: 400 });
-  const admin = createAdminClient();
-  // No user-supplied owner, seat count, domain, subscription status, or Stripe ID is trusted.
-  const { data: organization, error: createError } = await admin.from("virtus_organizations")
-    .insert({ name, owner_user_id: user.id, seat_limit: 0, billing_status: "pending" })
-    .select("id,name,billing_status").single();
-  if (createError) return NextResponse.json({ error: "Unable to create organization" }, { status: 503 });
-  const { error: membershipError } = await admin.from("virtus_organization_members")
-    .insert({ organization_id: organization.id, user_id: user.id, role: "owner", status: "active" });
-  if (membershipError) {
-    const { error: rollbackError } = await admin.from("virtus_organizations").delete().eq("id", organization.id).eq("owner_user_id", user.id);
-    console.error("Organization membership creation failed", { rollbackFailed: Boolean(rollbackError) });
-    return NextResponse.json({ error: "Organization setup failed" }, { status: 503 });
-  }
-  return NextResponse.json({ organization }, { status: 201, headers: { "Cache-Control": "no-store" } });
+  const client = await createClient();
+  const { data: organizationId, error } = await client.rpc("virtus_register_organization", { p_name: name });
+  if (error || !organizationId) return NextResponse.json({ error: "Unable to register organization" }, { status: 503 });
+  return NextResponse.json({ organization: { id: organizationId, name, billing_status: "pending" } }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
