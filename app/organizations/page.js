@@ -52,7 +52,7 @@ export default function OrganizationsPage() {
         <h1 className="mt-4 font-serif text-4xl leading-tight sm:text-5xl">Develop people. Strengthen leadership.</h1>
         <p className="mt-5 text-base leading-7 text-[#ccd5cc]">
           Give your team access to private AI coaching and structured training.
-          Your company manages licensed seats, programmes and billing—not your employees' thoughts.
+          Your company manages licensed seats, programmes and billing—not your employees&apos; thoughts.
         </p>
       </header>
       <section className="mt-9 grid gap-4 md:grid-cols-3">
