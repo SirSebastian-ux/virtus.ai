@@ -6,6 +6,7 @@ create table if not exists public.virtus_organizations (
   owner_user_id uuid not null references auth.users(id) on delete restrict,
   seat_limit integer not null default 0 check (seat_limit between 0 and 100000),
   billing_status text not null default 'pending' check (billing_status in ('pending','active','past_due','canceled')),
+  paid_through timestamptz,
   status text not null default 'draft' check (status in ('draft','active','suspended')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -76,7 +77,8 @@ begin
   if new.role <> 'member' or new.status <> 'active' then return new; end if;
   select * into v_org from public.virtus_organizations
    where id=new.organization_id for update;
-  if not found or v_org.status <> 'active' or v_org.billing_status <> 'active' then
+  if not found or v_org.status <> 'active' or v_org.billing_status <> 'active'
+     or v_org.paid_through is null or v_org.paid_through <= now() then
     raise exception 'Organization has no active paid entitlement';
   end if;
   select count(*) into v_used from public.virtus_org_memberships
