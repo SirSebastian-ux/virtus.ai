@@ -51,3 +51,31 @@ using (user_id = (select auth.uid()));
 create policy "org owners see organization" on public.virtus_organizations for select to authenticated
 using (owner_user_id = (select auth.uid()));
 -- No client-side INSERT/UPDATE/DELETE policies. Invites and billing events remain service-only.
+
+-- Atomic registration, restricted to a verified authenticated user.
+-- This function executes with elevated privileges and must never trust caller-supplied owner IDs.
+create or replace function public.virtus_register_organization(p_name text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_org uuid;
+begin
+  if v_user is null or not exists (select 1 from auth.users where id = v_user and email_confirmed_at is not null) then
+    raise exception 'Verified authentication required';
+  end if;
+  if p_name is null or length(trim(p_name)) not between 2 and 160 then
+    raise exception 'Invalid organization name';
+  end if;
+  insert into public.virtus_organizations(name,owner_user_id,seat_limit,billing_status)
+    values (trim(p_name),v_user,0,'pending') returning id into v_org;
+  insert into public.virtus_organization_members(organization_id,user_id,role,status)
+    values (v_org,v_user,'owner','active');
+  return v_org;
+end;
+$$;
+revoke all on function public.virtus_register_organization(text) from public,anon;
+grant execute on function public.virtus_register_organization(text) to authenticated;
