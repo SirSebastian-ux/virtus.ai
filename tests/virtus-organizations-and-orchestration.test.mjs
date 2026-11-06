@@ -31,7 +31,8 @@ test("company billing and role boundaries fail closed",()=>{
   assert.equal(isOrgAdmin({status:"revoked",role:"owner"}),false);
   assert.equal(isBillableOrganization({status:"draft",billing_status:"pending",seat_limit:0}),false);
   assert.equal(isBillableOrganization({status:"active",billing_status:"active",seat_limit:0}),false);
-  assert.equal(isBillableOrganization({status:"active",billing_status:"active",seat_limit:20}),true);
+  assert.equal(isBillableOrganization({status:"active",billing_status:"active",seat_limit:20}),false);
+  assert.equal(isBillableOrganization({status:"active",billing_status:"active",seat_limit:20,paid_through:"2999-01-01T00:00:00Z"}),true);
   assert.equal(countPaidSeats([
     {role:"member",status:"active"},{role:"owner",status:"active"},
     {role:"member",status:"revoked"}]),1);
