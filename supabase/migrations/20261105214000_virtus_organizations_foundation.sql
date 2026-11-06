@@ -107,7 +107,7 @@ grant select on public.virtus_organizations,public.virtus_org_memberships to aut
 create policy virtus_org_self_select on public.virtus_organizations for select to authenticated
  using (owner_user_id=(select auth.uid()) or exists
  (select 1 from public.virtus_org_memberships m
- where m.organization_id=id and m.user_id=(select auth.uid()) and m.status='active'));
+ where m.organization_id=virtus_organizations.id and m.user_id=(select auth.uid()) and m.status='active'));
 create policy virtus_org_membership_self_select on public.virtus_org_memberships
  for select to authenticated using (user_id=(select auth.uid()));
 -- Zero authenticated grants for invitation tokens, audit events, curriculum editing.
