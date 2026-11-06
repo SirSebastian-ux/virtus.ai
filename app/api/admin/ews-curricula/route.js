@@ -1,5 +1,6 @@
 import {requireAdminApi} from "@/lib/admin-auth";
 import {createAdminClient} from "@/lib/supabase-admin";
+import {verifyCurriculumReadiness} from "@/lib/virtus-ews-curricula.mjs";
 
 const respond=(data,status=200)=>Response.json(data,{
   status,headers:{"Cache-Control":"private, no-store"},
@@ -82,9 +83,9 @@ export async function POST(request) {
     if(registry.error||units.error||!registry.data)
       return respond({error:"Curriculum verification failed."},503);
     const entries=units.data||[],expected=registry.data.expected_units;
-    if(entries.length!==expected||
-      !Array.from({length:expected},(_,i)=>i+1).every(n=>entries.some(x=>x.unit_number===n&&x.review_status==="reviewed")))
-      return respond({error:"Every original unit must be mapped and marked reviewed before approval."},409);
+    const readiness=verifyCurriculumReadiness(expected,entries);
+    if(!readiness.ready)
+      return respond({error:"Every original unit must be mapped and reviewed: "+readiness.reason},409);
     const {count,error:chunkError}=await admin.from("virtus_library_chunks")
       .select("id",{count:"exact",head:true}).in("source_id",entries.map(x=>x.source_id));
     if(chunkError||(count||0)<expected)return respond({error:"Insufficient verified source content."},409);
