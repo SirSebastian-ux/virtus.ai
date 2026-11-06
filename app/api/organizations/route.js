@@ -19,7 +19,16 @@ export async function GET() {
   const { data: memberships, error } = await admin.from("virtus_organization_members")
     .select("organization_id,role,status").eq("user_id", user.id).eq("status", "active");
   if (error) return NextResponse.json({ error: "Unable to load organizations" }, { status: 503 });
-  return NextResponse.json({ memberships }, { headers: { "Cache-Control": "no-store" } });
+  const ids = [...new Set((memberships || []).map(m => m.organization_id))];
+  const { data: organizations, error: organizationError } = ids.length
+    ? await admin.from("virtus_organizations").select("id,name,verified_domain,billing_status,seat_limit").in("id", ids)
+    : { data: [], error: null };
+  if (organizationError) return NextResponse.json({ error: "Unable to load organization details" }, { status: 503 });
+  const byId = new Map((organizations || []).map(o => [o.id, o]));
+  const safeMemberships = (memberships || []).map(m => ({
+    ...m, organization: byId.get(m.organization_id) || null
+  }));
+  return NextResponse.json({ memberships: safeMemberships }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(request) {
