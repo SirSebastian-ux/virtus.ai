@@ -24,7 +24,7 @@ export async function POST(request) {
   if (!org || !["active", "trialing"].includes(org.billing_status) || org.seat_limit < 1) return respond("Organization has no active paid seats", 409);
   if (!org.verified_domain || !isOrganizationEmail(email, org.verified_domain)) return respond("Email domain not verified for organization", 403);
   // Delivery is intentionally disabled until an authenticated email sender and rate limit are configured.
-  if (process.env.VIRTUS_ORG_INVITES_DELIVERY_READY !== "true") return respond("Invitation delivery is not configured", 503);
+  return respond("Invitation delivery and acceptance must be integrated before enrollment", 503);
   const token = randomBytes(32).toString("hex");
   const token_hash = createHash("sha256").update(token).digest("hex");
   const { error } = await admin.from("virtus_organization_invitations").insert({
