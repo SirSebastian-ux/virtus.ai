@@ -11,7 +11,7 @@ export async function GET(request){
  const url=new URL(request.url);
  const organizationId=url.searchParams.get("organizationId")||"";
  const email=(url.searchParams.get("email")||"").trim().toLowerCase();
- if(!/^[0-9a-f-]{36}$/i.test(organizationId)||email.length>254||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return json({error:"Valid organization and corporate email required"},400);
+ if(!/^[0-9a-f-]{36}$/i.test(organizationId)||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json({error:"Valid organization and corporate email required"},400);
  const admin=createAdminClient();
  const {data:actor,error:actorError}=await admin.from("virtus_organization_members").select("role,status").eq("organization_id",organizationId).eq("user_id",user.id).maybeSingle();
  if(actorError||!actor||actor.status!=="active"||!["owner","admin"].includes(actor.role))return json({error:"Forbidden"},403);
