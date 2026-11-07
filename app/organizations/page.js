@@ -89,6 +89,63 @@ export default function OrganizationsPage(){
  @media(max-width:800px){.org-proposal-grid,.org-preview-detail{grid-template-columns:1fr}.org-preview-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.org-preview-heading{align-items:start;flex-direction:column}.org-preview{padding:23px}}
  @media(max-width:540px){.org-preview{padding:16px}.org-preview-stats{gap:9px;padding:12px}.org-preview-stats>div{padding:15px}.org-preview-stats strong{font-size:27px}.org-preview-detail{padding:0 12px 12px}.org-preview-bars,.org-preview-report{padding:19px}.org-preview-top{padding:16px;flex-direction:column;align-items:flex-start}.org-proposal-benefits,.org-proposal-quote{padding:22px}}
 
+/* Compact organizational presentation: preserve brand palette and structure. */
+.org-shell{max-width:1120px;padding:0 20px}
+.org-header{padding:12px 0;gap:12px}
+.org-brand{gap:9px}.org-brand-mark{width:34px;height:34px;border-radius:9px;font-size:17px}
+.org-brand strong{font-size:20px}.org-brand small{font-size:8px;margin-top:2px}
+.org-header-link,.org-footer a{font-size:12px}
+.org-hero{padding:45px 0 42px}.org-kicker{font-size:10px;letter-spacing:.16em}
+.org-ornament{font-size:16px;margin:9px}
+.org-hero h1{font-size:clamp(30px,4vw,46px);line-height:1.14;margin:10px auto 14px;max-width:780px}
+.org-intro{font-size:clamp(14px,1.4vw,16px);line-height:1.55;max-width:670px}
+.org-hero-actions{gap:10px;margin:20px 0 14px}
+.org-gold-button,.org-outline-button{font-size:12px;gap:8px;border-radius:9px;padding:9px 15px;min-height:38px}
+.org-trust{font-size:11px!important;line-height:1.5!important}
+.org-section{padding-top:34px!important;padding-bottom:36px!important}
+.org-section h2,.org-preview h2,.org-proposal h2,.org-privacy h2{font-size:clamp(23px,2.6vw,32px)!important;line-height:1.2!important}
+.org-section-lead{font-size:13px!important;line-height:1.5!important}
+.org-card-grid,.org-step-grid{gap:12px!important}
+.org-card,.org-step{padding:18px!important;border-radius:12px!important}
+.org-card h3,.org-step h3{font-size:17px!important;line-height:1.3!important;margin:8px 0!important}
+.org-card p,.org-step p{font-size:12px!important;line-height:1.55!important}
+.org-card-number{font-size:12px!important}
+.org-preview{padding:24px!important;border-radius:15px!important;margin-top:22px!important;margin-bottom:24px!important}
+.org-preview-heading{gap:12px!important;margin-bottom:16px!important}
+.org-preview-heading p{font-size:12px!important;line-height:1.55!important}
+.org-preview-frame{border-radius:12px!important}
+.org-preview-top{padding:10px 15px!important;font-size:11px!important}
+.org-preview-stats{gap:9px!important;padding:12px!important}
+.org-preview-stats>div{padding:12px!important;border-radius:9px!important}
+.org-preview-stats strong{font-size:24px!important}
+.org-preview-stats small{font-size:11px!important}
+.org-preview-detail{gap:10px!important;padding:0 12px 12px!important}
+.org-preview-bars,.org-preview-report{padding:15px!important;border-radius:10px!important}
+.org-preview-bars h3,.org-preview-report h3{font-size:17px!important}
+.org-preview-bars p,.org-preview-report p{font-size:12px!important;line-height:1.5!important}
+.org-preview-bar{margin-top:9px!important;font-size:11px!important}
+.org-preview-caption{padding-top:8px;font-size:11px}
+.org-proposal{padding:35px 0 40px!important}
+.org-proposal-intro{margin-bottom:17px}
+.org-proposal-intro>p{font-size:13px!important;line-height:1.55!important}
+.org-proposal-grid{gap:12px}
+.org-proposal-benefits,.org-proposal-quote{padding:18px!important;border-radius:12px!important}
+.org-proposal-benefits h3{font-size:20px;margin-bottom:12px}
+.org-proposal-benefits li{font-size:12px;line-height:1.45;padding:0 0 9px 19px;margin-bottom:8px}
+.org-quote-head{padding-bottom:10px;font-size:10px}
+.org-quote-line{padding:12px 0;gap:10px}
+.org-quote-line strong{font-size:13px}
+.org-quote-line .org-quote-amount{font-size:23px}
+.org-quote-line small,.org-quote-pending{font-size:11px}
+.org-proposal-note,.org-quote-footnote{margin-top:11px;line-height:1.5}
+.org-proposal-quote .org-gold-button{margin-top:14px}
+.org-privacy{padding:20px!important;gap:14px!important;margin:20px 0!important}
+.org-privacy p{font-size:12px!important;line-height:1.5!important}
+.org-privacy-disclosure{margin-top:9px}
+.org-footer{padding:18px 0!important;font-size:11px}
+@media(max-width:800px){.org-card-grid{grid-template-columns:1fr!important}.org-step-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.org-proposal-grid,.org-preview-detail{grid-template-columns:1fr!important}}
+@media(max-width:540px){.org-shell{padding:0 14px}.org-hero{padding:30px 0}.org-hero h1{font-size:30px}.org-step-grid{grid-template-columns:1fr!important}.org-preview{padding:12px!important}.org-preview-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.org-brand strong{font-size:17px}.org-header-link{font-size:11px}}
+
  @media(prefers-reduced-motion:reduce){.org-gold-button,.org-gold-button:before,.org-outline-button{transition:none}}
  `}</style>
  </main>;
