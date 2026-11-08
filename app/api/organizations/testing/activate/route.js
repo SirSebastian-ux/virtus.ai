@@ -13,11 +13,13 @@ export async function POST(request){
  const client=await createClient();
  const {data:{user},error:authError}=await client.auth.getUser();
  if(authError||!user?.id||!user.email_confirmed_at)return reply({error:"Verified owner sign-in required"},401);
- if(!isAdminUser(user))return reply({error:"Pilot activation restricted to platform administrator"},403);
+
  const body=await request.json().catch(()=>null);
  const id=body?.organizationId;
  const seats=body?.seats;
  if(typeof id!=="string"||!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)||!Number.isSafeInteger(seats)||seats<1||seats>25)return reply({error:"Invalid organization or test seats"},400);
+ const pilotIds=new Set((process.env.VIRTUS_ORG_PILOT_ORGANIZATION_IDS||"").split(",").map(v=>v.trim()).filter(Boolean));
+ if(!pilotIds.has(id))return reply({error:"Organization is not approved for the free pilot"},403);
  const admin=createAdminClient();
  const {data:org,error}=await admin.from("virtus_organizations").select("id,owner_user_id,verified_domain,billing_status,stripe_subscription_id").eq("id",id).maybeSingle();
  if(error||!org||org.owner_user_id!==user.id)return reply({error:"Organization owner required"},403);
