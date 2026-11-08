@@ -21,7 +21,6 @@ export async function POST(request){
  const admin=createAdminClient();
  const {data:org,error}=await admin.from("virtus_organizations").select("id,owner_user_id,verified_domain,billing_status,stripe_subscription_id").eq("id",id).maybeSingle();
  if(error||!org||org.owner_user_id!==user.id)return reply({error:"Organization owner required"},403);
- if(!org.verified_domain)return reply({error:"Verify the corporate email domain first"},409);
  if(org.stripe_subscription_id)return reply({error:"Existing Stripe subscription cannot be overridden"},409);
  if(!["pending","trialing"].includes(org.billing_status))return reply({error:"Organization is not eligible for pilot testing"},409);
  const {count,error:countError}=await admin.from("virtus_organization_members").select("id",{count:"exact",head:true}).eq("organization_id",id).eq("status","active");

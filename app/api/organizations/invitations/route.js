@@ -23,7 +23,7 @@ export async function POST(request) {
   const { data: membership, error: memberError } = await admin.from("virtus_organization_members").select("role,status").eq("organization_id", organizationId).eq("user_id", user.id).maybeSingle();
   if (memberError || !membership || membership.status !== "active" || !["owner","admin"].includes(membership.role)) return reply("Forbidden", 403);
   const { data: org, error: orgError } = await admin.from("virtus_organizations").select("name,verified_domain,billing_status,seat_limit").eq("id", organizationId).maybeSingle();
-  if (orgError || !org || !["active","trialing"].includes(org.billing_status) || org.seat_limit < 1) return reply("Organization has no active paid seats", 409);
+  if (orgError || !org || !["active","trialing"].includes(org.billing_status) || org.seat_limit < 1) return reply("Organization has no active seats", 409);
   if (!org.verified_domain || !isOrganizationEmail(email, org.verified_domain)) return reply("Corporate email domain is not verified", 403);
   const { count: activeCount, error: countError } = await admin.from("virtus_organization_members").select("id",{count:"exact",head:true}).eq("organization_id",organizationId).eq("status","active");
   if (countError || activeCount >= org.seat_limit) return reply("No seats available", 409);
