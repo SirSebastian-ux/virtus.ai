@@ -1,4 +1,3 @@
-import {isAdminUser} from "@/lib/admin-auth";
 import { randomBytes, createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
@@ -17,7 +16,6 @@ export async function POST(request) {
   const organizationId = typeof body?.organizationId === "string" ? body.organizationId : "";
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(organizationId) || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return reply("Invalid invitation", 400);
-  if (manualPilot && !isAdminUser(user)) return reply("Pilot invitations restricted to platform administrator",403);
   const admin = createAdminClient();
   const { data: membership, error: memberError } = await admin.from("virtus_organization_members").select("role,status").eq("organization_id", organizationId).eq("user_id", user.id).maybeSingle();
   if (memberError || !membership || membership.status !== "active" || !["owner","admin"].includes(membership.role)) return reply("Forbidden", 403);
