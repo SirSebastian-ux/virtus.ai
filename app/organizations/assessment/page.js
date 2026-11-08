@@ -24,7 +24,7 @@ function Assessment(){
  return <main style={{minHeight:"100vh",background:"radial-gradient(ellipse at top,#104736,#051b16 75%)",color:"#f5e6c9",padding:"28px 18px"}}><div style={{maxWidth:820,margin:"auto"}}>
  <Link href={"/organizations/learning?organizationId="+encodeURIComponent(org)} style={{color:"#e6c480",fontSize:12}}>My Development / Practice assessment</Link>
  <h1 style={{font:"normal 34px Georgia,serif",color:"#f1d69c"}}>Development practice baseline</h1>
- <p style={{fontSize:13,lineHeight:1.7,color:"#cbd5c9"}}>Six workplace scenarios measure responses to structured practice situations. They are not psychological diagnoses or verified measures of workplace performance. Your answers remain private; HR reporting is subject to aggregate privacy controls.</p>
+ <p style={{fontSize:13,lineHeight:1.7,color:"#cbd5c9"}}>Explore six practical workplace scenarios to discover strengths and identify skills you can develop with Virtus AI. Your personal reflections support your development journey.</p>
  <p style={{fontSize:12,color:"#e6c480"}}>{answered} of {scenarios.length} completed</p>
  {scenarios.map((s,i)=><section key={s.domain} style={{border:"1px solid #9d8556",background:"#0b3027",borderRadius:12,padding:17,margin:"12px 0"}}>
  <div style={{fontSize:11,color:"#e4bf7b"}}>{i+1} / {s.name}</div><h2 style={{fontSize:16,lineHeight:1.5}}>{s.prompt}</h2>
