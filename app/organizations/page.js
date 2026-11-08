@@ -20,13 +20,13 @@ export default function OrganizationsPage(){
  const price="9.99";
  return <main className="org-landing">
  <div className="org-shell">
- <header className="org-header"><Link href="/" className="org-brand"><span className="org-brand-mark">✦</span><span><strong>Virtus AI</strong><small>BY ENHANCED WELLNESS SOLUTIONS</small></span></Link><Link href="/organizations/dashboard" className="org-header-link">Organization workspace <span aria-hidden="true">↗</span></Link></header>
+ <header className="org-header"><Link href="/" className="org-brand"><span className="org-brand-mark">✦</span><span><strong>Virtus AI</strong><small>BY ENHANCED WELLNESS SOLUTIONS</small></span></Link><Link href="/organizations/workspace" className="org-header-link">Organization workspace <span aria-hidden="true">↗</span></Link></header>
  <section className="org-hero">
   <p className="org-kicker">VIRTUS AI <span>FOR ORGANIZATIONS</span></p>
   <div className="org-ornament" aria-hidden="true">✦</div>
   <h1>Develop the individual.<br/><em>Strengthen the organization.</em></h1>
   <p className="org-intro">Your people carry the decisions, conversations and pressures that shape your organization every day. Give them a confidential space to build awareness, emotional discipline and leadership capability.</p>
-  <div className="org-hero-actions"><Link className="org-gold-button" href="/organizations/dashboard">Enter organization workspace <span aria-hidden="true">→</span></Link><a className="org-outline-button" href="#how-it-works">Explore how it works</a></div>
+  <div className="org-hero-actions"><Link className="org-gold-button" href="/organizations/workspace">Enter organization workspace <span aria-hidden="true">→</span></Link><a className="org-outline-button" href="#how-it-works">Explore how it works</a></div>
   <p className="org-trust">Private employee mentorship · Structured leadership learning · Organizational development insights</p>
  </section>
  <section className="org-section" aria-labelledby="org-benefits"><p className="org-kicker">THE DEVELOPMENT MODEL</p><h2 id="org-benefits">Invest in the people behind the performance.</h2><p className="org-section-lead">A development environment designed around conscious decisions, practical exercises and sustainable professional growth.</p>
