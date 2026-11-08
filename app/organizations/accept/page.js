@@ -14,7 +14,7 @@ function AcceptInvitationContent(){
   try{
    const response=await fetch("/api/organizations/invitations/accept",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})});
    const result=await response.json().catch(()=>({}));
-   if(response.ok){setAccepted(true);setStatus("Your invitation has been accepted. Your private development space is ready when your organization has an active license.");}
+   if(response.ok){setAccepted(true);setStatus("Your invitation has been accepted. Your organizational membership is confirmed. Open your workspace to access Mentor and development exercises.");}
    else setStatus(result.error||"We could not accept this invitation. Confirm you are signed in with the invited corporate email.");
   }catch{setStatus("The connection could not be completed. Please try again.");}
   finally{setBusy(false);}
@@ -28,7 +28,7 @@ function AcceptInvitationContent(){
    <p className="org-invite-lead">{accepted?"Your organizational membership has been confirmed. Your mentorship journey is personal to you.":"Your organization is offering you a private space to strengthen your thinking, communication, decision-making and leadership practice."}</p>
    <div className="org-invite-benefits"><div><span>01</span><strong>Confidential mentorship</strong><p>Your personal conversations are not accessible to your employer.</p></div><div><span>02</span><strong>Structured development</strong><p>Explore leadership exercises and guided personal reflection.</p></div><div><span>03</span><strong>Your own progress</strong><p>Develop at your pace, with your own private learning history.</p></div></div>
    {!accepted&&<><p className="org-invite-note">To accept, sign in using the same corporate email address that received the invitation.</p><button type="button" className="org-invite-gold" disabled={busy||!token} onClick={accept}>{busy?"Verifying your invitation…":"Accept my invitation"} <span aria-hidden="true">→</span></button></>}
-   {accepted&&<Link className="org-invite-gold" href="/organizations/mentor">Open my private mentor <span aria-hidden="true">→</span></Link>}
+   {accepted&&<Link className="org-invite-gold" href="/organizations/workspace">Open my organization workspace <span aria-hidden="true">→</span></Link>}
    {status&&<p role="status" className="org-invite-status">{status}</p>}
    {!token&&!accepted&&<p role="alert" className="org-invite-status">This invitation link is incomplete. Please use the full link from your email.</p>}
    {!accepted&&<p className="org-invite-signin">Already invited but not signed in? <Link href="/login">Sign in to Virtus AI</Link></p>}

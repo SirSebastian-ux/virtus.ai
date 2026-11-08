@@ -20,7 +20,7 @@ export default function OrganizationDashboard(){
   return data;
  }
  async function refresh(){try{const data=await api("/api/organizations");setMemberships(data.memberships||[]);}catch(e){setMessage(e.message);}}
- useEffect(()=>{refresh();},[]);
+ useEffect(()=>{let mounted=true;fetch("/api/organizations",{cache:"no-store"}).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(({ok,data})=>{if(!ok)throw Error(data.error||"Unable to load organizations");if(mounted)setMemberships(data.memberships||[]);}).catch(e=>{if(mounted)setMessage(e.message);});return()=>{mounted=false};},[]);
  async function run(action){setBusy(true);setMessage("");try{await action();}catch(e){setMessage(e.message);}finally{setBusy(false);}}
  const active=selected||memberships[0]?.organization_id;
  const owner=memberships.find(m=>m.organization_id===active&&m.role==="owner");
@@ -59,7 +59,7 @@ export default function OrganizationDashboard(){
    <section style={{...panel,display:tab==="billing"?"block":"none"}}><h2>Employee mentorship licenses</h2>
     <p>Manage licensed access to the full Virtus AI Mentor experience.</p>
     <label htmlFor="org-license-count" style={{display:"block",marginTop:18,fontWeight:700,color:"#f2d99c"}}>Number of employee licenses</label><input id="org-license-count" aria-label="Number of employee licenses" style={input} type="number" min={1} max={10000} value={seats} onChange={e=>setSeats(Number(e.target.value))}/>
-    <button disabled={busy||!owner} className="virtus-org-action" style={button} onClick={()=>run(async()=>{const r=await api("/api/organizations/testing/activate","POST",{organizationId:active,seats});setMessage("Preview testing activated for "+r.seats+" seats. No payment collected.");})}>Activate free preview seats</button><p style={{fontSize:12,color:"#cbbd9c"}}>Preview only. Requires an isolated test database, verified company domain, and authorized organization owner. No Stripe payment is collected.</p>
+    <button disabled={busy||!owner} className="virtus-org-action" style={button} onClick={()=>run(async()=>{const r=await api("/api/organizations/testing/activate","POST",{organizationId:active,seats});await refresh();setMessage("Preview testing activated for "+r.seats+" seats. No payment collected.");})}>Activate free preview seats</button><p style={{fontSize:12,color:"#cbbd9c"}}>Preview only. Requires an isolated test database, verified company domain, and authorized organization owner. No Stripe payment is collected.</p>
    </section>
    <section style={{...panel,display:tab==="reports"?"block":"none"}}><h2>Aggregate learning report</h2>
     <p>Review participation and completed exercises across eligible groups. Development indicators will appear when sufficient evidence is available.</p>
@@ -70,7 +70,7 @@ export default function OrganizationDashboard(){
     {report&&<div style={{marginTop:16}}>{report.length===0?<p>No eligible group results available.</p>:report.map((item,i)=><p key={i}>{item.curriculum_type}, module {item.module_number}: {item.participants} participants, {item.completed_exercises} completed exercises</p>)}</div>}
    </section>
    <section style={{...panel,display:tab==="overview"?"block":"none"}}><h2>Employee mentor experience</h2><p>Open the employee learning experience to review its structure and available mentorship tools.</p>
-    <Link href={"/organizations/mentor?organizationId="+encodeURIComponent(active)} style={{color:"#d5b16a"}}>Open private mentor</Link>
+    <Link href="/" style={{color:"#d5b16a"}}>Open full Virtus Mentor</Link>
    </section></div>}
    {message&&<p role="status" className="virtus-org-status">{message}</p>}
   </div>
