@@ -1,9 +1,10 @@
 "use client";
 import {useEffect,useState} from "react";
+import {useRouter} from "next/navigation";
 import Link from "next/link";
 export default function OrganizationWorkspace(){
- const [memberships,setMemberships]=useState([]);const [message,setMessage]=useState("Checking organizational access...");
- useEffect(()=>{let active=true;fetch("/api/organizations",{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(r.status===401?"Sign in with your organizational email.":d.error||"Access unavailable");return d}).then(d=>{if(active){setMemberships((d.memberships||[]).filter(m=>m.status==="active"&&m.organization?.id));setMessage("Choose your organization.")}}).catch(e=>{if(active)setMessage(e.message)});return()=>{active=false}},[]);
+ const router=useRouter();const [memberships,setMemberships]=useState([]);const [message,setMessage]=useState("Checking organizational access...");
+ useEffect(()=>{let active=true;fetch("/api/organizations",{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(r.status===401?"Sign in with your organizational email.":d.error||"Access unavailable");return d}).then(d=>{if(active){setMemberships((d.memberships||[]).filter(m=>m.status==="active"&&m.organization?.id));setMessage("Opening your development workspace.");const activeMemberships=(d.memberships||[]).filter(m=>m.status==="active"&&m.organization?.id);if(activeMemberships.length===1&&!["owner","admin"].includes(activeMemberships[0].role))router.replace("/organizations/learning?organizationId="+encodeURIComponent(activeMemberships[0].organization_id));else setMessage("Choose your organization.")}}).catch(e=>{if(active)setMessage(e.message)});return()=>{active=false}},[router]);
  return <main style={{minHeight:"100vh",background:"radial-gradient(ellipse at top,#0d4939,#041611)",color:"#f4e5c9",padding:"35px 20px"}}><div style={{maxWidth:850,margin:"auto"}}>
  <Link href="/organizations" style={{color:"#e1bc77",fontSize:12}}>Virtus AI / Organizations</Link><h1 style={{font:"normal clamp(29px,4vw,43px) Georgia,serif",color:"#f2d69c"}}>Your organization</h1><p role="status" style={{fontSize:13,color:"#cbd1c5"}}>{message}</p>
  {memberships.map(m=><section key={m.organization_id} style={{border:"1px solid #b89a60",borderRadius:12,padding:18,background:"#0b352b",margin:"12px 0"}}>
