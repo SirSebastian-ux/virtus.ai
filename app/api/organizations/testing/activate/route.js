@@ -1,18 +1,19 @@
+import {isAdminUser} from "@/lib/admin-auth";
 import {NextResponse} from "next/server";
 import {createClient} from "@/lib/supabase-server";
 import {createAdminClient} from "@/lib/supabase-admin";
 export const dynamic="force-dynamic";
 const reply=(body,status=200)=>NextResponse.json(body,{status,headers:{"Cache-Control":"private, no-store"}});
 export async function POST(request){
- // Preview-only, explicitly opted-in and isolated Supabase testing environment.
- // Never use this against the production database or a production deployment.
- if(process.env.VERCEL_ENV!=="preview" ||
+ // Free seats are permitted only for the authenticated platform administrator.
+ // Production pilot records use the existing organization tables; no Stripe changes.
+ if(!["preview","production"].includes(process.env.VERCEL_ENV) ||
     process.env.VIRTUS_ORG_TEST_MODE!=="true" ||
-    process.env.VIRTUS_ORG_TEST_DATABASE_ISOLATED!=="true" ||
     process.env.VIRTUS_ORGANIZATIONS_ENABLED!=="true") return reply({error:"Test activation unavailable"},404);
  const client=await createClient();
  const {data:{user},error:authError}=await client.auth.getUser();
  if(authError||!user?.id||!user.email_confirmed_at)return reply({error:"Verified owner sign-in required"},401);
+ if(!isAdminUser(user))return reply({error:"Pilot activation restricted to platform administrator"},403);
  const body=await request.json().catch(()=>null);
  const id=body?.organizationId;
  const seats=body?.seats;
@@ -22,7 +23,7 @@ export async function POST(request){
  if(error||!org||org.owner_user_id!==user.id)return reply({error:"Organization owner required"},403);
  if(!org.verified_domain)return reply({error:"Verify the corporate email domain first"},409);
  if(org.stripe_subscription_id)return reply({error:"Existing Stripe subscription cannot be overridden"},409);
- if(!["pending","trialing"].includes(org.billing_status))return reply({error:"Organization is not eligible for preview testing"},409);
+ if(!["pending","trialing"].includes(org.billing_status))return reply({error:"Organization is not eligible for pilot testing"},409);
  const {count,error:countError}=await admin.from("virtus_organization_members").select("id",{count:"exact",head:true}).eq("organization_id",id).eq("status","active");
  if(countError)return reply({error:"Unable to verify seat usage"},503);
  if(count>seats)return reply({error:"Test seat count is below active membership"},409);

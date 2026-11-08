@@ -1,3 +1,4 @@
+import {isAdminUser} from "@/lib/admin-auth";
 import { randomBytes, createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
@@ -8,7 +9,8 @@ export const dynamic = "force-dynamic";
 const reply = (error, status) => NextResponse.json({ error }, { status });
 export async function POST(request) {
   if (process.env.VIRTUS_ORGANIZATIONS_ENABLED !== "true") return reply("Not enabled", 503);
-  if (!process.env.RESEND_API_KEY || !process.env.VIRTUS_ORGANIZATION_INVITE_FROM) return reply("Invitation delivery is not configured", 503);
+  const manualPilot = process.env.VIRTUS_ORG_TEST_MODE === "true" && ["preview","production"].includes(process.env.VERCEL_ENV);
+  if (!manualPilot && (!process.env.RESEND_API_KEY || !process.env.VIRTUS_ORGANIZATION_INVITE_FROM)) return reply("Invitation delivery is not configured", 503);
   const client = await createClient();
   const { data: { user }, error: authError } = await client.auth.getUser();
   if (authError || !user?.id || !user.email_confirmed_at) return reply("Verified authentication required", 401);
@@ -16,6 +18,7 @@ export async function POST(request) {
   const organizationId = typeof body?.organizationId === "string" ? body.organizationId : "";
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(organizationId) || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return reply("Invalid invitation", 400);
+  if (manualPilot && !isAdminUser(user)) return reply("Pilot invitations restricted to platform administrator",403);
   const admin = createAdminClient();
   const { data: membership, error: memberError } = await admin.from("virtus_organization_members").select("role,status").eq("organization_id", organizationId).eq("user_id", user.id).maybeSingle();
   if (memberError || !membership || membership.status !== "active" || !["owner","admin"].includes(membership.role)) return reply("Forbidden", 403);
@@ -33,13 +36,14 @@ export async function POST(request) {
     invited_by:user.id, expires_at:new Date(Date.now()+48*3600000).toISOString()
   }).select("id").single();
   if (insertError || !invitation) return reply("Unable to create invitation",503);
-  const base = process.env.NEXT_PUBLIC_APP_URL;
+  const base = manualPilot ? new URL(request.url).origin : process.env.NEXT_PUBLIC_APP_URL;
   if (!base || !/^https:\/\//.test(base)) {
     await admin.from("virtus_organization_invitations").update({revoked_at:new Date().toISOString()}).eq("id",invitation.id);
     return reply("Invitation URL not configured",503);
   }
   const url = new URL("/organizations/accept",base);
   url.searchParams.set("token",token);
+  if(manualPilot) return NextResponse.json({status:"pilot_link",invitationUrl:url.toString(),expiresInHours:48},{status:201,headers:{"Cache-Control":"private, no-store"}});
   const response = await fetch("https://api.resend.com/emails",{
     method:"POST",headers:{"Authorization":`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json"},
     body:JSON.stringify({from:process.env.VIRTUS_ORGANIZATION_INVITE_FROM,to:[email],subject:"Your Virtus AI organizational invitation",text:`You have been invited to join ${org.name} on Virtus AI. Sign in with ${email} and accept within 48 hours: ${url.toString()}\n\nIf you did not expect this invitation, ignore this email.`})
