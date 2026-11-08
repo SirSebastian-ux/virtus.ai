@@ -1,3 +1,4 @@
+import {hasOrganizationMentorAccess} from "@/lib/virtus-org-entitlement.mjs";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import {
@@ -30,8 +31,9 @@ export async function GET() {
       .eq("id", user.id)
       .single();
 
-    const currentPlan = profile?.plan ?? "free";
-    const currentPlanStatus = profile?.plan_status ?? "active";
+    const organizationMentorActive = await hasOrganizationMentorAccess({userId:user.id,userClient:authSupabase,adminClient:supabase});
+    const currentPlan = organizationMentorActive ? "premium" : (profile?.plan ?? "free");
+    const currentPlanStatus = organizationMentorActive ? "active" : (profile?.plan_status ?? "active");
 
     const dailyMessageLimit = getDailyMessageLimit(currentPlan);
 
@@ -64,6 +66,7 @@ export async function GET() {
         ...planPolicy,
         projectScope,
         plan: currentPlan,
+        organizationMentorActive,
         planStatus: currentPlanStatus,
         trialStartedAt: profile?.trial_started_at ?? null,
         trialEndsAt: profile?.trial_ends_at ?? null,

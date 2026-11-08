@@ -1,3 +1,4 @@
+import {hasOrganizationMentorAccess} from "@/lib/virtus-org-entitlement.mjs";
 ﻿function sanitizeAssistantOutput(text) {
   if (!text) return '';
   const patterns = [
@@ -329,26 +330,6 @@ ${usefulPatterns.join("\n")}
     return "";
   }
 }
-async function hasActiveOrganizationMentorEntitlement(userId, supabaseClient, adminClient) {
-  if (process.env.VIRTUS_ORGANIZATIONS_ENABLED !== "true" ||
-      process.env.VIRTUS_ORG_MENTORSHIP_ENABLED !== "true" || !userId) return false;
-  const { data: memberships, error } = await adminClient
-    .from("virtus_organization_members")
-    .select("organization_id")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .limit(20);
-  if (error) throw new Error("Unable to verify organizational Mentor entitlement");
-  for (const member of memberships || []) {
-    const { data: allowed, error: accessError } = await supabaseClient.rpc(
-      "virtus_organization_access", { p_organization_id: member.organization_id }
-    );
-    if (accessError) throw new Error("Unable to verify organizational access");
-    if (allowed === true) return true;
-  }
-  return false;
-}
-
 async function resolveVirtusUserId(guestId, cookieHeader = "") {
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
@@ -375,9 +356,7 @@ async function resolveVirtusUserId(guestId, cookieHeader = "") {
 
     // Organizational Mentor access is an additional entitlement, never a change to billing.
     // Re-evaluate on each request so revoked seats and canceled subscriptions lose access.
-    const organizationMentorActive = await hasActiveOrganizationMentorEntitlement(
-      user.id, supabase, adminSupabase
-    );
+    const organizationMentorActive = await hasOrganizationMentorAccess({userId:user.id,userClient:supabase,adminClient:adminSupabase});
     const currentPlan = organizationMentorActive ? "premium" : (profile?.plan ?? "free");
   const currentPlanStatus = organizationMentorActive ? "active" :
     (profile?.plan_status ?? getDefaultPlanStatusForPlan("free"));

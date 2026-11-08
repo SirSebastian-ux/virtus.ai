@@ -9,6 +9,7 @@ export default function CoachingProgress() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => { review(); }, []);
   async function review() {
     setLoading(true);
     setError("");
