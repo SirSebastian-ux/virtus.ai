@@ -1,54 +1,24 @@
 "use client";
-import {useEffect,useState} from "react";
+import {Suspense,useEffect,useMemo,useState} from "react";
 import {useSearchParams} from "next/navigation";
-import {Suspense} from "react";
 import Link from "next/link";
 import {virtusModules} from "@/data/virtus-modules";
-const workbookNames=["Volume 1 — Source pending","The Conscious Decision-Maker","Volume 3 — Source pending","Volume 4 — Source pending","Volume 5 — Source pending","Volume 6 — Source pending","The Psychology of Cadence","Volume 8 — Source pending"];
-function Learning(){
- const organizationId=useSearchParams().get("organizationId")||"";
- const [progress,setProgress]=useState([]);
- const [selected,setSelected]=useState({type:"leadership",module:1,exercise:1});
- const [status,setStatus]=useState("");
- const [busy,setBusy]=useState(false);
- const [filter,setFilter]=useState("leadership");
- useEffect(()=>{if(!organizationId)return;fetch("/api/organizations/learning?organizationId="+encodeURIComponent(organizationId),{cache:"no-store"}).then(r=>r.json()).then(d=>setProgress(d.progress||[])).catch(()=>setStatus("Unable to load progress"));},[organizationId]);
- const done=(type,module,exercise)=>progress.some(p=>p.curriculum_type===type&&p.module_number===module&&p.exercise_number===exercise);
- async function complete(){
-  setBusy(true);setStatus("");
-  try{const r=await fetch("/api/organizations/learning",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId,curriculumType:selected.type,moduleNumber:selected.module,exerciseNumber:selected.exercise})});const d=await r.json();if(!r.ok)throw Error(d.error||"Unable to save");
-  setProgress(p=>[...p,{curriculum_type:selected.type,module_number:selected.module,exercise_number:selected.exercise}]);setStatus("Exercise completion recorded.");
-  }catch(e){setStatus(e.message);}finally{setBusy(false);}
- }
- const module=virtusModules[selected.module-1];
- const day=selected.type==="leadership"?module?.days?.[selected.exercise-1]:null;
- return <main style={{minHeight:"100vh",background:"#0a0908",color:"#f1e5ce",padding:"5vh 5vw"}}>
-  <div style={{maxWidth:1000,margin:"auto"}}><Link href={"/organizations/mentor?organizationId="+encodeURIComponent(organizationId)} style={{color:"#d7b674"}}>Private mentor</Link>
-  <h1>Leadership & Conscious Mind learning</h1>
-  <p>Exercises are personal. Your organization receives only aggregate participation reports for sufficiently large groups.</p>
-  <div style={{display:"flex",gap:10,margin:"22px 0"}}>
-   <button onClick={()=>setFilter("leadership")} style={{padding:12,background:filter==="leadership"?"#d7b674":"#39332a"}}>Leadership Architecture (10)</button>
-   <button onClick={()=>setFilter("conscious_mind")} style={{padding:12,background:filter==="conscious_mind"?"#d7b674":"#39332a"}}>Conscious Mind (8)</button>
-  </div>
-  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:12}}>
-  {(filter==="leadership"?virtusModules.slice(0,10):workbookNames.map((title,i)=>({id:"workbook-"+(i+1),title,days:[]}))).map((m,i)=>{
-   const count=progress.filter(p=>p.curriculum_type===filter&&p.module_number===i+1).length;
-   return <button key={m.id} onClick={()=>{setSelected({type:filter,module:i+1,exercise:1});setStatus("");}} style={{textAlign:"left",padding:20,border:"1px solid #69502c",borderRadius:12,color:"#f1e5ce",background:selected.type===filter&&selected.module===i+1?"#40301b":"#191714"}}>
-    <strong>{i+1}. {m.title}</strong><p>{count} exercise{count===1?"":"s"} completed</p>
-   </button>;
-  })}
-  </div>
-  {selected.type===filter&&<section style={{marginTop:24,padding:24,border:"1px solid #69502c",borderRadius:12}}>
-   <h2>{filter==="leadership"?module?.title:workbookNames[selected.module-1]}</h2>
-   {filter==="leadership"&&module?.days?.length?<>
-    <label>Choose a day <select value={selected.exercise} onChange={e=>setSelected(s=>({...s,exercise:Number(e.target.value)}))} style={{padding:10,margin:12}}>{module.days.map((d,i)=><option key={i} value={i+1}>Day {i+1}: {d.title}</option>)}</select></label>
-    <h3>{day?.title}</h3><p>{day?.goal}</p>
-    <ol>{(day?.exercises||[]).map((e,i)=><li key={i} style={{marginBottom:8}}>{e}</li>)}</ol>
-    <p>Reflect privately with your mentor before marking the exercise complete.</p>
-    <button disabled={busy||done(filter,selected.module,selected.exercise)} onClick={complete} style={{padding:"12px 18px",background:"#d7b674",borderRadius:8}}>{done(filter,selected.module,selected.exercise)?"Completed":"Mark exercise completed"}</button>
-   </>:<p>The complete workbook exercise text has not yet been imported. Progress recording is withheld until the verified source material is available.</p>}
-  </section>}
-  <p role="status">{status}</p></div>
- </main>;
+const areas=[{id:"communication",label:"Communication",keywords:/communicat|listen|feedback|conflict|convers/i},{id:"awareness",label:"Self-awareness",keywords:/aware|reflect|thought|emotion|trigger/i},{id:"decisions",label:"Decision-making",keywords:/decis|reason|critical|choice|assum/i},{id:"leadership",label:"Leadership",keywords:/leader|delegate|accountab|team|responsib/i}];
+const library=virtusModules.slice(0,10).flatMap((m,mi)=>(m.days||[]).flatMap((d,di)=>({id:`leadership-${mi+1}-${di+1}`,module:mi+1,exercise:di+1,title:d.title,goal:d.goal||"",steps:d.exercises||[],text:[d.title,d.goal,...(d.exercises||[])].join(" ")})));
+function Development(){
+ const org=useSearchParams().get("organizationId")||"";
+ const [focus,setFocus]=useState("communication"),[completed,setCompleted]=useState([]),[selected,setSelected]=useState(null),[status,setStatus]=useState(""),[busy,setBusy]=useState(false);
+ useEffect(()=>{if(!org)return;let alive=true;fetch("/api/organizations/learning?organizationId="+encodeURIComponent(org),{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Unable to load development history");return d}).then(d=>{if(alive)setCompleted(d.progress||[])}).catch(e=>{if(alive)setStatus(e.message)});return()=>{alive=false}},[org]);
+ const completedKeys=useMemo(()=>new Set(completed.filter(x=>x.curriculum_type==="leadership").map(x=>`leadership-${x.module_number}-${x.exercise_number}`)),[completed]);
+ const suggestions=useMemo(()=>{const area=areas.find(a=>a.id===focus);return library.filter(x=>!completedKeys.has(x.id)).map(x=>({...x,relevance:area.keywords.test(x.text)?1:0})).sort((a,b)=>b.relevance-a.relevance).slice(0,3)},[focus,completedKeys]);
+ async function finish(){if(!selected||!org)return;setBusy(true);setStatus("");try{const r=await fetch("/api/organizations/learning",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:org,curriculumType:"leadership",moduleNumber:selected.module,exerciseNumber:selected.exercise})});const d=await r.json();if(!r.ok)throw Error(d.error||"Could not save exercise");setCompleted(p=>[...p,{curriculum_type:"leadership",module_number:selected.module,exercise_number:selected.exercise}]);setSelected(null);setStatus("Exercise completed and recorded in your private development history.")}catch(e){setStatus(e.message)}finally{setBusy(false)}}
+ return <main className="dev-shell"><div className="dev-container"><Link href="/organizations/workspace" className="dev-back">Organizations / My Development</Link><div className="dev-header"><div><span className="dev-eyebrow">PERSONAL DEVELOPMENT</span><h1>My Practice</h1><p>Build skills through focused exercises. Choose what you want to strengthen today.</p></div><Link href={"/organizations/mentor?organizationId="+encodeURIComponent(org)} className="dev-mentor">Open my Mentor</Link></div>
+ <div className="dev-metrics"><div><strong>{completed.length}</strong><span>Exercises completed</span></div><div><strong>{new Set(completed.map(x=>x.module_number)).size}</strong><span>Practice areas explored</span></div></div>
+ <section className="dev-panel"><h2>What would you like to work on?</h2><div className="dev-foci">{areas.map(a=><button type="button" key={a.id} aria-pressed={focus===a.id} className={focus===a.id?"chosen":""} onClick={()=>{setFocus(a.id);setSelected(null)}}>{a.label}</button>)}</div><p className="dev-note">These recommendations use your selected focus and completed exercises. Conversation-based adaptation will be introduced after its privacy and measurement controls are verified.</p></section>
+ <section className="dev-panel"><h2>Recommended practice</h2><div className="dev-list">{suggestions.map((x,i)=><button type="button" key={x.id} className={selected?.id===x.id?"dev-exercise active":"dev-exercise"} onClick={()=>setSelected(x)}><span>Exercise {i+1}</span><strong>{x.title}</strong><small>{x.goal||"Guided reflection and practice"}</small></button>)}</div>{!suggestions.length&&<p>You have completed the currently available exercises.</p>}</section>
+ {selected&&<section className="dev-panel dev-selected"><h2>{selected.title}</h2><p>{selected.goal}</p><ol>{selected.steps.map((step,i)=><li key={i}>{step}</li>)}</ol><p className="dev-note">Complete the exercise and reflect with your private Mentor. Only completion data contributes to organizational participation reporting.</p><button disabled={busy} className="dev-complete" onClick={finish}>{busy?"Saving...":"Mark exercise completed"}</button></section>}
+ <p role="status" className="dev-status">{status}</p></div><style jsx global>{`
+ .dev-shell{min-height:100vh;background:radial-gradient(ellipse at top,#0e4436,#061c17 70%);color:#f4e8d1;padding:30px 18px}.dev-container{max-width:940px;margin:auto}.dev-back{font-size:12px;color:#dbba78}.dev-header{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin:24px 0}.dev-eyebrow{font-size:10px;letter-spacing:.18em;color:#d7b56c}.dev-header h1{font:normal 34px Georgia,serif;color:#f4dca4;margin:6px 0}.dev-header p,.dev-note{font-size:12px;line-height:1.6;color:#c8d0c5}.dev-mentor,.dev-complete{background:linear-gradient(115deg,#f5dca5,#bd9251);border:0;border-radius:8px;padding:10px 14px;color:#211b12;text-decoration:none;font-size:12px;font-weight:750;cursor:pointer}.dev-metrics{display:flex;gap:10px;margin-bottom:14px}.dev-metrics>div{border:1px solid #977e50;background:#0a342a;border-radius:10px;padding:12px 16px;min-width:155px}.dev-metrics strong{display:block;color:#f0d39c;font-size:23px}.dev-metrics span{font-size:11px;color:#c9d0c6}.dev-panel{border:1px solid #9c8254;border-radius:12px;background:#0a2e26;padding:17px 20px;margin:12px 0}.dev-panel h2{font-size:17px;margin:0 0 12px;color:#f4dda9}.dev-foci{display:flex;gap:8px;flex-wrap:wrap}.dev-foci button{font-size:12px;color:#eed5a5;background:#124b3c;border:1px solid #8e7a50;border-radius:8px;padding:9px 12px;cursor:pointer}.dev-foci button.chosen{background:#d7b674;color:#1a221c}.dev-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.dev-exercise{display:flex;flex-direction:column;gap:7px;text-align:left;background:#103c30;border:1px solid #8d794f;border-radius:9px;color:#f4e8d1;padding:13px;cursor:pointer}.dev-exercise.active{border-color:#f7d18b;background:#195440}.dev-exercise span{font-size:10px;color:#e0bb77}.dev-exercise strong{font-size:14px}.dev-exercise small{font-size:11px;color:#c5cfc3;line-height:1.5}.dev-selected p,.dev-selected li{font-size:13px;line-height:1.6}.dev-selected li{margin-bottom:8px}.dev-status{font-size:12px;color:#f4d99f}.dev-shell button:focus-visible,.dev-shell a:focus-visible{outline:2px solid #ffdc8d;outline-offset:2px}@media(max-width:650px){.dev-list{grid-template-columns:1fr}.dev-panel{padding:14px}.dev-header h1{font-size:29px}}
+ `}</style></main>
 }
-export default function LearningPage(){return <Suspense fallback={<main>Loading curriculum...</main>}><Learning/></Suspense>;}
+export default function DevelopmentPage(){return <Suspense fallback={<main>Loading development...</main>}><Development/></Suspense>}
