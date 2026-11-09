@@ -12,6 +12,7 @@ export default function UniversalDevelopmentDashboard({ plan = "free" }) {
     let active = true;
     const load = async () => {
       try {
+        await fetch("/api/account/coaching-progress", { cache: "no-store" });
         const response = await fetch("/api/account/coaching-history", { cache: "no-store" });
         if (!response.ok) throw new Error("Development history is temporarily unavailable.");
         const data = await response.json();
