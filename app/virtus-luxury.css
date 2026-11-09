@@ -1712,3 +1712,35 @@
     max-height: min(44dvh, 440px);
   }
 }
+
+
+/* Compact chat composer: one line by default; grow only for actual content. */
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer-wrap {
+  padding: 6px clamp(12px, 4vw, 44px) 12px !important;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer {
+  max-width: 920px;
+  min-height: 54px;
+  border-radius: 26px;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-growing-composer-input {
+  min-height: 48px !important;
+  max-height: 176px !important;
+  padding: 15px 112px 13px 65px !important;
+  line-height: 20px;
+  height: auto;
+}
+.virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-luxury-composer-actions {
+  bottom: 7px;
+}
+@media (max-width: 767px) {
+  .virtus-chat-root.virtus-luxury .virtus-luxury-composer {
+    min-height: 54px;
+    border-radius: 25px;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-composer .virtus-growing-composer-input {
+    min-height: 48px !important;
+    max-height: min(176px, 30dvh) !important;
+    padding: 14px 104px 13px 58px !important;
+  }
+}

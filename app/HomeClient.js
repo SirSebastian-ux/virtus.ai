@@ -2217,10 +2217,10 @@ const handleCaptureMicrophoneClick = async () => {
     if (!element || typeof window === "undefined") return;
     const adjustHeight = () => {
       const viewport = window.visualViewport?.height || window.innerHeight;
-      const maximum = Math.min(440, Math.max(150, viewport * 0.44));
+      const maximum = Math.min(176, Math.max(100, viewport * 0.28));
       const nearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 40;
       element.style.height = "auto";
-      element.style.height = `${Math.min(maximum, Math.max(72, element.scrollHeight))}px`;
+      element.style.height = `${Math.min(maximum, Math.max(48, element.scrollHeight))}px`;
       element.style.overflowY = element.scrollHeight > maximum ? "auto" : "hidden";
       if (nearBottom) element.scrollTop = element.scrollHeight;
     };
@@ -3941,7 +3941,7 @@ useEffect(() => {
 
     const textarea = textareaRef.current;
     textarea.style.height = "0px";
-const newHeight = Math.max(44, Math.min(textarea.scrollHeight, 176));
+const newHeight = Math.max(48, Math.min(textarea.scrollHeight, 176));
 textarea.style.height = `${newHeight}px`;
 textarea.style.overflowY = textarea.scrollHeight > 176 ? "auto" : "hidden";
   }, [message]);
