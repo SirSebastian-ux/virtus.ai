@@ -26,5 +26,5 @@ export async function GET(request){
  if(a.error||b.error||c.error)return send({error:"Records unavailable"},503);
  const domains={};
  for(const s of c.data||[]){const d=domains[s.domain]||(domains[s.domain]={domain:s.domain,count:0,total:0});d.count++;d.total+=s.score;}
- return send({employee:{email,role:target.role,status:target.status},summary:{exercisesCompleted:b.data.length,practiceSessions:a.data.length,activeSeconds:a.data.reduce((n,s)=>n+Math.max(0,Number(s.active_seconds)||0),0),scoredExercises:c.data.length},domains:Object.values(domains).map(d=>({domain:d.domain,count:d.count,percent:Math.round(d.total/d.count/5*100)})),exercises:b.data.slice(0,50),assessments:c.data.map(s=>({domain:s.domain,scored_at:s.scored_at})).slice(0,50),sessions:a.data.slice(0,50)});
+ return send({employee:{email,role:target.role,status:target.status},summary:{exercisesCompleted:b.data.length,practiceSessions:a.data.length,activeSeconds:a.data.reduce((n,s)=>n+Math.max(0,Number(s.active_seconds)||0),0),scoredExercises:c.data.length},domains:Object.values(domains).map(d=>({domain:d.domain,count:d.count,percent:Math.round(d.total/d.count/5*100)})),exercises:b.data.slice(0,50),assessments:c.data.map(s=>({domain:s.domain,score:s.score,scored_at:s.scored_at})).slice(0,50),sessions:a.data.slice(0,50)});
 }
