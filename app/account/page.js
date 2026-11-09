@@ -7,10 +7,11 @@ import LogoutButton from "./LogoutButton";
 import ProfileNameEditor from "./ProfileNameEditor";
 import ProfilePhotoEditor from "./ProfilePhotoEditor";
 import ProfileAvatar from "./ProfileAvatar";
-import CoachingProgress from "./CoachingProgress";
+
 import DevelopmentWorkspace from "./DevelopmentWorkspace";
 import CognitivePatternsWorkspace from "./CognitivePatternsWorkspace";
 import CoachingHistory from "./CoachingHistory";
+import UniversalDevelopmentDashboard from "./UniversalDevelopmentDashboard";
 import { createClient } from "@/lib/supabase-server";
 import {
   getPlanLabel,
@@ -66,7 +67,7 @@ export default async function AccountPage() {
   }
 
   const currentPlan = profile?.plan || "free";
-  const currentPlanStatus = profile?.plan_status || "active";
+  const currentPlanStatus = profile?.plan_status || (currentPlan === "free" ? "inactive" : "active");
   const displayPlan = currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : currentPlan === "life_coach" ? "Life Coach" : "No active coaching membership";
   const dailyMessageLimit = currentPlan === "free" ? 0 : getDailyMessageLimit(currentPlan);
 
@@ -152,7 +153,7 @@ export default async function AccountPage() {
             <div className="mt-6">
               <div id="my-development" className="scroll-mt-8"><DevelopmentWorkspace /></div>
               <CognitivePatternsWorkspace />
-              <div className="mt-5"><CoachingProgress /></div>
+              <div className="mt-5"><UniversalDevelopmentDashboard plan={currentPlan} /></div>
               <div className="mt-4"><CoachingHistory displayName={profile?.nickname || user?.email?.split("@")[0] || "The client"} /></div>
             </div>
 
@@ -172,12 +173,12 @@ export default async function AccountPage() {
 
               <SettingsRow
                 label="Plan status"
-                value={currentPlanStatus}
+                value={currentPlan === "free" ? "No paid membership" : currentPlanStatus}
               />
 
               <SettingsRow
                 label="Daily message limit"
-                value={`${dailyMessageLimit ?? "Unlimited"}`}
+                value={currentPlan === "free" ? "See trial access" : `${dailyMessageLimit ?? "Unlimited"}`}
               />
 
               <SettingsRow

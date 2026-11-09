@@ -97,8 +97,8 @@ export default function CoachingHistory({ displayName = "The client" }) {
               Review periods reflect different conversation windows. AI interpretations may vary; compare the supporting evidence, not just the status labels.
             </p>
           )}
-          <DevelopmentProfileChart reviews={reviews} periods={periods} />
-          <div className="mt-5 grid gap-3 lg:grid-cols-2">
+
+          <details className="mt-5 rounded-xl border border-[#d8bd85]/25 p-4"><summary className="cursor-pointer font-semibold text-[#f2d08b]">Historical qualitative observations (legacy six-domain reviews)</summary><p className="mt-2 text-xs text-[#c3d1ca]">These archival observations predate the eight-domain framework. They are not current competency scores.</p><div className="mt-4 grid gap-3 lg:grid-cols-2">
             {COACHING_SKILLS.map((skill) => {
               const observations = getSkillObservations(reviews, skill);
               const latestObservation = observations.at(-1);
@@ -118,7 +118,7 @@ export default function CoachingHistory({ displayName = "The client" }) {
                 </article>
               );
             })}
-          </div>
+          </div></details>
         </>
       )}
       <p className="mt-5 text-xs leading-5 text-[#a7bdb4]">
