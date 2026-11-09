@@ -67,7 +67,7 @@ export default async function AccountPage() {
   }
 
   const currentPlan = profile?.plan || "free";
-  const currentPlanStatus = profile?.plan_status || "active";
+  const currentPlanStatus = profile?.plan_status || (currentPlan === "free" ? "inactive" : "active");
   const displayPlan = currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : currentPlan === "life_coach" ? "Life Coach" : "No active coaching membership";
   const dailyMessageLimit = currentPlan === "free" ? 0 : getDailyMessageLimit(currentPlan);
 
@@ -173,12 +173,12 @@ export default async function AccountPage() {
 
               <SettingsRow
                 label="Plan status"
-                value={currentPlanStatus}
+                value={currentPlan === "free" ? "No paid membership" : currentPlanStatus}
               />
 
               <SettingsRow
                 label="Daily message limit"
-                value={`${dailyMessageLimit ?? "Unlimited"}`}
+                value={currentPlan === "free" ? "See trial access" : `${dailyMessageLimit ?? "Unlimited"}`}
               />
 
               <SettingsRow
