@@ -3941,9 +3941,9 @@ useEffect(() => {
 
     const textarea = textareaRef.current;
     textarea.style.height = "0px";
-const newHeight = Math.min(textarea.scrollHeight, 288);
+const newHeight = Math.max(44, Math.min(textarea.scrollHeight, 176));
 textarea.style.height = `${newHeight}px`;
-textarea.style.overflowY = textarea.scrollHeight > 288 ? "auto" : "hidden";
+textarea.style.overflowY = textarea.scrollHeight > 176 ? "auto" : "hidden";
   }, [message]);
     async function handleLogout(alreadyConfirmed = false) {
     if (!alreadyConfirmed) {
@@ -7257,11 +7257,11 @@ setRegenerating(true);
             </div>
 
 <div
-  className={`virtus-chat-clear-bar virtus-luxury-composer-wrap virtus-theme-card-soft border-t border-sky-900/20 px-3 py-3 md:px-8 md:py-5 ${
+  className={`virtus-chat-clear-bar virtus-luxury-composer-wrap virtus-theme-card-soft border-t border-sky-900/20 px-3 py-2 md:px-8 md:py-3 ${
     showMobileMenu ? "opacity-0 pointer-events-none" : "opacity-100"
   }`}
 >
-  <div className="virtus-theme-card virtus-luxury-composer relative rounded-[30px] border border-sky-900/25 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10">
+  <div className="virtus-theme-card virtus-luxury-composer relative rounded-[26px] border border-sky-900/25 shadow-sm shadow-sky-950/10 backdrop-blur-sm transition hover:border-sky-800/40 hover:bg-sky-950/10">
 
 <div className="absolute left-3 top-1/2 -translate-y-1/2">
   <button
@@ -7389,7 +7389,7 @@ setRegenerating(true);
 <textarea
   ref={textareaRef}
   aria-label="Chat message — scroll within this box to review longer dictation"
-className="virtus-growing-composer-input w-full min-h-[72px] resize-none overflow-y-auto rounded-[30px] bg-transparent px-14 py-4 pb-20 pr-16 md:px-16 md:py-5 md:pb-20 md:pr-20 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+className="virtus-growing-composer-input block w-full min-h-[44px] max-h-[176px] resize-none overflow-y-auto rounded-[26px] bg-transparent pl-14 pr-28 py-3 text-sm leading-5 md:pl-16 md:pr-32 text-gray-100 placeholder:text-zinc-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
     placeholder={
     isTrialGuestExpired
       ? "Your Trial Guest access has ended. Create a free account or choose Plus or Premium to continue."
@@ -7416,7 +7416,7 @@ className="virtus-growing-composer-input w-full min-h-[72px] resize-none overflo
 }}
 />
 
-<div className="virtus-luxury-composer-actions absolute bottom-3 right-3 flex items-center gap-3">
+<div className="virtus-luxury-composer-actions absolute bottom-1 right-2 flex items-center gap-1">
 {(listening || voiceTranscribing || dictationNotice) && (
   <span role="status" aria-live="polite"
     title={dictationNotice || (voiceTranscribing ? "Transcribing your recording" : "Recording — tap square to stop")}
@@ -7429,7 +7429,7 @@ className="virtus-growing-composer-input w-full min-h-[72px] resize-none overflo
                  <button
   type="button"
   onClick={handleMicrophoneClick}
-  className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+  className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
     listening
       ? "bg-sky-950/60 text-sky-200"
       : "text-white/80 hover:bg-sky-950/30 hover:text-sky-200"
@@ -7468,7 +7468,7 @@ className="virtus-growing-composer-input w-full min-h-[72px] resize-none overflo
 
     sendMessage();
   }}
-  className={`virtus-luxury-send group relative flex h-12 w-12 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
+  className={`virtus-luxury-send group relative flex h-9 w-9 items-center justify-center border border-sky-900/40 bg-sky-950/30 text-sky-200 transition hover:bg-sky-900/40 disabled:cursor-not-allowed disabled:opacity-50 ${
     loading ? "rounded-xl" : "rounded-full"
   }`}
   aria-label={loading ? "Stop" : "Send"}
