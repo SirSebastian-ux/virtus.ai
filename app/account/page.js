@@ -7,7 +7,7 @@ import LogoutButton from "./LogoutButton";
 import ProfileNameEditor from "./ProfileNameEditor";
 import ProfilePhotoEditor from "./ProfilePhotoEditor";
 import ProfileAvatar from "./ProfileAvatar";
-import CoachingProgress from "./CoachingProgress";
+
 import DevelopmentWorkspace from "./DevelopmentWorkspace";
 import CognitivePatternsWorkspace from "./CognitivePatternsWorkspace";
 import CoachingHistory from "./CoachingHistory";
@@ -154,7 +154,6 @@ export default async function AccountPage() {
               <div id="my-development" className="scroll-mt-8"><DevelopmentWorkspace /></div>
               <CognitivePatternsWorkspace />
               <div className="mt-5"><UniversalDevelopmentDashboard plan={currentPlan} /></div>
-              <div className="mt-5"><CoachingProgress /></div>
               <div className="mt-4"><CoachingHistory displayName={profile?.nickname || user?.email?.split("@")[0] || "The client"} /></div>
             </div>
 
