@@ -36,6 +36,7 @@ import { getPracticeCategoryById } from "@/data/virtus-practice-categories";
 import { membershipConversationGuidance, canAccessPractice } from "@/lib/virtus-membership.mjs";
 import { loadDevelopmentContext } from "@/lib/virtus-development-context.mjs";
 import { loadPortfolioReview } from "@/lib/virtus-coaching-portfolio.mjs";
+import { loadOrgPracticeMemory } from "@/lib/virtus-org-practice-memory.mjs";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
 import { getVirtusLibraryContext } from "@/lib/virtus-library";
@@ -3335,6 +3336,10 @@ const virtusPortfolioReview = (!isGuest && memoryEnabled && chatHistoryEnabled)
     })
   : "";
 
+const virtusOrgPracticeMemory = (!isGuest && memoryEnabled)
+  ? await loadOrgPracticeMemory({ db: supabase, userId })
+  : "";
+
 const coachingKnowledge = buildVirtusCoachingKnowledgeLayer({
   message,
   practiceMode,
@@ -3351,7 +3356,9 @@ const virtusRequest = {
   max_output_tokens: intelligence.maxOutputTokens,
   stream: true,
   store: false,
-  instructions: `# SECURITY AND DATA BOUNDARY
+  instructions: `# ORGANIZATIONAL MEMORY — SERVER-VERIFIED DATA
+The application server retrieves authenticated organizational practice records BEFORE this model call. If the user input contains a section labeled PRIVATE ORGANIZATIONAL PRACTICE MEMORY, those entries are already database-backed server results. No model-side database query tool is required or available. Never say that no database query was performed when these records are supplied: the application server performed the retrieval. Report only the entries actually supplied, including their exact completion identifiers, timestamps and any saved reflection; if a title is missing, state that the title is unavailable instead of inventing one. If the section is absent, say the records are not available in this response; do not infer them from conversation history. An exercise completion is not evidence of real-world behavior or improvement. Private employee data must never be represented as employer-visible reporting.
+# SECURITY AND DATA BOUNDARY
 # NUMBERING PRESERVATION
 
 When the user asks to translate, summarize, or extract information from an image or document, preserve the original numbering exactly as it appears (e.g., 1., 2., 3.). Do not change, renumber, or omit any numbered items.
@@ -5019,7 +5026,7 @@ ${coachingKnowledge.instructions}
 
 ` : ""}${latestFileText ? `${latestFileText}
 
-` : ""}${virtusDevelopmentContext ? `${virtusDevelopmentContext}\n\n` : ""}${virtusPortfolioReview ? `${virtusPortfolioReview}\n\n` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
+` : ""}${virtusDevelopmentContext ? `${virtusDevelopmentContext}\n\n` : ""}${virtusPortfolioReview ? `${virtusPortfolioReview}\n\n` : ""}${virtusOrgPracticeMemory ? `${virtusOrgPracticeMemory}\n\n` : ""}${coachingReviewContext ? `${coachingReviewContext}\n\n` : ""}${sameChatAnchorContext ? `${sameChatAnchorContext}
 
 ` : ""}${virtusLibraryContext ? `${virtusLibraryContext}
 
