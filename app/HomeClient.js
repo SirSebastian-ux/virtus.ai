@@ -6863,6 +6863,8 @@ if (data.conversation) {
         <span aria-hidden="true" className="virtus-luxury-plan-sparkle">✦</span><span className="virtus-luxury-plan-label">{currentPlanKey === "free" ? "Free access ended — Choose membership" : `Your plan: ${displayPlanLabel}`}</span>
       </Link>
 
+      <div id="virtus-development-header-slot" className="flex w-full justify-end pt-1 empty:hidden md:hidden" />
+
       {isTrialGuestExpired && (
         <p className="mt-2 text-xs text-sky-300/70">
           Sign in to continue.
