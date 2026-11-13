@@ -28,6 +28,7 @@ test("two independent reviews establish one domain, but move slowly",()=>{
  const x=buildDevelopmentBar([period(1,10,2),period(2,11,2)]);
  assert.equal(x.percent,0.2);assert.equal(x.scored,1);assert.equal(x.stage,1);
  assert.equal(x.indexPercent,40);assert.equal(x.indexStage,3);
+ assert.equal(x.journeyDelta,0);
 });
 test("exercise completion alone, same evidence, and self-report do not earn new points",()=>{
  const p1=period(1,10,2),p2=period(2,11,2);
@@ -42,7 +43,7 @@ test("supported improvement makes a small change but never jumps stages",()=>{
  const x=buildDevelopmentBar([
   period(1,10,2),period(2,11,2),period(3,12,4,{direction:"improving"})]);
  assert.equal(x.percent,0.4);assert.equal(x.stage,1);
- assert.equal(x.indexPercent,60);assert.equal(x.indexStage,4);
+ assert.equal(x.indexPercent,40.2);assert.equal(x.indexStage,3);
 });
 test("one lower observation does not reduce the journey; repeated independent decline can",()=>{
  const base=[period(1,10,2),period(2,11,2),period(3,12,4,{direction:"improving"})];
@@ -70,4 +71,22 @@ test("multiple domains cannot move more than half a point per independent review
  }
  const out=buildDevelopmentBar([a,b]);
  assert.equal(out.scored,8);assert.equal(out.percent,0.5);
+});
+
+test("visible bar progresses gradually from first established competency baseline",()=>{
+ const h=[period(1,10,2),period(2,11,2)];
+ const start=buildDevelopmentBar(h);const improved=buildDevelopmentBar([...h,period(3,12,4,{direction:"improving"})]);
+ assert.equal(start.indexPercent,40);assert.equal(improved.indexPercent,40.2);assert.equal(improved.indexStage,3);
+ assert.ok(improved.indexPercent-start.indexPercent<=0.5);assert.equal(improved.journeyDelta,0.2);
+});
+test("one decline does not drop the visible bar; repeated evidence moves it slowly",()=>{
+ const base=[period(1,10,2),period(2,11,2),period(3,12,4,{direction:"improving"})];
+ const first=period(4,13,1,{direction:"declining"}),second=period(5,14,1,{direction:"declining"});
+ const a=buildDevelopmentBar(base),b=buildDevelopmentBar([...base,first]),c=buildDevelopmentBar([...base,first,second]);
+ assert.equal(b.indexPercent,a.indexPercent);assert.ok(c.indexPercent<b.indexPercent);assert.ok(b.indexPercent-c.indexPercent<=0.5);
+});
+test("unscored recent evidence preserves established score",()=>{
+ const a=period(1,10,2),b=period(2,11,2),c=period(3,12,3);
+ c.observations[0].proficiency=null;
+ assert.equal(buildDevelopmentBar([a,b,c]).indexPercent,buildDevelopmentBar([a,b]).indexPercent);
 });

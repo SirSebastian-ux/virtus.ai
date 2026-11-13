@@ -80,7 +80,7 @@ export default function VirtusDevelopmentBar() {
   if (HIDDEN.test(path) || !authenticated) return null;
 
   const percent = summary.indexPercent.toFixed(1);
-  const journeyChange = summary.percent.toFixed(1);
+  const journeyChange = summary.journeyDelta.toFixed(1);
   const baselinePending = summary.scored === 0;
   const toggle = () => setExpanded((value) => !value);
   const domainDetails = summary.domains.map((domain) => (
@@ -101,11 +101,10 @@ export default function VirtusDevelopmentBar() {
       <p className="text-xs text-[#e4c88f]">{baselinePending ? "Development Index: baseline pending" : "Development Index: Stage " + summary.indexStage + " of 6"}</p>
       {baselinePending && <p className="mt-2 text-xs leading-5 text-[#d4ded9]">Your earlier reviews are preserved. The new eight-domain competency assessment has not established a level for this account yet.</p>}
       {activityCount !== null && <p className="mt-2 text-xs text-[#f1cf84]">{activityCount.toLocaleString()} recorded chat messages; participation is tracked separately from demonstrated competency.</p>}
-      <p className="mt-2 text-xs text-[#f1cf84]">Gradual journey movement: {summary.percent > 0 ? "+" : ""}{journeyChange} percentage points since baseline</p>
+      <p className="mt-2 text-xs text-[#f1cf84]">Gradual journey movement: {summary.journeyDelta > 0 ? "+" : ""}{journeyChange} percentage points since baseline</p>
       <p className="mt-2 text-xs leading-5 text-[#d4ded9]">
         {summary.trend}. {summary.scored} of 8 domains have an established competency level.
-        The independent journey movement is limited to 0.5 percentage points per review and can also decline.
-        This main bar reflects the established competency baseline.
+        The visible bar starts at your established competency baseline and changes by at most 0.5 percentage points per new qualifying review. Repeated credible evidence can also lower it.
       </p>
       <p className="mt-3 text-xs font-semibold text-[#e9c681]">EIGHT DEVELOPMENT DOMAINS</p>
       <ul className="mt-1 text-[11px]">{domainDetails}</ul>
