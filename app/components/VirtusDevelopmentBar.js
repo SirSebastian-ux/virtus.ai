@@ -149,34 +149,24 @@ export default function VirtusDevelopmentBar() {
     </section>
   );
 
+  // Small secondary status under the plan - never a second subscription card.
   const mobileIndicator = (
     <button
       type="button"
       onClick={toggle}
       aria-expanded={expanded}
-      aria-label={baselinePending
-        ? "Development assessment is pending. Open details."
-        : "Development stage " + summary.indexStage + " of 6, " + percent + " percent. Open details."}
-      className="group relative flex w-[min(54vw,190px)] max-w-full flex-col rounded-xl border border-[#c4a268]/45 bg-[linear-gradient(145deg,rgba(9,55,43,.96),rgba(5,32,29,.98))] px-3 py-[7px] text-left shadow-[0_5px_16px_rgba(0,0,0,.22),inset_0_1px_0_rgba(245,211,152,.09)] transition-colors hover:border-[#e2bd7a]/80 hover:bg-[#124c3a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e9c681] active:scale-[.99] md:hidden"
+      aria-label={baselinePending ? "Development baseline pending; open details" : "Development stage " + summary.indexStage + ", " + percent + " percent; open details"}
+      className="flex w-[136px] max-w-full shrink-0 flex-col items-stretch gap-[5px] rounded-md px-1 py-1 text-left text-[#d9bb80] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e9c681] md:hidden"
     >
-      <span className="flex w-full items-center justify-between gap-1.5">
-        <span className="inline-flex min-w-0 items-center gap-1.5">
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0 text-[#e2b96b]">
-            <path d="M3 14.5l4.3-4.1 3.1 2.3L16.8 5.5M12.8 5.5h4v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span className="truncate text-[9px] font-semibold uppercase tracking-[.12em] text-[#e6ca93]">Development</span>
-        </span>
-        <span className="shrink-0 text-[10px] font-semibold tracking-[.01em] text-[#f8e0af]">{baselinePending ? "Pending" : percent + "%"}</span>
+      <span className="flex items-center justify-between gap-2 whitespace-nowrap">
+        <span className="text-[10px] font-semibold tracking-[.035em]">Development</span>
+        <span className="text-[10px] font-medium">{baselinePending ? "Pending" : percent + "%"}</span>
       </span>
-      <span className="mt-1.5 flex w-full items-center gap-2">
-        <span className="relative h-[3px] min-w-0 flex-1 overflow-hidden rounded-full bg-[#31594a]">
-          <span className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#b5823b] via-[#ebc67e] to-[#fff0bd] transition-[width] duration-1000 ease-out" style={{width: baselinePending ? "0%" : summary.indexPercent + "%"}}/>
-        </span>
-        <span className="shrink-0 text-[9px] font-medium tracking-wide text-[#b9a887]">{baselinePending ? "Not measured" : "Stage " + summary.indexStage}</span>
+      <span className="block h-[3px] w-full overflow-hidden rounded-full bg-[#315549]">
+        <span className="block h-full rounded-full bg-gradient-to-r from-[#b38743] via-[#e6c580] to-[#ffe7b4] transition-[width] duration-1000" style={{width: baselinePending ? "0%" : summary.indexPercent + "%"}} />
       </span>
     </button>
   );
-
   return (
     <>
     <aside aria-label="Private Virtus development indicator"
@@ -200,7 +190,7 @@ export default function VirtusDevelopmentBar() {
       </>}
     </aside>
     {mobileSlot && createPortal(
-      <div className="pointer-events-auto relative z-40 flex w-full justify-end">
+      <div className="pointer-events-auto relative z-40 flex w-full min-w-0 justify-end">
       {mobileIndicator}
       {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:top-12 max-md:right-0">{details}</div>}
       </div>,
