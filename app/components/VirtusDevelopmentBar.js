@@ -10,6 +10,7 @@ export default function VirtusDevelopmentBar() {
   const path = usePathname() || "/";
   const [authenticated, setAuthenticated] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [activityCount, setActivityCount] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -21,11 +22,13 @@ export default function VirtusDevelopmentBar() {
     if (response.status === 401) {
       setAuthenticated(false);
       setReviews([]);
+      setActivityCount(null);
       return;
     }
     if (!response.ok) throw Error("Development history is temporarily unavailable.");
     const data = await response.json();
     setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+    setActivityCount(Number.isInteger(data.activity?.userMessageCount) ? data.activity.userMessageCount : null);
     setAuthenticated(true);
     setError("");
   }, []);
@@ -76,7 +79,9 @@ export default function VirtusDevelopmentBar() {
 
   if (HIDDEN.test(path) || !authenticated) return null;
 
-  const percent = summary.percent.toFixed(1);
+  const percent = summary.indexPercent.toFixed(1);
+  const journeyChange = summary.percent.toFixed(1);
+  const baselinePending = summary.scored === 0;
   const toggle = () => setExpanded((value) => !value);
   const domainDetails = summary.domains.map((domain) => (
     <li key={domain.name} className="flex justify-between gap-2 border-b border-[#caa76c]/15 py-1.5">
@@ -92,11 +97,15 @@ export default function VirtusDevelopmentBar() {
         <span className="text-xs font-semibold tracking-wide text-[#e9c681]">VIRTUS DEVELOPMENT</span>
         <button type="button" onClick={() => setExpanded(false)} aria-label="Close development details" className="text-lg text-[#e9c681]">x</button>
       </div>
-      <p className="mt-2 text-2xl font-semibold text-white">{percent}%</p>
-      <p className="text-xs text-[#e4c88f]">Journey stage {summary.stage} of 6</p>
+      <p className="mt-2 text-2xl font-semibold text-white">{baselinePending ? "Baseline pending" : percent + "%"}</p>
+      <p className="text-xs text-[#e4c88f]">{baselinePending ? "Development Index: baseline pending" : "Development Index: Stage " + summary.indexStage + " of 6"}</p>
+      {baselinePending && <p className="mt-2 text-xs leading-5 text-[#d4ded9]">Your earlier reviews are preserved. The new eight-domain competency assessment has not established a level for this account yet.</p>}
+      {activityCount !== null && <p className="mt-2 text-xs text-[#f1cf84]">{activityCount.toLocaleString()} recorded chat messages; participation is tracked separately from demonstrated competency.</p>}
+      <p className="mt-2 text-xs text-[#f1cf84]">Gradual journey movement: {summary.percent > 0 ? "+" : ""}{journeyChange} percentage points since baseline</p>
       <p className="mt-2 text-xs leading-5 text-[#d4ded9]">
         {summary.trend}. {summary.scored} of 8 domains have an established competency level.
-        The bar moves by at most 0.5 percentage points per independent review and can also decline.
+        The independent journey movement is limited to 0.5 percentage points per review and can also decline.
+        This main bar reflects the established competency baseline.
       </p>
       <p className="mt-3 text-xs font-semibold text-[#e9c681]">EIGHT DEVELOPMENT DOMAINS</p>
       <ul className="mt-1 text-[11px]">{domainDetails}</ul>
@@ -109,7 +118,7 @@ export default function VirtusDevelopmentBar() {
       </button>
       {error && <p className="mt-2 text-xs text-amber-200" role="status">{error}</p>}
       <p className="mt-3 text-[10px] leading-4 text-[#b8c9c0]">
-        The journey percentage is a conservative coaching indicator, not an IQ score or a validated psychological measurement.
+        The index baseline and journey movement are coaching interpretations, not IQ scores or validated psychological measurements.
         Private to your account. Completion alone never earns points.
       </p>
     </section>
@@ -120,24 +129,24 @@ export default function VirtusDevelopmentBar() {
       className="pointer-events-none fixed right-2 top-1/2 z-40 -translate-y-1/2 max-md:bottom-3 max-md:right-3 max-md:top-auto max-md:translate-y-0">
       <div className="pointer-events-auto hidden flex-col items-center gap-2 rounded-2xl border border-[#caa76c]/60 bg-[#082b25]/95 px-2 py-3 shadow-2xl md:flex">
         <button type="button" onClick={toggle} aria-expanded={expanded} aria-label="Open development details"
-          className="text-[10px] font-semibold text-[#e9c681]">ST {summary.stage}</button>
+          className="text-[10px] font-semibold text-[#e9c681]">{baselinePending ? "NEW" : "ST " + summary.indexStage}</button>
         <button type="button" onClick={toggle} aria-expanded={expanded}
           aria-label={"Development journey " + percent + " percent; show details"}
           className="flex h-36 w-5 items-end overflow-hidden rounded-full border border-[#ad8d52] bg-[#26483c]">
           <span role="progressbar" aria-label="Development journey progress" aria-valuemin={0} aria-valuemax={100}
-            aria-valuenow={summary.percent} className="block w-full rounded-full bg-gradient-to-t from-[#9b742f] via-[#d6aa53] to-[#f8e4a7] transition-all duration-1000"
-            style={{height: summary.percent + "%"}} />
+            aria-valuenow={summary.indexPercent} className="block w-full rounded-full bg-gradient-to-t from-[#9b742f] via-[#d6aa53] to-[#f8e4a7] transition-all duration-1000"
+            style={{height: summary.indexPercent + "%"}} />
         </button>
-        <button type="button" onClick={toggle} className="text-[10px] font-semibold text-[#f6deb0]">{percent}%</button>
+        <button type="button" onClick={toggle} className="text-[10px] font-semibold text-[#f6deb0]">{baselinePending ? "N/A" : percent + "%"}</button>
       </div>
       <button type="button" onClick={toggle} aria-expanded={expanded}
         className="pointer-events-auto flex items-center gap-2 rounded-full border border-[#caa76c]/70 bg-[#082b25]/95 px-3 py-2 shadow-xl md:hidden"
         aria-label={"Development journey " + percent + " percent; open details"}>
-        <span className="text-xs text-[#f4d795]">ST {summary.stage}</span>
+        <span className="text-xs text-[#f4d795]">{baselinePending ? "NEW" : "ST " + summary.indexStage}</span>
         <span className="h-2 w-20 overflow-hidden rounded-full bg-[#26483c]">
-          <span className="block h-full rounded-full bg-[#d6aa53] transition-all duration-1000" style={{width: summary.percent + "%"}} />
+          <span className="block h-full rounded-full bg-[#d6aa53] transition-all duration-1000" style={{width: summary.indexPercent + "%"}} />
         </span>
-        <span className="text-xs font-semibold text-[#f4d795]">{percent}%</span>
+        <span className="text-xs font-semibold text-[#f4d795]">{baselinePending ? "N/A" : percent + "%"}</span>
       </button>
       {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:bottom-12 max-md:right-0 max-md:top-auto">{details}</div>}
     </aside>

@@ -9,5 +9,9 @@ export async function GET() {
     .select("id,created_at,message_count,first_message_at,last_message_at,observations")
     .eq("user_id", user.id).order("created_at", { ascending: true }).limit(100);
   if (error) return NextResponse.json({ error: "Review history unavailable" }, { status: 500 });
-  return NextResponse.json({ reviews: data || [] }, { headers: { "Cache-Control": "private, no-store" } });
+  const { count: userMessageCount } = await supabase.from("conversations")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id).eq("role", "user");
+  return NextResponse.json({ reviews: data || [], activity: { userMessageCount: userMessageCount ?? null } },
+    { headers: { "Cache-Control": "private, no-store" } });
 }

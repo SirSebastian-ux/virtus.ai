@@ -17,6 +17,7 @@ const period = (n, day, proficiency, {direction="stable", sourceType="exercise",
 test("starts at zero without inventing a cognitive baseline",()=>{
  const x=buildDevelopmentBar([]);
  assert.equal(x.percent,0);assert.equal(x.stage,1);assert.equal(x.scored,0);
+ assert.equal(x.indexPercent,0);assert.equal(x.indexStage,1);
  assert.equal(x.domains.length,8);
  assert.deepEqual(x.domains.map(d=>d.name),DEVELOPMENT_DOMAINS.map(d=>d.name));
 });
@@ -26,6 +27,7 @@ test("one provisional review does not increase progress",()=>{
 test("two independent reviews establish one domain, but move slowly",()=>{
  const x=buildDevelopmentBar([period(1,10,2),period(2,11,2)]);
  assert.equal(x.percent,0.2);assert.equal(x.scored,1);assert.equal(x.stage,1);
+ assert.equal(x.indexPercent,40);assert.equal(x.indexStage,3);
 });
 test("exercise completion alone, same evidence, and self-report do not earn new points",()=>{
  const p1=period(1,10,2),p2=period(2,11,2);
@@ -40,6 +42,7 @@ test("supported improvement makes a small change but never jumps stages",()=>{
  const x=buildDevelopmentBar([
   period(1,10,2),period(2,11,2),period(3,12,4,{direction:"improving"})]);
  assert.equal(x.percent,0.4);assert.equal(x.stage,1);
+ assert.equal(x.indexPercent,60);assert.equal(x.indexStage,4);
 });
 test("one lower observation does not reduce the journey; repeated independent decline can",()=>{
  const base=[period(1,10,2),period(2,11,2),period(3,12,4,{direction:"improving"})];
