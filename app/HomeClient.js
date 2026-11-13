@@ -6856,6 +6856,7 @@ if (data.conversation) {
     )}
 
     <div className="virtus-luxury-plan-actions ml-auto flex flex-wrap shrink-0 items-center justify-end">
+      <div className="virtus-plan-development-stack">
       <Link
         href="/upgrade"
         className="virtus-luxury-plan-pill select-text"
@@ -6863,7 +6864,8 @@ if (data.conversation) {
         <span aria-hidden="true" className="virtus-luxury-plan-sparkle">✦</span><span className="virtus-luxury-plan-label">{currentPlanKey === "free" ? "Free access ended — Choose membership" : `Your plan: ${displayPlanLabel}`}</span>
       </Link>
 
-      <div id="virtus-development-header-slot" className="flex w-full justify-end pt-1 empty:hidden md:hidden" />
+      <div id="virtus-development-header-slot" className="virtus-development-header-slot empty:hidden md:hidden" />
+      </div>
 
       {isTrialGuestExpired && (
         <p className="mt-2 text-xs text-sky-300/70">

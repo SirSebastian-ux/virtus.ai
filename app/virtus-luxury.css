@@ -1789,3 +1789,34 @@
     min-height:0;
   }
 }
+
+/* Virtus mobile development header: visually subordinate to the plan. */
+@media (max-width: 767px) {
+  .virtus-chat-root.virtus-luxury .virtus-plan-development-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: min(54vw, 190px);
+    max-width: 100%;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-plan-development-stack .virtus-luxury-plan-pill {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-development-header-slot {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 10px 0;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-mobile-growth {
+    min-height: 31px;
+    max-width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+@media (min-width: 768px) {
+  .virtus-chat-root.virtus-luxury .virtus-plan-development-stack { display: contents; }
+}

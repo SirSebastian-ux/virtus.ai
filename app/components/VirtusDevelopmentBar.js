@@ -149,21 +149,27 @@ export default function VirtusDevelopmentBar() {
     </section>
   );
 
-  // Small secondary status under the plan - never a second subscription card.
+  // A compact, borderless continuation of the subscription header, not a second card.
+  // The absence of a baseline must never imply a zero competency score.
   const mobileIndicator = (
     <button
       type="button"
       onClick={toggle}
       aria-expanded={expanded}
-      aria-label={baselinePending ? "Development baseline pending; open details" : "Development stage " + summary.indexStage + ", " + percent + " percent; open details"}
-      className="flex w-[136px] max-w-full shrink-0 flex-col items-stretch gap-[5px] rounded-md px-1 py-1 text-left text-[#d9bb80] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e9c681] md:hidden"
+      aria-label={baselinePending
+        ? "My growth: baseline not established. Open development details."
+        : "My growth: stage " + summary.indexStage + " of 6, " + percent + " percent. Open development details."}
+      className="virtus-mobile-growth inline-flex w-full min-w-0 flex-col items-stretch justify-center rounded-md border-0 bg-transparent px-0 py-1 text-left shadow-none outline-offset-2 transition-opacity hover:opacity-85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e9c681] md:hidden"
     >
-      <span className="flex items-center justify-between gap-2 whitespace-nowrap">
-        <span className="text-[10px] font-semibold tracking-[.035em]">Development</span>
-        <span className="text-[10px] font-medium">{baselinePending ? "Pending" : percent + "%"}</span>
+      <span className="flex min-w-0 items-center justify-between gap-2">
+        <span className="truncate text-[9px] font-medium uppercase tracking-[0.13em] text-[#d3b67a]">My growth</span>
+        <span className="shrink-0 text-[9px] font-semibold tracking-[0.02em] text-[#e5cc99]">{baselinePending ? "Baseline" : "Stage " + summary.indexStage + " · " + percent + "%"}</span>
       </span>
-      <span className="block h-[3px] w-full overflow-hidden rounded-full bg-[#315549]">
-        <span className="block h-full rounded-full bg-gradient-to-r from-[#b38743] via-[#e6c580] to-[#ffe7b4] transition-[width] duration-1000" style={{width: baselinePending ? "0%" : summary.indexPercent + "%"}} />
+      <span className="mt-[5px] block h-[2px] w-full overflow-hidden rounded-full bg-[#496354]/55" role="progressbar"
+        aria-label={baselinePending ? "Development baseline not established" : "Development journey"}
+        aria-valuemin={0} aria-valuemax={100} aria-valuenow={baselinePending ? undefined : summary.indexPercent}>
+        <span className="block h-full rounded-full bg-gradient-to-r from-[#b48d48] via-[#ecd197] to-[#ffe8b6] transition-[width] duration-1000"
+          style={{width: baselinePending ? "0%" : summary.indexPercent + "%"}} />
       </span>
     </button>
   );
