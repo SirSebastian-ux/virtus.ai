@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
+import { hasOrganizationMentorAccess } from "@/lib/virtus-org-entitlement.mjs";
 import { membershipCapabilities, canCreateGoal, canChooseProgram, canResumeGoal } from "@/lib/virtus-membership.mjs";
 import { validateDevelopmentGoal, validateDevelopmentCheckin, validateDevelopmentStatus } from "@/lib/virtus-development.mjs";
 
@@ -13,7 +15,15 @@ async function authorize() {
   const { data: profile, error: profileError } = await db.from("profiles")
     .select("plan").eq("id", user.id).maybeSingle();
   if (profileError) return { db, user, plan: "free", profileError: true };
-  return { db, user, plan: profile?.plan || "free" };
+  // Verify company-funded Mentor server-side without altering consumer billing.
+  try {
+    const organizationMentorActive = await hasOrganizationMentorAccess({
+      userId: user.id, userClient: db, adminClient: createAdminClient(),
+    });
+    return { db, user, plan: organizationMentorActive ? "premium" : (profile?.plan || "free") };
+  } catch {
+    return { db, user, plan: "free", profileError: true };
+  }
 }
 async function goalsForUser(db, userId) {
   return db.from("virtus_development_goals")
