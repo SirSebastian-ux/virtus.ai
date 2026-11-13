@@ -42,9 +42,8 @@ export default function UniversalDevelopmentDashboard({plan="free"}) {
     {error&&<p role="alert" className="mt-3 text-sm text-amber-200">{error}</p>}
     {reviewStatus&&<p className="mt-3 text-xs text-amber-200">{reviewStatus}</p>}
     <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{domains.map((d,i)=><div key={d.name} className="rounded-xl border border-[#c6a56d]/35 bg-[#0e3a30] p-4">
-      <p className="text-sm font-semibold">{d.name}</p>
-      <p className="mt-3 text-2xl font-semibold" style={{color:colors[i]}}>{d.level===null?"Baseline pending":STAGES[Math.floor(d.level)]}</p>
-      <p className="mt-1 text-xs text-[#d3e2d9]">{d.level===null?(d.provisionalLevel!==null?"Provisional evidence; second independent review required":"Awaiting sufficient evidence"):"Competency stage "+(Math.floor(d.level)+1)+" of "+STAGES.length}</p>
+      <h4 className="min-h-[3rem] text-lg font-semibold leading-snug" style={{color:colors[i]}}>{d.name}</h4>
+      <p className="mt-2 text-xs text-[#d3e2d9]">{d.level===null?(d.provisionalLevel!==null?"Provisional evidence; second independent review required":"Baseline pending; awaiting sufficient evidence"):"Competency stage "+(Math.floor(d.level)+1)+" of "+STAGES.length}</p>
       <div className="mt-4 h-2 rounded-full bg-[#42675b]"><div className="h-full rounded-full" style={{width:(d.progress||0)+"%",background:colors[i]}}/></div>
       <p className="mt-2 text-xs text-[#c4d3cc]">{d.progress===null?"Milestone progress not established":d.progress+"% toward next stage"} · {d.count} review periods</p>
       {d.delta!==null&&<p className="mt-1 text-xs text-[#e8c27e]">{d.delta>0?"+":""}{d.delta} stages vs baseline</p>}
