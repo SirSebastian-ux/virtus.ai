@@ -6855,7 +6855,8 @@ if (data.conversation) {
       </div>
     )}
 
-    <div className="virtus-luxury-plan-actions ml-auto flex flex-wrap shrink-0 items-center justify-end">
+    <div className="virtus-luxury-plan-actions ml-auto flex flex-wrap shrink-0 items-center justify-end" data-guest={!isAuthenticated}>
+      {!isAuthenticated && <span className="virtus-mobile-guest-status md:hidden">Guest preview</span>}
       <div className="virtus-plan-development-stack">
       <Link
         href="/upgrade"
@@ -6874,11 +6875,11 @@ if (data.conversation) {
       )}
 
       {!isAuthenticated && (
-        <Link href="/login?mode=signup" className="virtus-luxury-register-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <Link href="/login?mode=signup" aria-label="Register to continue" className="virtus-luxury-register-pill virtus-mobile-register-link">
+          <svg className="virtus-mobile-register-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="12" cy="7" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2H4Z" />
           </svg>
-          Register to continue
+          <span className="md:hidden">Create account</span><span className="hidden md:inline">Register to continue</span>
         </Link>
       )}
       {shouldShowUpgradePrompt && isAuthenticated && (

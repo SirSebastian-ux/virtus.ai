@@ -1820,3 +1820,60 @@
 @media (min-width: 768px) {
   .virtus-chat-root.virtus-luxury .virtus-plan-development-stack { display: contents; }
 }
+
+/* Mobile guest header: a status and one CTA must fit beside the menu at 320px. */
+@media (max-width: 767px) {
+  .virtus-chat-root.virtus-luxury .virtus-luxury-header > div {
+    min-width: 0;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-plan-actions[data-guest="true"] {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: calc(100% - 52px);
+    gap: 10px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-plan-actions[data-guest="true"] .virtus-plan-development-stack {
+    display: none !important;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-mobile-guest-status {
+    flex: 0 1 auto;
+    min-width: 0;
+    color: #b6bcb1;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-register-pill.virtus-mobile-register-link {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    min-height: 36px;
+    padding: 8px 12px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.2;
+    box-shadow: inset 0 1px 0 rgba(245, 222, 159, .14);
+  }
+  .virtus-chat-root.virtus-luxury .virtus-mobile-register-icon {
+    display: none;
+  }
+}
+@media (max-width: 359px) {
+  .virtus-chat-root.virtus-luxury .virtus-mobile-guest-status {
+    font-size: 9px;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-plan-actions[data-guest="true"] {
+    gap: 6px;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-register-pill.virtus-mobile-register-link {
+    padding: 7px 9px;
+  }
+}
