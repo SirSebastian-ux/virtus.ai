@@ -13,6 +13,8 @@ import CognitivePatternsWorkspace from "./CognitivePatternsWorkspace";
 import CoachingHistory from "./CoachingHistory";
 import UniversalDevelopmentDashboard from "./UniversalDevelopmentDashboard";
 import { createClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase-admin";
+import { resolveEffectivePlan } from "@/lib/virtus-effective-plan.mjs";
 import {
   getPlanLabel,
   getDailyMessageLimit,
@@ -66,9 +68,13 @@ export default async function AccountPage() {
     profile = data || null;
   }
 
-  const currentPlan = profile?.plan || "free";
-  const currentPlanStatus = profile?.plan_status || (currentPlan === "free" ? "inactive" : "active");
-  const displayPlan = currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : currentPlan === "life_coach" ? "Life Coach" : "No active coaching membership";
+  const entitlement = await resolveEffectivePlan({
+    userId: user.id, userClient: supabase, adminClient: createAdminClient(),
+    personalPlan: profile?.plan || "free",
+  });
+  const currentPlan = entitlement.plan;
+  const currentPlanStatus = entitlement.organizationMentorActive ? "active" : (profile?.plan_status || (currentPlan === "free" ? "inactive" : "active"));
+  const displayPlan = entitlement.organizationMentorActive ? "Mentor — Provided by your organization" : currentPlan === "premium" ? "Mentor" : currentPlan === "plus" ? "Trainer" : currentPlan === "life_coach" ? "Life Coach" : "No active coaching membership";
   const dailyMessageLimit = currentPlan === "free" ? 0 : getDailyMessageLimit(currentPlan);
 
   return (
