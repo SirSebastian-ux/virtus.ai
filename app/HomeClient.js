@@ -5661,6 +5661,19 @@ const renderAssistantActions = (item, index) => {
     setShowMobileMenu(false);
     setLuxuryActiveNav("home");
   }
+  async function refreshVirtusApp() {
+    if ((message.trim() || loading) && !window.confirm("Refreshing Virtus AI will discard the unsent message or stop the current response. Refresh now?")) return;
+    if (!navigator.onLine) { window.alert("Connect to the internet to refresh Virtus AI."); return; }
+    try {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration("/");
+        if (registration) await registration.update();
+      }
+    } catch { /* Reload still works when service worker update is unavailable. */ }
+    const url = new URL(window.location.href);
+    url.searchParams.set("virtus_refresh", String(Date.now()));
+    window.location.replace(url.toString());
+  }
   function openLuxuryTools() {
     setLuxuryLibraryOpen(false);
     setLuxuryToolsOpen((previous) => !previous);
@@ -5811,7 +5824,7 @@ return (
               recentOpen={recentOpen}
             />
             {isAdmin && <div className="mt-3 grid gap-2 border-t border-[#d8bd85]/30 pt-4"><p className="px-3 text-xs uppercase tracking-widest text-[#d8bd85]">Administrator</p><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/evaluation-lab">Evaluation Lab</Link><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/library-manager">Knowledge Library Manager</Link></div>}
-            <div className={luxuryToolsOpen ? "grid grid-cols-3 gap-2 mt-3" : "hidden"}>
+            <div className={luxuryToolsOpen ? "grid grid-cols-4 gap-2 mt-3" : "hidden"}>
               <button
                 type="button"
                 aria-label="Search"
@@ -5855,6 +5868,13 @@ return (
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M2 12h3" /><path d="M19 12h3" /></svg>
                 <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Practices</span>
+              </button>
+              <button type="button" aria-label="Refresh App" title="Refresh App" onClick={refreshVirtusApp}
+                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
+                  <path d="M20 7v5h-5M4 17v-5h5M5 9a8 8 0 0 1 13-2l2 5M19 15a8 8 0 0 1-13 2l-2-5" />
+                </svg>
+                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Refresh App</span>
               </button>
             </div>
 
@@ -6682,6 +6702,11 @@ if (data.conversation) {
 
             {luxuryToolsOpen && (
               <div className="virtus-mobile-tools-section space-y-2 rounded-2xl p-3">
+            <button type="button" onClick={refreshVirtusApp}
+              className="virtus-mobile-menu-item flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left transition" aria-label="Refresh App">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5 9a8 8 0 0 1 13-2l2 5M19 15a8 8 0 0 1-13 2l-2-5"/></svg>
+              Refresh App
+            </button>
             <button type="button" onClick={() => { setSearchOpen((current) => !current); setProjectsOpen(false); setCaptureOpen(false); }} className="virtus-mobile-menu-item w-full rounded-xl px-3 py-3 text-left transition">Search chats</button>
             {searchOpen && (
               <div className="virtus-mobile-subpanel rounded-xl p-3">
