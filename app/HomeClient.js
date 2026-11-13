@@ -2217,6 +2217,12 @@ const handleCaptureMicrophoneClick = async () => {
     if (!element || typeof window === "undefined") return;
     const adjustHeight = () => {
       const viewport = window.visualViewport?.height || window.innerHeight;
+      // Android WebView can report a taller CSS viewport than the visible
+      // area above its system navigation and on-screen keyboard.
+      if (window.matchMedia("(max-width: 767px)").matches) {
+        const chatRoot = document.querySelector(".virtus-chat-root");
+        if (chatRoot) chatRoot.style.height = Math.max(300, Math.floor(viewport)) + "px";
+      }
       const maximum = Math.min(176, Math.max(100, viewport * 0.28));
       const nearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 40;
       element.style.height = "auto";

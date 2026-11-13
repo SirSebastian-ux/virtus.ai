@@ -1780,3 +1780,12 @@
   border-color: #e9c986;
 }
 .virtus-growing-composer-input { color-scheme: dark; scrollbar-width: thin; scrollbar-color: #b99452 #092f28; }
+/* Android system navigation bar: keep the composer and send actions clear. */
+@media(max-width:767px){
+  .virtus-chat-root.virtus-luxury .virtus-luxury-composer-wrap {
+    padding-bottom:max(34px, calc(env(safe-area-inset-bottom) + 16px)) !important;
+  }
+  .virtus-chat-root.virtus-luxury .virtus-luxury-content > div {
+    min-height:0;
+  }
+}

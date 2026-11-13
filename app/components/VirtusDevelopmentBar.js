@@ -12,6 +12,7 @@ export default function VirtusDevelopmentBar() {
   const [reviews, setReviews] = useState([]);
   const [activityCount, setActivityCount] = useState(null);
   const [expanded, setExpanded] = useState(false);
+  const [mobileTop, setMobileTop] = useState(94);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,6 +58,18 @@ export default function VirtusDevelopmentBar() {
     };
   }, [loadHistory, path]);
 
+  useEffect(() => {
+    const measure = () => {
+      const header = document.querySelector(".virtus-chat-root .virtus-luxury-header");
+      setMobileTop(header ? Math.max(70, Math.round(header.getBoundingClientRect().bottom + 8)) : 94);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const observer = new ResizeObserver(measure);
+    const header = document.querySelector(".virtus-chat-root .virtus-luxury-header");
+    if (header) observer.observe(header);
+    return () => { window.removeEventListener("resize", measure); observer.disconnect(); };
+  }, [path]);
   const summary = useMemo(() => buildDevelopmentBar(reviews), [reviews]);
 
   async function requestReview() {
@@ -125,7 +138,8 @@ export default function VirtusDevelopmentBar() {
 
   return (
     <aside aria-label="Private Virtus development indicator"
-      className="pointer-events-none fixed right-2 top-1/2 z-40 -translate-y-1/2 max-md:bottom-3 max-md:right-3 max-md:top-auto max-md:translate-y-0">
+      style={{"--virtus-mobile-development-top": mobileTop + "px"}}
+      className="pointer-events-none fixed right-2 top-1/2 z-40 -translate-y-1/2 max-md:right-3 max-md:top-[var(--virtus-mobile-development-top)] max-md:translate-y-0">
       <div className="pointer-events-auto hidden flex-col items-center gap-2 rounded-2xl border border-[#caa76c]/60 bg-[#082b25]/95 px-2 py-3 shadow-2xl md:flex">
         <button type="button" onClick={toggle} aria-expanded={expanded} aria-label="Open development details"
           className="text-[10px] font-semibold text-[#e9c681]">{baselinePending ? "NEW" : "ST " + summary.indexStage}</button>
@@ -147,7 +161,7 @@ export default function VirtusDevelopmentBar() {
         </span>
         <span className="text-xs font-semibold text-[#f4d795]">{baselinePending ? "N/A" : percent + "%"}</span>
       </button>
-      {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:bottom-12 max-md:right-0 max-md:top-auto">{details}</div>}
+      {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:top-12 max-md:right-0">{details}</div>}
     </aside>
   );
 }
