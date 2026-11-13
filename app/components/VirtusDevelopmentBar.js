@@ -149,6 +149,34 @@ export default function VirtusDevelopmentBar() {
     </section>
   );
 
+  const mobileIndicator = (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-expanded={expanded}
+      aria-label={baselinePending
+        ? "Development assessment is pending. Open details."
+        : "Development stage " + summary.indexStage + " of 6, " + percent + " percent. Open details."}
+      className="group relative flex w-[min(54vw,190px)] max-w-full flex-col rounded-xl border border-[#c4a268]/45 bg-[linear-gradient(145deg,rgba(9,55,43,.96),rgba(5,32,29,.98))] px-3 py-[7px] text-left shadow-[0_5px_16px_rgba(0,0,0,.22),inset_0_1px_0_rgba(245,211,152,.09)] transition-colors hover:border-[#e2bd7a]/80 hover:bg-[#124c3a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#e9c681] active:scale-[.99] md:hidden"
+    >
+      <span className="flex w-full items-center justify-between gap-1.5">
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0 text-[#e2b96b]">
+            <path d="M3 14.5l4.3-4.1 3.1 2.3L16.8 5.5M12.8 5.5h4v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span className="truncate text-[9px] font-semibold uppercase tracking-[.12em] text-[#e6ca93]">Development</span>
+        </span>
+        <span className="shrink-0 text-[10px] font-semibold tracking-[.01em] text-[#f8e0af]">{baselinePending ? "Pending" : percent + "%"}</span>
+      </span>
+      <span className="mt-1.5 flex w-full items-center gap-2">
+        <span className="relative h-[3px] min-w-0 flex-1 overflow-hidden rounded-full bg-[#31594a]">
+          <span className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#b5823b] via-[#ebc67e] to-[#fff0bd] transition-[width] duration-1000 ease-out" style={{width: baselinePending ? "0%" : summary.indexPercent + "%"}}/>
+        </span>
+        <span className="shrink-0 text-[9px] font-medium tracking-wide text-[#b9a887]">{baselinePending ? "Not measured" : "Stage " + summary.indexStage}</span>
+      </span>
+    </button>
+  );
+
   return (
     <>
     <aside aria-label="Private Virtus development indicator"
@@ -167,29 +195,13 @@ export default function VirtusDevelopmentBar() {
         <button type="button" onClick={toggle} className="text-[10px] font-semibold text-[#f6deb0]">{baselinePending ? "N/A" : percent + "%"}</button>
       </div>
       {!mobileSlot && <>
-      <button type="button" onClick={toggle} aria-expanded={expanded}
-        className="pointer-events-auto flex items-center gap-2 rounded-full border border-[#caa76c]/70 bg-[#082b25]/95 px-3 py-2 shadow-xl md:hidden"
-        aria-label={"Development journey " + percent + " percent; open details"}>
-        <span className="text-xs text-[#f4d795]">{baselinePending ? "NEW" : "ST " + summary.indexStage}</span>
-        <span className="h-2 w-20 overflow-hidden rounded-full bg-[#26483c]">
-          <span className="block h-full rounded-full bg-[#d6aa53] transition-all duration-1000" style={{width: summary.indexPercent + "%"}} />
-        </span>
-        <span className="text-xs font-semibold text-[#f4d795]">{baselinePending ? "N/A" : percent + "%"}</span>
-      </button>
+      {mobileIndicator}
       {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:top-12 max-md:right-0">{details}</div>}
       </>}
     </aside>
     {mobileSlot && createPortal(
       <div className="pointer-events-auto relative z-40 flex w-full justify-end">
-      <button type="button" onClick={toggle} aria-expanded={expanded}
-        className="pointer-events-auto flex items-center gap-2 rounded-full border border-[#caa76c]/70 bg-[#082b25]/95 px-3 py-2 shadow-xl md:hidden"
-        aria-label={"Development journey " + percent + " percent; open details"}>
-        <span className="text-xs text-[#f4d795]">{baselinePending ? "NEW" : "ST " + summary.indexStage}</span>
-        <span className="h-2 w-20 overflow-hidden rounded-full bg-[#26483c]">
-          <span className="block h-full rounded-full bg-[#d6aa53] transition-all duration-1000" style={{width: summary.indexPercent + "%"}} />
-        </span>
-        <span className="text-xs font-semibold text-[#f4d795]">{baselinePending ? "N/A" : percent + "%"}</span>
-      </button>
+      {mobileIndicator}
       {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:top-12 max-md:right-0">{details}</div>}
       </div>,
       mobileSlot
