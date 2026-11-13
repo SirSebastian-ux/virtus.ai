@@ -16,6 +16,7 @@ test("independent evidence can justify advancement and retain source",()=>{
  const d=buildDevelopmentIndex([period("p1","11",observation(2,[ref("c1")])),period("p2","12",observation(4,[ref("e1","exercise")]))])[0];
  assert.equal(d.level,3);assert.equal(d.source_refs[0].type,"exercise");assert.match(d.stageJustification,/advanced/);
 });
+test("self-report alone cannot reduce established competency",()=>{ const d=buildDevelopmentIndex([period("p1","11",observation(4,[ref("e1","exercise")])),period("p2","12",observation(1,[ref("c2")]))])[0]; assert.equal(d.level,4); assert.match(d.stageJustification,/unchanged/); });
 test("missing evidence cannot establish a stage",()=>{
  const d=buildDevelopmentIndex([])[0];assert.equal(d.level,null);assert.match(d.stageJustification,/No qualifying/);
 });
