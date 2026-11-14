@@ -13,7 +13,6 @@ export default function VirtusDevelopmentBar() {
   const [reviews, setReviews] = useState([]);
   const [activityCount, setActivityCount] = useState(null);
   const [expanded, setExpanded] = useState(false);
-  const [mobileTop, setMobileTop] = useState(94);
   const [mobileSlot, setMobileSlot] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -60,18 +59,6 @@ export default function VirtusDevelopmentBar() {
     };
   }, [loadHistory, path]);
 
-  useEffect(() => {
-    const measure = () => {
-      const header = document.querySelector(".virtus-chat-root .virtus-luxury-header");
-      setMobileTop(header ? Math.max(70, Math.round(header.getBoundingClientRect().bottom + 8)) : 94);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    const observer = new ResizeObserver(measure);
-    const header = document.querySelector(".virtus-chat-root .virtus-luxury-header");
-    if (header) observer.observe(header);
-    return () => { window.removeEventListener("resize", measure); observer.disconnect(); };
-  }, [path]);
   // Attach the mobile indicator beneath the user plan, not over the workspace.
   useEffect(() => {
     const updateSlot = () => {
@@ -176,8 +163,7 @@ export default function VirtusDevelopmentBar() {
   return (
     <>
     <aside aria-label="Private Virtus development indicator"
-      style={{"--virtus-mobile-development-top": mobileTop + "px"}}
-      className="pointer-events-none fixed right-2 top-1/2 z-40 -translate-y-1/2 max-md:right-3 max-md:top-[var(--virtus-mobile-development-top)] max-md:translate-y-0">
+      className={"pointer-events-none relative z-10 w-full shrink-0 md:fixed md:right-2 md:top-1/2 md:z-40 md:w-auto md:-translate-y-1/2 " + (mobileSlot ? "max-md:hidden" : "")}>
       <div className="pointer-events-auto hidden flex-col items-center gap-2 rounded-2xl border border-[#caa76c]/60 bg-[#082b25]/95 px-2 py-3 shadow-2xl md:flex">
         <button type="button" onClick={toggle} aria-expanded={expanded} aria-label="Open development details"
           className="text-[10px] font-semibold text-[#e9c681]">{baselinePending ? "NEW" : "ST " + summary.indexStage}</button>
@@ -190,15 +176,17 @@ export default function VirtusDevelopmentBar() {
         </button>
         <button type="button" onClick={toggle} className="text-[10px] font-semibold text-[#f6deb0]">{baselinePending ? "N/A" : percent + "%"}</button>
       </div>
-      {!mobileSlot && <>
-      {mobileIndicator}
-      {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:top-12 max-md:right-0">{details}</div>}
-      </>}
+      {!mobileSlot && (
+        <div className="pointer-events-auto flex w-full flex-col items-end border-b border-[#aa8c57]/20 bg-[#071f1b] px-4 py-2 md:hidden">
+          <div className="w-[min(48vw,184px)] max-w-full">{mobileIndicator}</div>
+          {expanded && <div className="mt-2 w-full max-w-sm">{details}</div>}
+        </div>
+      )}
     </aside>
     {mobileSlot && createPortal(
-      <div className="pointer-events-auto relative z-40 flex w-full min-w-0 justify-end">
-      {mobileIndicator}
-      {expanded && <div className="pointer-events-auto absolute right-10 top-0 w-72 max-md:top-12 max-md:right-0">{details}</div>}
+      <div className="pointer-events-auto relative flex w-full min-w-0 flex-col items-end gap-2">
+        <div className="w-[min(48vw,184px)] max-w-full">{mobileIndicator}</div>
+        {expanded && <div className="w-full max-w-sm">{details}</div>}
       </div>,
       mobileSlot
     )}

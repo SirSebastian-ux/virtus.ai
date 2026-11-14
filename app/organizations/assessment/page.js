@@ -39,6 +39,7 @@ function Assessment(){
  <h1 style={{font:"normal 34px Georgia,serif",color:"#f1d69c"}}>Daily development assessment</h1>
  <p style={{fontSize:13,lineHeight:1.7,color:"#cbd5c9"}}>Each day brings six rotating workplace scenarios to discover strengths and identify skills you can develop with Virtus AI. Your personal reflections support your development journey.</p>
  <p style={{fontSize:12,color:"#e6c480"}}>{dayKey} · {answered} of {scenarios.length} completed</p>
+ <div id="virtus-development-header-slot" className="mb-3 flex w-full justify-end empty:hidden md:hidden" />
  {scenarios.map((s,i)=><section key={s.domain} style={{border:"1px solid #9d8556",background:"#0b3027",borderRadius:12,padding:17,margin:"12px 0"}}>
  <div style={{fontSize:11,color:"#e4bf7b"}}>{i+1} / {s.name}</div><h2 style={{fontSize:16,lineHeight:1.5}}>{s.prompt}</h2>
  {s.choices.map((choice,j)=><label key={j} style={{display:"block",padding:"9px 10px",margin:"7px 0",border:"1px solid #637b68",borderRadius:8,background:answers[i]===j?"#245c43":"#123a2e",fontSize:13,cursor:"pointer"}}><input type="radio" name={"scenario-"+i} checked={answers[i]===j} onChange={()=>{if(!finished)setAnswers(a=>({...a,[i]:j}))}} disabled={finished} style={{marginRight:10}}/>{choice}</label>)}

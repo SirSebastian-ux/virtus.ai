@@ -51,7 +51,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col font-sans"><PwaBootstrap />{children}<VirtusDevelopmentBar /></body>
+      <body className="min-h-full flex flex-col font-sans"><PwaBootstrap /><VirtusDevelopmentBar />{children}</body>
     </html>
   );
 }
