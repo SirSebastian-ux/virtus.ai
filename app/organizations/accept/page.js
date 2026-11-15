@@ -1,7 +1,8 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import {createClient} from "@/lib/supabase-browser";
 
 function AcceptInvitationContent(){
  const params=useSearchParams();
@@ -9,6 +10,12 @@ function AcceptInvitationContent(){
  const [status,setStatus]=useState("");
  const [accepted,setAccepted]=useState(false);
  const [busy,setBusy]=useState(false);
+ const [invitedEmail,setInvitedEmail]=useState("");
+ const [signedEmail,setSignedEmail]=useState("");
+ useEffect(()=>{if(!token)return;let active=true;fetch("/api/organizations/invitations/inspect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d}).then(d=>{if(active)setInvitedEmail(d.email)}).catch(e=>{if(active)setStatus(e.message)});createClient().auth.getUser().then(({data})=>{if(active)setSignedEmail(data?.user?.email?.toLowerCase()||"")});return()=>{active=false}},[token]);
+ const returnPath="/organizations/accept?token="+encodeURIComponent(token||"");
+ const signUpPath="/login?mode=signup&next="+encodeURIComponent(returnPath);
+ const signInPath="/login?next="+encodeURIComponent(returnPath);
  async function accept(){
   setBusy(true);setStatus("");
   try{
@@ -27,11 +34,11 @@ function AcceptInvitationContent(){
    <h1>{accepted?"Welcome to your development space":"Your invitation to grow"}</h1>
    <p className="org-invite-lead">{accepted?"Your organizational membership has been confirmed. Your mentorship journey is personal to you.":"Your organization is offering you a private space to strengthen your thinking, communication, decision-making and leadership practice."}</p>
    <div className="org-invite-benefits"><div><span>01</span><strong>Confidential mentorship</strong><p>Your personal conversations are not accessible to your employer.</p></div><div><span>02</span><strong>Structured development</strong><p>Explore leadership exercises and guided personal reflection.</p></div><div><span>03</span><strong>Your own progress</strong><p>Develop at your pace, with your own private learning history.</p></div></div>
-   {!accepted&&<><p className="org-invite-note">To accept, sign in using the same corporate email address that received the invitation.</p><button type="button" className="org-invite-gold" disabled={busy||!token} onClick={accept}>{busy?"Verifying your invitation…":"Accept my invitation"} <span aria-hidden="true">→</span></button></>}
+   {!accepted&&<><p className="org-invite-note">{invitedEmail?"Invitation for "+invitedEmail+". Create an account with this exact email, or sign in if you already have one.":"Check your invitation, then create an account or sign in with the invited email."}</p>{signedEmail&&invitedEmail&&signedEmail!==invitedEmail&&<p role="alert" className="org-invite-status">You are signed in as {signedEmail}, but this invitation is for {invitedEmail}. Sign out before accepting with the invited account.</p>}{!signedEmail&&<><Link className="org-invite-gold" href={signUpPath}>Create account</Link><Link className="org-invite-signin" href={signInPath}>Already have an account? Sign in</Link></>}<button type="button" className="org-invite-gold" disabled={busy||!token||!invitedEmail||signedEmail!==invitedEmail} onClick={accept}>{busy?"Verifying your invitation…":"Accept my invitation"} <span aria-hidden="true">→</span></button></>}
    {accepted&&<Link className="org-invite-gold" href="/organizations/workspace">Open my organization workspace <span aria-hidden="true">→</span></Link>}
    {status&&<p role="status" className="org-invite-status">{status}</p>}
    {!token&&!accepted&&<p role="alert" className="org-invite-status">This invitation link is incomplete. Please use the full link from your email.</p>}
-   {!accepted&&<p className="org-invite-signin">Already invited but not signed in? <Link href="/login">Sign in to Virtus AI</Link></p>}
+   {!accepted&&<p className="org-invite-signin">Already invited but not signed in? <Link href={signInPath}>Sign in to Virtus AI</Link></p>}
   </div>
   <footer className="org-invite-footer"><span>Virtus AI Organizations</span><Link href="/organizations">About organizational mentorship</Link></footer>
  </div>
