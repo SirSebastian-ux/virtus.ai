@@ -16,6 +16,10 @@ export async function POST(request){
  const {data:org}=await admin.from("virtus_organizations").select("billing_status").eq("id",organizationId).maybeSingle();
  if(member?.status!=="active"||!["active","trialing"].includes(org?.billing_status))return reply({error:"Active membership required"},403);
  if(body?.action==="start"){
+  const cutoff=new Date(Date.now()-5*60*1000).toISOString();
+  const {data:stale,error:staleError}=await admin.from("virtus_org_training_sessions").select("id,last_active_at").eq("organization_id",organizationId).eq("user_id",user.id).is("ended_at",null).lt("last_active_at",cutoff).limit(100);
+  if(staleError)return reply({error:"Unable to reconcile previous sessions"},503);
+  for(const old of stale||[]){const {error:closeError}=await admin.from("virtus_org_training_sessions").update({ended_at:old.last_active_at}).eq("id",old.id).eq("organization_id",organizationId).eq("user_id",user.id).is("ended_at",null);if(closeError)return reply({error:"Unable to close abandoned session"},503);}
   const {data,error}=await admin.from("virtus_org_training_sessions").insert({organization_id:organizationId,user_id:user.id}).select("id").single();
   return error?reply({error:"Unable to start session"},503):reply({sessionId:data.id});
  }
