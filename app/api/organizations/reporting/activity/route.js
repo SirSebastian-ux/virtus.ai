@@ -37,5 +37,5 @@ export async function GET(request){
  }));
  const report=summarizeOrganizationActivity({members:visible,sessions:sessionRows.data||[],completed:completedRows.data||[],scores:scoreRows.data||[],fromDay});
  return respond({...report,period:{from:fromDay,to:new Date().toISOString().slice(0,10),timezone:"UTC",days:30},complete:!truncated,
-  measurementNote:"Training time is estimated from active interaction heartbeats. Scenario selections describe exercise performance, not verified professional competency. No private chats or reflections are used."});
+  measurementNote:"Recorded sessions are learning or assessment page visits, not completed practices. Active interaction time is estimated from heartbeats and does not establish exercise completion. Scenario selections describe exercise performance, not verified professional competency. No private chats or reflections are used."});
 }
