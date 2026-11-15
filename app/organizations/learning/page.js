@@ -13,7 +13,28 @@ function Development(){
  useEffect(()=>{if(!org)return;fetch("/api/organizations/practice?organizationId="+encodeURIComponent(org)).then(r=>r.json()).then(d=>{const map={};for(const x of d.drafts||[])map[x.exercise_key]=x.responses;setDrafts(map)}).catch(()=>{});},[org]);
  const completedKeys=useMemo(()=>new Set(completed.filter(x=>x.curriculum_type==="leadership").map(x=>`leadership-${x.module_number}-${x.exercise_number}`)),[completed]);
  const suggestions=useMemo(()=>{const area=areas.find(a=>a.id===focus);return library.filter(x=>!completedKeys.has(x.id)).map(x=>({...x,relevance:area.keywords.test(x.text)?1:0,rotation:(x.module*19+x.exercise*11+dayIndex*7)%101})).sort((a,b)=>b.relevance-a.relevance||a.rotation-b.rotation).slice(0,9)},[focus,completedKeys,dayIndex]);
- async function finish(){if(!selected||!org)return;if(selected.steps.some((_,i)=>!(answers[selected.id+"-"+i]??drafts[selected.id]?.[i]??"").trim())){setStatus("Complete each reflection before marking this exercise finished.");return;}setBusy(true);setStatus("");try{const r=await fetch("/api/organizations/learning",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:org,curriculumType:"leadership",moduleNumber:selected.module,exerciseNumber:selected.exercise})});const d=await r.json();if(!r.ok)throw Error(d.error||"Could not save exercise");setCompleted(p=>[...p,{curriculum_type:"leadership",module_number:selected.module,exercise_number:selected.exercise}]);setSelected(null);setStatus("Exercise completed and recorded in your private development history.")}catch(e){setStatus(e.message)}finally{setBusy(false)}}
+ async function finish(){
+  if(!selected||!org||busy)return;
+  const responses=selected.steps.map((_,i)=>answers[selected.id+"-"+i]??drafts[selected.id]?.[i]??"");
+  if(responses.some(text=>!text.trim())){setStatus("Complete each reflection before marking this exercise finished.");return;}
+  setBusy(true);setStatus("");
+  try{
+    // An exercise cannot be completed without first preserving its private answers.
+    const draftResponse=await fetch("/api/organizations/practice",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:org,exerciseKey:selected.id,title:selected.title,responses})});
+    const draftBody=await draftResponse.json().catch(()=>({}));
+    if(!draftResponse.ok||draftBody.saved!==true)throw Error(draftBody.error||"Could not save exercise reflections");
+    setDrafts(previous=>({...previous,[selected.id]:responses}));
+    const completionResponse=await fetch("/api/organizations/learning",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:org,curriculumType:"leadership",moduleNumber:selected.module,exerciseNumber:selected.exercise})});
+    const completion=await completionResponse.json().catch(()=>({}));
+    if(!completionResponse.ok||completion.saved!==true)throw Error(completion.error||"Could not record exercise completion");
+    setCompleted(previous=>previous.some(x=>x.curriculum_type==="leadership"&&x.module_number===selected.module&&x.exercise_number===selected.exercise)?previous:[...previous,{curriculum_type:"leadership",module_number:selected.module,exercise_number:selected.exercise}]);
+    setSelected(null);
+    setStatus("Exercise and private reflections saved. Virtus will assess the quality of the evidence, not the exercise count.");
+    // Refresh the same eight-domain index and persistent bar, without blocking the learner.
+    fetch("/api/account/coaching-progress",{credentials:"same-origin",cache:"no-store"}).then(r=>{if(r.ok)window.dispatchEvent(new Event("virtus-coaching-review-saved"));}).catch(()=>{});
+  }catch(e){setStatus(e.message);}
+  finally{setBusy(false);}
+ }
  return <main className="dev-shell"><div className="dev-container"><Link href="/organizations/workspace" className="dev-back">Organizations / My Development</Link><div className="dev-header"><div><span className="dev-eyebrow">PERSONAL DEVELOPMENT</span><h1>My Practice</h1><p>Build skills through focused exercises. Choose what you want to strengthen today.</p></div><Link href="/" className="dev-mentor">Open my Mentor</Link><Link href={"/organizations/assessment?organizationId="+encodeURIComponent(org)} className="dev-mentor">My Assessment</Link></div>
  <div className="dev-metrics"><div><strong>{completed.length}</strong><span>Exercises completed</span></div><div><strong>{new Set(completed.map(x=>x.module_number)).size}</strong><span>Practice areas explored</span></div></div>
  <section className="dev-panel"><h2>What would you like to work on?</h2><div className="dev-foci">{areas.map(a=><button type="button" key={a.id} aria-pressed={focus===a.id} className={focus===a.id?"chosen":""} onClick={()=>{setFocus(a.id);setSelected(null)}}>{a.label}</button>)}</div><p className="dev-note">Recommendations rotate daily using your selected focus and completed exercises. Choose a development area and work through guided exercises at your own pace.</p></section>
