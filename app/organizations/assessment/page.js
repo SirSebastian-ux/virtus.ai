@@ -9,13 +9,14 @@ function Assessment(){
  useOrganizationTrainingSession(org);
  const scenarios=dailyScenarios();
  const dayKey=new Date().toISOString().slice(0,10);
- const [answers,setAnswers]=useState({}),[saving,setSaving]=useState(false),[status,setStatus]=useState(""),[finished,setFinished]=useState(false);
+ const [answers,setAnswers]=useState({}),[saving,setSaving]=useState(false),[status,setStatus]=useState(""),[finished,setFinished]=useState(false),[alreadyRecorded,setAlreadyRecorded]=useState(false);
  const answered=Object.keys(answers).length;
  async function submit(){
   if(!org||answered!==scenarios.length)return;setSaving(true);setStatus("");
   try{
-   for(let i=0;i<scenarios.length;i++){const s=scenarios[i];const r=await fetch("/api/organizations/training/score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:org,domain:s.domain,exerciseKey:"scenario-v2-daily-"+dayKey+"-"+s.domain,choiceIndex:answers[i]})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Unable to save assessment");}
-   setFinished(true);setStatus("Today’s practice assessment saved and linked to your private eight-domain evidence history. Your competency stage changes only with corroborating development evidence.");
+   let replayed=false;
+   for(let i=0;i<scenarios.length;i++){const s=scenarios[i];const r=await fetch("/api/organizations/training/score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:org,domain:s.domain,exerciseKey:"scenario-v2-daily-"+dayKey+"-"+s.domain,choiceIndex:answers[i]})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Unable to save assessment");if(d.alreadyRecorded)replayed=true;}
+   setAlreadyRecorded(replayed);setFinished(true);setStatus(replayed?"Assessment already recorded for today. Original scores are preserved; new selections were not saved.":"Today’s practice assessment saved and linked to your private eight-domain evidence history. Your competency stage changes only with corroborating development evidence.");
    fetch("/api/account/coaching-progress",{credentials:"same-origin",cache:"no-store"})
     .then(r=>{if(r.ok)window.dispatchEvent(new Event("virtus-coaching-review-saved"));}).catch(()=>{});
   }catch(e){setStatus(e.message)}finally{setSaving(false)}
@@ -29,9 +30,9 @@ function Assessment(){
  {scenarios.map((s,i)=><section key={s.domain} style={{border:"1px solid #9d8556",background:"#0b3027",borderRadius:12,padding:17,margin:"12px 0"}}>
  <div style={{fontSize:11,color:"#e4bf7b"}}>{i+1} / {s.name}</div><h2 style={{fontSize:16,lineHeight:1.5}}>{s.prompt}</h2>
  {s.choices.map((choice,j)=><label key={j} style={{display:"block",padding:"9px 10px",margin:"7px 0",border:"1px solid #637b68",borderRadius:8,background:answers[i]===j?"#245c43":"#123a2e",fontSize:13,cursor:"pointer"}}><input type="radio" name={"scenario-"+i} checked={answers[i]===j} onChange={()=>{if(!finished)setAnswers(a=>({...a,[i]:j}))}} disabled={finished} style={{marginRight:10}}/>{choice}</label>)}
- {finished&&<p style={{fontSize:12,color:"#e6c480"}}>Practice score: {s.points[answers[i]]}/5. {s.feedback}</p>}
+ {finished&&!alreadyRecorded&&<p style={{fontSize:12,color:"#e6c480"}}>Practice score: {s.points[answers[i]]}/5. {s.feedback}</p>}
  </section>)}
- <button type="button" disabled={saving||finished||answered!==scenarios.length||!org} onClick={submit} style={{background:"#e3be7a",border:0,borderRadius:8,padding:"12px 20px",fontWeight:750,color:"#15231c"}}>{saving?"Saving...":finished?"Baseline saved":"Save my practice baseline"}</button><p role="status" style={{fontSize:13,color:"#e9cc92"}}>{status}</p>
+ <button type="button" disabled={saving||finished||answered!==scenarios.length||!org} onClick={submit} style={{background:"#e3be7a",border:0,borderRadius:8,padding:"12px 20px",fontWeight:750,color:"#15231c"}}>{saving?"Saving...":finished?(alreadyRecorded?"Already recorded":"Baseline saved"):"Save my practice baseline"}</button><p role="status" style={{fontSize:13,color:"#e9cc92"}}>{status}</p>
  </div></main>;
 }
 export default function AssessmentPage(){return <Suspense fallback={<main>Loading assessment...</main>}><Assessment/></Suspense>}
