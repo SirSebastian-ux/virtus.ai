@@ -6,12 +6,12 @@ import { FRAMEWORK_VERSION, DEVELOPMENT_DOMAINS } from "../lib/virtus-developmen
 
 const scores=Object.keys(ASSESSMENT_DOMAINS).map((domain,i)=>({
   id:"qa-id-"+i,user_id:"user-a",organization_id:"org-a",domain,exercise_key:"scenario-2026-11-15-"+domain,
-  score:[5,5,1,5,5,2][i],scored_at:"2026-11-15T10:00:00Z"
+  score:[5,5,1,5,5,2,4,3,2][i],scored_at:"2026-11-15T10:00:00Z"
 }));
-test("six daily assessment domains map to all eight distinct competencies",()=>{
+test("nine daily assessment domains map to all eight distinct competencies",()=>{
  const seen=new Set(Object.values(ASSESSMENT_DOMAINS).flat());
  assert.deepEqual([...seen].sort(),DEVELOPMENT_DOMAINS.map(d=>d.name).sort());
- assert.equal(scores.length,6);
+ assert.equal(scores.length,9);
  for(const domain of seen){
   const refs=assessmentDomainEvidence(scores,domain);
   assert.ok(refs.length>=1,domain);
@@ -27,7 +27,7 @@ test("assessment references are typed, dated and attributed to their source",()=
 });
 test("new and updated assessment score records are reviewed once per version",()=>{
  const first=planAssessmentReview(scores,[]);
- assert.equal(first.pending.length,6);
+ assert.equal(first.pending.length,9);
  const prior=[{observations:[{reviewed_assessment_refs:scores.map(x=>({id:x.id,date:x.scored_at}))}]}];
  assert.equal(planAssessmentReview(scores,prior).pending.length,0);
  const modified=scores.map((s,i)=>i===2?{...s,score:2,scored_at:"2026-11-16T10:00:00Z"}:s);
