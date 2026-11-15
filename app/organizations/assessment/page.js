@@ -31,7 +31,9 @@ function Assessment(){
   if(!org||answered!==scenarios.length)return;setSaving(true);setStatus("");
   try{
    for(let i=0;i<scenarios.length;i++){const s=scenarios[i];const r=await fetch("/api/organizations/training/score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({organizationId:org,domain:s.domain,exerciseKey:"scenario-daily-"+dayKey+"-"+s.domain,score:s.points[answers[i]]})});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Unable to save assessment");}
-   setFinished(true);setStatus("Today’s practice assessment saved. Return tomorrow for six new scenarios.");
+   setFinished(true);setStatus("Today’s practice assessment saved and linked to your private eight-domain evidence history. Your competency stage changes only with corroborating development evidence.");
+   fetch("/api/account/coaching-progress",{credentials:"same-origin",cache:"no-store"})
+    .then(r=>{if(r.ok)window.dispatchEvent(new Event("virtus-coaching-review-saved"));}).catch(()=>{});
   }catch(e){setStatus(e.message)}finally{setSaving(false)}
  }
  return <main style={{minHeight:"100vh",background:"radial-gradient(ellipse at top,#104736,#051b16 75%)",color:"#f5e6c9",padding:"28px 18px"}}><div style={{maxWidth:820,margin:"auto"}}>
