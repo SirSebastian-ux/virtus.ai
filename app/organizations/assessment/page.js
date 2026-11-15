@@ -23,7 +23,7 @@ function Assessment(){
  return <main style={{minHeight:"100vh",background:"radial-gradient(ellipse at top,#104736,#051b16 75%)",color:"#f5e6c9",padding:"28px 18px"}}><div style={{maxWidth:820,margin:"auto"}}>
  <Link href={"/organizations/learning?organizationId="+encodeURIComponent(org)} style={{color:"#e6c480",fontSize:12}}>My Development / Practice assessment</Link>
  <h1 style={{font:"normal 34px Georgia,serif",color:"#f1d69c"}}>Daily development assessment</h1>
- <p style={{fontSize:13,lineHeight:1.7,color:"#cbd5c9"}}>Each day brings six rotating workplace scenarios to discover strengths and identify skills you can develop with Virtus AI. Your scenario choices become structured training evidence available to authorized HR reporting. Private Mentor conversations and reflections are never included. Scenario ratings are not proof of real-world ability.</p>
+ <p style={{fontSize:13,lineHeight:1.7,color:"#cbd5c9"}}>Each day brings nine rotating workplace scenarios, spanning eight foundational domains and one leadership pathway to discover strengths and identify skills you can develop with Virtus AI. Your scenario choices become structured training evidence available to authorized HR reporting. Private Mentor conversations and reflections are never included. Scenario ratings are not proof of real-world ability.</p>
  <p style={{fontSize:12,color:"#e6c480"}}>{dayKey} · {answered} of {scenarios.length} completed</p>
  <div id="virtus-development-header-slot" className="mb-3 flex w-full justify-end empty:hidden md:hidden" />
  {scenarios.map((s,i)=><section key={s.domain} style={{border:"1px solid #9d8556",background:"#0b3027",borderRadius:12,padding:17,margin:"12px 0"}}>
