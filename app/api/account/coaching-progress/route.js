@@ -31,7 +31,8 @@ export async function GET() {
   const reviewedExercises = practices.map(p => ({ ref: `exercise:${p.id}`, type: "exercise", id: p.id, date: p.updated_at, title: p.title }));
   const sourceInventory = new Map([
     ...messages.map(m => [`conversation:${m.id}`, { type: "conversation", id: m.id, date: m.created_at }]),
-    ...practices.map(p => [`exercise:${p.id}`, { type: "exercise", id: p.id, date: p.updated_at }]),
+    // Synthetic QA reflections are examined but never eligible as competency evidence.
+    ...practices.filter(p => !isSyntheticQaBatch([p])).map(p => [`exercise:${p.id}`, { type: "exercise", id: p.id, date: p.updated_at }]),
     ...checkins.map(c => [`checkin:${c.id}`, { type: "checkin", id: c.id, goal_id: c.goal_id, date: c.created_at }]),
   ]);
   if (count < 6) return respond({ status: "insufficient_evidence", observations: [], count });
