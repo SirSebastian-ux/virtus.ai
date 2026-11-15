@@ -11,7 +11,7 @@ async function context(req){
  return {client,user,id};
 }
 export async function GET(req){const c=await context(req);if(c.error)return c.error;
- const {data,error}=await c.client.from("virtus_org_private_exercise_drafts").select("exercise_key,title,responses,updated_at").eq("organization_id",c.id).eq("user_id",c.user.id).order("updated_at",{ascending:false}).limit(100);
+ const {data,error}=await c.client.from("virtus_org_private_exercise_drafts").select("exercise_key,title,responses,updated_at").eq("organization_id",c.id).eq("user_id",c.user.id).order("updated_at",{ascending:false}).limit(300);
  return error?NextResponse.json({error:"Unable to load drafts"},{status:503}):NextResponse.json({drafts:data},{headers:{"Cache-Control":"private, no-store"}});
 }
 export async function POST(req){const c=await context(req);if(c.error)return c.error;const b=await req.json().catch(()=>({}));

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase-server";
 import { DEVELOPMENT_DOMAINS, FRAMEWORK_VERSION } from "@/lib/virtus-development-index.mjs";
+import { planExerciseReview, isSyntheticQaBatch } from "@/lib/virtus-exercise-review-planner.mjs";
 
 const DOMAINS = DEVELOPMENT_DOMAINS.map(d => d.name);
 const respond = (data, status = 200) => NextResponse.json(data, { status, headers: { "Cache-Control": "private, no-store" } });
@@ -11,14 +12,22 @@ export async function GET() {
   if (!user) return respond({ error: "Unauthorized" }, 401);
   const [conversationResult, practiceResult, checkinResult] = await Promise.all([
     supabase.from("conversations").select("id,content,created_at").eq("user_id", user.id).eq("role", "user").order("created_at", { ascending: false }).limit(100),
-    supabase.from("virtus_org_private_exercise_drafts").select("id,title,responses,updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(15),
+    supabase.from("virtus_org_private_exercise_drafts").select("id,title,responses,updated_at").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(300),
     supabase.from("virtus_development_checkins").select("id,goal_id,rating,evidence,next_action,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30),
   ]);
   if (conversationResult.error) return respond({ error: "Conversation history unavailable" }, 503);
+  if (practiceResult.error) return respond({ error: "Exercise history unavailable" }, 503);
+  if (checkinResult.error) return respond({ error: "Check-in history unavailable" }, 503);
   const messages = (conversationResult.data || []).filter(m => m.content?.trim().length > 20).reverse();
-  const practices = practiceResult.error ? [] : practiceResult.data || [];
+  const allPractices = practiceResult.error ? [] : practiceResult.data || [];
   const checkins = checkinResult.error ? [] : checkinResult.data || [];
-  const count = messages.length + practices.length + checkins.length;
+  const { data: previousReviews, error: reviewHistoryError } = await supabase.from("coaching_progress_reviews")
+    .select("id,created_at,observations,message_count,last_message_at")
+    .eq("user_id", user.id).order("created_at", { ascending: false }).limit(100);
+  if (reviewHistoryError) return respond({ error: "Review history unavailable" }, 503);
+  const plan = planExerciseReview(allPractices, previousReviews || [], 15);
+  const practices = plan.selected;
+  const count = messages.length + checkins.length + plan.total - plan.pending.length + (plan.pending.length ? practices.length : 0);
   const reviewedExercises = practices.map(p => ({ ref: `exercise:${p.id}`, type: "exercise", id: p.id, date: p.updated_at, title: p.title }));
   const sourceInventory = new Map([
     ...messages.map(m => [`conversation:${m.id}`, { type: "conversation", id: m.id, date: m.created_at }]),
@@ -27,16 +36,18 @@ export async function GET() {
   ]);
   if (count < 6) return respond({ status: "insufficient_evidence", observations: [], count });
   const lastMessage = messages.at(-1)?.created_at || "";
-  const latestActivity = [lastMessage, practices[0]?.updated_at || "", checkins[0]?.created_at || ""].sort().at(-1);
-  const { data: previous, error: previousError } = await supabase.from("coaching_progress_reviews")
-    .select("id,created_at,observations,message_count,last_message_at")
-    .eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
-  if (previousError) return respond({ error: "Review history unavailable" }, 503);
+  const latestActivity = [lastMessage, allPractices[0]?.updated_at || "", checkins[0]?.created_at || ""].sort().at(-1);
+  const previous = (previousReviews || [])[0] || null;
   // Reuse unchanged evidence. Avoid duplicate AI reviews when the page is reopened.
-  if (previous && previous.message_count === count && previous.last_message_at === latestActivity) {
+  if (!plan.pending.length && previous && previous.message_count === count && previous.last_message_at === latestActivity) {
     return respond({ status: "reviewed", reviewId: previous.id, reviewedAt: previous.created_at, observations: previous.observations || [], count, unchanged: true });
   }
   try {
+    let parsed;
+    const freshOtherEvidence = previous && [lastMessage, checkins[0]?.created_at || ""].some(date => date && date > previous.last_message_at);
+    if (isSyntheticQaBatch(practices) && !freshOtherEvidence) {
+      parsed = { observations: DOMAINS.map(skill => ({ skill, direction: "unclear", confidence: "low", proficiency: null, difficulty: 1, source: "exercise", source_refs: [], evidence: "Synthetic QA exercise reviewed; no real employee competence can be inferred." })) };
+    } else {
     const ai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await ai.responses.create({
       model: process.env.VIRTUS_DEVELOPMENT_MODEL || "gpt-4.1-mini",
@@ -52,7 +63,8 @@ export async function GET() {
       text: { format: { type: "json_object" } },
       max_output_tokens: 2300,
     });
-    const parsed = JSON.parse(response.output_text || "{}");
+    parsed = JSON.parse(response.output_text || "{}");
+    }
     const observations = DOMAINS.map(skill => {
       const item = (Array.isArray(parsed.observations) ? parsed.observations : []).find(o => String(o.skill || "").toLowerCase() === skill.toLowerCase());
       const direction = ["improving","declining","stable","unclear"].includes(item?.direction) ? item.direction : "unclear";
@@ -65,7 +77,7 @@ export async function GET() {
       last_message_at: latestActivity, observations,
     }).select("id,created_at").single();
     if (error) return respond({ error: "Could not save the review" }, 500);
-    return respond({ status: "reviewed", reviewId: saved.id, reviewedAt: saved.created_at, observations, count, note: "Private longitudinal coaching evidence; not clinical or validated performance scores." });
+    return respond({ status: "reviewed", reviewId: saved.id, reviewedAt: saved.created_at, observations, count, pendingExerciseReviews: Math.max(0, plan.pending.length - practices.length), reviewedExerciseCount: practices.length, note: "Private longitudinal coaching evidence; not clinical or validated performance scores." });
   } catch {
     return respond({ error: "Development review temporarily unavailable" }, 503);
   }
