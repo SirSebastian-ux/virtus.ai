@@ -21,7 +21,7 @@ function AcceptInvitationContent(){
   try{
    const response=await fetch("/api/organizations/invitations/accept",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token})});
    const result=await response.json().catch(()=>({}));
-   if(response.ok){setAccepted(true);setStatus("Your invitation has been accepted. Your organizational membership is confirmed. Open your workspace to access Mentor and development exercises.");}
+   if(response.ok){setAccepted(true);setStatus("Invitation accepted. Opening your organization workspace...");window.location.replace("/organizations/workspace");}
    else setStatus(result.error||"We could not accept this invitation. Confirm you are signed in with the invited corporate email.");
   }catch{setStatus("The connection could not be completed. Please try again.");}
   finally{setBusy(false);}
