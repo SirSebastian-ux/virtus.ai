@@ -5,6 +5,7 @@ const file=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const chat=file("app/api/chat/route.js");
 const entitlement=file("lib/virtus-org-entitlement.mjs");
 const workspace=file("app/organizations/workspace/page.js");
+const employeeLearning=file("app/organizations/learning/page.js");
 test("organizational Mentor entitlement does not mutate personal subscription",()=>{
  assert.match(chat,/hasOrganizationMentorAccess\(/);
  assert.match(chat,/organizationMentorActive\s*\?\s*"premium"/);
@@ -20,7 +21,8 @@ test("Mentor access checks feature flags, active membership and authorized organ
  assert.match(entitlement,/if\(error\) throw/);
 });
 test("organization links to full Mentor and limits HR workspace by role",()=>{
- assert.match(workspace,/Full Virtus Mentor/);
- assert.match(workspace,/href="\/"/);
+ assert.match(workspace,/\/organizations\/learning\?organizationId/);
+ assert.match(employeeLearning,/Open my Mentor/);
+ assert.match(employeeLearning,/href="\/"/);
  assert.match(workspace,/\["owner","admin"\]\.includes\(m\.role\)/);
 });
