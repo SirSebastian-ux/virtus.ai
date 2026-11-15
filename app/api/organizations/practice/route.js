@@ -16,6 +16,7 @@ export async function GET(req){const c=await context(req);if(c.error)return c.er
 }
 export async function POST(req){const c=await context(req);if(c.error)return c.error;const b=await req.json().catch(()=>({}));
  if(typeof b.exerciseKey!=="string"||b.exerciseKey.length>100||!b.exerciseKey||typeof b.title!=="string"||b.title.length>180||!Array.isArray(b.responses)||b.responses.length>12||b.responses.some(x=>typeof x!=="string"||x.length>2000))return NextResponse.json({error:"Invalid reflection"},{status:400});
+ if(b.responses.length===0||b.responses.some(x=>!x.trim()))return NextResponse.json({error:"Complete all reflections before saving this practice"},{status:400});
  const {error}=await c.client.from("virtus_org_private_exercise_drafts").upsert({organization_id:c.id,user_id:c.user.id,exercise_key:b.exerciseKey,title:b.title,responses:b.responses,updated_at:new Date().toISOString()},{onConflict:"organization_id,user_id,exercise_key"});
  return error?NextResponse.json({error:"Unable to save reflection"},{status:503}):NextResponse.json({saved:true});
 }

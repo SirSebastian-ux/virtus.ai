@@ -23,6 +23,9 @@ export async function POST(request){
  if(!valid.test(organizationId||"")||!["leadership","conscious_mind"].includes(curriculumType)||!Number.isInteger(moduleNumber)||moduleNumber<1||moduleNumber>(curriculumType==="leadership"?10:8)||!Number.isInteger(exerciseNumber)||exerciseNumber<1||exerciseNumber>30)return NextResponse.json({error:"Invalid exercise"},{status:400});
  const {data:allowed}=await client.rpc("virtus_organization_access",{p_organization_id:organizationId});
  if(allowed!==true)return NextResponse.json({error:"Access denied"},{status:403});
+ const exerciseKey=`${curriculumType}-${moduleNumber}-${exerciseNumber}`;
+ const {data:draft,error:draftError}=await client.from("virtus_org_private_exercise_drafts").select("responses").eq("organization_id",organizationId).eq("user_id",user.id).eq("exercise_key",exerciseKey).maybeSingle();
+ if(draftError||!draft||!Array.isArray(draft.responses)||draft.responses.length===0||draft.responses.some(x=>typeof x!=="string"||!x.trim()))return NextResponse.json({error:"Save complete exercise reflections before marking this exercise finished"},{status:409});
  const {error}=await client.from("virtus_org_learning_progress").upsert({organization_id:organizationId,user_id:user.id,curriculum_type:curriculumType,module_number:moduleNumber,exercise_number:exerciseNumber},{onConflict:"organization_id,user_id,curriculum_type,module_number,exercise_number",ignoreDuplicates:true});
  if(error)return NextResponse.json({error:"Unable to save progress"},{status:503});
  return NextResponse.json({saved:true},{headers:{"Cache-Control":"private, no-store"}});
