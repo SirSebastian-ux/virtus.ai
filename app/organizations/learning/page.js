@@ -3,10 +3,12 @@ import {Suspense,useEffect,useMemo,useState} from "react";
 import {useSearchParams} from "next/navigation";
 import Link from "next/link";
 import {virtusModules} from "@/data/virtus-modules";
+import {useOrganizationTrainingSession} from "@/hooks/useOrganizationTrainingSession";
 const areas=[{id:"habits",label:"Good habits",keywords:/habit|routine|consisten|discipline/i},{id:"procrastination",label:"Procrastination",keywords:/delay|avoid|action|start|procrastinat/i},{id:"time",label:"Time management",keywords:/time|priorit|schedule|focus|plan/i},{id:"emotions",label:"Emotional intelligence",keywords:/emotion|empath|trigger|react|feeling/i},{id:"metacognition",label:"Metacognition",keywords:/think|assum|interpret|aware|reflect/i},{id:"behavior",label:"Behavior",keywords:/behav|response|action|reaction/i},{id:"critical",label:"Critical thinking",keywords:/reason|evidence|bias|assum|critical/i},{id:"communication",label:"Communication",keywords:/communicat|listen|feedback|conflict|convers/i},{id:"awareness",label:"Self-awareness",keywords:/aware|reflect|thought|emotion|trigger/i},{id:"decisions",label:"Decision-making",keywords:/decis|reason|critical|choice|assum/i},{id:"leadership",label:"Leadership",keywords:/leader|delegate|accountab|team|responsib/i}];
 const library=virtusModules.slice(0,10).flatMap((m,mi)=>(m.days||[]).flatMap((d,di)=>({id:`leadership-${mi+1}-${di+1}`,module:mi+1,exercise:di+1,title:d.title,goal:d.goal||"",steps:d.exercises||[],text:[d.title,d.goal,...(d.exercises||[])].join(" ")})));
 function Development(){
  const org=useSearchParams().get("organizationId")||"";
+ useOrganizationTrainingSession(org);
  const dayIndex=Math.floor(Date.now()/86400000);
  const [focus,setFocus]=useState("habits"),[drafts,setDrafts]=useState({}),[answers,setAnswers]=useState({}),[completed,setCompleted]=useState([]),[selected,setSelected]=useState(null),[status,setStatus]=useState(""),[busy,setBusy]=useState(false);
  useEffect(()=>{if(!org)return;let alive=true;fetch("/api/organizations/learning?organizationId="+encodeURIComponent(org),{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Unable to load development history");return d}).then(d=>{if(alive)setCompleted(d.progress||[])}).catch(e=>{if(alive)setStatus(e.message)});return()=>{alive=false}},[org]);

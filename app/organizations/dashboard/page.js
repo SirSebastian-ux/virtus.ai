@@ -1,6 +1,7 @@
 "use client";
 import { useEffect,useState } from "react";
 import Link from "next/link";
+import HRDevelopmentIntelligence from "./HRDevelopmentIntelligence";
 export default function OrganizationDashboard(){
  const [memberships,setMemberships]=useState([]);
  const [selected,setSelected]=useState("");
@@ -74,8 +75,9 @@ export default function OrganizationDashboard(){
     })}>View participation report</button>
     {report&&<div style={{marginTop:16}}>{report.length===0?<p>No eligible group results available.</p>:report.map((item,i)=><p key={i}>{item.curriculum_type}, module {item.module_number}: {item.participants} participants, {item.completed_exercises} completed exercises</p>)}</div>}
    </section>
+   <section style={{...panel,display:tab==="reports"?"block":"none",gridColumn:"1 / -1"}}>{manager&&<HRDevelopmentIntelligence organizationId={active}/>}</section>
    <section style={{...panel,display:tab==="overview"?"block":"none"}}><h2>Employee mentor experience</h2><p>Open the employee learning experience to review its structure and available mentorship tools.</p>
-    <Link href="/" style={{color:"#d5b16a"}}>Open full Virtus Mentor</Link>
+    <Link href="/" style={{color:"#d5b16a"}}>Open my private Virtus Mentor</Link><p style={{fontSize:12,color:"#d5cab0"}}>Owners and active members receive Mentor access through their paid organization subscription. Personal chats and reflections remain private.</p>
    </section></div>}
    {message&&<p role="status" className="virtus-org-status">{message}</p>}
   </div>

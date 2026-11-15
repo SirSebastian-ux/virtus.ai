@@ -1,0 +1,5 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {summarizeOrganizationActivity} from "../lib/virtus-org-hr-activity.mjs";
+const now="2026-11-15T12:00:00Z";
+test("HR only receives eligible organization learning events and eight mapped domains",()=>{const d=summarizeOrganizationActivity({members:[{user_id:"a",role:"employee"}],sessions:[{user_id:"a",started_at:now,active_seconds:300},{user_id:"b",started_at:now,active_seconds:900}],completed:[{user_id:"a",completed_at:now}],scores:[{user_id:"a",domain:"communication",score:2,scored_at:now},{user_id:"a",domain:"communication",score:4,scored_at:"2026-11-15T14:00:00Z"}]});assert.equal(d.totals.activeSeconds,300);assert.equal(d.totals.exercisesCompleted,1);assert.equal(d.totals.assessmentsCompleted,2);assert.equal(d.employees[0].domains.length,8);assert.equal(d.employees[0].domains.find(x=>x.key==="communication").changePoints,40);assert.equal(d.employees[0].domains.find(x=>x.key==="executive_functioning").latestScorePercent,null);});
