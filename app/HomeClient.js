@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPlanLabel, getPlanPolicy } from "@/data/virtus-plan-policy";
 import { canAccessPractice } from "@/lib/virtus-membership.mjs";
+import {createClient as createBrowserSupabase} from "@/lib/supabase-browser";
 import { combineRecognitionResults, mergeSpeechCycles, normalizeSpeechText } from "@/lib/virtus-voice-transcript.mjs";
 import { virtusPracticeCategories } from "@/data/virtus-practice-categories";
 
@@ -3884,6 +3885,13 @@ setAccountAccess(authData.access || null);
       }
     }
 
+    // Hydrate the signed-in sidebar from the browser session immediately, while the server independently validates access.
+    createBrowserSupabase().auth.getSession().then(({data})=>{
+      if(!mounted || !data?.session?.user)return;
+      const user=data.session.user;
+      setCurrentUser(previous=>previous || {id:user.id,email:user.email,nickname:user.user_metadata?.nickname||null});
+      setIsAuthenticated(true);
+    }).catch(()=>{});
     loadAuthAndSidebar();
 
     return () => {
