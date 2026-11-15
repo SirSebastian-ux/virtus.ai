@@ -7,7 +7,7 @@ import "./virtus-subpages.css";
 
 export const metadata = {
   metadataBase: new URL("https://virtusaiworld.com"),
-  title: "Virtus AI | Life Coach Â· Trainer Â· Mentor",
+  title: "Virtus AI | Life Coach | Trainer | Mentor",
   description: "AI life coaching, structured training, and leadership mentoring powered by Enhanced Wellness Solutions.",
   manifest: "/manifest.json",
   icons: {
@@ -23,13 +23,13 @@ export const metadata = {
     type: "website",
     url: "https://virtusaiworld.com",
     siteName: "Virtus AI",
-    title: "Virtus AI | Life Coach Â· Trainer Â· Mentor",
+    title: "Virtus AI | Life Coach | Trainer | Mentor",
     description: "Your AI life coach, trainer and mentor. Personal growth begins with awareness.",
     images: [{ url: "/og/virtus-ai-official-20261105.png", width: 1200, height: 630, alt: "Virtus AI - Life Coach, Trainer, Mentor" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Virtus AI | Life Coach Â· Trainer Â· Mentor",
+    title: "Virtus AI | Life Coach | Trainer | Mentor",
     description: "Your AI life coach, trainer and mentor.",
     images: ["/og/virtus-ai-official-20261105.png"],
   },
