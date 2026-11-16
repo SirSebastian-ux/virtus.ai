@@ -1,15 +1,21 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
+import {createClient} from "@/lib/supabase-browser";
 import Link from "next/link";
 const initial={name:"",industry:"",country:"",business_address:"",contact_name:"",contact_email:"",total_employees:5,requested_seats:5};
 const fields=[["name","Legal business name"],["industry","Industry / business type"],["country","Country"],["business_address","Registered business address"],["contact_name","Organization Administrator’s Full Name"],["contact_email","Business contact email"]];
 export default function RegisterOrganization(){
  const [form,setForm]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[registered,setRegistered]=useState("");
+ const [ownerEmail,setOwnerEmail]=useState(""),[ownerLoading,setOwnerLoading]=useState(true);
+ useEffect(()=>{let active=true;createClient().auth.getUser().then(({data,error})=>{if(active){setOwnerEmail(error?"":data?.user?.email||"");setOwnerLoading(false);}}).catch(()=>{if(active){setOwnerEmail("");setOwnerLoading(false);}});return()=>{active=false};},[]);
  const update=(key,value)=>setForm(v=>({...v,[key]:value}));
  const input={display:"block",width:"100%",boxSizing:"border-box",marginTop:8,padding:"12px 14px",borderRadius:9,border:"1px solid #a88952",background:"#082b24",color:"#fff2d5",fontSize:15};
  const button={border:0,borderRadius:10,padding:"14px 22px",fontWeight:800,background:"linear-gradient(110deg,#ffe7ad,#c99c50,#f5d89b)",color:"#19170f",cursor:"pointer"};
  async function send(url,method,payload){const response=await fetch(url,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||"Request failed");return data;}
  async function submit(event){event.preventDefault();setBusy(true);setMessage("");try{
+  if(!ownerEmail)throw Error("Sign in with the existing Mentor account that will own this organization.");
+  const {data:{user}}=await createClient().auth.getUser();
+  if(user?.email?.toLowerCase()!==ownerEmail.toLowerCase())throw Error("Your login has changed. Refresh the registration page and verify the owner.");
   if(!Number.isSafeInteger(form.total_employees)||form.total_employees<1||!Number.isSafeInteger(form.requested_seats)||form.requested_seats<1||form.requested_seats>form.total_employees)throw Error("Licenses must be between 1 and the total employee count.");
   let id=registered;
   if(!id){const result=await send("/api/organizations","POST",{name:form.name});id=result.organization.id;setRegistered(id);}
@@ -25,13 +31,14 @@ export default function RegisterOrganization(){
  <p>Complete the company information, choose licensed employees, then review your monthly subscription before payment.</p>
  <form onSubmit={submit} style={{border:"1px solid #b99b61",borderRadius:18,padding:"clamp(18px,4vw,36px)",background:"linear-gradient(145deg,#0b4737,#062a23)",display:"grid",gap:18,marginTop:26}}>
  <h2 style={{margin:0,color:"#f3d8a2"}}>1. Company information</h2>
+ <div style={{padding:15,borderRadius:12,border:"1px solid #d3b672",background:"#0a332a"}}><strong>Existing account becomes organization owner</strong><p style={{margin:"8px 0"}}>Signed-in account: <strong>{ownerLoading?"Verifying login...":ownerEmail||"Not signed in"}</strong></p><p style={{margin:"6px 0",fontSize:13}}>The person signed in here becomes the organization owner and receives Mentor access through the $199 platform subscription without using an employee license. Their existing Mentor account, conversations, and history are preserved. The contact name entered below does not create a second account or change the owner.</p>{!ownerLoading&&!ownerEmail&&<Link href={"/login?next="+encodeURIComponent("/organizations/register")} style={{color:"#ffe0a0"}}>Sign in with the owner’s existing Mentor account</Link>}</div>
  {fields.map(([key,label])=><label key={key} style={{fontWeight:650}}>{label}<input style={input} required minLength={2} maxLength={key==="name"?160:240} type={key==="contact_email"?"email":"text"} value={form[key]} onChange={e=>update(key,e.target.value)}/></label>)}
  <h2 style={{margin:"10px 0 0",color:"#f3d8a2"}}>2. Employee licensing</h2>
- <label>Total company employees<input style={input} type="number" required min={1} max={1000000} value={form.total_employees} onChange={e=>update("total_employees",Number(e.target.value))}/></label>
- <label>Employees requiring Virtus AI licenses<input style={input} type="number" required min={1} max={10000} value={form.requested_seats} onChange={e=>update("requested_seats",Number(e.target.value))}/></label>
+ <label>Total people in company (including owner)<input style={input} type="number" required min={1} max={1000000} value={form.total_employees} onChange={e=>update("total_employees",Number(e.target.value))}/></label>
+ <label>Employees requiring Virtus AI licenses (owner excluded)<input style={input} type="number" required min={1} max={10000} value={form.requested_seats} onChange={e=>update("requested_seats",Number(e.target.value))}/></label>
  <div style={{borderTop:"1px solid #ad8c55",paddingTop:22}}><h2 style={{color:"#f3d8a2",marginTop:0}}>3. Subscription review</h2><p>Organization platform: <strong>$199.00 / month</strong></p><p>{form.requested_seats||0} employee licenses × $9.99 / month</p><p style={{fontSize:24,color:"#f8d894",fontWeight:800}}>Total: ${(199+9.99*Math.max(0,form.requested_seats||0)).toFixed(2)} / month</p><p style={{fontSize:12}}>Taxes, if applicable, are determined at checkout. Access is activated only after verified payment.</p></div>
  {message&&<p role="alert" style={{color:"#ffd0b6"}}>{message}</p>}
- <button type="submit" disabled={busy} style={{...button,opacity:busy?.6:1}}>{busy?"Saving registration...":"Save and continue to secure payment"}</button>
+ <button type="submit" disabled={busy||ownerLoading||!ownerEmail} style={{...button,opacity:busy?.6:1}}>{busy?"Saving registration...":"Save and continue to secure payment"}</button>
  {registered&&<Link href={"/organizations/dashboard?organizationId="+encodeURIComponent(registered)} style={{color:"#f2cf87"}}>Return to your saved organization</Link>}
  </form></div></main>;
 }
