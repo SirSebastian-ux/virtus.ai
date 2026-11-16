@@ -65,6 +65,10 @@ export default function OrganizationDashboard(){
    <section style={{...panel,display:tab==="billing"?"block":"none"}}><h2>Employee mentorship licenses</h2>
     <p>Manage licensed access to the full Virtus AI Mentor experience.</p>
     <label htmlFor="org-license-count" style={{display:"block",marginTop:18,fontWeight:700,color:"#f2d99c"}}>Number of employee licenses</label><input id="org-license-count" aria-label="Number of employee licenses" style={input} type="number" min={1} max={10000} value={seats} onChange={e=>setSeats(Number(e.target.value))}/>
+    <p style={{color:"#f1d99c",fontWeight:700}}>Monthly subscription: $199 platform + $9.99 per employee seat.</p>
+    <p style={{fontSize:13}}>Estimated monthly total: <strong>${(199+9.99*(Number.isSafeInteger(seats)&&seats>0?seats:0)).toFixed(2)} USD</strong></p>
+    {owner&&!memberships.find(m=>m.organization_id===active)?.organization?.stripe_subscription_id&&<button disabled={busy||!Number.isSafeInteger(seats)||seats<1||seats>10000} className="virtus-org-action" style={button} onClick={()=>run(async()=>{const r=await api("/api/organizations/billing/checkout","POST",{organizationId:active,seats});if(!r.url||!r.url.startsWith("https://checkout.stripe.com/"))throw Error("Invalid checkout URL");window.location.assign(r.url);})}>Continue to secure Stripe checkout</button>}
+    <p style={{fontSize:12,color:"#cbbd9c"}}>Checkout becomes available when organizational billing is enabled. Your subscription starts only after payment confirmation.</p>
     <button disabled={busy||!owner} className="virtus-org-action" style={button} onClick={()=>run(async()=>{const r=await api("/api/organizations/testing/activate","POST",{organizationId:active,seats});await refresh();setMessage("Preview testing activated for "+r.seats+" seats. No payment collected.");})}>Activate free preview seats</button><p style={{fontSize:12,color:"#cbbd9c"}}>Free preview seats. No website, corporate domain or Stripe payment is required.</p>
    </section>
    <section style={{...panel,display:tab==="reports"?"block":"none"}}><h2>Aggregate learning report</h2>
