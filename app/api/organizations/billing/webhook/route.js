@@ -21,10 +21,11 @@ export async function POST(request){
     subscription=await stripe.subscriptions.retrieve(session.subscription);
   }else if(event.type.startsWith("invoice.")){
     const invoice=event.data.object;
-    const subscriptionId=typeof invoice.subscription==="string"?invoice.subscription:invoice.subscription?.id;
+    const invoiceSubscription=invoice.parent?.subscription_details?.subscription ?? invoice.subscription;
+    const subscriptionId=typeof invoiceSubscription==="string"?invoiceSubscription:invoiceSubscription?.id;
     if(!subscriptionId) return ok({ignored:true});
     subscription=await stripe.subscriptions.retrieve(subscriptionId);
-  }else subscription=event.data.object;
+  }else subscription=await stripe.subscriptions.retrieve(event.data.object.id);
   if(subscription.metadata?.virtus_product_family!=="organizations") return ok({ignored:true});
   const id=subscription.metadata?.virtus_organization_id;
   const items=subscription.items?.data||[];

@@ -25,7 +25,7 @@ export async function POST(request){
  if(error||!org||org.owner_user_id!==user.id)return reply({error:"Organization owner required"},403);
  if(org.stripe_subscription_id)return reply({error:"Existing Stripe subscription cannot be overridden"},409);
  if(!["pending","trialing"].includes(org.billing_status))return reply({error:"Organization is not eligible for pilot testing"},409);
- const {count,error:countError}=await admin.from("virtus_organization_members").select("id",{count:"exact",head:true}).eq("organization_id",id).eq("status","active");
+ const {count,error:countError}=await admin.from("virtus_organization_members").select("id",{count:"exact",head:true}).eq("organization_id",id).eq("status","active").neq("role","owner");
  if(countError)return reply({error:"Unable to verify seat usage"},503);
  if(count>seats)return reply({error:"Test seat count is below active membership"},409);
  const {data:updated,error:updateError}=await admin.from("virtus_organizations").update({billing_status:"trialing",seat_limit:seats}).eq("id",id).eq("owner_user_id",user.id).is("stripe_subscription_id",null).select("id,seat_limit,billing_status").maybeSingle();
