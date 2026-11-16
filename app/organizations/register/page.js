@@ -2,7 +2,7 @@
 import {useState} from "react";
 import Link from "next/link";
 const initial={name:"",industry:"",country:"",business_address:"",contact_name:"",contact_email:"",total_employees:5,requested_seats:5};
-const fields=[["name","Legal business name"],["industry","Industry / business type"],["country","Country"],["business_address","Registered business address"],["contact_name","HR / billing contact"],["contact_email","Business contact email"]];
+const fields=[["name","Legal business name"],["industry","Industry / business type"],["country","Country"],["business_address","Registered business address"],["contact_name","Organization Administrator’s Full Name"],["contact_email","Business contact email"]];
 export default function RegisterOrganization(){
  const [form,setForm]=useState(initial),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[registered,setRegistered]=useState("");
  const update=(key,value)=>setForm(v=>({...v,[key]:value}));
