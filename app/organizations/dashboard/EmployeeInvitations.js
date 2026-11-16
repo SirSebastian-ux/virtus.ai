@@ -36,17 +36,17 @@ export default function EmployeeInvitations({organizationId,isOwner,onInvitation
  return <section style={{...surface,gridColumn:"1 / -1"}} aria-label="Invite an employee">
   <h2 style={{fontSize:20,color:"#f8dfa6",margin:"0 0 7px"}}>Invite an employee</h2>
   <p style={{margin:"0 0 16px",color:"#d0daca"}}>Each employee has a private Virtus AI account. Existing users sign in; new users create an account with the invited email.</p>
-  {billing&&<p style={{color:"#f4d28c",fontWeight:650}}>{billing.availableSeats??Math.max(0,billing.seats-billing.usedSeats)} available licenses · {billing.usedSeats} enrolled · {billing.pendingInvites||0} invitations awaiting acceptance · {billing.seats} paid employee licenses</p>}
+  {billing&&<p style={{color:"#f4d28c",fontWeight:650}}>Grow your team anytime — each additional Mentor license is just $9.99/month.</p>}
   <label htmlFor="new-employee-email" style={{display:"block",marginBottom:8}}>Employee email</label>
   <input id="new-employee-email" type="email" autoComplete="email" style={input} value={email} onChange={e=>{setEmail(e.target.value);setQuote(null);}} placeholder="employee@company.com"/>
   <div style={{marginTop:12}}><button type="button" style={gold} onClick={invite} disabled={busy||!email.includes("@")}>Send invitation email</button></div>
   {quote&&<div style={{border:"1px solid #e0c389",padding:18,borderRadius:12,marginTop:20,background:"#0a342b"}}>
-   <strong style={{color:"#ffe3a0"}}>Add a paid license for {quote.recipient}</strong>
-   <p style={{marginTop:10}}>All {quote.oldSeats} employee licenses are occupied. Increase to <strong>{quote.newSeats} licenses</strong> for one additional employee.</p>
-   <p>New monthly base: <strong>${(quote.monthlyTotalCents/100).toFixed(2)}</strong> · Additional recurring cost <strong>$9.99/month</strong>.</p>
-   <p>Stripe's estimated upcoming invoice: <strong>${((quote.previewInvoiceTotalCents||0)/100).toFixed(2)}</strong> {quote.currency?.toUpperCase()}. This is not necessarily the immediate prorated charge.</p>
-   <p style={{fontSize:12,color:"#d0cfbe"}}>Confirming may charge the organization's saved payment method. Any authentication requirement must be completed. The invitation email is not sent until payment and new seat availability are verified.</p>
-   <button type="button" style={gold} disabled={busy} onClick={confirm}>Confirm purchase and queue invitation</button>
+   <strong style={{color:"#ffe3a0"}}>Extend Virtus AI Mentor to {quote.recipient}</strong>
+   <p style={{marginTop:12,fontSize:21,fontWeight:800,color:"#ffe0a0"}}>Add this employee for just +$9.99/month</p>
+   <p>Your existing monthly organization bill will increase by <strong>$9.99</strong>, before applicable taxes.</p>
+   <details style={{marginTop:9,fontSize:12,color:"#d0cfbe"}}><summary style={{cursor:"pointer",color:"#f1d6a1"}}>Billing details</summary><p>Stripe estimates your upcoming invoice at <strong>${((quote.previewInvoiceTotalCents||0)/100).toFixed(2)} {quote.currency?.toUpperCase()}</strong>; this is not the amount necessarily charged today.</p></details>
+   <p style={{fontSize:12,color:"#d0cfbe"}}>A prorated charge and any applicable taxes may apply today to the company’s saved payment method. The invitation is emailed automatically after payment is confirmed.</p>
+   <button type="button" style={gold} disabled={busy} onClick={confirm}>Confirm +$9.99/month and invite</button>
    <button type="button" style={{...gold,marginLeft:12,background:"#134437",color:"#f9dc9d"}} disabled={busy} onClick={()=>setQuote(null)}>Cancel</button>
   </div>}
   {paymentUrl&&<p style={{marginTop:15}}><a href={paymentUrl} target="_blank" rel="noopener noreferrer" style={{color:"#ffe0a0",textDecoration:"underline",fontWeight:800}}>Complete payment securely with Stripe</a></p>}
