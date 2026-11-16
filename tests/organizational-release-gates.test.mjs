@@ -58,3 +58,27 @@ test("seat changes are owner-only, confirmed, and applied by signed webhook, not
 test("archived organizations are hidden from roster and invitation accepts check archive",()=>{
  assert.match(file("app/api/organizations/route.js"),/is\("archived_at",null\)/);
 });
+
+test("manual Premium organization transfer binds intent during EWS registration without charging or replacing account",()=>{
+ const register=file("app/api/organizations/route.js");
+ assert.match(register,/virtus_org_mentor_transfer_intents/);
+ assert.match(register,/organization_id: organizationId/);
+ assert.match(register,/name\.toLowerCase\(\) === "enhanced wellness solutions"/);
+ assert.doesNotMatch(register,/\.update\(\{\s*plan:/);
+});
+test("transferred Mentor access remains effective for conversations, files and authenticated account",()=>{
+ for (const path of [
+  "app/api/conversations/route.js",
+  "app/api/auth/claim-guest/route.js",
+  "app/api/files/create-pdf/route.js",
+  "app/api/files/create-pptx/route.js",
+  "app/api/files/create-docx/route.js",
+  "app/api/files/create-image/route.js"
+ ]) {
+  const source=file(path);
+  assert.match(source,/hasOrganizationMentorAccess/);
+  assert.match(source,/organizationMentorActive\s*\?\s*"premium"/);
+ }
+ const me=file("app/api/auth/me/route.js");
+ assert.match(me,/planSource:\s*organizationMentorActive\s*\?\s*"organization"/);
+});

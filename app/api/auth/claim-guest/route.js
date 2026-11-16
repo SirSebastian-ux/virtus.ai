@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase-admin";
+import {hasOrganizationMentorAccess} from "@/lib/virtus-org-entitlement.mjs";
 import { createClient } from "@/lib/supabase-server";
 import { getPlanPolicy } from "@/data/virtus-plan-policy";
 
@@ -117,8 +118,9 @@ export async function POST(req) {
       .eq("id", user.id)
       .maybeSingle();
 
-    const currentPlan = finalProfile?.plan ?? "free";
-    const currentPlanStatus = finalProfile?.plan_status ?? "active";
+    const organizationMentorActive = await hasOrganizationMentorAccess({userId:user.id,userClient:authSupabase,adminClient:supabase});
+    const currentPlan = organizationMentorActive ? "premium" : (finalProfile?.plan ?? "free");
+    const currentPlanStatus = organizationMentorActive ? "active" : (finalProfile?.plan_status ?? "active");
     const planPolicy = getPlanPolicy(currentPlan);
 
     return Response.json({

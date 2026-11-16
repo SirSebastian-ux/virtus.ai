@@ -67,6 +67,7 @@ export async function GET() {
         projectScope,
         plan: currentPlan,
         organizationMentorActive,
+        planSource: organizationMentorActive ? "organization" : "personal",
         planStatus: currentPlanStatus,
         trialStartedAt: profile?.trial_started_at ?? null,
         trialEndsAt: profile?.trial_ends_at ?? null,

@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase-server";
+import {hasOrganizationMentorAccess} from "@/lib/virtus-org-entitlement.mjs";
 import pptxgen from "pptxgenjs";
 import OpenAI from "openai";
 import { checkRateLimit, getRateLimitIdentity, rateLimitResponse } from "@/lib/rate-limit";
@@ -782,8 +783,9 @@ export async function POST(req) {
       .eq("id", user.id)
       .single();
 
-    const currentPlan = profile?.plan ?? "free";
-    const currentPlanStatus = profile?.plan_status ?? "active";
+    const organizationMentorActive = await hasOrganizationMentorAccess({userId:user.id,userClient:supabase,adminClient:admin});
+    const currentPlan = organizationMentorActive ? "premium" : (profile?.plan ?? "free");
+    const currentPlanStatus = organizationMentorActive ? "active" : (profile?.plan_status ?? "active");
     const canCreateFiles =
       currentPlanStatus === "active" &&
       ["plus", "premium"].includes(currentPlan);

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase-admin";
+import {hasOrganizationMentorAccess} from "@/lib/virtus-org-entitlement.mjs";
 import { createClient } from "@/lib/supabase-server";
 import crypto from "crypto";
 import {
@@ -54,9 +55,9 @@ async function resolveVirtusUserId(guestId, cookieHeader = "") {
     .eq("id", user.id)
     .single();
 
-  const currentPlan = profile?.plan ?? DEFAULT_VIRTUS_PLAN;
-  const currentPlanStatus =
-    profile?.plan_status ?? DEFAULT_VIRTUS_PLAN_STATUS;
+  const organizationMentorActive = await hasOrganizationMentorAccess({userId:user.id,userClient:supabase,adminClient:adminSupabase});
+  const currentPlan = organizationMentorActive ? "premium" : (profile?.plan ?? DEFAULT_VIRTUS_PLAN);
+  const currentPlanStatus = organizationMentorActive ? "active" : (profile?.plan_status ?? DEFAULT_VIRTUS_PLAN_STATUS);
 
   return {
     userId: user.id,

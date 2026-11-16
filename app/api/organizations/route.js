@@ -41,5 +41,14 @@ export async function POST(request) {
   const client = await createClient();
   const { data: organizationId, error } = await client.rpc("virtus_register_organization", { p_name: name });
   if (error || !organizationId) return NextResponse.json({ error: "Unable to register organization" }, { status: 503 });
+  // An explicitly prepared manual-Premium transfer is bound to this new EWS organization.
+  // This never changes the existing account or billing before verified Stripe payment.
+  if (name.toLowerCase() === "enhanced wellness solutions") {
+    const admin = createAdminClient();
+    const { error: transferError } = await admin.from("virtus_org_mentor_transfer_intents")
+      .update({ organization_id: organizationId })
+      .eq("user_id", user.id).eq("state", "pending").is("organization_id", null);
+    if (transferError) return NextResponse.json({ error: "Organization registered, but account entitlement preparation requires review. Open your organization workspace before paying." }, { status: 503 });
+  }
   return NextResponse.json({ organization: { id: organizationId, name, billing_status: "pending" } }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
