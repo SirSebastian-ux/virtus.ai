@@ -5,7 +5,7 @@ export const dynamic="force-dynamic";
 const ok=(extra={})=>NextResponse.json({received:true,...extra});
 export async function POST(request){
   if(process.env.VIRTUS_ORGANIZATION_BILLING_ENABLED!=="true") return NextResponse.json({error:"Disabled"},{status:503});
-  if(!process.env.STRIPE_SECRET_KEY||!process.env.VIRTUS_ORGANIZATION_WEBHOOK_SECRET||!process.env.VIRTUS_ORGANIZATION_PRICE_ID) return NextResponse.json({error:"Not configured"},{status:503});
+  if(!process.env.STRIPE_SECRET_KEY||!process.env.VIRTUS_ORGANIZATION_WEBHOOK_SECRET||!process.env.VIRTUS_ORGANIZATION_PLATFORM_PRICE_ID||!process.env.VIRTUS_ORGANIZATION_SEAT_PRICE_ID) return NextResponse.json({error:"Not configured"},{status:503});
   const signature=request.headers.get("stripe-signature");
   if(!signature) return NextResponse.json({error:"Missing signature"},{status:400});
   const stripe=new Stripe(process.env.STRIPE_SECRET_KEY,{apiVersion:"2025-03-31.basil"});
@@ -27,9 +27,11 @@ export async function POST(request){
   }else subscription=event.data.object;
   if(subscription.metadata?.virtus_product_family!=="organizations") return ok({ignored:true});
   const id=subscription.metadata?.virtus_organization_id;
-  const item=subscription.items?.data?.[0];
-  if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id||"")||!item||item.price?.id!==process.env.VIRTUS_ORGANIZATION_PRICE_ID) return NextResponse.json({error:"Organization subscription metadata mismatch"},{status:409});
-  const seats=item.quantity;
+  const items=subscription.items?.data||[];
+  const platformItems=items.filter(item=>item.price?.id===process.env.VIRTUS_ORGANIZATION_PLATFORM_PRICE_ID);
+  const seatItems=items.filter(item=>item.price?.id===process.env.VIRTUS_ORGANIZATION_SEAT_PRICE_ID);
+  if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id||"")||items.length!==2||platformItems.length!==1||seatItems.length!==1||platformItems[0].quantity!==1) return NextResponse.json({error:"Organization subscription metadata mismatch"},{status:409});
+  const seats=seatItems[0].quantity;
   if(!Number.isSafeInteger(seats)||seats<1||seats>10000) return NextResponse.json({error:"Invalid licensed seats"},{status:409});
   const admin=createAdminClient();
   const {data:org,error:orgError}=await admin.from("virtus_organizations").select("id,stripe_subscription_id").eq("id",id).maybeSingle();
