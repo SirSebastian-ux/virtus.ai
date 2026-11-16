@@ -21,11 +21,11 @@ export async function GET() {
   if (error) return NextResponse.json({ error: "Unable to load organizations" }, { status: 503 });
   const ids = [...new Set((memberships || []).map(m => m.organization_id))];
   const { data: organizations, error: organizationError } = ids.length
-    ? await admin.from("virtus_organizations").select("id,name,verified_domain,billing_status,seat_limit").in("id", ids)
+    ? await admin.from("virtus_organizations").select("id,name,verified_domain,billing_status,seat_limit").in("id", ids).is("archived_at",null)
     : { data: [], error: null };
   if (organizationError) return NextResponse.json({ error: "Unable to load organization details" }, { status: 503 });
   const byId = new Map((organizations || []).map(o => [o.id, o]));
-  const safeMemberships = (memberships || []).map(m => ({
+  const safeMemberships = (memberships || []).filter(m=>byId.has(m.organization_id)).map(m => ({
     ...m, organization: byId.get(m.organization_id) || null
   }));
   return NextResponse.json({ memberships: safeMemberships }, { headers: { "Cache-Control": "no-store" } });
