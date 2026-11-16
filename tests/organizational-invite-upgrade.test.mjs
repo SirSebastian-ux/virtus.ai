@@ -43,7 +43,7 @@ test("seat upgrade queues employee email before Stripe update and delivers after
 test("billing upgrade CTA requires owner confirmation and does not automatically purchase seats on invite",()=>{
  const component=file("app/organizations/dashboard/EmployeeInvitations.js");
  assert.match(component,/setQuote/);
- assert.match(component,/Confirm \+\$9\.99\/month and invite/);
+ assert.match(component,/Confirm payment and invite/);
  assert.match(component,/invitedEmail:quote.recipient/);
  assert.match(component,/payment_pending/);
 });
