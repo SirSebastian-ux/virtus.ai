@@ -29,7 +29,7 @@ export async function GET(request) {
     const {data:{user:account},error:lookupError} = await admin.auth.admin.getUserById(member.user_id);
     if (lookupError || !account?.email) continue;
     const email = account.email.toLowerCase();
-    roster.set(email,{email,status:"active",role:member.role});
+    roster.set(email,{email,userId:member.user_id,status:"active",role:member.role});
   }
   return respond({employees:[...roster.values()].sort((a,b)=>a.email.localeCompare(b.email))});
 }

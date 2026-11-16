@@ -34,7 +34,7 @@ export async function POST(request){
   const seatItems=items.filter(item=>item.price?.id===process.env.VIRTUS_ORGANIZATION_SEAT_PRICE_ID);
   if(!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id||"")||items.length!==2||platformItems.length!==1||seatItems.length!==1||platformItems[0].quantity!==1) return NextResponse.json({error:"Organization subscription metadata mismatch"},{status:409});
   const seats=seatItems[0].quantity;
-  if(!Number.isSafeInteger(seats)||seats<1||seats>10000) return NextResponse.json({error:"Invalid licensed seats"},{status:409});
+  if(!Number.isSafeInteger(seats)||seats<0||seats>10000) return NextResponse.json({error:"Invalid licensed seats"},{status:409});
   const admin=createAdminClient();
   const {data:org,error:orgError}=await admin.from("virtus_organizations").select("id,stripe_subscription_id").eq("id",id).maybeSingle();
   if(orgError||!org) return NextResponse.json({error:"Organization not found"},{status:409});
@@ -47,6 +47,11 @@ export async function POST(request){
     p_customer:customer,p_status:status,p_seats:seats,p_event_type:event.type
   });
   if(reconcileError) return NextResponse.json({error:"Billing reconciliation failed"},{status:500});
+  // A fully canceled company loses its employer-funded entitlements immediately, including owner access.
+  if(status==="canceled"){
+    const closed=await admin.rpc("virtus_org_close_entitlements",{p_org:id});
+    if(closed.error)return NextResponse.json({error:"Company access closure pending"},{status:500});
+  }
   // Paid seat upgrades fulfill the waiting employee invitation. Unpaid/pending updates do not.
   let queuedInvitations=0;
   if(event.type==="invoice.payment_succeeded"&&status==="active"){
