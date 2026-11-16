@@ -38,7 +38,8 @@ test("licensed employees exclude the owner and cannot exceed purchased seats",()
  const invitations=file("app/api/organizations/invitations/route.js");
  const seats=file("app/api/organizations/billing/seats/route.js");
  const checkout=file("app/api/organizations/billing/checkout/route.js");
- assert.match(invitations,/\.neq\("role","owner"\)/);
+ assert.match(invitations,/issueEmployeeInvitation/);
+ assert.match(file("lib/organization-invitation-delivery.mjs"),/\.neq\("role","owner"\)/);
  assert.match(seats,/\.neq\("role","owner"\)/);
  assert.match(seats,/seats<ctx\.used/);
  assert.match(checkout,/quantity:1/);

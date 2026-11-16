@@ -14,7 +14,7 @@ export default function HRDevelopmentIntelligence({organizationId}){
  const emp=data?.employees?.find(e=>e.userId===selected);
  return <div style={{marginTop:18,display:"grid",gap:15}}>
  <div><h2 style={{color:"#f4daa5",fontSize:23}}>HR Development Intelligence</h2>
- <p style={{fontSize:13,color:"#d5d6c8"}}>Actual recorded organizational learning, not access to personal Mentor conversations. Last 30 days (UTC).</p></div>
+ <p style={{fontSize:13,color:"#d5d6c8"}}>Actual recorded organizational learning, not access to personal Mentor conversations. Last 30 days (UTC). The private personal development bar is not an HR metric. Pre-existing individual Mentor stages are not imported into company reports; the eight workplace domains below require separate organizational evidence.</p></div>
  {loading&&<p role="status">Loading verified learning records...</p>}
  {error&&<p role="alert" style={{color:"#f0b0a5"}}>{error}</p>}
  {data&&<>

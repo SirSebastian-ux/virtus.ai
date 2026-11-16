@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import {dispatchPaidQueuedInvitations} from "@/lib/organization-invitation-delivery.mjs";
 export const dynamic="force-dynamic";
 const ok=(extra={})=>NextResponse.json({received:true,...extra});
 export async function POST(request){
@@ -46,5 +47,11 @@ export async function POST(request){
     p_customer:customer,p_status:status,p_seats:seats,p_event_type:event.type
   });
   if(reconcileError) return NextResponse.json({error:"Billing reconciliation failed"},{status:500});
-  return ok({organization:true,reconciliation:outcome});
+  // Paid seat upgrades fulfill the waiting employee invitation. Unpaid/pending updates do not.
+  let queuedInvitations=0;
+  if(event.type==="invoice.payment_succeeded"&&status==="active"){
+    try{const delivered=await dispatchPaidQueuedInvitations({admin,organizationId:id});queuedInvitations=delivered.sent;}
+    catch(error){console.error("Organizational invite fulfillment retry needed",error);return NextResponse.json({error:"Invitation fulfillment retry needed"},{status:500});}
+  }
+  return ok({organization:true,reconciliation:outcome,queuedInvitations});
 }

@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { buildDevelopmentBar } from "@/lib/virtus-development-bar.mjs";
 
-const HIDDEN = /^\/(?:login|auth|forgot-password|update-password|pricing|privacy|terms|legal|support|install|embed)(?:\/|$)/;
+// Keep personal progress in private Mentor and employee learning, but off company administration and invitations.
+const HIDDEN = /^\/(?:login|auth|forgot-password|update-password|pricing|privacy|terms|legal|support|install|embed)(?:\/|$)|^\/organizations(?:$|\/(?:register|workspace|dashboard|accept)(?:\/|$))/;
 
 export default function VirtusDevelopmentBar() {
   const path = usePathname() || "/";
