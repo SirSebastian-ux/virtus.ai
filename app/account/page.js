@@ -3,6 +3,7 @@ import Link from "next/link";
 import { isAdminUser } from "@/lib/admin-auth";
 import { redirect } from "next/navigation";
 import BillingPortalButton from "./BillingPortalButton";
+import CancelSubscription from "./CancelSubscription";
 import LogoutButton from "./LogoutButton";
 import ProfileNameEditor from "./ProfileNameEditor";
 import ProfilePhotoEditor from "./ProfilePhotoEditor";
@@ -170,6 +171,7 @@ export default async function AccountPage() {
               />
 
               <BillingPortalButton hasStripeCustomer={Boolean(profile?.stripe_customer_id)} currentPlan={displayPlan} />
+              <CancelSubscription hasStripeCustomer={Boolean(profile?.stripe_customer_id)} />
 
               <SettingsRow
                 label="Plan status"
