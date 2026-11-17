@@ -19,17 +19,19 @@ async function validate(request){
  if(counts.active>seats.quantity)throw billingError("Existing seat count needs reconciliation",409);
  const target=seats.quantity-ids.length;
  if(target<0||target<counts.active-ids.length+counts.pending)throw billingError("Pending invitations or remaining members require licenses. Revoke invitations first.");
- return {body,ctx,ids,target,counts};
+ const endAt=seats.current_period_end||sub.current_period_end;
+ if(!Number.isSafeInteger(endAt)||endAt*1000<=Date.now())throw billingError("Unable to determine the end of the current paid period",503);
+ return {body,ctx,ids,target,counts,endAt};
 }
 export async function POST(request){
  try{
-  const {ctx,ids,target}=await validate(request);
-  return billingReply({employeesToRemove:ids.length,currentSeats:ctx.seats.quantity,newSeats:target,monthlyReductionCents:ids.length*999,nextMonthlyBaseCents:19900+target*999,currency:"usd",note:"Selected employees lose organization-funded Mentor access when the change is confirmed. Their personal account and development history remain. No automatic partial-period refund."});
+  const {ctx,ids,target,endAt}=await validate(request);
+  return billingReply({employeesToRemove:ids.length,currentSeats:ctx.seats.quantity,newSeats:target,monthlyReductionCents:ids.length*999,nextMonthlyBaseCents:19900+target*999,currency:"usd",accessEndsAt:endAt,note:"The selected employees keep their paid Mentor access until the current billing period ends. Their licenses will not renew. Personal accounts and development history remain intact."});
  }catch(e){return billingFailure(e);}
 }
 export async function PUT(request){
  try{
-  const {body,ctx,ids,target}=await validate(request);
+  const {body,ctx,ids,target,endAt}=await validate(request);
   if(body.confirm!==true||body.expectedSeats!==ctx.seats.quantity||typeof body.requestId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.requestId))throw billingError("Review and confirm this downgrade",409);
   const emails=[];
   for(const id of ids){
@@ -39,19 +41,20 @@ export async function PUT(request){
   }
   const saved=await ctx.db.from("virtus_org_billing_notices").insert({organization_id:ctx.org.id,owner_user_id:ctx.org.owner_user_id,request_id:body.requestId,kind:"employee_downgrade",previous_seats:ctx.seats.quantity,new_seats:target,removed_emails:emails,status:"pending"});
   if(saved.error)throw billingError("Could not prepare owner confirmation record",503);
-  const result=await ctx.db.rpc("virtus_org_suspend_members_for_downgrade",{p_org:ctx.org.id,p_user_ids:ids});
-  if(result.error||result.data!==ids.length)throw billingError("Unable to safely suspend selected employee licenses",503);
+  const effectiveAt=new Date(endAt*1000).toISOString();
+  const result=await ctx.db.rpc("virtus_org_schedule_member_downgrades",{p_org:ctx.org.id,p_user_ids:ids,p_effective_at:effectiveAt});
+  if(result.error||result.data!==ids.length)throw billingError("Unable to schedule end-of-period employee access",503);
   try{
    const changed=await ctx.stripe.subscriptions.update(ctx.sub.id,{
     items:[{id:ctx.platform.id,quantity:1},{id:ctx.seats.id,quantity:target}],
     proration_behavior:"none",payment_behavior:"error_if_incomplete"
    },{idempotencyKey:"virtus-org-downgrade-"+ctx.org.id+"-"+body.requestId});
    if(changed.items.data.find(x=>x.id===ctx.seats.id)?.quantity!==target)throw Error("Stripe did not return the expected employee license count");
-   return billingReply({status:"submitted",employeesSuspended:ids.length,requestedSeats:target,note:"Stripe update accepted. License totals will reconcile through the signed webhook; employee history is retained."});
+   return billingReply({status:"scheduled",employeesScheduled:ids.length,accessEndsAt:endAt,requestedSeats:target,note:"License reduction confirmed. Selected employees retain Mentor access until the paid period ends, then lose organization-funded access automatically. Their personal history is retained."});
   }catch(e){
    // A definitive Stripe rejection permits safe restoration. An ambiguous network failure requires manual reconciliation.
    if(Number(e.statusCode)>=400&&Number(e.statusCode)<500){
-    await ctx.db.rpc("virtus_org_resume_suspended_members",{p_org:ctx.org.id,p_user_ids:ids});
+    await ctx.db.rpc("virtus_org_rollback_member_downgrades",{p_org:ctx.org.id,p_user_ids:ids,p_effective_at:effectiveAt});
     await ctx.db.from("virtus_org_billing_notices").update({status:"canceled"}).eq("organization_id",ctx.org.id).eq("request_id",body.requestId).eq("status","pending");
    }
    throw billingError("Stripe downgrade was not confirmed. Check billing state before retrying.",503);
