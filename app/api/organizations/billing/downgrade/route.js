@@ -31,6 +31,14 @@ export async function PUT(request){
  try{
   const {body,ctx,ids,target}=await validate(request);
   if(body.confirm!==true||body.expectedSeats!==ctx.seats.quantity||typeof body.requestId!=="string"||!/^[0-9a-f-]{36}$/i.test(body.requestId))throw billingError("Review and confirm this downgrade",409);
+  const emails=[];
+  for(const id of ids){
+   const {data:{user:employee},error:lookupError}=await ctx.db.auth.admin.getUserById(id);
+   if(lookupError||!employee?.email)throw billingError("Cannot verify selected employee email",503);
+   emails.push(employee.email.toLowerCase());
+  }
+  const saved=await ctx.db.from("virtus_org_billing_notices").insert({organization_id:ctx.org.id,owner_user_id:ctx.org.owner_user_id,request_id:body.requestId,kind:"employee_downgrade",previous_seats:ctx.seats.quantity,new_seats:target,removed_emails:emails,status:"pending"});
+  if(saved.error)throw billingError("Could not prepare owner confirmation record",503);
   const result=await ctx.db.rpc("virtus_org_suspend_members_for_downgrade",{p_org:ctx.org.id,p_user_ids:ids});
   if(result.error||result.data!==ids.length)throw billingError("Unable to safely suspend selected employee licenses",503);
   try{
@@ -44,6 +52,7 @@ export async function PUT(request){
    // A definitive Stripe rejection permits safe restoration. An ambiguous network failure requires manual reconciliation.
    if(Number(e.statusCode)>=400&&Number(e.statusCode)<500){
     await ctx.db.rpc("virtus_org_resume_suspended_members",{p_org:ctx.org.id,p_user_ids:ids});
+    await ctx.db.from("virtus_org_billing_notices").update({status:"canceled"}).eq("organization_id",ctx.org.id).eq("request_id",body.requestId).eq("status","pending");
    }
    throw billingError("Stripe downgrade was not confirmed. Check billing state before retrying.",503);
   }
