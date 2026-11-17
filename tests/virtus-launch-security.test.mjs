@@ -44,3 +44,12 @@ test("organization privacy boundaries are server-scoped",()=>{
  const reporting=read("app/api/organizations/reporting/route.js");
  assert.match(reporting,/organizationId/);
 });
+
+test("public health endpoint fails closed when database is unavailable",()=>{
+ const health=read("app/api/health/route.js");
+ assert.match(health,/createAdminClient/);
+ assert.match(health,/status:"healthy"/);
+ assert.match(health,/status:"unavailable"/);
+ assert.match(health,/status:503/);
+ assert.doesNotMatch(health,/error\.message/);
+});
