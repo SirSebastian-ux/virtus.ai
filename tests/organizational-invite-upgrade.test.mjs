@@ -51,7 +51,7 @@ test("seat guard counts active members, pending invitations and outstanding queu
  const table=name=>{
    const chain={};
    for(const k of ["select","eq","neq","is","gt","lte","in","limit"]){chain[k]=()=>chain;}
-   chain.then=resolve=>resolve({count:name==="virtus_organization_members"?2:name==="virtus_organization_invitations"?0:1,data:[],error:null});
+   chain.then=resolve=>resolve({count:name==="virtus_organization_invitations"?0:1,data:name==="virtus_organization_members"?[{user_id:"u1"},{user_id:"u2"}]:[],error:null});
    return chain;
  };
  const fake={from:table};
