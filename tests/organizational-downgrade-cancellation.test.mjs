@@ -41,7 +41,7 @@ test("webhook permits zero employee seats and suspends all employee entitlements
 test("billing UI has employee downgrade and company cancellation controls",()=>{
  const ui=file("app/organizations/dashboard/OrganizationCancellation.js");
  const dash=file("app/organizations/dashboard/page.js");
- assert.match(ui,/Remove organizational access/);
+ assert.match(ui,/Schedule the end of organization-funded access/);
  assert.match(ui,/Schedule employee downgrade/);
  assert.match(ui,/keep their already-paid Mentor access/);
  assert.doesNotMatch(ui,/Cancel company subscription now/);
