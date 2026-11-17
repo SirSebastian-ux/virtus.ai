@@ -17,7 +17,7 @@ export default function OrganizationWorkspace() {
     let timedOut=false;
     const timeout=setTimeout(()=>{timedOut=true;controller.abort();},12000);
     let mounted=true;
-    setState({phase:"loading",memberships:[],message:""});
+    queueMicrotask(()=>{if(mounted)setState({phase:"loading",memberships:[],message:""});});
     async function check(){
       try {
         const response=await fetch("/api/organizations",{cache:"no-store",credentials:"same-origin",signal:controller.signal});
