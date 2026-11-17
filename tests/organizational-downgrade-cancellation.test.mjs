@@ -25,7 +25,7 @@ test("cancellation permits only end of paid period and requires owner confirmati
  const code=file("app/api/organizations/billing/cancel/route.js");
  assert.match(code,/cancel_at_period_end:true/);
  assert.doesNotMatch(code,/subscriptions.cancel/);
- assert.match(code,/virtus_org_close_entitlements/);
+ assert.match(code,/cancel_at_period_end:true/);
  assert.match(code,/body.confirmName!==c.org.name/);
  assert.match(code,/body.timing!=="period_end"/);
 });
@@ -47,4 +47,6 @@ test("billing UI has employee downgrade and company cancellation controls",()=>{
  assert.doesNotMatch(dash,/<OrganizationLicenses/);
  assert.match(file("lib/organization-billing-notices.mjs"),/Idempotency-Key/);
  assert.match(file("app/api/organizations/billing/notifications/route.js"),/ownerBillingContext/);
+ assert.match(file("app/api/organizations/billing/downgrade/route.js"),/virtus_org_billing_notices/);
+ assert.match(file("app/api/organizations/billing/webhook/route.js"),/dispatchOrganizationBillingNotices/);
 });
