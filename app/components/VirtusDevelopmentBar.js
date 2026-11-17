@@ -38,7 +38,7 @@ export default function VirtusDevelopmentBar() {
 
   useEffect(() => {
     if (HIDDEN.test(path)) {
-      setExpanded(false);
+      queueMicrotask(() => setExpanded(false));
       return;
     }
     let active = true;
