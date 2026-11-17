@@ -5,7 +5,7 @@ const fmt=(n)=>Number(n||0).toLocaleString("en-US");
 export default function HRDevelopmentIntelligence({organizationId}){
  const [data,setData]=useState(null),[error,setError]=useState(""),[loading,setLoading]=useState(false),[selected,setSelected]=useState("");
  useEffect(()=>{if(!organizationId)return;let alive=true;
-  setLoading(true);setError("");setData(null);
+  queueMicrotask(()=>{if(alive){setLoading(true);setError("");setData(null);}});
   fetch("/api/organizations/reporting/activity?organizationId="+encodeURIComponent(organizationId),{credentials:"same-origin",cache:"no-store"})
    .then(async response=>{const payload=await response.json().catch(()=>({}));if(!response.ok)throw Error(payload.error||"Report unavailable");return payload;})
    .then(payload=>{if(alive){setData(payload);setSelected(payload.employees?.[0]?.userId||"");}})
