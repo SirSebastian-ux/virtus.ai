@@ -21,13 +21,13 @@ test("downgrade suspends employees, then changes Stripe seats with idempotency a
  assert.match(code,/virtus_org_resume_suspended_members/);
  assert.match(code,/target<0/);
 });
-test("cancellation supports now and period end with explicit owner confirmation",()=>{
+test("cancellation permits only end of paid period and requires owner confirmation",()=>{
  const code=file("app/api/organizations/billing/cancel/route.js");
  assert.match(code,/cancel_at_period_end:true/);
- assert.match(code,/subscriptions.cancel/);
+ assert.doesNotMatch(code,/subscriptions.cancel/);
  assert.match(code,/virtus_org_close_entitlements/);
  assert.match(code,/body.confirmName!==c.org.name/);
- assert.match(code,/body.timing==="period_end"/);
+ assert.match(code,/body.timing!=="period_end"/);
 });
 test("webhook permits zero employee seats and suspends all employee entitlements after cancellation",()=>{
  const code=file("app/api/organizations/billing/webhook/route.js");
@@ -40,7 +40,11 @@ test("billing UI has employee downgrade and company cancellation controls",()=>{
  const dash=file("app/organizations/dashboard/page.js");
  assert.match(ui,/Remove organizational access/);
  assert.match(ui,/Confirm employee downgrade/);
- assert.match(ui,/Cancel company subscription now/);
+ assert.doesNotMatch(ui,/Cancel company subscription now/);
  assert.match(ui,/Schedule company cancellation/);
  assert.match(dash,/OrganizationCancellation/);
+ assert.doesNotMatch(dash,/Company registration and employee licenses/);
+ assert.doesNotMatch(dash,/<OrganizationLicenses/);
+ assert.match(file("lib/organization-billing-notices.mjs"),/Idempotency-Key/);
+ assert.match(file("app/api/organizations/billing/notifications/route.js"),/ownerBillingContext/);
 });
