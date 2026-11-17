@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { loadOrgPracticeMemory } from "@/lib/virtus-org-practice-memory.mjs";
 export const dynamic="force-dynamic";
 const fail=(error,status)=>NextResponse.json({error},{status,headers:{"Cache-Control":"no-store"}});
 export async function POST(request){
@@ -30,11 +31,13 @@ export async function POST(request){
   }
   const {data:history,error:historyError}=await client.from("virtus_org_private_messages").select("role,content").eq("conversation_id",threadId).order("created_at",{ascending:false}).limit(20);
   if(historyError) return fail("Unable to load private conversation",503);
+  const practiceMemory = await loadOrgPracticeMemory({ db: admin, userId: user.id, organizationId });
   const ai=new OpenAI({apiKey:process.env.OPENAI_API_KEY});
   let answer;
   try{
     const response=await ai.responses.create({model:process.env.VIRTUS_ORG_MODEL||"gpt-4.1-mini",input:[
-      {role:"system",content:"You are Virtus AI, a confidential workplace leadership mentor. Help the employee reflect critically on thought, awareness, emotion, behavior and communication. Be thoughtful, practical, respectful and psychologically responsible. Do not claim clinical diagnosis or share private disclosures with the employer. Employer access is limited to aggregate program metrics."},
+      {role:"system",content:"You are Virtus AI, a confidential workplace leadership mentor. Help the employee reflect critically on thought, awareness, emotion, behavior and communication. Be thoughtful, practical, respectful and psychologically responsible. Do not claim clinical diagnosis or share private disclosures with the employer. Employer access is limited to aggregate program metrics. Never invent database records or claim completion is proof of behavior."},
+      ...(practiceMemory ? [{role:"system",content:practiceMemory}] : []),
       ...[...(history||[])].reverse().map(x=>({role:x.role,content:x.content})),
       {role:"user",content:message}
     ]});
