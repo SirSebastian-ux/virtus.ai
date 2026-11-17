@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - fix/hr-estimated-test-time
   pull_request:
     branches:
       - main
+
 
 jobs:
   build:
@@ -50,23 +52,11 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      - name: Test microphone transcript merging
-        run: node --test tests/virtus-voice-transcript.test.mjs
+      - name: Run all application and organizational regression tests
+        run: node --test tests/*.test.mjs
 
-      - name: Test cognitive development validators
-        run: node --test tests/virtus-development.test.mjs
-
-      - name: Test membership and programme entitlements
-        run: node --test tests/virtus-membership.test.mjs
-
-      - name: Test cognitive intelligence, curriculum and longitudinal development
-        run: node --test tests/virtus-cognitive-development.test.mjs
-
-      - name: Test account-owned project and development review
-        run: node --test tests/virtus-coaching-portfolio.test.mjs
-
-      - name: Test organizational mentorship contract
-        run: node --test tests/organizational-mentorship.test.mjs
+      - name: Verify checkout and webhook security invariants
+        run: node --test tests/virtus-launch-security.test.mjs
 
       - name: Build app
         run: npm run build
