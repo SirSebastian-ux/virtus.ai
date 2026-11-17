@@ -25,13 +25,13 @@ export default function OrganizationDashboard(){
   return data;
  }
  async function refresh(){try{const data=await api("/api/organizations");setMemberships(data.memberships||[]);}catch(e){setMessage(e.message);}}
- useEffect(()=>{const params=new URLSearchParams(window.location.search);const id=params.get("organizationId");if(id)setSelected(id);},[]);
+ useEffect(()=>{const params=new URLSearchParams(window.location.search);const id=params.get("organizationId");if(id)queueMicrotask(()=>setSelected(id));},[]);
  useEffect(()=>{let mounted=true;fetch("/api/organizations",{cache:"no-store"}).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(({ok,data})=>{if(!ok)throw Error(data.error||"Unable to load organizations");if(mounted)setMemberships(data.memberships||[]);}).catch(e=>{if(mounted)setMessage(e.message);});return()=>{mounted=false};},[]);
  async function run(action){setBusy(true);setMessage("");try{await action();}catch(e){setMessage(e.message);}finally{setBusy(false);}}
  const active=memberships.some(m=>m.organization_id===selected)?selected:"";
  const owner=memberships.find(m=>m.organization_id===active&&m.role==="owner");
  const manager=memberships.find(m=>m.organization_id===active&&["owner","admin"].includes(m.role));
- useEffect(()=>{if(!active||!manager){setEmployees([]);return;}let cancelled=false;fetch("/api/organizations/employees?organizationId="+encodeURIComponent(active),{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Directory unavailable");if(!cancelled){setEmployees(d.employees||[]);setDirectoryError("");}}).catch(e=>{if(!cancelled)setDirectoryError(e.message);});return()=>{cancelled=true};},[active,manager?.role]);
+ useEffect(()=>{if(!active||!manager){queueMicrotask(()=>setEmployees([]));return;}let cancelled=false;fetch("/api/organizations/employees?organizationId="+encodeURIComponent(active),{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Directory unavailable");if(!cancelled){setEmployees(d.employees||[]);setDirectoryError("");}}).catch(e=>{if(!cancelled)setDirectoryError(e.message);});return()=>{cancelled=true};},[active,manager?.role]);
 
  const panel={border:"1px solid #d4b16e",borderRadius:14,padding:"clamp(16px,2vw,24px)",background:"linear-gradient(145deg,#0b4b3a 0%,#07362c 52%,#06241f 100%)",marginTop:14,boxShadow:"inset 0 2px 0 #ffe6ac30,0 16px 45px #0006,0 0 18px #ba945027"};
  const input={display:"block",width:"100%",maxWidth:440,background:"#0a362d",color:"#fff1d6",border:"1px solid #ae9059",borderRadius:8,padding:"10px 12px",margin:"9px 0",fontSize:14,boxSizing:"border-box"};
