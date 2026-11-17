@@ -12,11 +12,13 @@ export async function GET(request) {
   const admin = createAdminClient();
   const {data:actor,error:actorError} = await admin.from("virtus_organization_members").select("role,status").eq("organization_id",organizationId).eq("user_id",user.id).maybeSingle();
   if (actorError || actor?.status !== "active" || !["owner","admin"].includes(actor.role)) return respond({error:"Forbidden"},403);
-  const [invites,members] = await Promise.all([
+  const [invites,members,endings] = await Promise.all([
     admin.from("virtus_organization_invitations").select("invited_email,created_at,accepted_at,revoked_at,expires_at").eq("organization_id",organizationId).order("created_at",{ascending:false}).limit(500),
-    admin.from("virtus_organization_members").select("user_id,role,status").eq("organization_id",organizationId).eq("status","active").limit(500)
+    admin.from("virtus_organization_members").select("user_id,role,status").eq("organization_id",organizationId).eq("status","active").limit(500),
+    admin.from("virtus_org_employee_access_endings").select("user_id,effective_at,state").eq("organization_id",organizationId).limit(500)
   ]);
-  if (invites.error || members.error) return respond({error:"Unable to load employee directory"},503);
+  if (invites.error || members.error || endings.error) return respond({error:"Unable to load employee directory"},503);
+  const scheduled=new Map((endings.data||[]).map(e=>[e.user_id,e]));
   const roster = new Map();
   for (const invite of invites.data || []) {
     const email = String(invite.invited_email || "").toLowerCase();
@@ -29,7 +31,8 @@ export async function GET(request) {
     const {data:{user:account},error:lookupError} = await admin.auth.admin.getUserById(member.user_id);
     if (lookupError || !account?.email) continue;
     const email = account.email.toLowerCase();
-    roster.set(email,{email,userId:member.user_id,status:"active",role:member.role});
+    const end=scheduled.get(member.user_id);
+    roster.set(email,{email,userId:member.user_id,status:end ? (end.state==="scheduled"&&new Date(end.effective_at).getTime()>Date.now()?"ending":"suspended") : "active",accessEndsAt:end?.effective_at||null,role:member.role});
   }
   return respond({employees:[...roster.values()].sort((a,b)=>a.email.localeCompare(b.email))});
 }
