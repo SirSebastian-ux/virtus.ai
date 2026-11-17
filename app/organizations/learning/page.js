@@ -9,7 +9,7 @@ const library=virtusModules.slice(0,10).flatMap((m,mi)=>(m.days||[]).flatMap((d,
 function Development(){
  const org=useSearchParams().get("organizationId")||"";
  useOrganizationTrainingSession(org);
- const dayIndex=Math.floor(Date.now()/86400000);
+ const [dayIndex]=useState(()=>Math.floor(Date.now()/86400000));
  const [focus,setFocus]=useState("habits"),[drafts,setDrafts]=useState({}),[answers,setAnswers]=useState({}),[completed,setCompleted]=useState([]),[selected,setSelected]=useState(null),[status,setStatus]=useState(""),[busy,setBusy]=useState(false);
  useEffect(()=>{if(!org)return;let alive=true;fetch("/api/organizations/learning?organizationId="+encodeURIComponent(org),{cache:"no-store"}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Unable to load development history");return d}).then(d=>{if(alive)setCompleted(d.progress||[])}).catch(e=>{if(alive)setStatus(e.message)});return()=>{alive=false}},[org]);
  useEffect(()=>{if(!org)return;fetch("/api/organizations/practice?organizationId="+encodeURIComponent(org)).then(r=>r.json()).then(d=>{const map={};for(const x of d.drafts||[])map[x.exercise_key]=x.responses;setDrafts(map)}).catch(()=>{});},[org]);
