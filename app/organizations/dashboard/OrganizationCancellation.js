@@ -6,7 +6,7 @@ const secondary={...primary,background:"#174638",color:"#f8dfaa"};
 const field={padding:12,background:"#092c25",border:"1px solid #a98b57",borderRadius:8,color:"#f6e3c4",width:"100%",maxWidth:400};
 async function send(url,method="GET",body){const res=await fetch(url,{method,headers:{"Content-Type":"application/json"},cache:"no-store",body:body?JSON.stringify(body):undefined});const data=await res.json().catch(()=>({}));if(!res.ok)throw Error(data.error||"Unable to process request");return data;}
 export default function OrganizationCancellation({organizationId,onUpdate}){
- const [people,setPeople]=useState([]),[selected,setSelected]=useState([]),[review,setReview]=useState(null),[cancellation,setCancellation]=useState(null),[timing,setTiming]=useState("period_end"),[confirmedName,setConfirmedName]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[state,setState]=useState(null);
+ const [people,setPeople]=useState([]),[selected,setSelected]=useState([]),[review,setReview]=useState(null),[cancellation,setCancellation]=useState(null),[confirmedName,setConfirmedName]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[state,setState]=useState(null);
  const ids=selected;
  const load=async()=>{const [directory,subscription]=await Promise.all([send("/api/organizations/employees?organizationId="+encodeURIComponent(organizationId)),send("/api/organizations/billing/cancel?organizationId="+encodeURIComponent(organizationId))]);setPeople((directory.employees||[]).filter(x=>x.role!=="owner"&&x.status==="active"&&x.userId));setState(subscription);};
  useEffect(()=>{let mounted=true;Promise.all([send("/api/organizations/employees?organizationId="+encodeURIComponent(organizationId)),send("/api/organizations/billing/cancel?organizationId="+encodeURIComponent(organizationId))]).then(([directory,subscription])=>{if(!mounted)return;setPeople((directory.employees||[]).filter(x=>x.role!=="owner"&&x.status==="active"&&x.userId));setState(subscription);}).catch(e=>{if(mounted)setMessage(e.message)});return()=>{mounted=false};},[organizationId]);
@@ -24,18 +24,15 @@ export default function OrganizationCancellation({organizationId,onUpdate}){
  <h2 style={{margin:"0 0 10px",color:"#f5d3a2"}}>Cancel organization subscription</h2>
  <p>Cancellation ends the organization's recurring subscription and all organization-funded Mentor access, including the owner's included access. Personal subscriptions and saved account history are not deleted.</p>
  {state?.cancelAtPeriodEnd?<p role="status">Subscription cancellation is scheduled for the end of the current paid period. Access continues until Stripe confirms cancellation.</p>:state?.cancelled?<p role="status">This company subscription is canceled.</p>:<>
- <div style={{display:"grid",gap:10,margin:"14px 0"}}>
- <label style={{display:"flex",gap:10}}><input type="radio" name="org-cancel-timing" checked={timing==="period_end"} onChange={()=>{setTiming("period_end");setCancellation(null);}}/>Cancel at the end of the paid billing period</label>
- <label style={{display:"flex",gap:10}}><input type="radio" name="org-cancel-timing" checked={timing==="immediate"} onChange={()=>{setTiming("immediate");setCancellation(null);}}/>Cancel immediately and end all company-funded access now</label>
- </div>
- <button type="button" style={secondary} disabled={busy} onClick={()=>run(async()=>{setCancellation(await send(cancelPath,"POST",{organizationId,timing}));setConfirmedName("");})}>Review cancellation</button>
+ <p style={{fontSize:13,color:"#dacaa9"}}>Cancellation takes effect automatically at the end of your current paid billing period. Your team keeps access until then.</p>
+ <button type="button" style={secondary} disabled={busy} onClick={()=>run(async()=>{setCancellation(await send(cancelPath,"POST",{organizationId,timing:"period_end"}));setConfirmedName("");})}>Review cancellation</button>
  {cancellation&&<div style={{borderTop:"1px solid #936c58",marginTop:15,paddingTop:15}}>
  <h3 style={{margin:"0 0 8px"}}>Confirm organization cancellation</h3>
  <p>{cancellation.summary}</p>
  <p><strong>{cancellation.employeesAffected}</strong> currently active employee accounts will lose organization-funded access when cancellation takes effect.</p>
  <label htmlFor="cancel-org-name" style={{display:"block",marginBottom:8}}>Type <strong>{cancellation.companyName}</strong> to confirm</label>
  <input id="cancel-org-name" style={field} value={confirmedName} onChange={e=>setConfirmedName(e.target.value)} autoComplete="off"/>
- <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:12}}><button type="button" disabled={busy||confirmedName!==cancellation.companyName} style={{...primary,background:"#8e4942",color:"#fff2e4"}} onClick={()=>run(async()=>{const result=await send(cancelPath,"PUT",{organizationId,confirm:true,confirmName:cancellation.companyName,timing,requestId:crypto.randomUUID()});setMessage(result.note||"Cancellation confirmed");setCancellation(null);await load();onUpdate?.();})}>{timing==="immediate"?"Cancel company subscription now":"Schedule company cancellation"}</button><button type="button" style={secondary} onClick={()=>setCancellation(null)} disabled={busy}>Keep subscription</button></div>
+ <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:12}}><button type="button" disabled={busy||confirmedName!==cancellation.companyName} style={{...primary,background:"#8e4942",color:"#fff2e4"}} onClick={()=>run(async()=>{const result=await send(cancelPath,"PUT",{organizationId,confirm:true,confirmName:cancellation.companyName,timing:"period_end",requestId:crypto.randomUUID()});setMessage(result.note||"Cancellation confirmed");setCancellation(null);await load();onUpdate?.();})}>{timing==="immediate"?"Cancel company subscription now":"Schedule company cancellation"}</button><button type="button" style={secondary} onClick={()=>setCancellation(null)} disabled={busy}>Keep subscription</button></div>
  </div>}
  </>}
  </section>
