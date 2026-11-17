@@ -262,7 +262,8 @@ async function insertGlobalLearningEvent(supabase, payload) {
       return;
     }
 
-    const { error: rpcError } = await supabase.rpc(
+    // This privileged aggregate write is server-only; client JWTs cannot execute the RPC.
+    const { error: rpcError } = await createAdminClient().rpc(
       "log_global_learning_event",
       {
         p_source_user_id: null,
