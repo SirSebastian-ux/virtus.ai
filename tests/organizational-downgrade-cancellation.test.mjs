@@ -12,13 +12,16 @@ test("downgrade requires the registered owner and explicit employee selection",(
  assert.match(downgrade,/new Set\(ids\).size!==ids.length/);
  assert.match(downgrade,/body.confirm!==true/);
  assert.match(downgrade,/p_user_ids:ids/);
+ assert.match(downgrade,/p_effective_at:effectiveAt/);
 });
-test("downgrade suspends employees, then changes Stripe seats with idempotency and no refund",()=>{
+test("downgrade schedules paid-period expiry before reducing renewal quantity",()=>{
  const code=file("app/api/organizations/billing/downgrade/route.js");
- assert.ok(code.indexOf("virtus_org_suspend_members_for_downgrade")<code.indexOf("stripe.subscriptions.update"));
+ assert.ok(code.indexOf("virtus_org_schedule_member_downgrades")<code.indexOf("stripe.subscriptions.update"));
+ assert.doesNotMatch(code,/virtus_org_suspend_members_for_downgrade/);
+ assert.match(code,/accessEndsAt:endAt/);
  assert.match(code,/proration_behavior:"none"/);
  assert.match(code,/idempotencyKey:/);
- assert.match(code,/virtus_org_resume_suspended_members/);
+ assert.match(code,/virtus_org_rollback_member_downgrades/);
  assert.match(code,/target<0/);
 });
 test("cancellation permits only end of paid period and requires owner confirmation",()=>{
@@ -39,7 +42,8 @@ test("billing UI has employee downgrade and company cancellation controls",()=>{
  const ui=file("app/organizations/dashboard/OrganizationCancellation.js");
  const dash=file("app/organizations/dashboard/page.js");
  assert.match(ui,/Remove organizational access/);
- assert.match(ui,/Confirm employee downgrade/);
+ assert.match(ui,/Schedule employee downgrade/);
+ assert.match(ui,/keep their already-paid Mentor access/);
  assert.doesNotMatch(ui,/Cancel company subscription now/);
  assert.match(ui,/Schedule company cancellation/);
  assert.match(dash,/OrganizationCancellation/);
@@ -49,4 +53,10 @@ test("billing UI has employee downgrade and company cancellation controls",()=>{
  assert.match(file("app/api/organizations/billing/notifications/route.js"),/ownerBillingContext/);
  assert.match(file("app/api/organizations/billing/downgrade/route.js"),/virtus_org_billing_notices/);
  assert.match(file("app/api/organizations/billing/webhook/route.js"),/dispatchOrganizationBillingNotices/);
+});
+
+test("renewing seats exclude members scheduled to lose access after paid period",()=>{
+ assert.match(file("lib/organization-billing-owner.mjs"),/virtus_org_employee_access_endings/);
+ assert.match(file("lib/organization-invitation-delivery.mjs"),/virtus_org_employee_access_endings/);
+ assert.match(file("app/api/organizations/billing/seats/route.js"),/virtus_org_employee_access_endings/);
 });
