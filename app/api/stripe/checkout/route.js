@@ -86,6 +86,18 @@ export async function POST(req) {
       .maybeSingle();
 
     const stripeCustomerId = profile?.stripe_customer_id || null;
+    // Existing subscribers must manage changes through billing, not start a second paid subscription.
+    if (stripeCustomerId) {
+      const existing = await stripe.subscriptions.list({customer:stripeCustomerId,status:"all",limit:50});
+      const existingVirtus = existing.data.some(sub =>
+        sub.metadata?.user_id === user.id &&
+        Boolean(sub.metadata?.virtus_plan) &&
+        ["active","trialing","past_due","unpaid","incomplete","paused"].includes(sub.status)
+      );
+      if (existingVirtus) return NextResponse.json({
+        error:"You already have a personal Virtus subscription. Manage changes in your billing account instead of starting another paid subscription."
+      },{status:409});
+    }
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     const session = await stripe.checkout.sessions.create({
