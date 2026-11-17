@@ -19,11 +19,16 @@ async function context(request){
  if(orgError||!org||org.owner_user_id!==user.id||org.archived_at)throw err("Owner required",403);
  const {data:member,error:memberError}=await db.from("virtus_organization_members").select("role,status").eq("organization_id",id).eq("user_id",user.id).maybeSingle();
  if(memberError||member?.role!=="owner"||member.status!=="active")throw err("Active owner membership required",403);
- const {count,error:countError}=await db.from("virtus_organization_members").select("id",{count:"exact",head:true}).eq("organization_id",id).eq("status","active").neq("role","owner");
- if(countError)throw err("Cannot verify seat use",503);
+ const [roster,endings]=await Promise.all([
+   db.from("virtus_organization_members").select("user_id").eq("organization_id",id).eq("status","active").neq("role","owner"),
+   db.from("virtus_org_employee_access_endings").select("user_id").eq("organization_id",id)
+ ]);
+ if(roster.error||endings.error)throw err("Cannot verify seat use",503);
+ const excluded=new Set((endings.data||[]).map(e=>e.user_id));
+ const renewing=(roster.data||[]).filter(m=>!excluded.has(m.user_id)).length;
  const {count:pendingCount,error:pendingError}=await db.from("virtus_organization_invitations").select("id",{count:"exact",head:true}).eq("organization_id",id).is("accepted_at",null).is("revoked_at",null).gt("expires_at",new Date().toISOString());
  if(pendingError)throw err("Cannot verify pending invitations",503);
- return {org,payload,used:count||0,pending:pendingCount||0};
+ return {org,payload,used:renewing,paidThroughExpiry:(roster.data||[]).filter(m=>excluded.has(m.user_id)).length,pending:pendingCount||0};
 }
 function stripe(){if(!process.env.STRIPE_SECRET_KEY||!process.env.VIRTUS_ORGANIZATION_PLATFORM_PRICE_ID||!process.env.VIRTUS_ORGANIZATION_SEAT_PRICE_ID)throw err("Billing not configured",503);return new Stripe(process.env.STRIPE_SECRET_KEY,{apiVersion:"2025-03-31.basil"});}
 async function load(ctx,client){
