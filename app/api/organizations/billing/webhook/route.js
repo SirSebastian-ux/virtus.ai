@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import {dispatchPaidQueuedInvitations} from "@/lib/organization-invitation-delivery.mjs";
+import {dispatchOrganizationBillingNotices} from "@/lib/organization-billing-notices.mjs";
 export const dynamic="force-dynamic";
 const ok=(extra={})=>NextResponse.json({received:true,...extra});
 export async function POST(request){
@@ -57,6 +58,11 @@ export async function POST(request){
   if(event.type==="invoice.payment_succeeded"&&status==="active"){
     try{const delivered=await dispatchPaidQueuedInvitations({admin,organizationId:id});queuedInvitations=delivered.sent;}
     catch(error){console.error("Organizational invite fulfillment retry needed",error);return NextResponse.json({error:"Invitation fulfillment retry needed"},{status:500});}
+  }
+  // A downgrade is complete only when Stripe and Supabase agree on the new seat count.
+  if(status==="active"&&subscription.status==="active"&&outcome!=="stale"){
+   try{await dispatchOrganizationBillingNotices({admin,organizationId:id});}
+   catch(error){console.error("Downgrade owner email delivery needs retry",error);}
   }
   return ok({organization:true,reconciliation:outcome,queuedInvitations});
 }
