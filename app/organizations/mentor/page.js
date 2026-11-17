@@ -12,7 +12,7 @@ function Mentor(){
  const [message,setMessage]=useState("");
  const [status,setStatus]=useState("");
  const [busy,setBusy]=useState(false);
- useEffect(()=>{setHistory([]);setConversationId(null);setThreads([]);setStatus("");
+ useEffect(()=>{queueMicrotask(()=>{setHistory([]);setConversationId(null);setThreads([]);setStatus("");});
   if(!organizationId)return;
   fetch("/api/organizations/mentor/history?organizationId="+encodeURIComponent(organizationId),{cache:"no-store"})
    .then(r=>r.ok?r.json():Promise.reject(Error("History unavailable")))
