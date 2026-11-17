@@ -1,3 +1,4 @@
+import {hasOrganizationMentorAccess} from "@/lib/virtus-org-entitlement.mjs";
 ﻿function sanitizeAssistantOutput(text) {
   if (!text) return '';
   const patterns = [
@@ -353,9 +354,12 @@ async function resolveVirtusUserId(guestId, cookieHeader = "") {
     .eq("id", user.id)
     .single();
 
-    const currentPlan = profile?.plan ?? "free";
-  const currentPlanStatus =
-    profile?.plan_status ?? getDefaultPlanStatusForPlan("free");
+    // Organizational Mentor access is an additional entitlement, never a change to billing.
+    // Re-evaluate on each request so revoked seats and canceled subscriptions lose access.
+    const organizationMentorActive = await hasOrganizationMentorAccess({userId:user.id,userClient:supabase,adminClient:adminSupabase});
+    const currentPlan = organizationMentorActive ? "premium" : (profile?.plan ?? "free");
+  const currentPlanStatus = organizationMentorActive ? "active" :
+    (profile?.plan_status ?? getDefaultPlanStatusForPlan("free"));
 
   return {
     userId: user.id,
@@ -467,6 +471,11 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
+    // Organizational coaching must never silently fall back to consumer/guest entitlements.
+    // Until the isolated organizational conversation store is deployed, reject this mode.
+    if (body?.organizationId != null || body?.organization_id != null || body?.billingMode === "organization") {
+      return Response.json({ error: "Organizational mentorship conversations are not enabled yet." }, { status: 503 });
+    }
     const { message, guestId, guestPastedImage, chatId, practiceMode, activeProjectId: selectedProjectId, activeProjectTitle: selectedProjectTitle, hideFromSidebar, sessionTitle } = body;
     const shouldHideFromSidebar = hideFromSidebar === true;
     const cleanSessionTitle = String(sessionTitle || "").trim().slice(0, 80);

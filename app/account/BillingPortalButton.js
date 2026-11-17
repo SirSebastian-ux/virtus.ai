@@ -51,9 +51,9 @@ export default function BillingPortalButton({ hasStripeCustomer = false, current
         </span>
       </button>
 
-      {!hasStripeCustomer ? (
+      {!hasStripeCustomer && currentPlan !== "No active coaching membership" ? (
         <div className="virtus-billing-status mt-3 rounded-xl border border-[#eac78b]/35 bg-[#063b31]/70 px-4 py-3 text-sm text-[#e9d4a5]" role="status">
-          <p className="font-semibold text-[#f2d798]">{currentPlan} membership is active in Virtus.</p>
+          <p className="font-semibold text-[#f2d798]">{currentPlan} access is available in Virtus.</p>
           <p className="mt-1 text-xs leading-5 text-[#c9dad0]">No Virtus Stripe billing profile is linked to this account. Your existing coaching access is unchanged. If you expected a paid Virtus subscription, contact support to verify the payment before connecting a billing record. Do not purchase again to fix this message.</p>
           <a className="mt-2 inline-block text-xs font-semibold text-[#f4d78c] underline underline-offset-4" href="/support">Contact support</a>
         </div>

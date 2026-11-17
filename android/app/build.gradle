@@ -1,5 +1,13 @@
 apply plugin: 'com.android.application'
 
+// Keep the upload key outside source control. Use the same key registered in Play Console.
+def uploadKeyPath = System.getenv('VIRTUS_UPLOAD_KEYSTORE')
+def uploadKeyAlias = System.getenv('VIRTUS_UPLOAD_KEY_ALIAS')
+def uploadStorePassword = System.getenv('VIRTUS_UPLOAD_STORE_PASSWORD')
+def uploadKeyPassword = System.getenv('VIRTUS_UPLOAD_KEY_PASSWORD')
+def uploadSigningReady = [uploadKeyPath, uploadKeyAlias, uploadStorePassword, uploadKeyPassword].every { it != null && !it.isEmpty() }
+def playVersionCode = Integer.parseInt(System.getenv('VIRTUS_ANDROID_VERSION_CODE') ?: '2')
+
 android {
     namespace = "com.virtusaiworld.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +15,8 @@ android {
         applicationId "com.virtusaiworld.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode playVersionCode
+        versionName "1.0.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +24,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    if (uploadSigningReady) {
+        signingConfigs {
+            playUpload {
+                storeFile file(uploadKeyPath)
+                storePassword uploadStorePassword
+                keyAlias uploadKeyAlias
+                keyPassword uploadKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (uploadSigningReady) signingConfig signingConfigs.playUpload
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

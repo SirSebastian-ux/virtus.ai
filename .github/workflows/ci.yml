@@ -65,5 +65,8 @@ jobs:
       - name: Test account-owned project and development review
         run: node --test tests/virtus-coaching-portfolio.test.mjs
 
+      - name: Test organizational mentorship contract
+        run: node --test tests/organizational-mentorship.test.mjs
+
       - name: Build app
         run: npm run build
