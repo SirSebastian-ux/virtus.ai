@@ -105,11 +105,16 @@ export async function POST(req) {
     ) {
       const invoice = event.data.object;
 
-      if (invoice.subscription) {
-        subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+      // Stripe API 2025-03-31.basil exposes subscription on invoice.parent.subscription_details.
+      // Legacy invoices may still provide invoice.subscription.
+      const invoiceSubscription = invoice.parent?.subscription_details?.subscription ?? invoice.subscription;
+      const subscriptionId = typeof invoiceSubscription === "string" ? invoiceSubscription : invoiceSubscription?.id;
+      if (subscriptionId) {
+        subscription = await stripe.subscriptions.retrieve(subscriptionId);
       }
     } else {
-      subscription = event.data.object;
+      // Always reconcile current Stripe status, not an out-of-order event snapshot.
+      subscription = await stripe.subscriptions.retrieve(event.data.object.id);
     }
 
     if (!subscription) {
