@@ -22,7 +22,7 @@ export default function OrganizationCancellation({organizationId,onUpdate}){
  </section>
  <section style={{...surface,borderColor:"#a27468"}}>
  <h2 style={{margin:"0 0 10px",color:"#f5d3a2"}}>Cancel organization subscription</h2>
- <p>Cancellation ends the organization's recurring subscription and all organization-funded Mentor access, including the owner's included access. Personal subscriptions and saved account history are not deleted.</p>
+ <p>Cancellation ends the organization&apos;s recurring subscription and all organization-funded Mentor access, including the owner&apos;s included access. Personal subscriptions and saved account history are not deleted.</p>
  {state?.cancelAtPeriodEnd?<p role="status">Subscription cancellation is scheduled for the end of the current paid period. Access continues until Stripe confirms cancellation.</p>:state?.cancelled?<p role="status">This company subscription is canceled.</p>:<>
  <p style={{fontSize:13,color:"#dacaa9"}}>Cancellation takes effect automatically at the end of your current paid billing period. Your team keeps access until then.</p>
  <button type="button" style={secondary} disabled={busy} onClick={()=>run(async()=>{setCancellation(await send(cancelPath,"POST",{organizationId,timing:"period_end"}));setConfirmedName("");})}>Review cancellation</button>
