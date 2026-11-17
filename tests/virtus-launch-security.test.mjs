@@ -24,6 +24,8 @@ test("personal checkout is authenticated and prevents arbitrary pricing",()=>{
  assert.match(checkout,/stripePrice\.active/);
  assert.match(checkout,/stripePrice\.product\s*!==\s*expectedProduct/);
  assert.match(checkout,/VIRTUS_PAID_MEMBERSHIPS_ENABLED/);
+ assert.match(checkout,/stripe\.subscriptions\.list\(\{customer:stripeCustomerId,status:"all"/);
+ assert.match(checkout,/existingVirtus/);
 });
 
 test("organizational payment changes require owner authority",()=>{
