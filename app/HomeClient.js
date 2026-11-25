@@ -5823,6 +5823,7 @@ return (
 
                     <div className="virtus-scrollbar flex-1 overflow-y-auto overflow-x-hidden p-3">
             <LuxurySidebarNav
+              isAdmin={isAdmin}
               active={luxuryActiveNav}
               onHome={openLuxuryHome}
               onNewChat={() => { openLuxuryHome(); textareaRef.current?.focus(); setLuxuryActiveNav("chat"); }}
@@ -6608,6 +6609,7 @@ if (data.conversation) {
 
           <div className="virtus-mobile-menu-stack space-y-2 pt-2">
             <LuxurySidebarNav
+              isAdmin={isAdmin}
               active={luxuryActiveNav}
               recentOpen={recentOpen}
               onHome={() => { openLuxuryHome(); setShowMobileMenu(false); }}
