@@ -1,0 +1,11 @@
+import http from "node:http";
+import {timingSafeEqual,createHmac} from "node:crypto";
+import {WebSocketServer} from "ws";
+import {startSession} from "./session.mjs";
+const configured=()=>Boolean(process.env.OPENAI_API_KEY&&process.env.TALKING_AVATAR_API_KEY&&process.env.COMPANION_BRIDGE_SECRET);
+const server=http.createServer((req,res)=>{res.setHeader("Content-Type","application/json");res.end(JSON.stringify({service:"virtus-companion-avatar",configured:configured()}));});
+const wss=new WebSocketServer({noServer:true,maxPayload:65536});
+const used=new Map();let active=false;
+server.on("upgrade",(req,socket,head)=>{try{const url=new URL(req.url,"http://localhost");const token=url.searchParams.get("ticket")||"";const [nonce,expiry,sig]=token.split(".");const now=Date.now();for(const [k,v] of used)if(v<now)used.delete(k);if(!configured()||active||url.pathname!=="/session"||!nonce||!expiry||!sig||Number(expiry)<now||Number(expiry)>now+60000||used.has(nonce))throw Error();const expected=createHmac("sha256",process.env.COMPANION_BRIDGE_SECRET).update(nonce+"."+expiry).digest("hex");if(sig.length!==expected.length||!timingSafeEqual(Buffer.from(sig),Buffer.from(expected)))throw Error();used.set(nonce,Number(expiry));active=true;wss.handleUpgrade(req,socket,head,ws=>wss.emit("connection",ws));}catch{socket.destroy();}});
+wss.on("connection",async ws=>{let session,closed=false;const send=e=>{if(ws.readyState===1)ws.send(JSON.stringify(e));};const finish=()=>{if(closed)return;closed=true;clearTimeout(timer);session?.close();ws.close();active=false;};const timer=setTimeout(finish,300000);ws.on("close",finish);ws.on("error",finish);try{session=await startSession({onEvent:send,onClose:finish});if(closed){session.close();return;}ws.on("message",async raw=>{try{const e=JSON.parse(raw.toString());if(e.type==="audio"&&typeof e.audio==="string"&&e.audio.length<=48000)session.appendAudio(e.audio);else if(e.type==="view")send({type:"view",id:e.id,body:await session.handleView(e.body)});else if(e.type==="end")finish();}catch{send({type:"error",message:"Session processing failed"});finish();}});send({type:"connected"});}catch{send({type:"error",message:"Avatar provider unavailable"});finish();}});
+server.listen(Number(process.env.PORT)||8080,"0.0.0.0");
