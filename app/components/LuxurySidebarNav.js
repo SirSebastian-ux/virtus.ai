@@ -14,7 +14,7 @@ function NavIcon({ name }) {
   );
 }
 
-export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools, onRecent, recentOpen = false, active = "home" }) {
+export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools, onRecent, recentOpen = false, active = "home", isAuthenticated = false }) {
   const links = [
     { id: "home", title: "Home", action: onHome },
     { id: "chat", title: "New Chat", action: onNewChat },
@@ -48,6 +48,7 @@ export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools
           </svg>
           <span>My Development</span>
         </Link>
+        <Link className="virtus-luxury-nav-link" href={isAuthenticated ? "/companion" : "/login?mode=signup&next=%2Fcompanion"}><NavIcon name="chat"/><span>Rent a Companion</span></Link>
         <Link className="virtus-luxury-nav-link" href="/account">
           <NavIcon name="settings" />
           <span>Settings</span>
