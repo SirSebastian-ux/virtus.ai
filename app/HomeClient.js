@@ -5806,6 +5806,7 @@ return (
             />
             {isAdmin && <div className="mt-3 grid gap-2 border-t border-[#d8bd85]/30 pt-4"><p className="px-3 text-xs uppercase tracking-widest text-[#d8bd85]">Administrator</p><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/evaluation-lab">Evaluation Lab</Link><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/library-manager">Knowledge Library Manager</Link></div>}
             <div className={luxuryToolsOpen ? "grid grid-cols-3 gap-2 mt-3" : "hidden"}>
+<Link href="/companion" className="virtus-luxury-tool-button col-span-3 flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm text-[#f3d08c]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-5 w-5" aria-hidden="true"><path d="M20 11a8 8 0 0 1-8 8H5l2-4a8 8 0 1 1 13-4Z"/><path d="M9 11h6"/></svg>Rent a Companion</Link>
               <button
                 type="button"
                 aria-label="Search"
@@ -6676,6 +6677,7 @@ if (data.conversation) {
 
             {luxuryToolsOpen && (
               <div className="virtus-mobile-tools-section space-y-2 rounded-2xl p-3">
+<Link href="/companion" className="virtus-mobile-menu-item block w-full rounded-xl px-3 py-3 text-left text-[#f3d08c]">Rent a Companion</Link>
             <button type="button" onClick={() => { setSearchOpen((current) => !current); setProjectsOpen(false); setCaptureOpen(false); }} className="virtus-mobile-menu-item w-full rounded-xl px-3 py-3 text-left transition">Search chats</button>
             {searchOpen && (
               <div className="virtus-mobile-subpanel rounded-xl p-3">
