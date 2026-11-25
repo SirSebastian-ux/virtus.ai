@@ -12,9 +12,12 @@ export async function POST(req){
  if(!userRate.allowed)return rateLimitResponse(userRate);
  const secret=process.env.COMPANION_BRIDGE_SECRET;
  if(!secret||secret.length<32)return Response.json({error:"Avatar service not configured"},{status:503});
+ const companion=new URL(req.url).searchParams.get("companion")||"male";
+ if(!["male","female"].includes(companion))return new Response(null,{status:400});
  const nonce=randomBytes(16).toString("hex"),expiry=Date.now()+30000;
- const sig=createHmac("sha256",secret).update(nonce+"."+expiry).digest("hex");
+ const sig=createHmac("sha256",secret).update(nonce+"."+expiry+(companion==="female"?".female":"")).digest("hex");
  const url=new URL("wss://companion-avatar-preview.up.railway.app/session");
+ url.searchParams.set("companion",companion);
  url.searchParams.set("ticket",nonce+"."+expiry+"."+sig);
  return Response.json({url:url.toString()},{headers:{"Cache-Control":"no-store"}});
 }
