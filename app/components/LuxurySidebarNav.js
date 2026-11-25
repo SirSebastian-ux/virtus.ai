@@ -48,7 +48,7 @@ export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools
           </svg>
           <span>My Development</span>
         </Link>
-        <Link className="virtus-luxury-nav-link" href={isAuthenticated ? "/companion" : "/login?mode=signup&next=%2Fcompanion"}><NavIcon name="chat"/><span>Rent a Companion</span></Link>
+        <Link className="virtus-luxury-nav-link" href={isAuthenticated ? "/companion" : "/login?mode=signup&next=%2Fcompanion"}><NavIcon name="chat"/><span>Virtus AI Companionship</span></Link>
         <Link className="virtus-luxury-nav-link" href="/account">
           <NavIcon name="settings" />
           <span>Settings</span>
