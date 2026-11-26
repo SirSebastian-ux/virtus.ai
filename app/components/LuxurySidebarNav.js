@@ -14,7 +14,7 @@ function NavIcon({ name }) {
   );
 }
 
-export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools, onRecent, recentOpen = false, active = "home", isAdmin = false }) {
+export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools, onRecent, recentOpen = false, active = "home", isAdmin = false, tools = null }) {
   const links = [
     { id: "home", title: "Home", action: onHome },
     { id: "chat", title: "New Chat", action: onNewChat },
@@ -52,12 +52,13 @@ export default function LuxurySidebarNav({ onHome, onNewChat, onLibrary, onTools
           </svg>
           <span>My Development</span>
         </Link>
-        {isAdmin && <Link className="virtus-luxury-nav-link" href="/companion"><NavIcon name="chat"/><span>Virtus AI Companionship</span></Link>}
+        <Link className="virtus-luxury-nav-link virtus-companionship-nav-link" href="/companion"><NavIcon name="chat"/><span>Virtus AI Companionship</span></Link>
         <Link className="virtus-luxury-nav-link" href="/account">
           <NavIcon name="settings" />
           <span>Settings</span>
         </Link>
       </nav>
+      {tools}
       <button
         type="button"
         className="virtus-luxury-recent-toggle"
