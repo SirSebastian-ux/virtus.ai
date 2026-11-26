@@ -5831,17 +5831,15 @@ return (
               onTools={openLuxuryTools}
               onRecent={() => setRecentOpen((previous) => !previous)}
               recentOpen={recentOpen}
-            />
-            {isAdmin && <div className="mt-3 grid gap-2 border-t border-[#d8bd85]/30 pt-4"><p className="px-3 text-xs uppercase tracking-widest text-[#d8bd85]">Administrator</p><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/evaluation-lab">Evaluation Lab</Link><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/library-manager">Knowledge Library Manager</Link></div>}
-            <div className={luxuryToolsOpen ? "grid grid-cols-4 gap-2 mt-3" : "hidden"}>
+              tools={<div className="grid grid-cols-4 gap-1 mt-2" aria-label="Quick tools">
               <button
                 type="button"
                 aria-label="Search"
                 onClick={() => { setSearchOpen(!searchOpen); setProjectsOpen(false); setPracticeOpen(false); setCaptureOpen(false); }}
-                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
+                className="virtus-luxury-tool-button group relative flex h-12 flex-col items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Search</span>
+                <span className="text-[9px] leading-tight mt-0.5">Search</span>
               </button>
 
               <button
@@ -5855,10 +5853,10 @@ return (
                   setCaptureOpen(false);
                   if (!nextState) { setProjectHomeOpen(false); setActiveProject(null); }
                 }}
-                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
+                className="virtus-luxury-tool-button group relative flex h-12 flex-col items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" /><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Projects</span>
+                <span className="text-[9px] leading-tight mt-0.5">Projects</span>
               </button>
 
               <button
@@ -5873,20 +5871,21 @@ return (
                   setProjectsOpen(false);
                   setCaptureOpen(false);
                 }}
-                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition"
+                className="virtus-luxury-tool-button group relative flex h-12 flex-col items-center justify-center rounded-2xl border transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M2 12h3" /><path d="M19 12h3" /></svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Practices</span>
+                <span className="text-[9px] leading-tight mt-0.5">Practices</span>
               </button>
               <button type="button" aria-label="Refresh App" title="Refresh App" onClick={refreshVirtusApp}
-                className="virtus-luxury-tool-button group relative flex h-12 items-center justify-center rounded-2xl border transition">
+                className="virtus-luxury-tool-button group relative flex h-12 flex-col items-center justify-center rounded-2xl border transition">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true">
                   <path d="M20 7v5h-5M4 17v-5h5M5 9a8 8 0 0 1 13-2l2 5M19 15a8 8 0 0 1-13 2l-2-5" />
                 </svg>
-                <span className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-xl border border-sky-900/35 bg-zinc-950/95 px-3 py-1 text-xs font-medium text-sky-100 opacity-0 shadow-lg shadow-sky-950/30 backdrop-blur-sm transition group-hover:opacity-100">Refresh App</span>
+                <span className="text-[9px] leading-tight mt-0.5">Refresh App</span>
               </button>
-            </div>
-
+            </div>}
+            />
+            {isAdmin && <div className="mt-3 grid gap-2 border-t border-[#d8bd85]/30 pt-4"><p className="px-3 text-xs uppercase tracking-widest text-[#d8bd85]">Administrator</p><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/evaluation-lab">Evaluation Lab</Link><Link className="rounded-xl border border-[#d8bd85]/35 px-4 py-3 text-sm text-[#e8d59e] hover:bg-[#d8bd85]/10" href="/admin/library-manager">Knowledge Library Manager</Link></div>}
             {captureOpen && renderCapturePanel()}
 
             {searchOpen && (
